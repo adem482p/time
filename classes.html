@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classes — Emplois</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="classes">
+<nav><a href="index.html">Teachers</a><a href="timetable.html">Timetable matrix</a><a href="time.html">Time</a><a href="classes.html"><strong>Classes</strong></a></nav>
+<div id="layout">
+  <div id="listPane">
+    <button type="button" id="themeCycle" title="Cycle color preset" aria-label="Cycle color preset"></button>
+    <h1>Find Classes</h1>
+    <p id="status">Loading emplois.csv…</p>
+    <div id="searchWrap">
+      <div id="ghost" aria-hidden="true"><span id="ghostPre"></span><span id="ghostTyped"></span><span id="ghostRest"></span></div>
+      <input id="search" type="search" placeholder="Search class (LCS, GLSI3D1…)" autocomplete="off">
+      <button type="button" id="searchDone" aria-label="Hide the keyboard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button type="button" id="searchClear" aria-label="Clear the search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <ul id="suggest" hidden></ul>
+    </div>
+    <ul id="classList"></ul>
+  </div>
+  <div id="detail"></div>
+</div>
+<script src="js/data.js"></script>
+<script src="js/libgroups.js"></script>
+<script src="js/model.js"></script>
+<script src="js/match.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/color.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
