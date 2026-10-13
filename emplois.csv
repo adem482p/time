@@ -1,0 +1,2094 @@
+professor,day,time,room,subject,field
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-A Groupe 1
+Omezzine,MERCREDI,08h15-09h45,B1,Algo Struct de Données I,LBC1-A Groupe 1
+Chouk,JEUDI,08h15-09h45,A4,Francais Pro1,LBC1-A Groupe 1
+Dlima,VENDREDI,08h15-09h45,info D1,"Intro Analyse, Vis données",LBC1-A Groupe 1
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-A Groupe 1
+Machghoul H.,LUNDI,10h00-11h30,FSEG-INFO3,Digital Skills 1,LBC1-A Groupe 1
+Kratou,MARDI,10h00-11h30,B2,Math pour l'Info 1,LBC1-A Groupe 1
+Ben Haj,MERCREDI,10h00-11h30,Salle Accée lib,Archi des ordinateurs,LBC1-A Groupe 1
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-A Groupe 1
+Dimassi,VENDREDI,10h00-11h30,A2,Archi des ordinateurs,LBC1-A Groupe 1
+Hatem B.,SAMEDI,10h00-11h30,FSEG_S111,Statistique Descriptive,LBC1-A Groupe 1
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-A Groupe 1
+Dhouib,MERCREDI,11h40-13h10,C1,Systèmes d'exploitation,LBC1-A Groupe 1
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-A Groupe 1
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-A Groupe 1
+Harzallah A.,SAMEDI,11h40-13h10,FSEG_S207,Comptabilité Générale,LBC1-A Groupe 1
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-A Groupe 1
+Zemni,JEUDI,13h20-14h50,info A1,Systèmes d'exploitation,LBC1-A Groupe 1
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-A Groupe 1
+Ben Kahla,MARDI,15h00-16h30,A3,Study Skills 1,LBC1-A Groupe 1
+Hazgui.S,VENDREDI,15h00-16h30,FSEG_S107,Organisation entreprises,LBC1-A Groupe 1
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-A Groupe 1
+Karchoud,MARDI,16h45-18h15,info B1,Algo Struct de Données I,LBC1-A Groupe 1
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-A Groupe 1
+Dorbez W.,VENDREDI,16h45-18h15,FSEG_S111,Principe de Gestion,LBC1-A Groupe 1
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-A Groupe 2
+Omezzine,MERCREDI,08h15-09h45,B1,Algo Struct de Données I,LBC1-A Groupe 2
+Chouk,JEUDI,08h15-09h45,A4,Francais Pro1,LBC1-A Groupe 2
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-A Groupe 2
+Kratou,MARDI,10h00-11h30,B2,Math pour l'Info 1,LBC1-A Groupe 2
+Zemni,MERCREDI,10h00-11h30,info B3,Systèmes d'exploitation,LBC1-A Groupe 2
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-A Groupe 2
+Dimassi,VENDREDI,10h00-11h30,A2,Archi des ordinateurs,LBC1-A Groupe 2
+Hatem B.,SAMEDI,10h00-11h30,FSEG_S111,Statistique Descriptive,LBC1-A Groupe 2
+Machghoul H.,LUNDI,11h40-13h10,FSEG-INFO3,Digital Skills 1,LBC1-A Groupe 2
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-A Groupe 2
+Ben Haj,MERCREDI,11h40-13h10,Salle Accée lib,Archi des ordinateurs,LBC1-A Groupe 2
+Dhouib,MERCREDI,11h40-13h10,C1,Systèmes d'exploitation,LBC1-A Groupe 2
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-A Groupe 2
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-A Groupe 2
+Harzallah A.,SAMEDI,11h40-13h10,FSEG_S207,Comptabilité Générale,LBC1-A Groupe 2
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-A Groupe 2
+Karchoud,JEUDI,13h20-14h50,info C2,Algo Struct de Données I,LBC1-A Groupe 2
+Dlima,VENDREDI,13h20-14h50,FSEG-INFO1,"Intro Analyse, Vis données",LBC1-A Groupe 2
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-A Groupe 2
+Ben Kahla,MARDI,15h00-16h30,A3,Study Skills 1,LBC1-A Groupe 2
+Hazgui.S,VENDREDI,15h00-16h30,FSEG_S107,Organisation entreprises,LBC1-A Groupe 2
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-A Groupe 2
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-A Groupe 2
+Dorbez W.,VENDREDI,16h45-18h15,FSEG_S111,Principe de Gestion,LBC1-A Groupe 2
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-B Groupe 1
+Kratou,MERCREDI,08h15-09h45,C4,Math pour l'Info 1,LBC1-B Groupe 1
+Ben Haj,JEUDI,08h15-09h45,Salle Accée lib,Archi des ordinateurs,LBC1-B Groupe 1
+Dimassi,VENDREDI,08h15-09h45,A2,Archi des ordinateurs,LBC1-B Groupe 1
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-B Groupe 1
+Omezzine,MARDI,10h00-11h30,B4,Algo Struct de Données I,LBC1-B Groupe 1
+Dhouib,MERCREDI,10h00-11h30,C1,Systèmes d'exploitation,LBC1-B Groupe 1
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-B Groupe 1
+Sghaier S,SAMEDI,10h00-11h30,FSEG_S110,Organisation entreprises,LBC1-B Groupe 1
+Harzallah A.,SAMEDI,10h00-11h30,FSEG_S209,Comptabilité Générale,LBC1-B Groupe 1
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-B Groupe 1
+Nemriya,MERCREDI,11h40-13h10,info B2,Systèmes d'exploitation,LBC1-B Groupe 1
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-B Groupe 1
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-B Groupe 1
+Dorbez W.,SAMEDI,11h40-13h10,FSEG_S209,Principe de Gestion,LBC1-B Groupe 1
+Mathlouthi,LUNDI,13h20-14h50,FSEG-INFO5,Digital Skills 1,LBC1-B Groupe 1
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-B Groupe 1
+Sokraf,JEUDI,13h20-14h50,A6,Francais Pro1,LBC1-B Groupe 1
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-B Groupe 1
+Medimag,JEUDI,15h00-16h30,info A3,"Intro Analyse, Vis données",LBC1-B Groupe 1
+Dlima,VENDREDI,15h00-16h30,FSEG-INFO1,Algo Struct de Données I,LBC1-B Groupe 1
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-B Groupe 1
+Hatem B.,MARDI,16h45-18h15,FSEG_S1,Statistique Descriptive,LBC1-B Groupe 1
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-B Groupe 1
+Ben Kahla,VENDREDI,16h45-18h15,A4,Study Skills 1,LBC1-B Groupe 1
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-B Groupe 2
+Nemriya,MARDI,08h15-09h45,Info A2,Systèmes d'exploitation,LBC1-B Groupe 2
+Kratou,MERCREDI,08h15-09h45,C4,Math pour l'Info 1,LBC1-B Groupe 2
+Ben Haj,VENDREDI,08h15-09h45,Salle Accée lib,Archi des ordinateurs,LBC1-B Groupe 2
+Dimassi,VENDREDI,08h15-09h45,A2,Archi des ordinateurs,LBC1-B Groupe 2
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-B Groupe 2
+Omezzine,MARDI,10h00-11h30,B4,Algo Struct de Données I,LBC1-B Groupe 2
+Dhouib,MERCREDI,10h00-11h30,C1,Systèmes d'exploitation,LBC1-B Groupe 2
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-B Groupe 2
+Medimag,VENDREDI,10h00-11h30,info D1,"Intro Analyse, Vis données",LBC1-B Groupe 2
+Sghaier S,SAMEDI,10h00-11h30,FSEG_S110,Organisation entreprises,LBC1-B Groupe 2
+Harzallah A.,SAMEDI,10h00-11h30,FSEG_S209,Comptabilité Générale,LBC1-B Groupe 2
+Mathlouthi,LUNDI,11h40-13h10,FSEG-INFO5,Digital Skills 1,LBC1-B Groupe 2
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-B Groupe 2
+Dlima,MERCREDI,11h40-13h10,info D1,Algo Struct de Données I,LBC1-B Groupe 2
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-B Groupe 2
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-B Groupe 2
+Dorbez W.,SAMEDI,11h40-13h10,FSEG_S209,Principe de Gestion,LBC1-B Groupe 2
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-B Groupe 2
+Sokraf,JEUDI,13h20-14h50,A6,Francais Pro1,LBC1-B Groupe 2
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-B Groupe 2
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-B Groupe 2
+Hatem B.,MARDI,16h45-18h15,FSEG_S1,Statistique Descriptive,LBC1-B Groupe 2
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-B Groupe 2
+Ben Kahla,VENDREDI,16h45-18h15,A4,Study Skills 1,LBC1-B Groupe 2
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-C Groupe 1
+Chouk,MERCREDI,08h15-09h45,A4,Francais Pro1,LBC1-C Groupe 1
+Karchoud,JEUDI,08h15-09h45,info B1,Algo Struct de Données I,LBC1-C Groupe 1
+Ben Kahla,VENDREDI,08h15-09h45,A4,Study Skills 1,LBC1-C Groupe 1
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-C Groupe 1
+Hlaoui K.,LUNDI,10h00-11h30,FSEG-INFO2,Digital Skills 1,LBC1-C Groupe 1
+Nemriya,MARDI,10h00-11h30,Info A2,Systèmes d'exploitation,LBC1-C Groupe 1
+Dhouib,MERCREDI,10h00-11h30,C1,Systèmes d'exploitation,LBC1-C Groupe 1
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-C Groupe 1
+Dimassi,VENDREDI,10h00-11h30,A2,Archi des ordinateurs,LBC1-C Groupe 1
+Ben Haj,VENDREDI,10h00-11h30,Labo Lang 1,Archi des ordinateurs,LBC1-C Groupe 1
+Dorbez W.,SAMEDI,10h00-11h30,FSEG_S110,Principe de Gestion,LBC1-C Groupe 1
+Harzallah A.,LUNDI,11h40-13h10,FSEG_S214,Comptabilité Générale,LBC1-C Groupe 1
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-C Groupe 1
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-C Groupe 1
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-C Groupe 1
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-C Groupe 1
+Medimag,JEUDI,13h20-14h50,info B2,"Intro Analyse, Vis données",LBC1-C Groupe 1
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-C Groupe 1
+Omezzine,MARDI,15h00-16h30,B4,Algo Struct de Données I,LBC1-C Groupe 1
+Hazgui.S,VENDREDI,15h00-16h30,FSEG_S107,Organisation entreprises,LBC1-C Groupe 1
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-C Groupe 1
+Kratou,MARDI,16h45-18h15,B2,Math pour l'Info 1,LBC1-C Groupe 1
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-C Groupe 1
+,VENDREDI,16h45-18h15,FSEG_S112,Statistique Descriptive,LBC1-C Groupe 1
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-C Groupe 2
+Chouk,MERCREDI,08h15-09h45,A4,Francais Pro1,LBC1-C Groupe 2
+Nemriya,JEUDI,08h15-09h45,info B2,Systèmes d'exploitation,LBC1-C Groupe 2
+Ben Kahla,VENDREDI,08h15-09h45,A4,Study Skills 1,LBC1-C Groupe 2
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-C Groupe 2
+Karchoud,MARDI,10h00-11h30,salle Internet,Algo Struct de Données I,LBC1-C Groupe 2
+Dhouib,MERCREDI,10h00-11h30,C1,Systèmes d'exploitation,LBC1-C Groupe 2
+Ben Haj,MERCREDI,10h00-11h30,Salle Accée lib,Archi des ordinateurs,LBC1-C Groupe 2
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-C Groupe 2
+Dimassi,VENDREDI,10h00-11h30,A2,Archi des ordinateurs,LBC1-C Groupe 2
+Dorbez W.,SAMEDI,10h00-11h30,FSEG_S110,Principe de Gestion,LBC1-C Groupe 2
+Harzallah A.,LUNDI,11h40-13h10,FSEG_S214,Comptabilité Générale,LBC1-C Groupe 2
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-C Groupe 2
+Medimag,MERCREDI,11h40-13h10,Labo Lang 1,"Intro Analyse, Vis données",LBC1-C Groupe 2
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-C Groupe 2
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-C Groupe 2
+Hlaoui K.,SAMEDI,11h40-13h10,FSEG-INFO2,Digital Skills 1,LBC1-C Groupe 2
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-C Groupe 2
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-C Groupe 2
+Omezzine,MARDI,15h00-16h30,B4,Algo Struct de Données I,LBC1-C Groupe 2
+Hazgui.S,VENDREDI,15h00-16h30,FSEG_S107,Organisation entreprises,LBC1-C Groupe 2
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-C Groupe 2
+Kratou,MARDI,16h45-18h15,B2,Math pour l'Info 1,LBC1-C Groupe 2
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-C Groupe 2
+,VENDREDI,16h45-18h15,FSEG_S112,Statistique Descriptive,LBC1-C Groupe 2
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-D Groupe 1
+Dlima,MERCREDI,08h15-09h45,info D1,Algo Struct de Données I,LBC1-D Groupe 1
+Dimassi,JEUDI,08h15-09h45,A2,Archi des ordinateurs,LBC1-D Groupe 1
+Nemriya,VENDREDI,08h15-09h45,Info C3,Systèmes d'exploitation,LBC1-D Groupe 1
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-D Groupe 1
+Hammouda M.,LUNDI,10h00-11h30,FSEG-INFO1,Digital Skills 1,LBC1-D Groupe 1
+Ben salah,MARDI,10h00-11h30,info A4,"Intro Analyse, Vis données",LBC1-D Groupe 1
+Kratou,MERCREDI,10h00-11h30,B2,Math pour l'Info 1,LBC1-D Groupe 1
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-D Groupe 1
+Harzallah A.,SAMEDI,10h00-11h30,FSEG_S209,Comptabilité Générale,LBC1-D Groupe 1
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-D Groupe 1
+Dhouib,MERCREDI,11h40-13h10,C1,Systèmes d'exploitation,LBC1-D Groupe 1
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-D Groupe 1
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-D Groupe 1
+Dorbez W.,SAMEDI,11h40-13h10,FSEG_S209,Principe de Gestion,LBC1-D Groupe 1
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-D Groupe 1
+Omezzine,JEUDI,13h20-14h50,B4,Algo Struct de Données I,LBC1-D Groupe 1
+Ben Haj,VENDREDI,13h20-14h50,Labo Lang 2,Archi des ordinateurs,LBC1-D Groupe 1
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-D Groupe 1
+Sokraf,JEUDI,15h00-16h30,A6,Francais Pro1,LBC1-D Groupe 1
+Hatem B.,VENDREDI,15h00-16h30,FSEG_S210,Statistique Descriptive,LBC1-D Groupe 1
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-D Groupe 1
+Ben Kahla,MARDI,16h45-18h15,A3,Study Skills 1,LBC1-D Groupe 1
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-D Groupe 1
+Hazgui.S,VENDREDI,16h45-18h15,FSEG_S106,Organisation entreprises,LBC1-D Groupe 1
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-D Groupe 2
+Ben salah,MARDI,08h15-09h45,info A4,"Intro Analyse, Vis données",LBC1-D Groupe 2
+Nemriya,MERCREDI,08h15-09h45,info B2,Systèmes d'exploitation,LBC1-D Groupe 2
+Dimassi,JEUDI,08h15-09h45,A2,Archi des ordinateurs,LBC1-D Groupe 2
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-D Groupe 2
+Kratou,MERCREDI,10h00-11h30,B2,Math pour l'Info 1,LBC1-D Groupe 2
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-D Groupe 2
+Ben Haj,VENDREDI,10h00-11h30,Labo Lang 1,Archi des ordinateurs,LBC1-D Groupe 2
+Harzallah A.,SAMEDI,10h00-11h30,FSEG_S209,Comptabilité Générale,LBC1-D Groupe 2
+Hammouda M.,LUNDI,11h40-13h10,FSEG-INFO1,Digital Skills 1,LBC1-D Groupe 2
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-D Groupe 2
+Dhouib,MERCREDI,11h40-13h10,C1,Systèmes d'exploitation,LBC1-D Groupe 2
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-D Groupe 2
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-D Groupe 2
+Dorbez W.,SAMEDI,11h40-13h10,FSEG_S209,Principe de Gestion,LBC1-D Groupe 2
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-D Groupe 2
+Omezzine,JEUDI,13h20-14h50,B4,Algo Struct de Données I,LBC1-D Groupe 2
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-D Groupe 2
+Dlima,MARDI,15h00-16h30,info A4,Algo Struct de Données I,LBC1-D Groupe 2
+Sokraf,JEUDI,15h00-16h30,A6,Francais Pro1,LBC1-D Groupe 2
+Hatem B.,VENDREDI,15h00-16h30,FSEG_S210,Statistique Descriptive,LBC1-D Groupe 2
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-D Groupe 2
+Ben Kahla,MARDI,16h45-18h15,A3,Study Skills 1,LBC1-D Groupe 2
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-D Groupe 2
+Hazgui.S,VENDREDI,16h45-18h15,FSEG_S106,Organisation entreprises,LBC1-D Groupe 2
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-E Groupe 1
+Dhouib,MERCREDI,08h15-09h45,C1,Systèmes d'exploitation,LBC1-E Groupe 1
+Omezzine,JEUDI,08h15-09h45,B2,Algo Struct de Données I,LBC1-E Groupe 1
+Dimassi,VENDREDI,08h15-09h45,A2,Archi des ordinateurs,LBC1-E Groupe 1
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-E Groupe 1
+Sghaier S,LUNDI,10h00-11h30,FSEG_S217,Organisation entreprises,LBC1-E Groupe 1
+Harzallah A.,LUNDI,10h00-11h30,FSEG_S214,Comptabilité Générale,LBC1-E Groupe 1
+Ben Kahla,MARDI,10h00-11h30,A3,Study Skills 1,LBC1-E Groupe 1
+Nemriya,MERCREDI,10h00-11h30,info B2,Systèmes d'exploitation,LBC1-E Groupe 1
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-E Groupe 1
+Dlima,VENDREDI,10h00-11h30,Info C4,"Intro Analyse, Vis données",LBC1-E Groupe 1
+Hlaoui K.,SAMEDI,10h00-11h30,FSEG-INFO2,Digital Skills 1,LBC1-E Groupe 1
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-E Groupe 1
+Karchoud,MERCREDI,11h40-13h10,FSEG-INFO5,Algo Struct de Données I,LBC1-E Groupe 1
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-E Groupe 1
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-E Groupe 1
+Hatem B.,SAMEDI,11h40-13h10,FSEG_S107,Statistique Descriptive,LBC1-E Groupe 1
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-E Groupe 1
+Ben Haj,JEUDI,13h20-14h50,salle Internet,Archi des ordinateurs,LBC1-E Groupe 1
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-E Groupe 1
+Kratou,MARDI,15h00-16h30,B2,Math pour l'Info 1,LBC1-E Groupe 1
+Dorbez W.,VENDREDI,15h00-16h30,FSEG_S112,Principe de Gestion,LBC1-E Groupe 1
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-E Groupe 1
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-E Groupe 1
+ElKamel.A,VENDREDI,16h45-18h15,FSEG_S107,Francais Pro1,LBC1-E Groupe 1
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-E Groupe 2
+Ben Haj,MERCREDI,08h15-09h45,Salle Accée lib,Archi des ordinateurs,LBC1-E Groupe 2
+Dhouib,MERCREDI,08h15-09h45,C1,Systèmes d'exploitation,LBC1-E Groupe 2
+Omezzine,JEUDI,08h15-09h45,B2,Algo Struct de Données I,LBC1-E Groupe 2
+Dimassi,VENDREDI,08h15-09h45,A2,Archi des ordinateurs,LBC1-E Groupe 2
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-E Groupe 2
+Sghaier S,LUNDI,10h00-11h30,FSEG_S217,Organisation entreprises,LBC1-E Groupe 2
+Harzallah A.,LUNDI,10h00-11h30,FSEG_S214,Comptabilité Générale,LBC1-E Groupe 2
+Ben Kahla,MARDI,10h00-11h30,A3,Study Skills 1,LBC1-E Groupe 2
+Dlima,MERCREDI,10h00-11h30,info D1,"Intro Analyse, Vis données",LBC1-E Groupe 2
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-E Groupe 2
+Nemriya,VENDREDI,10h00-11h30,info A3,Systèmes d'exploitation,LBC1-E Groupe 2
+Hlaoui K.,LUNDI,11h40-13h10,FSEG-INFO2,Digital Skills 1,LBC1-E Groupe 2
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-E Groupe 2
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-E Groupe 2
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-E Groupe 2
+Hatem B.,SAMEDI,11h40-13h10,FSEG_S107,Statistique Descriptive,LBC1-E Groupe 2
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-E Groupe 2
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-E Groupe 2
+Kratou,MARDI,15h00-16h30,B2,Math pour l'Info 1,LBC1-E Groupe 2
+Karchoud,JEUDI,15h00-16h30,info C2,Algo Struct de Données I,LBC1-E Groupe 2
+Dorbez W.,VENDREDI,15h00-16h30,FSEG_S112,Principe de Gestion,LBC1-E Groupe 2
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-E Groupe 2
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-E Groupe 2
+ElKamel.A,VENDREDI,16h45-18h15,FSEG_S107,Francais Pro1,LBC1-E Groupe 2
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-F Groupe 1
+Ben Kahla,MARDI,08h15-09h45,A3,Study Skills 1,LBC1-F Groupe 1
+Ben Neji,MERCREDI,08h15-09h45,FSEG-INFO5,Algo Struct de Données I,LBC1-F Groupe 1
+Zemni,JEUDI,08h15-09h45,info D1,Systèmes d'exploitation,LBC1-F Groupe 1
+Dorbez W.,VENDREDI,08h15-09h45,FSEG_S110,Principe de Gestion,LBC1-F Groupe 1
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-F Groupe 1
+Harzallah A.,LUNDI,10h00-11h30,FSEG_S214,Comptabilité Générale,LBC1-F Groupe 1
+Dhifet,MARDI,10h00-11h30,A6,Math pour l'Info 1,LBC1-F Groupe 1
+Omezzine,MERCREDI,10h00-11h30,B1,Algo Struct de Données I,LBC1-F Groupe 1
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-F Groupe 1
+Hatem B.,LUNDI,11h40-13h10,FSEG_S209,Statistique Descriptive,LBC1-F Groupe 1
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-F Groupe 1
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-F Groupe 1
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-F Groupe 1
+Ben Haj,VENDREDI,11h40-13h10,Labo Lang 1,Archi des ordinateurs,LBC1-F Groupe 1
+Hammouda M.,SAMEDI,11h40-13h10,FSEG-INFO1,Digital Skills 1,LBC1-F Groupe 1
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-F Groupe 1
+Dimassi,JEUDI,13h20-14h50,A5,Archi des ordinateurs,LBC1-F Groupe 1
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-F Groupe 1
+Dhouib,JEUDI,15h00-16h30,A5,Systèmes d'exploitation,LBC1-F Groupe 1
+ElKamel.A,VENDREDI,15h00-16h30,FSEG_S114,Francais Pro1,LBC1-F Groupe 1
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-F Groupe 1
+Ben salah,MARDI,16h45-18h15,info B3,"Intro Analyse, Vis données",LBC1-F Groupe 1
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-F Groupe 1
+Hazgui.S,VENDREDI,16h45-18h15,FSEG_S106,Organisation entreprises,LBC1-F Groupe 1
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-F Groupe 2
+Ben Kahla,MARDI,08h15-09h45,A3,Study Skills 1,LBC1-F Groupe 2
+Dorbez W.,VENDREDI,08h15-09h45,FSEG_S110,Principe de Gestion,LBC1-F Groupe 2
+Ben Haj,VENDREDI,08h15-09h45,Salle Accée lib,Archi des ordinateurs,LBC1-F Groupe 2
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-F Groupe 2
+Harzallah A.,LUNDI,10h00-11h30,FSEG_S214,Comptabilité Générale,LBC1-F Groupe 2
+Dhifet,MARDI,10h00-11h30,A6,Math pour l'Info 1,LBC1-F Groupe 2
+Omezzine,MERCREDI,10h00-11h30,B1,Algo Struct de Données I,LBC1-F Groupe 2
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-F Groupe 2
+Ben Neji,VENDREDI,10h00-11h30,FSEG-INFO1,Algo Struct de Données I,LBC1-F Groupe 2
+Hammouda M.,SAMEDI,10h00-11h30,FSEG-INFO5,Digital Skills 1,LBC1-F Groupe 2
+Hatem B.,LUNDI,11h40-13h10,FSEG_S209,Statistique Descriptive,LBC1-F Groupe 2
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-F Groupe 2
+Zemni,MERCREDI,11h40-13h10,info B3,Systèmes d'exploitation,LBC1-F Groupe 2
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-F Groupe 2
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-F Groupe 2
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-F Groupe 2
+Dimassi,JEUDI,13h20-14h50,A5,Archi des ordinateurs,LBC1-F Groupe 2
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-F Groupe 2
+Ben salah,MARDI,15h00-16h30,info B3,"Intro Analyse, Vis données",LBC1-F Groupe 2
+Dhouib,JEUDI,15h00-16h30,A5,Systèmes d'exploitation,LBC1-F Groupe 2
+ElKamel.A,VENDREDI,15h00-16h30,FSEG_S114,Francais Pro1,LBC1-F Groupe 2
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-F Groupe 2
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-F Groupe 2
+Hazgui.S,VENDREDI,16h45-18h15,FSEG_S106,Organisation entreprises,LBC1-F Groupe 2
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-G Groupe 1
+Ben Haj,JEUDI,08h15-09h45,Labo Lang 2,Archi des ordinateurs,LBC1-G Groupe 1
+Dimassi,JEUDI,08h15-09h45,A2,Archi des ordinateurs,LBC1-G Groupe 1
+Medimag,VENDREDI,08h15-09h45,Info C4,"Intro Analyse, Vis données",LBC1-G Groupe 1
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-G Groupe 1
+Hatem B.,LUNDI,10h00-11h30,FSEG_S209,Statistique Descriptive,LBC1-G Groupe 1
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-G Groupe 1
+Ben Kahla,VENDREDI,10h00-11h30,A4,Study Skills 1,LBC1-G Groupe 1
+Sghaier S,LUNDI,11h40-13h10,FSEG_S217,Organisation entreprises,LBC1-G Groupe 1
+Harzallah A.,LUNDI,11h40-13h10,FSEG_S214,Comptabilité Générale,LBC1-G Groupe 1
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-G Groupe 1
+Omezzine,MERCREDI,11h40-13h10,B4,Algo Struct de Données I,LBC1-G Groupe 1
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-G Groupe 1
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-G Groupe 1
+Dhouib,VENDREDI,11h40-13h10,C1,Systèmes d'exploitation,LBC1-G Groupe 1
+Machghoul H.,SAMEDI,11h40-13h10,FSEG-INFO3,Digital Skills 1,LBC1-G Groupe 1
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-G Groupe 1
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-G Groupe 1
+Dhifet,MARDI,15h00-16h30,A6,Math pour l'Info 1,LBC1-G Groupe 1
+Zemni,JEUDI,15h00-16h30,info A1,Systèmes d'exploitation,LBC1-G Groupe 1
+Dorbez W.,VENDREDI,15h00-16h30,FSEG_S112,Principe de Gestion,LBC1-G Groupe 1
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-G Groupe 1
+Dlima,MARDI,16h45-18h15,info A4,Algo Struct de Données I,LBC1-G Groupe 1
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-G Groupe 1
+Bousrih.Hela,VENDREDI,16h45-18h15,FSEG_S113,Francais Pro1,LBC1-G Groupe 1
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-G Groupe 2
+Zemni,MERCREDI,08h15-09h45,info B3,Systèmes d'exploitation,LBC1-G Groupe 2
+Dimassi,JEUDI,08h15-09h45,A2,Archi des ordinateurs,LBC1-G Groupe 2
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-G Groupe 2
+Hatem B.,LUNDI,10h00-11h30,FSEG_S209,Statistique Descriptive,LBC1-G Groupe 2
+Medimag,MERCREDI,10h00-11h30,info A3,"Intro Analyse, Vis données",LBC1-G Groupe 2
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-G Groupe 2
+Ben Kahla,VENDREDI,10h00-11h30,A4,Study Skills 1,LBC1-G Groupe 2
+Machghoul H.,SAMEDI,10h00-11h30,FSEG-INFO3,Digital Skills 1,LBC1-G Groupe 2
+Sghaier S,LUNDI,11h40-13h10,FSEG_S217,Organisation entreprises,LBC1-G Groupe 2
+Harzallah A.,LUNDI,11h40-13h10,FSEG_S214,Comptabilité Générale,LBC1-G Groupe 2
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-G Groupe 2
+Omezzine,MERCREDI,11h40-13h10,B4,Algo Struct de Données I,LBC1-G Groupe 2
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-G Groupe 2
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-G Groupe 2
+Dhouib,VENDREDI,11h40-13h10,C1,Systèmes d'exploitation,LBC1-G Groupe 2
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-G Groupe 2
+Ben Haj,JEUDI,13h20-14h50,salle Internet,Archi des ordinateurs,LBC1-G Groupe 2
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-G Groupe 2
+Dhifet,MARDI,15h00-16h30,A6,Math pour l'Info 1,LBC1-G Groupe 2
+Dlima,JEUDI,15h00-16h30,info D1,Algo Struct de Données I,LBC1-G Groupe 2
+Dorbez W.,VENDREDI,15h00-16h30,FSEG_S112,Principe de Gestion,LBC1-G Groupe 2
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-G Groupe 2
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-G Groupe 2
+Bousrih.Hela,VENDREDI,16h45-18h15,FSEG_S113,Francais Pro1,LBC1-G Groupe 2
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-H Groupe 1
+Dhifet,MARDI,08h15-09h45,A6,Math pour l'Info 1,LBC1-H Groupe 1
+Dhouib,MERCREDI,08h15-09h45,C1,Systèmes d'exploitation,LBC1-H Groupe 1
+Barboura,JEUDI,08h15-09h45,info B3,Systèmes d'exploitation,LBC1-H Groupe 1
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-H Groupe 1
+Ben Kahla,MARDI,10h00-11h30,A3,Study Skills 1,LBC1-H Groupe 1
+Karchoud,MERCREDI,10h00-11h30,FSEG-INFO5,Algo Struct de Données I,LBC1-H Groupe 1
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-H Groupe 1
+Mathlouthi,SAMEDI,10h00-11h30,FSEG-INFO1,Digital Skills 1,LBC1-H Groupe 1
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-H Groupe 1
+Ben Haj,MERCREDI,11h40-13h10,Salle Accée lib,Archi des ordinateurs,LBC1-H Groupe 1
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-H Groupe 1
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-H Groupe 1
+Dimassi,VENDREDI,11h40-13h10,A7,Archi des ordinateurs,LBC1-H Groupe 1
+Sghaier S,SAMEDI,11h40-13h10,FSEG_S212,Organisation entreprises,LBC1-H Groupe 1
+Harzallah A.,SAMEDI,11h40-13h10,FSEG_S207,Comptabilité Générale,LBC1-H Groupe 1
+Hatem B.,LUNDI,13h20-14h50,FSEG_S209,Statistique Descriptive,LBC1-H Groupe 1
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-H Groupe 1
+Medimag,VENDREDI,13h20-14h50,info D1,"Intro Analyse, Vis données",LBC1-H Groupe 1
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-H Groupe 1
+Omezzine,JEUDI,15h00-16h30,B4,Algo Struct de Données I,LBC1-H Groupe 1
+Bousrih.Hela,VENDREDI,15h00-16h30,FSEG_S206,Francais Pro1,LBC1-H Groupe 1
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-H Groupe 1
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-H Groupe 1
+Dorbez W.,VENDREDI,16h45-18h15,FSEG_S111,Principe de Gestion,LBC1-H Groupe 1
+Boussema S.,LUNDI,08h15-09h45,FSEG_A2,Principes de gestion,LBC1-H Groupe 2
+Dhifet,MARDI,08h15-09h45,A6,Math pour l'Info 1,LBC1-H Groupe 2
+Dhouib,MERCREDI,08h15-09h45,C1,Systèmes d'exploitation,LBC1-H Groupe 2
+Ben Haj,MERCREDI,08h15-09h45,Salle Accée lib,Archi des ordinateurs,LBC1-H Groupe 2
+Medimag,JEUDI,08h15-09h45,Info C4,"Intro Analyse, Vis données",LBC1-H Groupe 2
+Mili F.,SAMEDI,08h15-09h45,FSEG_A2,Statistique Descriptive,LBC1-H Groupe 2
+Mathlouthi,LUNDI,10h00-11h30,FSEG-INFO5,Digital Skills 1,LBC1-H Groupe 2
+Ben Kahla,MARDI,10h00-11h30,A3,Study Skills 1,LBC1-H Groupe 2
+Hassairi,JEUDI,10h00-11h30,Grand Amphi,Systèmes d'exploitation,LBC1-H Groupe 2
+Barboura,VENDREDI,10h00-11h30,info C2,Systèmes d'exploitation,LBC1-H Groupe 2
+Kratou,MARDI,11h40-13h10,FSEG_A5,Math pour l'Info 1,LBC1-H Groupe 2
+Dimassi,JEUDI,11h40-13h10,FSEG_A5,Architecture des ordinateurs,LBC1-H Groupe 2
+Ben Ayed,VENDREDI,11h40-13h10,FSEG_A5,Study Skills 1,LBC1-H Groupe 2
+Dimassi,VENDREDI,11h40-13h10,A7,Archi des ordinateurs,LBC1-H Groupe 2
+Sghaier S,SAMEDI,11h40-13h10,FSEG_S212,Organisation entreprises,LBC1-H Groupe 2
+Harzallah A.,SAMEDI,11h40-13h10,FSEG_S207,Comptabilité Générale,LBC1-H Groupe 2
+Hatem B.,LUNDI,13h20-14h50,FSEG_S209,Statistique Descriptive,LBC1-H Groupe 2
+Bayoudh,MARDI,13h20-14h50,FSEG_A5,Algo Struct de Données I,LBC1-H Groupe 2
+Boussema S.,LUNDI,15h00-16h30,FSEG_A5,Organisation de l'entreprise,LBC1-H Groupe 2
+Karchoud,MARDI,15h00-16h30,info B1,Algo Struct de Données I,LBC1-H Groupe 2
+Omezzine,JEUDI,15h00-16h30,B4,Algo Struct de Données I,LBC1-H Groupe 2
+Bousrih.Hela,VENDREDI,15h00-16h30,FSEG_S206,Francais Pro1,LBC1-H Groupe 2
+Bouchareb,LUNDI,16h45-18h15,FSEG_A5,Comptabilité Générale,LBC1-H Groupe 2
+Bayoudh,JEUDI,16h45-18h15,FSEG_A5,Algo Struct de Données I,LBC1-H Groupe 2
+Dorbez W.,VENDREDI,16h45-18h15,FSEG_S111,Principe de Gestion,LBC1-H Groupe 2
+Ghoul,MARDI,08h15-09h45,info B1,Programmation OO,LBC2-BI_A Groupe 1
+Ben Krim,MERCREDI,08h15-09h45,A7,Base de données,LBC2-BI_A Groupe 1
+Bayoudhi,JEUDI,08h15-09h45,FSEG_S206,Programmation OO,LBC2-BI_A Groupe 1
+Salem,VENDREDI,08h15-09h45,info C2,Atelier Python,LBC2-BI_A Groupe 1
+Ben Amor E.,LUNDI,10h00-11h30,FSEG_S114,Gestion de la Production,LBC2-BI_A Groupe 1
+Fki,MARDI,10h00-11h30,C1,Fondements de l'IA,LBC2-BI_A Groupe 1
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_A Groupe 1
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_A Groupe 1
+Belkacem,SAMEDI,10h00-11h30,A2,Ethique et lois des IT,LBC2-BI_A Groupe 1
+Klebi F.,LUNDI,11h40-13h10,FSEG_S215,Marketing Digital,LBC2-BI_A Groupe 1
+Ben Krim,MARDI,11h40-13h10,B1,Conception OO des SI,LBC2-BI_A Groupe 1
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_A Groupe 1
+Sghaier S,JEUDI,11h40-13h10,FSEG_S3,Projet profess. personnel,LBC2-BI_A Groupe 1
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_A Groupe 1
+Jdai,MARDI,13h20-14h50,salle Internet,Programmation web 1,LBC2-BI_A Groupe 1
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_A Groupe 1
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_A Groupe 1
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_A Groupe 1
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_A Groupe 1
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_A Groupe 1
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_A Groupe 1
+Ben Krim,MERCREDI,08h15-09h45,A7,Base de données,LBC2-BI_A Groupe 2
+Bayoudhi,JEUDI,08h15-09h45,FSEG_S206,Programmation OO,LBC2-BI_A Groupe 2
+Ben Amor E.,LUNDI,10h00-11h30,FSEG_S114,Gestion de la Production,LBC2-BI_A Groupe 2
+Ghoul,MARDI,10h00-11h30,info B1,Programmation OO,LBC2-BI_A Groupe 2
+Fki,MARDI,10h00-11h30,C1,Fondements de l'IA,LBC2-BI_A Groupe 2
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_A Groupe 2
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_A Groupe 2
+Belkacem,SAMEDI,10h00-11h30,A2,Ethique et lois des IT,LBC2-BI_A Groupe 2
+Klebi F.,LUNDI,11h40-13h10,FSEG_S215,Marketing Digital,LBC2-BI_A Groupe 2
+Ben Krim,MARDI,11h40-13h10,B1,Conception OO des SI,LBC2-BI_A Groupe 2
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_A Groupe 2
+Sghaier S,JEUDI,11h40-13h10,FSEG_S3,Projet profess. personnel,LBC2-BI_A Groupe 2
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_A Groupe 2
+Salem,VENDREDI,13h20-14h50,info C2,Atelier Python,LBC2-BI_A Groupe 2
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_A Groupe 2
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_A Groupe 2
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_A Groupe 2
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_A Groupe 2
+Jdai,MARDI,16h45-18h15,salle Internet,Programmation web 1,LBC2-BI_A Groupe 2
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_A Groupe 2
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_A Groupe 2
+Ghoul,MARDI,08h15-09h45,info B1,Programmation OO,LBC2-BI_B Groupe 1
+Hazgui.S,JEUDI,08h15-09h45,FSEG_S111,Projet profess. personnel,LBC2-BI_B Groupe 1
+Salem,SAMEDI,08h15-09h45,info C1,Atelier Python,LBC2-BI_B Groupe 1
+Ben Amor E.,LUNDI,10h00-11h30,FSEG_S215,Gestion de la Production,LBC2-BI_B Groupe 1
+Jdai,MARDI,10h00-11h30,info B2,Programmation web 1,LBC2-BI_B Groupe 1
+Ben Krim,MERCREDI,10h00-11h30,A7,Conception OO des SI,LBC2-BI_B Groupe 1
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_B Groupe 1
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_B Groupe 1
+Klebi F.,LUNDI,11h40-13h10,FSEG_S215,Marketing Digital,LBC2-BI_B Groupe 1
+Boutayeb,MARDI,11h40-13h10,A5,Base de données,LBC2-BI_B Groupe 1
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_B Groupe 1
+Bayoudhi,JEUDI,11h40-13h10,FSEG_S209,Programmation OO,LBC2-BI_B Groupe 1
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_B Groupe 1
+Fki,MARDI,13h20-14h50,C1,Fondements de l'IA,LBC2-BI_B Groupe 1
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_B Groupe 1
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_B Groupe 1
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_B Groupe 1
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_B Groupe 1
+Belkacem,MARDI,16h45-18h15,A5,Ethique et lois des IT,LBC2-BI_B Groupe 1
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_B Groupe 1
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_B Groupe 1
+Jdai,MARDI,08h15-09h45,info B2,Programmation web 1,LBC2-BI_B Groupe 2
+Hazgui.S,JEUDI,08h15-09h45,FSEG_S111,Projet profess. personnel,LBC2-BI_B Groupe 2
+Ben Amor E.,LUNDI,10h00-11h30,FSEG_S215,Gestion de la Production,LBC2-BI_B Groupe 2
+Ben Krim,MERCREDI,10h00-11h30,A7,Conception OO des SI,LBC2-BI_B Groupe 2
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_B Groupe 2
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_B Groupe 2
+Klebi F.,LUNDI,11h40-13h10,FSEG_S215,Marketing Digital,LBC2-BI_B Groupe 2
+Boutayeb,MARDI,11h40-13h10,A5,Base de données,LBC2-BI_B Groupe 2
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_B Groupe 2
+Bayoudhi,JEUDI,11h40-13h10,FSEG_S209,Programmation OO,LBC2-BI_B Groupe 2
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_B Groupe 2
+Salem,SAMEDI,11h40-13h10,info C1,Atelier Python,LBC2-BI_B Groupe 2
+Ghoul,MARDI,13h20-14h50,info B1,Programmation OO,LBC2-BI_B Groupe 2
+Fki,MARDI,13h20-14h50,C1,Fondements de l'IA,LBC2-BI_B Groupe 2
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_B Groupe 2
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_B Groupe 2
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_B Groupe 2
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_B Groupe 2
+Belkacem,MARDI,16h45-18h15,A5,Ethique et lois des IT,LBC2-BI_B Groupe 2
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_B Groupe 2
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_B Groupe 2
+Fki,MARDI,08h15-09h45,C1,Fondements de l'IA,LBC2-BI_C Groupe 1
+Sghaier S,JEUDI,08h15-09h45,FSEG_S114,Projet profess. personnel,LBC2-BI_C Groupe 1
+Baati,VENDREDI,08h15-09h45,info B4,Programmation web 1,LBC2-BI_C Groupe 1
+Klebi F.,LUNDI,10h00-11h30,FSEG_S212,Marketing Digital,LBC2-BI_C Groupe 1
+Ben Krim,MARDI,10h00-11h30,A7,Conception OO des SI,LBC2-BI_C Groupe 1
+Boutayeb,MERCREDI,10h00-11h30,A2,Base de données,LBC2-BI_C Groupe 1
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_C Groupe 1
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_C Groupe 1
+Ben Amor E.,LUNDI,11h40-13h10,FSEG_S111,Gestion de la Production,LBC2-BI_C Groupe 1
+Ghoul,MARDI,11h40-13h10,info B1,Programmation OO,LBC2-BI_C Groupe 1
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_C Groupe 1
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_C Groupe 1
+Belkacem,SAMEDI,11h40-13h10,A2,Ethique et lois des IT,LBC2-BI_C Groupe 1
+Bayoudhi,JEUDI,13h20-14h50,FSEG_S111,Programmation OO,LBC2-BI_C Groupe 1
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_C Groupe 1
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_C Groupe 1
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_C Groupe 1
+Salem,VENDREDI,15h00-16h30,info C2,Atelier Python,LBC2-BI_C Groupe 1
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_C Groupe 1
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_C Groupe 1
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_C Groupe 1
+Fki,MARDI,08h15-09h45,C1,Fondements de l'IA,LBC2-BI_C Groupe 2
+Ghoul,MERCREDI,08h15-09h45,info B1,Programmation OO,LBC2-BI_C Groupe 2
+Sghaier S,JEUDI,08h15-09h45,FSEG_S114,Projet profess. personnel,LBC2-BI_C Groupe 2
+Klebi F.,LUNDI,10h00-11h30,FSEG_S212,Marketing Digital,LBC2-BI_C Groupe 2
+Ben Krim,MARDI,10h00-11h30,A7,Conception OO des SI,LBC2-BI_C Groupe 2
+Boutayeb,MERCREDI,10h00-11h30,A2,Base de données,LBC2-BI_C Groupe 2
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_C Groupe 2
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_C Groupe 2
+Salem,SAMEDI,10h00-11h30,info C1,Atelier Python,LBC2-BI_C Groupe 2
+Ben Amor E.,LUNDI,11h40-13h10,FSEG_S111,Gestion de la Production,LBC2-BI_C Groupe 2
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_C Groupe 2
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_C Groupe 2
+Belkacem,SAMEDI,11h40-13h10,A2,Ethique et lois des IT,LBC2-BI_C Groupe 2
+Baati,MARDI,13h20-14h50,Salle Accée lib,Programmation web 1,LBC2-BI_C Groupe 2
+Bayoudhi,JEUDI,13h20-14h50,FSEG_S111,Programmation OO,LBC2-BI_C Groupe 2
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_C Groupe 2
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_C Groupe 2
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_C Groupe 2
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_C Groupe 2
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_C Groupe 2
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_C Groupe 2
+Fki,MARDI,08h15-09h45,C1,Fondements de l'IA,LBC2-BI_D Groupe 1
+Klebi F.,JEUDI,08h15-09h45,FSEG_S2,Marketing Digital,LBC2-BI_D Groupe 1
+Khenissi,SAMEDI,08h15-09h45,info A3,Programmation web 1,LBC2-BI_D Groupe 1
+Gassara,MARDI,10h00-11h30,B3,Programmation OO,LBC2-BI_D Groupe 1
+Ghoul,MERCREDI,10h00-11h30,info B1,Programmation OO,LBC2-BI_D Groupe 1
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_D Groupe 1
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_D Groupe 1
+Ben Amor E.,LUNDI,11h40-13h10,FSEG_S111,Gestion de la Production,LBC2-BI_D Groupe 1
+Ben Krim,MARDI,11h40-13h10,B1,Conception OO des SI,LBC2-BI_D Groupe 1
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_D Groupe 1
+Hazgui.S,JEUDI,11h40-13h10,FSEG_S208,Projet profess. personnel,LBC2-BI_D Groupe 1
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_D Groupe 1
+Bannour,SAMEDI,11h40-13h10,Info C4,Atelier Python,LBC2-BI_D Groupe 1
+Belkacem,MARDI,13h20-14h50,A5,Ethique et lois des IT,LBC2-BI_D Groupe 1
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_D Groupe 1
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_D Groupe 1
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_D Groupe 1
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_D Groupe 1
+Boutayeb,MARDI,16h45-18h15,A2,Base de données,LBC2-BI_D Groupe 1
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_D Groupe 1
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_D Groupe 1
+Fki,MARDI,08h15-09h45,C1,Fondements de l'IA,LBC2-BI_D Groupe 2
+Klebi F.,JEUDI,08h15-09h45,FSEG_S2,Marketing Digital,LBC2-BI_D Groupe 2
+Bannour,SAMEDI,08h15-09h45,Info C4,Atelier Python,LBC2-BI_D Groupe 2
+Gassara,MARDI,10h00-11h30,B3,Programmation OO,LBC2-BI_D Groupe 2
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_D Groupe 2
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_D Groupe 2
+Ghoul,SAMEDI,10h00-11h30,info B2,Programmation OO,LBC2-BI_D Groupe 2
+Ben Amor E.,LUNDI,11h40-13h10,FSEG_S111,Gestion de la Production,LBC2-BI_D Groupe 2
+Ben Krim,MARDI,11h40-13h10,B1,Conception OO des SI,LBC2-BI_D Groupe 2
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_D Groupe 2
+Hazgui.S,JEUDI,11h40-13h10,FSEG_S208,Projet profess. personnel,LBC2-BI_D Groupe 2
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_D Groupe 2
+Khenissi,SAMEDI,11h40-13h10,info A3,Programmation web 1,LBC2-BI_D Groupe 2
+Belkacem,MARDI,13h20-14h50,A5,Ethique et lois des IT,LBC2-BI_D Groupe 2
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_D Groupe 2
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_D Groupe 2
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_D Groupe 2
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_D Groupe 2
+Boutayeb,MARDI,16h45-18h15,A2,Base de données,LBC2-BI_D Groupe 2
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_D Groupe 2
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_D Groupe 2
+Marghli,MARDI,08h15-09h45,B1,Base de données,LBC2-BI_E Groupe 1
+Belkacem,SAMEDI,08h15-09h45,A2,Ethique et lois des IT,LBC2-BI_E Groupe 1
+Klebi F.,LUNDI,10h00-11h30,FSEG_S212,Marketing Digital,LBC2-BI_E Groupe 1
+Fki,MARDI,10h00-11h30,C1,Fondements de l'IA,LBC2-BI_E Groupe 1
+Ghoul,MARDI,10h00-11h30,info B1,Programmation OO,LBC2-BI_E Groupe 1
+Baati,MERCREDI,10h00-11h30,info B4,Programmation web 1,LBC2-BI_E Groupe 1
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_E Groupe 1
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_E Groupe 1
+Bannour,SAMEDI,10h00-11h30,Info C4,Atelier Python,LBC2-BI_E Groupe 1
+Gassara,MARDI,11h40-13h10,B3,Programmation OO,LBC2-BI_E Groupe 1
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_E Groupe 1
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_E Groupe 1
+Ben Amor E.,LUNDI,13h20-14h50,FSEG_S213,Gestion de la Production,LBC2-BI_E Groupe 1
+Ben Krim,MARDI,13h20-14h50,B1,Conception OO des SI,LBC2-BI_E Groupe 1
+Hazgui.S,JEUDI,13h20-14h50,FSEG_S206,Projet profess. personnel,LBC2-BI_E Groupe 1
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_E Groupe 1
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_E Groupe 1
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_E Groupe 1
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_E Groupe 1
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_E Groupe 1
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_E Groupe 1
+Marghli,MARDI,08h15-09h45,B1,Base de données,LBC2-BI_E Groupe 2
+Baati,MERCREDI,08h15-09h45,info B4,Programmation web 1,LBC2-BI_E Groupe 2
+Belkacem,SAMEDI,08h15-09h45,A2,Ethique et lois des IT,LBC2-BI_E Groupe 2
+Klebi F.,LUNDI,10h00-11h30,FSEG_S212,Marketing Digital,LBC2-BI_E Groupe 2
+Fki,MARDI,10h00-11h30,C1,Fondements de l'IA,LBC2-BI_E Groupe 2
+Ghoul,MERCREDI,10h00-11h30,info B1,Programmation OO,LBC2-BI_E Groupe 2
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_E Groupe 2
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_E Groupe 2
+Gassara,MARDI,11h40-13h10,B3,Programmation OO,LBC2-BI_E Groupe 2
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_E Groupe 2
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_E Groupe 2
+Ben Amor E.,LUNDI,13h20-14h50,FSEG_S213,Gestion de la Production,LBC2-BI_E Groupe 2
+Ben Krim,MARDI,13h20-14h50,B1,Conception OO des SI,LBC2-BI_E Groupe 2
+Hazgui.S,JEUDI,13h20-14h50,FSEG_S206,Projet profess. personnel,LBC2-BI_E Groupe 2
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_E Groupe 2
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_E Groupe 2
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_E Groupe 2
+Bannour,VENDREDI,15h00-16h30,Info A2,Atelier Python,LBC2-BI_E Groupe 2
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_E Groupe 2
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_E Groupe 2
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_E Groupe 2
+Gassara,MARDI,08h15-09h45,B3,Programmation OO,LBC2-BI_F Groupe 1
+Ghoul,MERCREDI,08h15-09h45,info B1,Programmation OO,LBC2-BI_F Groupe 1
+Klebi F.,JEUDI,08h15-09h45,FSEG_S2,Marketing Digital,LBC2-BI_F Groupe 1
+Bannour,VENDREDI,08h15-09h45,info B2,Atelier Python,LBC2-BI_F Groupe 1
+Marghli,MARDI,10h00-11h30,B1,Base de données,LBC2-BI_F Groupe 1
+Ben Krim,MERCREDI,10h00-11h30,A7,Conception OO des SI,LBC2-BI_F Groupe 1
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_F Groupe 1
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_F Groupe 1
+Baati,MARDI,11h40-13h10,Salle Accée lib,Programmation web 1,LBC2-BI_F Groupe 1
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_F Groupe 1
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_F Groupe 1
+Ben Amor E.,LUNDI,13h20-14h50,FSEG_S213,Gestion de la Production,LBC2-BI_F Groupe 1
+Fki,MARDI,13h20-14h50,C1,Fondements de l'IA,LBC2-BI_F Groupe 1
+,JEUDI,13h20-14h50,FSEG_S201,Projet profess. personnel,LBC2-BI_F Groupe 1
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_F Groupe 1
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_F Groupe 1
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_F Groupe 1
+Belkacem,VENDREDI,15h00-16h30,B1,Ethique et lois des IT,LBC2-BI_F Groupe 1
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_F Groupe 1
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_F Groupe 1
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_F Groupe 1
+Gassara,MARDI,08h15-09h45,B3,Programmation OO,LBC2-BI_F Groupe 2
+Klebi F.,JEUDI,08h15-09h45,FSEG_S2,Marketing Digital,LBC2-BI_F Groupe 2
+Marghli,MARDI,10h00-11h30,B1,Base de données,LBC2-BI_F Groupe 2
+Ben Krim,MERCREDI,10h00-11h30,A7,Conception OO des SI,LBC2-BI_F Groupe 2
+Zbidi N.,JEUDI,10h00-11h30,FSEG_SC2,Statistiques inférentielles,LBC2-BI_F Groupe 2
+Fki,VENDREDI,10h00-11h30,Amphi C,Fondements de l'IA,LBC2-BI_F Groupe 2
+Ben Krim,MERCREDI,11h40-13h10,Amphi A,Conception OO des SI,LBC2-BI_F Groupe 2
+Gassara,VENDREDI,11h40-13h10,Grand Amphi,Technologies Web 1,LBC2-BI_F Groupe 2
+Ben Amor E.,LUNDI,13h20-14h50,FSEG_S213,Gestion de la Production,LBC2-BI_F Groupe 2
+Fki,MARDI,13h20-14h50,C1,Fondements de l'IA,LBC2-BI_F Groupe 2
+Ghoul,MARDI,13h20-14h50,info B1,Programmation OO,LBC2-BI_F Groupe 2
+,JEUDI,13h20-14h50,FSEG_S201,Projet profess. personnel,LBC2-BI_F Groupe 2
+Bannour,VENDREDI,13h20-14h50,Info A2,Atelier Python,LBC2-BI_F Groupe 2
+Omezzine,LUNDI,15h00-16h30,FSEG_A1,Gestion de la production,LBC2-BI_F Groupe 2
+Boutayeb,MARDI,15h00-16h30,Grand Amphi,Base de données,LBC2-BI_F Groupe 2
+Bayoudhi,JEUDI,15h00-16h30,FSEG_A4,Programmation OO,LBC2-BI_F Groupe 2
+Belkacem,VENDREDI,15h00-16h30,B1,Ethique et lois des IT,LBC2-BI_F Groupe 2
+Klebi F.,LUNDI,16h45-18h15,FSEG_A1,Marketing Digital,LBC2-BI_F Groupe 2
+Baati,MARDI,16h45-18h15,info B4,Programmation web 1,LBC2-BI_F Groupe 2
+Saadi M.,JEUDI,16h45-18h15,FSEG_A1,Economie Numérique,LBC2-BI_F Groupe 2
+Belkacem,VENDREDI,16h45-18h15,Grand Amphi,Ethique et lois des IT,LBC2-BI_F Groupe 2
+Hazgui.S,MERCREDI,08h15-09h45,FSEG_S2,Gestion de Projet,LBC3-BI_A Groupe 1
+Ben Abdellah,VENDREDI,08h15-09h45,FSEG_SC2,Techniques de prévision,LBC3-BI_A Groupe 1
+Bsir,LUNDI,10h00-11h30,Amphi B,Conception TB et scoring,LBC3-BI_A Groupe 1
+Mansour N.,MARDI,10h00-11h30,FSEG_SC1,Techniques d'aide à décision,LBC3-BI_A Groupe 1
+Alaoui L.,MERCREDI,10h00-11h30,FSEG_S106,Gestion de techno de l'info,LBC3-BI_A Groupe 1
+Ben Rhaiem,JEUDI,10h00-11h30,Amphi B,Les fondem de la sécurité IT,LBC3-BI_A Groupe 1
+EL Haj Hssin.A,VENDREDI,10h00-11h30,FSEG_SC2,PSE- Politique et Stratégie,LBC3-BI_A Groupe 1
+Khlif,SAMEDI,10h00-11h30,Grand Amphi,Développement Mobile,LBC3-BI_A Groupe 1
+Othmen AN.,MARDI,11h40-13h10,FSEG_S203,Techniques aide décision,LBC3-BI_A Groupe 1
+Fitouri M.,MERCREDI,11h40-13h10,FSEG_SC1,Gestion de projet,LBC3-BI_A Groupe 1
+Chebil,JEUDI,11h40-13h10,Amphi A,Intro au Big data et Cloud,LBC3-BI_A Groupe 1
+Ben Abdellah,VENDREDI,11h40-13h10,FSEG_S113,Techniques de prévision,LBC3-BI_A Groupe 1
+Chebil,JEUDI,13h20-14h50,B1,Intro au Big data et Cloud,LBC3-BI_A Groupe 1
+Toumia,LUNDI,15h00-16h30,Amphi A,Langages de prog évolués BI,LBC3-BI_A Groupe 1
+Alaoui L.,MARDI,15h00-16h30,FSEG_SC1,Gestion de la tech de l'info,LBC3-BI_A Groupe 1
+Sidhom,JEUDI,15h00-16h30,Amphi C,Fondem. théorie de décision,LBC3-BI_A Groupe 1
+Fitouri M.,VENDREDI,15h00-16h30,FSEG_A4,Psycho and socio for MA,LBC3-BI_A Groupe 1
+Toumia,LUNDI,16h45-18h15,A3,Langages de prog évolués BI,LBC3-BI_A Groupe 1
+Hazgui.S,MERCREDI,08h15-09h45,FSEG_S2,Gestion de Projet,LBC3-BI_A Groupe 2
+Ben Abdellah,VENDREDI,08h15-09h45,FSEG_SC2,Techniques de prévision,LBC3-BI_A Groupe 2
+Bsir,LUNDI,10h00-11h30,Amphi B,Conception TB et scoring,LBC3-BI_A Groupe 2
+Mansour N.,MARDI,10h00-11h30,FSEG_SC1,Techniques d'aide à décision,LBC3-BI_A Groupe 2
+Alaoui L.,MERCREDI,10h00-11h30,FSEG_S106,Gestion de techno de l'info,LBC3-BI_A Groupe 2
+Ben Rhaiem,JEUDI,10h00-11h30,Amphi B,Les fondem de la sécurité IT,LBC3-BI_A Groupe 2
+EL Haj Hssin.A,VENDREDI,10h00-11h30,FSEG_SC2,PSE- Politique et Stratégie,LBC3-BI_A Groupe 2
+Khlif,SAMEDI,10h00-11h30,Grand Amphi,Développement Mobile,LBC3-BI_A Groupe 2
+Othmen AN.,MARDI,11h40-13h10,FSEG_S203,Techniques aide décision,LBC3-BI_A Groupe 2
+Fitouri M.,MERCREDI,11h40-13h10,FSEG_SC1,Gestion de projet,LBC3-BI_A Groupe 2
+Chebil,JEUDI,11h40-13h10,Amphi A,Intro au Big data et Cloud,LBC3-BI_A Groupe 2
+Ben Abdellah,VENDREDI,11h40-13h10,FSEG_S113,Techniques de prévision,LBC3-BI_A Groupe 2
+Chebil,JEUDI,13h20-14h50,B1,Intro au Big data et Cloud,LBC3-BI_A Groupe 2
+Toumia,LUNDI,15h00-16h30,Amphi A,Langages de prog évolués BI,LBC3-BI_A Groupe 2
+Alaoui L.,MARDI,15h00-16h30,FSEG_SC1,Gestion de la tech de l'info,LBC3-BI_A Groupe 2
+Sidhom,JEUDI,15h00-16h30,Amphi C,Fondem. théorie de décision,LBC3-BI_A Groupe 2
+Fitouri M.,VENDREDI,15h00-16h30,FSEG_A4,Psycho and socio for MA,LBC3-BI_A Groupe 2
+Toumia,LUNDI,16h45-18h15,A3,Langages de prog évolués BI,LBC3-BI_A Groupe 2
+Ben Abdellah,VENDREDI,08h15-09h45,FSEG_SC2,Techniques de prévision,LBC3-BI_B Groupe 1
+Bsir,LUNDI,10h00-11h30,Amphi B,Conception TB et scoring,LBC3-BI_B Groupe 1
+Mansour N.,MARDI,10h00-11h30,FSEG_SC1,Techniques d'aide à décision,LBC3-BI_B Groupe 1
+Othmen AN.,MERCREDI,10h00-11h30,FSEG_S113,Techniques aide décision,LBC3-BI_B Groupe 1
+Ben Rhaiem,JEUDI,10h00-11h30,Amphi B,Les fondem de la sécurité IT,LBC3-BI_B Groupe 1
+EL Haj Hssin.A,VENDREDI,10h00-11h30,FSEG_SC2,PSE- Politique et Stratégie,LBC3-BI_B Groupe 1
+Khlif,SAMEDI,10h00-11h30,Grand Amphi,Développement Mobile,LBC3-BI_B Groupe 1
+Chebil,MARDI,11h40-13h10,B4,Intro au Big data et Cloud,LBC3-BI_B Groupe 1
+Fitouri M.,MERCREDI,11h40-13h10,FSEG_SC1,Gestion de projet,LBC3-BI_B Groupe 1
+Chebil,JEUDI,11h40-13h10,Amphi A,Intro au Big data et Cloud,LBC3-BI_B Groupe 1
+Ben Abdellah,MARDI,13h20-14h50,FSEG_S2,Techniques de prévision,LBC3-BI_B Groupe 1
+Toumia,LUNDI,15h00-16h30,Amphi A,Langages de prog évolués BI,LBC3-BI_B Groupe 1
+Alaoui L.,MARDI,15h00-16h30,FSEG_SC1,Gestion de la tech de l'info,LBC3-BI_B Groupe 1
+Sidhom,JEUDI,15h00-16h30,Amphi C,Fondem. théorie de décision,LBC3-BI_B Groupe 1
+Fitouri M.,VENDREDI,15h00-16h30,FSEG_A4,Psycho and socio for MA,LBC3-BI_B Groupe 1
+Alaoui L.,MARDI,16h45-18h15,FSEG_S110,Gestion de techno de l'info,LBC3-BI_B Groupe 1
+Toumia,JEUDI,16h45-18h15,A4,Langages de prog évolués BI,LBC3-BI_B Groupe 1
+Ben messaoud C.,VENDREDI,16h45-18h15,FSEG_S114,Gestion de Projet,LBC3-BI_B Groupe 1
+Ben Abdellah,VENDREDI,08h15-09h45,FSEG_SC2,Techniques de prévision,LBC3-BI_B Groupe 2
+Bsir,LUNDI,10h00-11h30,Amphi B,Conception TB et scoring,LBC3-BI_B Groupe 2
+Mansour N.,MARDI,10h00-11h30,FSEG_SC1,Techniques d'aide à décision,LBC3-BI_B Groupe 2
+Othmen AN.,MERCREDI,10h00-11h30,FSEG_S113,Techniques aide décision,LBC3-BI_B Groupe 2
+Ben Rhaiem,JEUDI,10h00-11h30,Amphi B,Les fondem de la sécurité IT,LBC3-BI_B Groupe 2
+EL Haj Hssin.A,VENDREDI,10h00-11h30,FSEG_SC2,PSE- Politique et Stratégie,LBC3-BI_B Groupe 2
+Khlif,SAMEDI,10h00-11h30,Grand Amphi,Développement Mobile,LBC3-BI_B Groupe 2
+Chebil,MARDI,11h40-13h10,B4,Intro au Big data et Cloud,LBC3-BI_B Groupe 2
+Fitouri M.,MERCREDI,11h40-13h10,FSEG_SC1,Gestion de projet,LBC3-BI_B Groupe 2
+Chebil,JEUDI,11h40-13h10,Amphi A,Intro au Big data et Cloud,LBC3-BI_B Groupe 2
+Ben Abdellah,MARDI,13h20-14h50,FSEG_S2,Techniques de prévision,LBC3-BI_B Groupe 2
+Toumia,LUNDI,15h00-16h30,Amphi A,Langages de prog évolués BI,LBC3-BI_B Groupe 2
+Alaoui L.,MARDI,15h00-16h30,FSEG_SC1,Gestion de la tech de l'info,LBC3-BI_B Groupe 2
+Sidhom,JEUDI,15h00-16h30,Amphi C,Fondem. théorie de décision,LBC3-BI_B Groupe 2
+Fitouri M.,VENDREDI,15h00-16h30,FSEG_A4,Psycho and socio for MA,LBC3-BI_B Groupe 2
+Alaoui L.,MARDI,16h45-18h15,FSEG_S110,Gestion de techno de l'info,LBC3-BI_B Groupe 2
+Toumia,JEUDI,16h45-18h15,A4,Langages de prog évolués BI,LBC3-BI_B Groupe 2
+Ben messaoud C.,VENDREDI,16h45-18h15,FSEG_S114,Gestion de Projet,LBC3-BI_B Groupe 2
+Ben Abdellah,MARDI,08h15-09h45,FSEG_S108,Techniques de prévision,LBC3-BI_C Groupe 1
+Bachta A.,MERCREDI,08h15-09h45,FSEG_S108,Gestion de techno de l'info,LBC3-BI_C Groupe 1
+Chebil,JEUDI,08h15-09h45,B4,Intro au Big data et Cloud,LBC3-BI_C Groupe 1
+Ben Abdellah,VENDREDI,08h15-09h45,FSEG_SC2,Techniques de prévision,LBC3-BI_C Groupe 1
+Bsir,LUNDI,10h00-11h30,Amphi B,Conception TB et scoring,LBC3-BI_C Groupe 1
+Mansour N.,MARDI,10h00-11h30,FSEG_SC1,Techniques d'aide à décision,LBC3-BI_C Groupe 1
+Ben Rhaiem,JEUDI,10h00-11h30,Amphi B,Les fondem de la sécurité IT,LBC3-BI_C Groupe 1
+EL Haj Hssin.A,VENDREDI,10h00-11h30,FSEG_SC2,PSE- Politique et Stratégie,LBC3-BI_C Groupe 1
+Khlif,SAMEDI,10h00-11h30,Grand Amphi,Développement Mobile,LBC3-BI_C Groupe 1
+Fitouri M.,MERCREDI,11h40-13h10,FSEG_SC1,Gestion de projet,LBC3-BI_C Groupe 1
+Chebil,JEUDI,11h40-13h10,Amphi A,Intro au Big data et Cloud,LBC3-BI_C Groupe 1
+Othmen AN.,MARDI,13h20-14h50,FSEG_S203,Techniques aide décision,LBC3-BI_C Groupe 1
+Toumia,JEUDI,13h20-14h50,A4,Langages de prog évolués BI,LBC3-BI_C Groupe 1
+Ben Messaoud.Ch,VENDREDI,13h20-14h50,FSEG_S203,Gestion de Projet,LBC3-BI_C Groupe 1
+Toumia,LUNDI,15h00-16h30,Amphi A,Langages de prog évolués BI,LBC3-BI_C Groupe 1
+Alaoui L.,MARDI,15h00-16h30,FSEG_SC1,Gestion de la tech de l'info,LBC3-BI_C Groupe 1
+Sidhom,JEUDI,15h00-16h30,Amphi C,Fondem. théorie de décision,LBC3-BI_C Groupe 1
+Fitouri M.,VENDREDI,15h00-16h30,FSEG_A4,Psycho and socio for MA,LBC3-BI_C Groupe 1
+Ben Abdellah,MARDI,08h15-09h45,FSEG_S108,Techniques de prévision,LBC3-BI_C Groupe 2
+Bachta A.,MERCREDI,08h15-09h45,FSEG_S108,Gestion de techno de l'info,LBC3-BI_C Groupe 2
+Chebil,JEUDI,08h15-09h45,B4,Intro au Big data et Cloud,LBC3-BI_C Groupe 2
+Ben Abdellah,VENDREDI,08h15-09h45,FSEG_SC2,Techniques de prévision,LBC3-BI_C Groupe 2
+Bsir,LUNDI,10h00-11h30,Amphi B,Conception TB et scoring,LBC3-BI_C Groupe 2
+Mansour N.,MARDI,10h00-11h30,FSEG_SC1,Techniques d'aide à décision,LBC3-BI_C Groupe 2
+Ben Rhaiem,JEUDI,10h00-11h30,Amphi B,Les fondem de la sécurité IT,LBC3-BI_C Groupe 2
+EL Haj Hssin.A,VENDREDI,10h00-11h30,FSEG_SC2,PSE- Politique et Stratégie,LBC3-BI_C Groupe 2
+Khlif,SAMEDI,10h00-11h30,Grand Amphi,Développement Mobile,LBC3-BI_C Groupe 2
+Fitouri M.,MERCREDI,11h40-13h10,FSEG_SC1,Gestion de projet,LBC3-BI_C Groupe 2
+Chebil,JEUDI,11h40-13h10,Amphi A,Intro au Big data et Cloud,LBC3-BI_C Groupe 2
+Othmen AN.,MARDI,13h20-14h50,FSEG_S203,Techniques aide décision,LBC3-BI_C Groupe 2
+Toumia,JEUDI,13h20-14h50,A4,Langages de prog évolués BI,LBC3-BI_C Groupe 2
+Ben Messaoud.Ch,VENDREDI,13h20-14h50,FSEG_S203,Gestion de Projet,LBC3-BI_C Groupe 2
+Toumia,LUNDI,15h00-16h30,Amphi A,Langages de prog évolués BI,LBC3-BI_C Groupe 2
+Alaoui L.,MARDI,15h00-16h30,FSEG_SC1,Gestion de la tech de l'info,LBC3-BI_C Groupe 2
+Sidhom,JEUDI,15h00-16h30,Amphi C,Fondem. théorie de décision,LBC3-BI_C Groupe 2
+Fitouri M.,VENDREDI,15h00-16h30,FSEG_A4,Psycho and socio for MA,LBC3-BI_C Groupe 2
+Chebil,MARDI,08h15-09h45,A5,Intro au Big data et Cloud,LBC3-BI_D Groupe 1
+Othmen AN.,MERCREDI,08h15-09h45,FSEG_S113,Techniques aide décision,LBC3-BI_D Groupe 1
+Ben Abdellah,VENDREDI,08h15-09h45,FSEG_SC2,Techniques de prévision,LBC3-BI_D Groupe 1
+Bsir,LUNDI,10h00-11h30,Amphi B,Conception TB et scoring,LBC3-BI_D Groupe 1
+Mansour N.,MARDI,10h00-11h30,FSEG_SC1,Techniques d'aide à décision,LBC3-BI_D Groupe 1
+Ben Rhaiem,JEUDI,10h00-11h30,Amphi B,Les fondem de la sécurité IT,LBC3-BI_D Groupe 1
+EL Haj Hssin.A,VENDREDI,10h00-11h30,FSEG_SC2,PSE- Politique et Stratégie,LBC3-BI_D Groupe 1
+Khlif,SAMEDI,10h00-11h30,Grand Amphi,Développement Mobile,LBC3-BI_D Groupe 1
+Fitouri M.,MERCREDI,11h40-13h10,FSEG_SC1,Gestion de projet,LBC3-BI_D Groupe 1
+Chebil,JEUDI,11h40-13h10,Amphi A,Intro au Big data et Cloud,LBC3-BI_D Groupe 1
+Toumia,LUNDI,13h20-14h50,B3,Langages de prog évolués BI,LBC3-BI_D Groupe 1
+Alaoui L.,MARDI,13h20-14h50,FSEG_S1,Gestion de techno de l'info,LBC3-BI_D Groupe 1
+Hazgui.S,VENDREDI,13h20-14h50,FSEG_S112,Gestion de Projet,LBC3-BI_D Groupe 1
+Toumia,LUNDI,15h00-16h30,Amphi A,Langages de prog évolués BI,LBC3-BI_D Groupe 1
+Alaoui L.,MARDI,15h00-16h30,FSEG_SC1,Gestion de la tech de l'info,LBC3-BI_D Groupe 1
+Sidhom,JEUDI,15h00-16h30,Amphi C,Fondem. théorie de décision,LBC3-BI_D Groupe 1
+Fitouri M.,VENDREDI,15h00-16h30,FSEG_A4,Psycho and socio for MA,LBC3-BI_D Groupe 1
+Ben Abdellah,MARDI,16h45-18h15,FSEG_S108,Techniques de prévision,LBC3-BI_D Groupe 1
+Chebil,MARDI,08h15-09h45,A5,Intro au Big data et Cloud,LBC3-BI_D Groupe 2
+Othmen AN.,MERCREDI,08h15-09h45,FSEG_S113,Techniques aide décision,LBC3-BI_D Groupe 2
+Ben Abdellah,VENDREDI,08h15-09h45,FSEG_SC2,Techniques de prévision,LBC3-BI_D Groupe 2
+Bsir,LUNDI,10h00-11h30,Amphi B,Conception TB et scoring,LBC3-BI_D Groupe 2
+Mansour N.,MARDI,10h00-11h30,FSEG_SC1,Techniques d'aide à décision,LBC3-BI_D Groupe 2
+Ben Rhaiem,JEUDI,10h00-11h30,Amphi B,Les fondem de la sécurité IT,LBC3-BI_D Groupe 2
+EL Haj Hssin.A,VENDREDI,10h00-11h30,FSEG_SC2,PSE- Politique et Stratégie,LBC3-BI_D Groupe 2
+Khlif,SAMEDI,10h00-11h30,Grand Amphi,Développement Mobile,LBC3-BI_D Groupe 2
+Fitouri M.,MERCREDI,11h40-13h10,FSEG_SC1,Gestion de projet,LBC3-BI_D Groupe 2
+Chebil,JEUDI,11h40-13h10,Amphi A,Intro au Big data et Cloud,LBC3-BI_D Groupe 2
+Toumia,LUNDI,13h20-14h50,B3,Langages de prog évolués BI,LBC3-BI_D Groupe 2
+Alaoui L.,MARDI,13h20-14h50,FSEG_S1,Gestion de techno de l'info,LBC3-BI_D Groupe 2
+Hazgui.S,VENDREDI,13h20-14h50,FSEG_S112,Gestion de Projet,LBC3-BI_D Groupe 2
+Toumia,LUNDI,15h00-16h30,Amphi A,Langages de prog évolués BI,LBC3-BI_D Groupe 2
+Alaoui L.,MARDI,15h00-16h30,FSEG_SC1,Gestion de la tech de l'info,LBC3-BI_D Groupe 2
+Sidhom,JEUDI,15h00-16h30,Amphi C,Fondem. théorie de décision,LBC3-BI_D Groupe 2
+Fitouri M.,VENDREDI,15h00-16h30,FSEG_A4,Psycho and socio for MA,LBC3-BI_D Groupe 2
+Ben Abdellah,MARDI,16h45-18h15,FSEG_S108,Techniques de prévision,LBC3-BI_D Groupe 2
+Ben Krim,MARDI,08h15-09h45,A2,Gestion de projets,LBC3-EB_A
+Boutayeb,MERCREDI,08h15-09h45,A3,Initiation Machine Learning,LBC3-EB_A
+Jarraya,JEUDI,08h15-09h45,A5,Analyse données Data Mining,LBC3-EB_A
+Fki,VENDREDI,08h15-09h45,C1,Intelligence Artificielle,LBC3-EB_A
+Boukthir,SAMEDI,08h15-09h45,A4,Intégration Web,LBC3-EB_A
+Belkacem,LUNDI,10h00-11h30,A2,Laws and Ethics of IT,LBC3-EB_A
+Mansour N.,MARDI,10h00-11h30,FSEG_SC1,Techniques d'aide à décision,LBC3-EB_A
+Ben Neji,MERCREDI,10h00-11h30,info A1,Gestion de Projets,LBC3-EB_A
+Ben Rhaiem,JEUDI,10h00-11h30,Amphi B,Les fondem de la sécurité IT,LBC3-EB_A
+Khlif,SAMEDI,10h00-11h30,Grand Amphi,Développement Mobile,LBC3-EB_A
+Toumia,LUNDI,11h40-13h10,A1,Langage de prog évolué BI,LBC3-EB_A
+Fki,MARDI,11h40-13h10,A7,Intellegence artificielle,LBC3-EB_A
+Toumia,JEUDI,11h40-13h10,info C1,Langage de prog évolué BI,LBC3-EB_A
+Boukthir,SAMEDI,11h40-13h10,A6,Intégration Web,LBC3-EB_A
+Belkacem,LUNDI,13h20-14h50,A2,Laws and Ethics of IT,LBC3-EB_A
+Atig w.,MARDI,13h20-14h50,FSEG_S106,Business Communication,LBC3-EB_A
+Othmen AN.,MARDI,15h00-16h30,FSEG_S203,Techniques aide décision,LBC3-EB_A
+Chebil,JEUDI,15h00-16h30,A4,Intro au Big data et Cloud,LBC3-EB_A
+Jarraya,VENDREDI,15h00-16h30,A5,Analyse données Data Mining,LBC3-EB_A
+Marmouch,LUNDI,08h15-09h45,info A1,Programmation Python,LCE1-A Groupe 1
+Souissi,MARDI,08h15-09h45,Salle Accée lib,Système d'exploitation I,LCE1-A Groupe 1
+Kedri,MERCREDI,08h15-09h45,B2,Francais Pro1,LCE1-A Groupe 1
+Zaag,JEUDI,08h15-09h45,Labo Lang 1,Systèmes Logiques,LCE1-A Groupe 1
+Ben Kahla,VENDREDI,08h15-09h45,A4,Study Skills 1,LCE1-A Groupe 1
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-A Groupe 1
+Chafroud,MARDI,10h00-11h30,info A3,Algo Struct de Données I,LCE1-A Groupe 1
+Hlel,MERCREDI,10h00-11h30,Grand Amphi,Math pour l'Info 1,LCE1-A Groupe 1
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-A Groupe 1
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-A Groupe 1
+Gassem,SAMEDI,10h00-11h30,A3,Onde et Propagation,LCE1-A Groupe 1
+Hlel,LUNDI,11h40-13h10,A7,Math pour l'Info 1,LCE1-A Groupe 1
+Taleb,MARDI,11h40-13h10,info D1,Digital Skills 1,LCE1-A Groupe 1
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-A Groupe 1
+Khlif,SAMEDI,11h40-13h10,B4,Algo & Struct de Données I,LCE1-A Groupe 1
+Ghanmi,LUNDI,13h20-14h50,B2,Systèmes logiques,LCE1-A Groupe 1
+Ben Hadj Belkacem,MARDI,13h20-14h50,A6,Transmission de données,LCE1-A Groupe 1
+Ghanmi,JEUDI,13h20-14h50,Amphi B,Electricité - Electronique,LCE1-A Groupe 1
+Kchaw,VENDREDI,13h20-14h50,A7,Systèmes d'exploitation,LCE1-A Groupe 1
+Marmouch,LUNDI,15h00-16h30,Amphi B,Programmation Python,LCE1-A Groupe 1
+Bayoudh,JEUDI,15h00-16h30,Labo Lang 2,Electricité - Electronique,LCE1-A Groupe 1
+Ghanmi,LUNDI,16h45-18h15,Amphi A,Systèmes Logiques,LCE1-A Groupe 1
+Bayoudh,MARDI,16h45-18h15,Amphi A,Onde et Propagation,LCE1-A Groupe 1
+Chafroud,LUNDI,08h15-09h45,Info A2,Algo Struct de Données I,LCE1-A Groupe 2
+Kedri,MERCREDI,08h15-09h45,B2,Francais Pro1,LCE1-A Groupe 2
+Ben Kahla,VENDREDI,08h15-09h45,A4,Study Skills 1,LCE1-A Groupe 2
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-A Groupe 2
+Zaag,MARDI,10h00-11h30,Labo Lang 1,Systèmes Logiques,LCE1-A Groupe 2
+Hlel,MERCREDI,10h00-11h30,Grand Amphi,Math pour l'Info 1,LCE1-A Groupe 2
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-A Groupe 2
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-A Groupe 2
+Gassem,SAMEDI,10h00-11h30,A3,Onde et Propagation,LCE1-A Groupe 2
+Hlel,LUNDI,11h40-13h10,A7,Math pour l'Info 1,LCE1-A Groupe 2
+Marmouch,MARDI,11h40-13h10,info A1,Programmation Python,LCE1-A Groupe 2
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-A Groupe 2
+Taleb,JEUDI,11h40-13h10,info B1,Digital Skills 1,LCE1-A Groupe 2
+Khlif,SAMEDI,11h40-13h10,B4,Algo & Struct de Données I,LCE1-A Groupe 2
+Ghanmi,LUNDI,13h20-14h50,B2,Systèmes logiques,LCE1-A Groupe 2
+Ben Hadj Belkacem,MARDI,13h20-14h50,A6,Transmission de données,LCE1-A Groupe 2
+Ghanmi,JEUDI,13h20-14h50,Amphi B,Electricité - Electronique,LCE1-A Groupe 2
+Kchaw,VENDREDI,13h20-14h50,A7,Systèmes d'exploitation,LCE1-A Groupe 2
+Marmouch,LUNDI,15h00-16h30,Amphi B,Programmation Python,LCE1-A Groupe 2
+Souissi,MARDI,15h00-16h30,info B4,Système d'exploitation I,LCE1-A Groupe 2
+Bayoudh,VENDREDI,15h00-16h30,Labo Lang 2,Electricité - Electronique,LCE1-A Groupe 2
+Ghanmi,LUNDI,16h45-18h15,Amphi A,Systèmes Logiques,LCE1-A Groupe 2
+Bayoudh,MARDI,16h45-18h15,Amphi A,Onde et Propagation,LCE1-A Groupe 2
+Souissi,LUNDI,08h15-09h45,Salle Accée lib,Système d'exploitation I,LCE1-B Groupe 1
+Zaag,MARDI,08h15-09h45,Labo Lang 1,Systèmes Logiques,LCE1-B Groupe 1
+Hlel,MERCREDI,08h15-09h45,C2,Math pour l'Info 1,LCE1-B Groupe 1
+Ben Neji,VENDREDI,08h15-09h45,FSEG-INFO1,Algo Struct de Données I,LCE1-B Groupe 1
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-B Groupe 1
+Gassem,LUNDI,10h00-11h30,A4,Onde et Propagation,LCE1-B Groupe 1
+Kedri,MARDI,10h00-11h30,A4,Francais Pro1,LCE1-B Groupe 1
+Hlel,MERCREDI,10h00-11h30,Grand Amphi,Math pour l'Info 1,LCE1-B Groupe 1
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-B Groupe 1
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-B Groupe 1
+Kchaw,SAMEDI,10h00-11h30,A5,Algo & Struct de Données I,LCE1-B Groupe 1
+Ben Khalifa,MARDI,11h40-13h10,info B2,Programmation Python,LCE1-B Groupe 1
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-B Groupe 1
+Bayoudh,JEUDI,11h40-13h10,Labo Lang 2,Electricité - Electronique,LCE1-B Groupe 1
+Ghanmi,LUNDI,13h20-14h50,B2,Systèmes logiques,LCE1-B Groupe 1
+Ben Hadj Belkacem,MARDI,13h20-14h50,A6,Transmission de données,LCE1-B Groupe 1
+Ghanmi,JEUDI,13h20-14h50,Amphi B,Electricité - Electronique,LCE1-B Groupe 1
+Kchaw,VENDREDI,13h20-14h50,A7,Systèmes d'exploitation,LCE1-B Groupe 1
+Marmouch,LUNDI,15h00-16h30,Amphi B,Programmation Python,LCE1-B Groupe 1
+Taleb,JEUDI,15h00-16h30,info B1,Digital Skills 1,LCE1-B Groupe 1
+Ben Kahla,VENDREDI,15h00-16h30,A4,Study Skills 1,LCE1-B Groupe 1
+Ghanmi,LUNDI,16h45-18h15,Amphi A,Systèmes Logiques,LCE1-B Groupe 1
+Bayoudh,MARDI,16h45-18h15,Amphi A,Onde et Propagation,LCE1-B Groupe 1
+Ben Khalifa,MARDI,08h15-09h45,info B4,Programmation Python,LCE1-B Groupe 2
+Hlel,MERCREDI,08h15-09h45,C2,Math pour l'Info 1,LCE1-B Groupe 2
+Ben Neji,JEUDI,08h15-09h45,Info C3,Algo Struct de Données I,LCE1-B Groupe 2
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-B Groupe 2
+Gassem,LUNDI,10h00-11h30,A4,Onde et Propagation,LCE1-B Groupe 2
+Kedri,MARDI,10h00-11h30,A4,Francais Pro1,LCE1-B Groupe 2
+Hlel,MERCREDI,10h00-11h30,Grand Amphi,Math pour l'Info 1,LCE1-B Groupe 2
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-B Groupe 2
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-B Groupe 2
+Kchaw,SAMEDI,10h00-11h30,A5,Algo & Struct de Données I,LCE1-B Groupe 2
+Souissi,MARDI,11h40-13h10,info B4,Système d'exploitation I,LCE1-B Groupe 2
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-B Groupe 2
+Zaag,JEUDI,11h40-13h10,Labo Lang 1,Systèmes Logiques,LCE1-B Groupe 2
+Ghanmi,LUNDI,13h20-14h50,B2,Systèmes logiques,LCE1-B Groupe 2
+Ben Hadj Belkacem,MARDI,13h20-14h50,A6,Transmission de données,LCE1-B Groupe 2
+Ghanmi,JEUDI,13h20-14h50,Amphi B,Electricité - Electronique,LCE1-B Groupe 2
+Kchaw,VENDREDI,13h20-14h50,A7,Systèmes d'exploitation,LCE1-B Groupe 2
+Marmouch,LUNDI,15h00-16h30,Amphi B,Programmation Python,LCE1-B Groupe 2
+Taleb,MARDI,15h00-16h30,info D1,Digital Skills 1,LCE1-B Groupe 2
+Ben Kahla,VENDREDI,15h00-16h30,A4,Study Skills 1,LCE1-B Groupe 2
+Ghanmi,LUNDI,16h45-18h15,Amphi A,Systèmes Logiques,LCE1-B Groupe 2
+Bayoudh,MARDI,16h45-18h15,Amphi A,Onde et Propagation,LCE1-B Groupe 2
+Bayoudh,JEUDI,16h45-18h15,Labo Lang 2,Electricité - Electronique,LCE1-B Groupe 2
+Gassem,LUNDI,08h15-09h45,A4,Onde et Propagation,LCE1-C Groupe 1
+Kedri,MARDI,08h15-09h45,A4,Francais Pro1,LCE1-C Groupe 1
+Chafroud,JEUDI,08h15-09h45,info A3,Algo Struct de Données I,LCE1-C Groupe 1
+Khenissi,VENDREDI,08h15-09h45,Labo Lang 1,Programmation Python,LCE1-C Groupe 1
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-C Groupe 1
+Souissi,LUNDI,10h00-11h30,Salle Accée lib,Système d'exploitation I,LCE1-C Groupe 1
+Hlel,MERCREDI,10h00-11h30,Grand Amphi,Math pour l'Info 1,LCE1-C Groupe 1
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-C Groupe 1
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-C Groupe 1
+Ben Hadj Belkacem,MARDI,11h40-13h10,A6,Transmission de données,LCE1-C Groupe 1
+Sfar,MARDI,11h40-13h10,B2,Systèmes logiques,LCE1-C Groupe 1
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-C Groupe 1
+Kchaw,SAMEDI,11h40-13h10,A5,Algo & Struct de Données I,LCE1-C Groupe 1
+Hlel,LUNDI,13h20-14h50,A7,Math pour l'Info 1,LCE1-C Groupe 1
+Bayoudh,MARDI,13h20-14h50,Labo Lang 2,Electricité - Electronique,LCE1-C Groupe 1
+Ghanmi,JEUDI,13h20-14h50,Amphi B,Electricité - Electronique,LCE1-C Groupe 1
+Marmouch,LUNDI,15h00-16h30,Amphi B,Programmation Python,LCE1-C Groupe 1
+Ben Kahla,MARDI,15h00-16h30,A3,Study Skills 1,LCE1-C Groupe 1
+Zaag,JEUDI,15h00-16h30,Labo Lang 1,Systèmes Logiques,LCE1-C Groupe 1
+Kchaw,VENDREDI,15h00-16h30,A7,Systèmes d'exploitation,LCE1-C Groupe 1
+Ghanmi,LUNDI,16h45-18h15,Amphi A,Systèmes Logiques,LCE1-C Groupe 1
+Bayoudh,MARDI,16h45-18h15,Amphi A,Onde et Propagation,LCE1-C Groupe 1
+Taleb,VENDREDI,16h45-18h15,Labo Lang 1,Digital Skills 1,LCE1-C Groupe 1
+Gassem,LUNDI,08h15-09h45,A4,Onde et Propagation,LCE1-C Groupe 2
+Kedri,MARDI,08h15-09h45,A4,Francais Pro1,LCE1-C Groupe 2
+Taleb,VENDREDI,08h15-09h45,info A4,Digital Skills 1,LCE1-C Groupe 2
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-C Groupe 2
+Souissi,MARDI,10h00-11h30,Salle Accée lib,Système d'exploitation I,LCE1-C Groupe 2
+Hlel,MERCREDI,10h00-11h30,Grand Amphi,Math pour l'Info 1,LCE1-C Groupe 2
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-C Groupe 2
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-C Groupe 2
+Khenissi,SAMEDI,10h00-11h30,info A3,Programmation Python,LCE1-C Groupe 2
+Ben Hadj Belkacem,MARDI,11h40-13h10,A6,Transmission de données,LCE1-C Groupe 2
+Sfar,MARDI,11h40-13h10,B2,Systèmes logiques,LCE1-C Groupe 2
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-C Groupe 2
+Chafroud,JEUDI,11h40-13h10,info A3,Algo Struct de Données I,LCE1-C Groupe 2
+Kchaw,SAMEDI,11h40-13h10,A5,Algo & Struct de Données I,LCE1-C Groupe 2
+Hlel,LUNDI,13h20-14h50,A7,Math pour l'Info 1,LCE1-C Groupe 2
+Zaag,MARDI,13h20-14h50,Labo Lang 1,Systèmes Logiques,LCE1-C Groupe 2
+Ghanmi,JEUDI,13h20-14h50,Amphi B,Electricité - Electronique,LCE1-C Groupe 2
+Marmouch,LUNDI,15h00-16h30,Amphi B,Programmation Python,LCE1-C Groupe 2
+Ben Kahla,MARDI,15h00-16h30,A3,Study Skills 1,LCE1-C Groupe 2
+Kchaw,VENDREDI,15h00-16h30,A7,Systèmes d'exploitation,LCE1-C Groupe 2
+Ghanmi,LUNDI,16h45-18h15,Amphi A,Systèmes Logiques,LCE1-C Groupe 2
+Bayoudh,MARDI,16h45-18h15,Amphi A,Onde et Propagation,LCE1-C Groupe 2
+Bayoudh,VENDREDI,16h45-18h15,Labo Lang 2,Electricité - Electronique,LCE1-C Groupe 2
+Bayoudh,LUNDI,08h15-09h45,Amphi A,Onde et Propagation,LCE1-D Groupe 1
+KesKes,MARDI,08h15-09h45,B2,Math pour l'Info 1,LCE1-D Groupe 1
+Gassem,JEUDI,08h15-09h45,A3,Onde et Propagation,LCE1-D Groupe 1
+KesKes,VENDREDI,08h15-09h45,Amphi B,Math pour l'Info 1,LCE1-D Groupe 1
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-D Groupe 1
+Marmouch,MARDI,10h00-11h30,Amphi B,Programmation Python,LCE1-D Groupe 1
+Sfar,MERCREDI,10h00-11h30,B4,Systèmes logiques,LCE1-D Groupe 1
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-D Groupe 1
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-D Groupe 1
+Ghanmi,LUNDI,11h40-13h10,Amphi A,Systèmes Logiques,LCE1-D Groupe 1
+Bayoudh,MARDI,11h40-13h10,Labo Lang 1,Systèmes Logiques,LCE1-D Groupe 1
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-D Groupe 1
+Ghanmi,JEUDI,11h40-13h10,Amphi B,Electricité - Electronique,LCE1-D Groupe 1
+Kedri,SAMEDI,11h40-13h10,A4,Francais Pro1,LCE1-D Groupe 1
+Marmouch,LUNDI,13h20-14h50,info A1,Programmation Python,LCE1-D Groupe 1
+Chafroud,JEUDI,13h20-14h50,info A3,Algo Struct de Données I,LCE1-D Groupe 1
+Ben Kahla,VENDREDI,13h20-14h50,A4,Study Skills 1,LCE1-D Groupe 1
+Souissi,LUNDI,15h00-16h30,info B1,Système d'exploitation I,LCE1-D Groupe 1
+Gassem,MARDI,15h00-16h30,Labo Lang 2,Electricité - Electronique,LCE1-D Groupe 1
+Ben Hadj Belkacem,JEUDI,15h00-16h30,A7,Transmission de données,LCE1-D Groupe 1
+Khlif,VENDREDI,15h00-16h30,B4,Algo & Struct de Données I,LCE1-D Groupe 1
+Taleb,MARDI,16h45-18h15,Info C4,Digital Skills 1,LCE1-D Groupe 1
+Kchaw,VENDREDI,16h45-18h15,A7,Systèmes d'exploitation,LCE1-D Groupe 1
+Bayoudh,LUNDI,08h15-09h45,Amphi A,Onde et Propagation,LCE1-D Groupe 2
+KesKes,MARDI,08h15-09h45,B2,Math pour l'Info 1,LCE1-D Groupe 2
+Gassem,JEUDI,08h15-09h45,A3,Onde et Propagation,LCE1-D Groupe 2
+KesKes,VENDREDI,08h15-09h45,Amphi B,Math pour l'Info 1,LCE1-D Groupe 2
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-D Groupe 2
+Marmouch,MARDI,10h00-11h30,Amphi B,Programmation Python,LCE1-D Groupe 2
+Sfar,MERCREDI,10h00-11h30,B4,Systèmes logiques,LCE1-D Groupe 2
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-D Groupe 2
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-D Groupe 2
+Ghanmi,LUNDI,11h40-13h10,Amphi A,Systèmes Logiques,LCE1-D Groupe 2
+Chafroud,MARDI,11h40-13h10,info A3,Algo Struct de Données I,LCE1-D Groupe 2
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-D Groupe 2
+Ghanmi,JEUDI,11h40-13h10,Amphi B,Electricité - Electronique,LCE1-D Groupe 2
+Kedri,SAMEDI,11h40-13h10,A4,Francais Pro1,LCE1-D Groupe 2
+Souissi,LUNDI,13h20-14h50,info B1,Système d'exploitation I,LCE1-D Groupe 2
+Marmouch,MARDI,13h20-14h50,info A1,Programmation Python,LCE1-D Groupe 2
+Bayoudh,JEUDI,13h20-14h50,Labo Lang 1,Systèmes Logiques,LCE1-D Groupe 2
+Ben Kahla,VENDREDI,13h20-14h50,A4,Study Skills 1,LCE1-D Groupe 2
+Ben Hadj Belkacem,JEUDI,15h00-16h30,A7,Transmission de données,LCE1-D Groupe 2
+Khlif,VENDREDI,15h00-16h30,B4,Algo & Struct de Données I,LCE1-D Groupe 2
+Gassem,MARDI,16h45-18h15,Labo Lang 2,Electricité - Electronique,LCE1-D Groupe 2
+Taleb,JEUDI,16h45-18h15,info B1,Digital Skills 1,LCE1-D Groupe 2
+Kchaw,VENDREDI,16h45-18h15,A7,Systèmes d'exploitation,LCE1-D Groupe 2
+Bayoudh,LUNDI,08h15-09h45,Amphi A,Onde et Propagation,LCE1-E Groupe 1
+Gassem,MARDI,08h15-09h45,A7,Onde et Propagation,LCE1-E Groupe 1
+Gassem,MERCREDI,08h15-09h45,Labo Lang 2,Electricité - Electronique,LCE1-E Groupe 1
+KesKes,VENDREDI,08h15-09h45,Amphi B,Math pour l'Info 1,LCE1-E Groupe 1
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-E Groupe 1
+Marmouch,LUNDI,10h00-11h30,info A1,Programmation Python,LCE1-E Groupe 1
+Marmouch,MARDI,10h00-11h30,Amphi B,Programmation Python,LCE1-E Groupe 1
+Fnaiech,MERCREDI,10h00-11h30,Labo Lang 1,Systèmes Logiques,LCE1-E Groupe 1
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-E Groupe 1
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-E Groupe 1
+Kedri,SAMEDI,10h00-11h30,A4,Francais Pro1,LCE1-E Groupe 1
+Ghanmi,LUNDI,11h40-13h10,Amphi A,Systèmes Logiques,LCE1-E Groupe 1
+Sfar,MARDI,11h40-13h10,B2,Systèmes logiques,LCE1-E Groupe 1
+Ben Hadj Belkacem,MARDI,11h40-13h10,A6,Transmission de données,LCE1-E Groupe 1
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-E Groupe 1
+Ghanmi,JEUDI,11h40-13h10,Amphi B,Electricité - Electronique,LCE1-E Groupe 1
+Khlif,VENDREDI,13h20-14h50,B4,Algo & Struct de Données I,LCE1-E Groupe 1
+Hlel,LUNDI,15h00-16h30,A7,Math pour l'Info 1,LCE1-E Groupe 1
+Chafroud,MARDI,15h00-16h30,info A3,Algo Struct de Données I,LCE1-E Groupe 1
+Taleb,VENDREDI,15h00-16h30,Labo Lang 1,Digital Skills 1,LCE1-E Groupe 1
+Souissi,LUNDI,16h45-18h15,info B1,Système d'exploitation I,LCE1-E Groupe 1
+Ben Kahla,MARDI,16h45-18h15,A3,Study Skills 1,LCE1-E Groupe 1
+Kchaw,VENDREDI,16h45-18h15,A7,Systèmes d'exploitation,LCE1-E Groupe 1
+Bayoudh,LUNDI,08h15-09h45,Amphi A,Onde et Propagation,LCE1-E Groupe 2
+Gassem,MARDI,08h15-09h45,A7,Onde et Propagation,LCE1-E Groupe 2
+KesKes,VENDREDI,08h15-09h45,Amphi B,Math pour l'Info 1,LCE1-E Groupe 2
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-E Groupe 2
+Chafroud,LUNDI,10h00-11h30,Info A2,Algo Struct de Données I,LCE1-E Groupe 2
+Marmouch,MARDI,10h00-11h30,Amphi B,Programmation Python,LCE1-E Groupe 2
+Gassem,MERCREDI,10h00-11h30,Labo Lang 2,Electricité - Electronique,LCE1-E Groupe 2
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-E Groupe 2
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-E Groupe 2
+Kedri,SAMEDI,10h00-11h30,A4,Francais Pro1,LCE1-E Groupe 2
+Ghanmi,LUNDI,11h40-13h10,Amphi A,Systèmes Logiques,LCE1-E Groupe 2
+Sfar,MARDI,11h40-13h10,B2,Systèmes logiques,LCE1-E Groupe 2
+Ben Hadj Belkacem,MARDI,11h40-13h10,A6,Transmission de données,LCE1-E Groupe 2
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-E Groupe 2
+Ghanmi,JEUDI,11h40-13h10,Amphi B,Electricité - Electronique,LCE1-E Groupe 2
+Fnaiech,SAMEDI,11h40-13h10,Labo Lang 1,Systèmes Logiques,LCE1-E Groupe 2
+Souissi,MARDI,13h20-14h50,info B4,Système d'exploitation I,LCE1-E Groupe 2
+Taleb,JEUDI,13h20-14h50,info B1,Digital Skills 1,LCE1-E Groupe 2
+Khlif,VENDREDI,13h20-14h50,B4,Algo & Struct de Données I,LCE1-E Groupe 2
+Hlel,LUNDI,15h00-16h30,A7,Math pour l'Info 1,LCE1-E Groupe 2
+Marmouch,LUNDI,16h45-18h15,info A3,Programmation Python,LCE1-E Groupe 2
+Ben Kahla,MARDI,16h45-18h15,A3,Study Skills 1,LCE1-E Groupe 2
+Kchaw,VENDREDI,16h45-18h15,A7,Systèmes d'exploitation,LCE1-E Groupe 2
+Bayoudh,LUNDI,08h15-09h45,Amphi A,Onde et Propagation,LCE1-F Groupe 1
+Sfar,MERCREDI,08h15-09h45,B4,Systèmes logiques,LCE1-F Groupe 1
+KesKes,VENDREDI,08h15-09h45,Amphi B,Math pour l'Info 1,LCE1-F Groupe 1
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-F Groupe 1
+Marmouch,MARDI,10h00-11h30,Amphi B,Programmation Python,LCE1-F Groupe 1
+Kedri,MERCREDI,10h00-11h30,A3,Francais Pro1,LCE1-F Groupe 1
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-F Groupe 1
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-F Groupe 1
+Ben Kahla,VENDREDI,10h00-11h30,A4,Study Skills 1,LCE1-F Groupe 1
+Fnaiech,SAMEDI,10h00-11h30,Labo Lang 1,Systèmes Logiques,LCE1-F Groupe 1
+Ghanmi,LUNDI,11h40-13h10,Amphi A,Systèmes Logiques,LCE1-F Groupe 1
+KesKes,MARDI,11h40-13h10,A4,Math pour l'Info 1,LCE1-F Groupe 1
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-F Groupe 1
+Ghanmi,JEUDI,11h40-13h10,Amphi B,Electricité - Electronique,LCE1-F Groupe 1
+Taleb,VENDREDI,11h40-13h10,info D1,Digital Skills 1,LCE1-F Groupe 1
+Gassem,SAMEDI,11h40-13h10,A3,Onde et Propagation,LCE1-F Groupe 1
+Ben Hadj Belkacem,JEUDI,13h20-14h50,A7,Transmission de données,LCE1-F Groupe 1
+Marmouch,MARDI,15h00-16h30,info A1,Programmation Python,LCE1-F Groupe 1
+Kchaw,VENDREDI,15h00-16h30,A7,Systèmes d'exploitation,LCE1-F Groupe 1
+Gassem,LUNDI,16h45-18h15,Labo Lang 2,Electricité - Electronique,LCE1-F Groupe 1
+Chafroud,MARDI,16h45-18h15,info A3,Algo Struct de Données I,LCE1-F Groupe 1
+Barboura,JEUDI,16h45-18h15,Salle Accée lib,Système d'exploitation I,LCE1-F Groupe 1
+Khlif,VENDREDI,16h45-18h15,B4,Algo & Struct de Données I,LCE1-F Groupe 1
+Bayoudh,LUNDI,08h15-09h45,Amphi A,Onde et Propagation,LCE1-F Groupe 2
+Chafroud,MARDI,08h15-09h45,info A3,Algo Struct de Données I,LCE1-F Groupe 2
+Sfar,MERCREDI,08h15-09h45,B4,Systèmes logiques,LCE1-F Groupe 2
+KesKes,VENDREDI,08h15-09h45,Amphi B,Math pour l'Info 1,LCE1-F Groupe 2
+Khlif,SAMEDI,08h15-09h45,Grand Amphi,Algo & Struct de Données I,LCE1-F Groupe 2
+Fnaiech,LUNDI,10h00-11h30,C3,Systèmes Logiques,LCE1-F Groupe 2
+Marmouch,MARDI,10h00-11h30,Amphi B,Programmation Python,LCE1-F Groupe 2
+Kedri,MERCREDI,10h00-11h30,A3,Francais Pro1,LCE1-F Groupe 2
+Ben Hadj Belkacem,JEUDI,10h00-11h30,Amphi A,Transmission des données,LCE1-F Groupe 2
+Ben Ayed,VENDREDI,10h00-11h30,Grand Amphi,Study Skills 1,LCE1-F Groupe 2
+Ben Kahla,VENDREDI,10h00-11h30,A4,Study Skills 1,LCE1-F Groupe 2
+Ghanmi,LUNDI,11h40-13h10,Amphi A,Systèmes Logiques,LCE1-F Groupe 2
+KesKes,MARDI,11h40-13h10,A4,Math pour l'Info 1,LCE1-F Groupe 2
+Ben Ayed,MERCREDI,11h40-13h10,Grand Amphi,Système d'exploitation I,LCE1-F Groupe 2
+Ghanmi,JEUDI,11h40-13h10,Amphi B,Electricité - Electronique,LCE1-F Groupe 2
+Gassem,SAMEDI,11h40-13h10,A3,Onde et Propagation,LCE1-F Groupe 2
+Ben Hadj Belkacem,JEUDI,13h20-14h50,A7,Transmission de données,LCE1-F Groupe 2
+Taleb,VENDREDI,13h20-14h50,Labo Lang 1,Digital Skills 1,LCE1-F Groupe 2
+Gassem,LUNDI,15h00-16h30,Labo Lang 2,Electricité - Electronique,LCE1-F Groupe 2
+Barboura,JEUDI,15h00-16h30,Salle Accée lib,Système d'exploitation I,LCE1-F Groupe 2
+Kchaw,VENDREDI,15h00-16h30,A7,Systèmes d'exploitation,LCE1-F Groupe 2
+Marmouch,MARDI,16h45-18h15,info A1,Programmation Python,LCE1-F Groupe 2
+Khlif,VENDREDI,16h45-18h15,B4,Algo & Struct de Données I,LCE1-F Groupe 2
+Achoura,LUNDI,08h15-09h45,Amphi B,Réseaux Locaux et Indus,LCE2-IoT_A Groupe 1
+Abid,MARDI,08h15-09h45,Amphi C,Probabilité Statistique,LCE2-IoT_A Groupe 1
+Belhadj Taher,MERCREDI,08h15-09h45,A2,Intro Certification CCNA1,LCE2-IoT_A Groupe 1
+Hassairi,JEUDI,08h15-09h45,Amphi B,Fondements des BD,LCE2-IoT_A Groupe 1
+Gharred,VENDREDI,08h15-09h45,info C1,Programmation Python,LCE2-IoT_A Groupe 1
+Ben Saleh,SAMEDI,08h15-09h45,Amphi B,Technologies Multimédias,LCE2-IoT_A Groupe 1
+Aloui,LUNDI,10h00-11h30,A5,Anglais 3,LCE2-IoT_A Groupe 1
+Abid,MARDI,10h00-11h30,A2,Probabilité Statistique,LCE2-IoT_A Groupe 1
+Achoura,MERCREDI,10h00-11h30,Amphi B,Réseaux Locaux et Indus,LCE2-IoT_A Groupe 1
+Chahdoura,MERCREDI,10h00-11h30,B3,Graphes et optimisation,LCE2-IoT_A Groupe 1
+Oimezzine,JEUDI,10h00-11h30,info B4,Fondements des BD,LCE2-IoT_A Groupe 1
+Dhouib,VENDREDI,10h00-11h30,info B1,Programmation OO,LCE2-IoT_A Groupe 1
+Sadak,LUNDI,11h40-13h10,Salle Accée lib,Réseaux Locaux et Indus,LCE2-IoT_A Groupe 1
+Belhadj Taher,MARDI,11h40-13h10,Amphi A,Intro Certification CCNA1,LCE2-IoT_A Groupe 1
+Chahdoura,MERCREDI,11h40-13h10,Amphi B,Graphes et optimisation,LCE2-IoT_A Groupe 1
+Ammar,JEUDI,11h40-13h10,A7,Init Dev IoT et Embarqué,LCE2-IoT_A Groupe 1
+Fdhila,VENDREDI,11h40-13h10,Amphi C,Méthodo concep de logiciels,LCE2-IoT_A Groupe 1
+Ben Saleh,SAMEDI,11h40-13h10,A7,Technologies Multimédias,LCE2-IoT_A Groupe 1
+Abdelhafidh,MARDI,13h20-14h50,Grand Amphi,Programmation OO,LCE2-IoT_A Groupe 1
+Fdhila,JEUDI,13h20-14h50,A2,Métho de concep logiciel,LCE2-IoT_A Groupe 1
+Gassara,VENDREDI,13h20-14h50,Amphi B,Programmation Python,LCE2-IoT_A Groupe 1
+Ammar,JEUDI,15h00-16h30,Amphi B,Init Dev IoT et Embarqué,LCE2-IoT_A Groupe 1
+Jrad,JEUDI,16h45-18h15,Grand Amphi,Gestion d'entreprise,LCE2-IoT_A Groupe 1
+Achoura,LUNDI,08h15-09h45,Amphi B,Réseaux Locaux et Indus,LCE2-IoT_A Groupe 2
+Abid,MARDI,08h15-09h45,Amphi C,Probabilité Statistique,LCE2-IoT_A Groupe 2
+Belhadj Taher,MERCREDI,08h15-09h45,A2,Intro Certification CCNA1,LCE2-IoT_A Groupe 2
+Hassairi,JEUDI,08h15-09h45,Amphi B,Fondements des BD,LCE2-IoT_A Groupe 2
+Dhouib,VENDREDI,08h15-09h45,info A1,Programmation OO,LCE2-IoT_A Groupe 2
+Ben Saleh,SAMEDI,08h15-09h45,Amphi B,Technologies Multimédias,LCE2-IoT_A Groupe 2
+Aloui,LUNDI,10h00-11h30,A5,Anglais 3,LCE2-IoT_A Groupe 2
+Abid,MARDI,10h00-11h30,A2,Probabilité Statistique,LCE2-IoT_A Groupe 2
+Achoura,MERCREDI,10h00-11h30,Amphi B,Réseaux Locaux et Indus,LCE2-IoT_A Groupe 2
+Chahdoura,MERCREDI,10h00-11h30,B3,Graphes et optimisation,LCE2-IoT_A Groupe 2
+Gharred,VENDREDI,10h00-11h30,Info A2,Programmation Python,LCE2-IoT_A Groupe 2
+Belhadj Taher,MARDI,11h40-13h10,Amphi A,Intro Certification CCNA1,LCE2-IoT_A Groupe 2
+Chahdoura,MERCREDI,11h40-13h10,Amphi B,Graphes et optimisation,LCE2-IoT_A Groupe 2
+Ammar,JEUDI,11h40-13h10,A7,Init Dev IoT et Embarqué,LCE2-IoT_A Groupe 2
+Fdhila,VENDREDI,11h40-13h10,Amphi C,Méthodo concep de logiciels,LCE2-IoT_A Groupe 2
+Ben Saleh,SAMEDI,11h40-13h10,A7,Technologies Multimédias,LCE2-IoT_A Groupe 2
+Sadak,LUNDI,13h20-14h50,Salle Accée lib,Réseaux Locaux et Indus,LCE2-IoT_A Groupe 2
+Abdelhafidh,MARDI,13h20-14h50,Grand Amphi,Programmation OO,LCE2-IoT_A Groupe 2
+Fdhila,JEUDI,13h20-14h50,A2,Métho de concep logiciel,LCE2-IoT_A Groupe 2
+Oimezzine,JEUDI,13h20-14h50,info B4,Fondements des BD,LCE2-IoT_A Groupe 2
+Gassara,VENDREDI,13h20-14h50,Amphi B,Programmation Python,LCE2-IoT_A Groupe 2
+Ammar,JEUDI,15h00-16h30,Amphi B,Init Dev IoT et Embarqué,LCE2-IoT_A Groupe 2
+Jrad,JEUDI,16h45-18h15,Grand Amphi,Gestion d'entreprise,LCE2-IoT_A Groupe 2
+Achoura,LUNDI,08h15-09h45,Amphi B,Réseaux Locaux et Indus,LCE2-IoT_B Groupe 1
+Abid,MARDI,08h15-09h45,Amphi C,Probabilité Statistique,LCE2-IoT_B Groupe 1
+Hassairi,JEUDI,08h15-09h45,Amphi B,Fondements des BD,LCE2-IoT_B Groupe 1
+Aloui,VENDREDI,08h15-09h45,A5,Anglais 3,LCE2-IoT_B Groupe 1
+Ben Saleh,SAMEDI,08h15-09h45,Amphi B,Technologies Multimédias,LCE2-IoT_B Groupe 1
+Sadak,LUNDI,10h00-11h30,salle Internet,Réseaux Locaux et Indus,LCE2-IoT_B Groupe 1
+Belhadj Taher,MARDI,10h00-11h30,A5,Intro Certification CCNA1,LCE2-IoT_B Groupe 1
+Abid,MARDI,10h00-11h30,A2,Probabilité Statistique,LCE2-IoT_B Groupe 1
+Achoura,MERCREDI,10h00-11h30,Amphi B,Réseaux Locaux et Indus,LCE2-IoT_B Groupe 1
+Ammar,JEUDI,10h00-11h30,A7,Init Dev IoT et Embarqué,LCE2-IoT_B Groupe 1
+Chahdoura,JEUDI,10h00-11h30,B3,Graphes et optimisation,LCE2-IoT_B Groupe 1
+Ben Saleh,VENDREDI,10h00-11h30,B2,Technologies Multimédias,LCE2-IoT_B Groupe 1
+Gharred,SAMEDI,10h00-11h30,salle Internet,Programmation Python,LCE2-IoT_B Groupe 1
+Belhadj Taher,MARDI,11h40-13h10,Amphi A,Intro Certification CCNA1,LCE2-IoT_B Groupe 1
+Chahdoura,MERCREDI,11h40-13h10,Amphi B,Graphes et optimisation,LCE2-IoT_B Groupe 1
+Fdhila,VENDREDI,11h40-13h10,Amphi C,Méthodo concep de logiciels,LCE2-IoT_B Groupe 1
+Dhouib,SAMEDI,11h40-13h10,info A1,Programmation OO,LCE2-IoT_B Groupe 1
+Abdelhafidh,MARDI,13h20-14h50,Grand Amphi,Programmation OO,LCE2-IoT_B Groupe 1
+Fdhila,JEUDI,13h20-14h50,A2,Métho de concep logiciel,LCE2-IoT_B Groupe 1
+Gassara,VENDREDI,13h20-14h50,Amphi B,Programmation Python,LCE2-IoT_B Groupe 1
+Oimezzine,LUNDI,15h00-16h30,info B2,Fondements des BD,LCE2-IoT_B Groupe 1
+Ammar,JEUDI,15h00-16h30,Amphi B,Init Dev IoT et Embarqué,LCE2-IoT_B Groupe 1
+Jrad,JEUDI,16h45-18h15,Grand Amphi,Gestion d'entreprise,LCE2-IoT_B Groupe 1
+Achoura,LUNDI,08h15-09h45,Amphi B,Réseaux Locaux et Indus,LCE2-IoT_B Groupe 2
+Abid,MARDI,08h15-09h45,Amphi C,Probabilité Statistique,LCE2-IoT_B Groupe 2
+Hassairi,JEUDI,08h15-09h45,Amphi B,Fondements des BD,LCE2-IoT_B Groupe 2
+Aloui,VENDREDI,08h15-09h45,A5,Anglais 3,LCE2-IoT_B Groupe 2
+Ben Saleh,SAMEDI,08h15-09h45,Amphi B,Technologies Multimédias,LCE2-IoT_B Groupe 2
+Belhadj Taher,MARDI,10h00-11h30,A5,Intro Certification CCNA1,LCE2-IoT_B Groupe 2
+Abid,MARDI,10h00-11h30,A2,Probabilité Statistique,LCE2-IoT_B Groupe 2
+Achoura,MERCREDI,10h00-11h30,Amphi B,Réseaux Locaux et Indus,LCE2-IoT_B Groupe 2
+Ammar,JEUDI,10h00-11h30,A7,Init Dev IoT et Embarqué,LCE2-IoT_B Groupe 2
+Chahdoura,JEUDI,10h00-11h30,B3,Graphes et optimisation,LCE2-IoT_B Groupe 2
+Ben Saleh,VENDREDI,10h00-11h30,B2,Technologies Multimédias,LCE2-IoT_B Groupe 2
+Dhouib,SAMEDI,10h00-11h30,info A1,Programmation OO,LCE2-IoT_B Groupe 2
+Belhadj Taher,MARDI,11h40-13h10,Amphi A,Intro Certification CCNA1,LCE2-IoT_B Groupe 2
+Chahdoura,MERCREDI,11h40-13h10,Amphi B,Graphes et optimisation,LCE2-IoT_B Groupe 2
+Fdhila,VENDREDI,11h40-13h10,Amphi C,Méthodo concep de logiciels,LCE2-IoT_B Groupe 2
+Gharred,SAMEDI,11h40-13h10,salle Internet,Programmation Python,LCE2-IoT_B Groupe 2
+Sadak,LUNDI,13h20-14h50,Salle Accée lib,Réseaux Locaux et Indus,LCE2-IoT_B Groupe 2
+Oimezzine,LUNDI,13h20-14h50,info B2,Fondements des BD,LCE2-IoT_B Groupe 2
+Abdelhafidh,MARDI,13h20-14h50,Grand Amphi,Programmation OO,LCE2-IoT_B Groupe 2
+Fdhila,JEUDI,13h20-14h50,A2,Métho de concep logiciel,LCE2-IoT_B Groupe 2
+Gassara,VENDREDI,13h20-14h50,Amphi B,Programmation Python,LCE2-IoT_B Groupe 2
+Ammar,JEUDI,15h00-16h30,Amphi B,Init Dev IoT et Embarqué,LCE2-IoT_B Groupe 2
+Jrad,JEUDI,16h45-18h15,Grand Amphi,Gestion d'entreprise,LCE2-IoT_B Groupe 2
+Achoura,LUNDI,08h15-09h45,Amphi B,Réseaux Locaux et Indus,LCE2-IRS_A Groupe 1
+Abid,MARDI,08h15-09h45,Amphi C,Probabilité Statistique,LCE2-IRS_A Groupe 1
+Belhadj Taher,MERCREDI,08h15-09h45,A2,Intro Certification CCNA1,LCE2-IRS_A Groupe 1
+Hassairi,JEUDI,08h15-09h45,Amphi B,Fondements des BD,LCE2-IRS_A Groupe 1
+Ben Saleh,SAMEDI,08h15-09h45,Amphi B,Technologies Multimédias,LCE2-IRS_A Groupe 1
+Sadak,LUNDI,10h00-11h30,salle Internet,Réseaux Locaux et Indus,LCE2-IRS_A Groupe 1
+Abid,LUNDI,10h00-11h30,C1,Probabilité Statistique,LCE2-IRS_A Groupe 1
+Ammar,MARDI,10h00-11h30,A7,Init Dev IoT et Embarqué,LCE2-IRS_A Groupe 1
+Achoura,MERCREDI,10h00-11h30,Amphi B,Réseaux Locaux et Indus,LCE2-IRS_A Groupe 1
+Chahdoura,JEUDI,10h00-11h30,B3,Graphes et optimisation,LCE2-IRS_A Groupe 1
+Ben Saleh,SAMEDI,10h00-11h30,A7,Technologies Multimédias,LCE2-IRS_A Groupe 1
+Aloui,LUNDI,11h40-13h10,A5,Anglais 3,LCE2-IRS_A Groupe 1
+Belhadj Taher,MARDI,11h40-13h10,Amphi A,Intro Certification CCNA1,LCE2-IRS_A Groupe 1
+Chahdoura,MERCREDI,11h40-13h10,Amphi B,Graphes et optimisation,LCE2-IRS_A Groupe 1
+Fdhila,JEUDI,11h40-13h10,A2,Métho de concep logiciel,LCE2-IRS_A Groupe 1
+Fdhila,VENDREDI,11h40-13h10,Amphi C,Méthodo concep de logiciels,LCE2-IRS_A Groupe 1
+Oimezzine,LUNDI,13h20-14h50,info B2,Fondements des BD,LCE2-IRS_A Groupe 1
+Abdelhafidh,MARDI,13h20-14h50,Grand Amphi,Programmation OO,LCE2-IRS_A Groupe 1
+Dhouib,JEUDI,13h20-14h50,Salle Accée lib,Programmation OO,LCE2-IRS_A Groupe 1
+Gassara,VENDREDI,13h20-14h50,Amphi B,Programmation Python,LCE2-IRS_A Groupe 1
+Ammar,JEUDI,15h00-16h30,Amphi B,Init Dev IoT et Embarqué,LCE2-IRS_A Groupe 1
+Barboura,VENDREDI,15h00-16h30,info B4,Programmation Python,LCE2-IRS_A Groupe 1
+Jrad,JEUDI,16h45-18h15,Grand Amphi,Gestion d'entreprise,LCE2-IRS_A Groupe 1
+Achoura,LUNDI,08h15-09h45,Amphi B,Réseaux Locaux et Indus,LCE2-IRS_A Groupe 2
+Abid,MARDI,08h15-09h45,Amphi C,Probabilité Statistique,LCE2-IRS_A Groupe 2
+Belhadj Taher,MERCREDI,08h15-09h45,A2,Intro Certification CCNA1,LCE2-IRS_A Groupe 2
+Hassairi,JEUDI,08h15-09h45,Amphi B,Fondements des BD,LCE2-IRS_A Groupe 2
+Sadak,VENDREDI,08h15-09h45,salle Internet,Réseaux Locaux et Indus,LCE2-IRS_A Groupe 2
+Ben Saleh,SAMEDI,08h15-09h45,Amphi B,Technologies Multimédias,LCE2-IRS_A Groupe 2
+Oimezzine,LUNDI,10h00-11h30,info B2,Fondements des BD,LCE2-IRS_A Groupe 2
+Abid,LUNDI,10h00-11h30,C1,Probabilité Statistique,LCE2-IRS_A Groupe 2
+Ammar,MARDI,10h00-11h30,A7,Init Dev IoT et Embarqué,LCE2-IRS_A Groupe 2
+Achoura,MERCREDI,10h00-11h30,Amphi B,Réseaux Locaux et Indus,LCE2-IRS_A Groupe 2
+Chahdoura,JEUDI,10h00-11h30,B3,Graphes et optimisation,LCE2-IRS_A Groupe 2
+Barboura,VENDREDI,10h00-11h30,info B2,Programmation Python,LCE2-IRS_A Groupe 2
+Ben Saleh,SAMEDI,10h00-11h30,A7,Technologies Multimédias,LCE2-IRS_A Groupe 2
+Aloui,LUNDI,11h40-13h10,A5,Anglais 3,LCE2-IRS_A Groupe 2
+Belhadj Taher,MARDI,11h40-13h10,Amphi A,Intro Certification CCNA1,LCE2-IRS_A Groupe 2
+Chahdoura,MERCREDI,11h40-13h10,Amphi B,Graphes et optimisation,LCE2-IRS_A Groupe 2
+Fdhila,JEUDI,11h40-13h10,A2,Métho de concep logiciel,LCE2-IRS_A Groupe 2
+Fdhila,VENDREDI,11h40-13h10,Amphi C,Méthodo concep de logiciels,LCE2-IRS_A Groupe 2
+Abdelhafidh,MARDI,13h20-14h50,Grand Amphi,Programmation OO,LCE2-IRS_A Groupe 2
+Gassara,VENDREDI,13h20-14h50,Amphi B,Programmation Python,LCE2-IRS_A Groupe 2
+Ammar,JEUDI,15h00-16h30,Amphi B,Init Dev IoT et Embarqué,LCE2-IRS_A Groupe 2
+Jrad,JEUDI,16h45-18h15,Grand Amphi,Gestion d'entreprise,LCE2-IRS_A Groupe 2
+Dhouib,VENDREDI,16h45-18h15,info A1,Programmation OO,LCE2-IRS_A Groupe 2
+Achoura,LUNDI,08h15-09h45,Amphi B,Réseaux Locaux et Indus,LCE2-IRS_B Groupe 1
+Abid,MARDI,08h15-09h45,Amphi C,Probabilité Statistique,LCE2-IRS_B Groupe 1
+Chahdoura,MERCREDI,08h15-09h45,B3,Graphes et optimisation,LCE2-IRS_B Groupe 1
+Hassairi,JEUDI,08h15-09h45,Amphi B,Fondements des BD,LCE2-IRS_B Groupe 1
+Ben Saleh,SAMEDI,08h15-09h45,Amphi B,Technologies Multimédias,LCE2-IRS_B Groupe 1
+Abid,LUNDI,10h00-11h30,C1,Probabilité Statistique,LCE2-IRS_B Groupe 1
+Belhadj Taher,MARDI,10h00-11h30,A5,Intro Certification CCNA1,LCE2-IRS_B Groupe 1
+Achoura,MERCREDI,10h00-11h30,Amphi B,Réseaux Locaux et Indus,LCE2-IRS_B Groupe 1
+Ben Saleh,VENDREDI,10h00-11h30,B2,Technologies Multimédias,LCE2-IRS_B Groupe 1
+Belhadj Taher,MARDI,11h40-13h10,Amphi A,Intro Certification CCNA1,LCE2-IRS_B Groupe 1
+Chahdoura,MERCREDI,11h40-13h10,Amphi B,Graphes et optimisation,LCE2-IRS_B Groupe 1
+Fdhila,JEUDI,11h40-13h10,A2,Métho de concep logiciel,LCE2-IRS_B Groupe 1
+Ammar,JEUDI,11h40-13h10,A7,Init Dev IoT et Embarqué,LCE2-IRS_B Groupe 1
+Fdhila,VENDREDI,11h40-13h10,Amphi C,Méthodo concep de logiciels,LCE2-IRS_B Groupe 1
+Barboura,SAMEDI,11h40-13h10,info B3,Programmation Python,LCE2-IRS_B Groupe 1
+Aloui,LUNDI,13h20-14h50,A5,Anglais 3,LCE2-IRS_B Groupe 1
+Abdelhafidh,MARDI,13h20-14h50,Grand Amphi,Programmation OO,LCE2-IRS_B Groupe 1
+Gassara,VENDREDI,13h20-14h50,Amphi B,Programmation Python,LCE2-IRS_B Groupe 1
+Oimezzine,LUNDI,15h00-16h30,info B2,Fondements des BD,LCE2-IRS_B Groupe 1
+Sadak,LUNDI,15h00-16h30,Salle Accée lib,Réseaux Locaux et Indus,LCE2-IRS_B Groupe 1
+Ammar,JEUDI,15h00-16h30,Amphi B,Init Dev IoT et Embarqué,LCE2-IRS_B Groupe 1
+Dhouib,VENDREDI,15h00-16h30,info A1,Programmation OO,LCE2-IRS_B Groupe 1
+Jrad,JEUDI,16h45-18h15,Grand Amphi,Gestion d'entreprise,LCE2-IRS_B Groupe 1
+Achoura,LUNDI,08h15-09h45,Amphi B,Réseaux Locaux et Indus,LCE2-IRS_B Groupe 2
+Abid,MARDI,08h15-09h45,Amphi C,Probabilité Statistique,LCE2-IRS_B Groupe 2
+Chahdoura,MERCREDI,08h15-09h45,B3,Graphes et optimisation,LCE2-IRS_B Groupe 2
+Hassairi,JEUDI,08h15-09h45,Amphi B,Fondements des BD,LCE2-IRS_B Groupe 2
+Ben Saleh,SAMEDI,08h15-09h45,Amphi B,Technologies Multimédias,LCE2-IRS_B Groupe 2
+Abid,LUNDI,10h00-11h30,C1,Probabilité Statistique,LCE2-IRS_B Groupe 2
+Oimezzine,LUNDI,10h00-11h30,info B2,Fondements des BD,LCE2-IRS_B Groupe 2
+Belhadj Taher,MARDI,10h00-11h30,A5,Intro Certification CCNA1,LCE2-IRS_B Groupe 2
+Achoura,MERCREDI,10h00-11h30,Amphi B,Réseaux Locaux et Indus,LCE2-IRS_B Groupe 2
+Dhouib,JEUDI,10h00-11h30,Salle Accée lib,Programmation OO,LCE2-IRS_B Groupe 2
+Ben Saleh,VENDREDI,10h00-11h30,B2,Technologies Multimédias,LCE2-IRS_B Groupe 2
+Barboura,SAMEDI,10h00-11h30,info B3,Programmation Python,LCE2-IRS_B Groupe 2
+Belhadj Taher,MARDI,11h40-13h10,Amphi A,Intro Certification CCNA1,LCE2-IRS_B Groupe 2
+Chahdoura,MERCREDI,11h40-13h10,Amphi B,Graphes et optimisation,LCE2-IRS_B Groupe 2
+Fdhila,JEUDI,11h40-13h10,A2,Métho de concep logiciel,LCE2-IRS_B Groupe 2
+Ammar,JEUDI,11h40-13h10,A7,Init Dev IoT et Embarqué,LCE2-IRS_B Groupe 2
+Fdhila,VENDREDI,11h40-13h10,Amphi C,Méthodo concep de logiciels,LCE2-IRS_B Groupe 2
+Aloui,LUNDI,13h20-14h50,A5,Anglais 3,LCE2-IRS_B Groupe 2
+Abdelhafidh,MARDI,13h20-14h50,Grand Amphi,Programmation OO,LCE2-IRS_B Groupe 2
+Gassara,VENDREDI,13h20-14h50,Amphi B,Programmation Python,LCE2-IRS_B Groupe 2
+Ammar,JEUDI,15h00-16h30,Amphi B,Init Dev IoT et Embarqué,LCE2-IRS_B Groupe 2
+Sadak,VENDREDI,15h00-16h30,salle Internet,Réseaux Locaux et Indus,LCE2-IRS_B Groupe 2
+Jrad,JEUDI,16h45-18h15,Grand Amphi,Gestion d'entreprise,LCE2-IRS_B Groupe 2
+Hassairi,LUNDI,08h15-09h45,Amphi C,Industrie 4.0,LCE3-IoT_A Groupe 1
+Raddaoui,LUNDI,08h15-09h45,salle Internet,Techno des rés sans fil IoT,LCE3-IoT_A Groupe 1
+Raddaoui,MARDI,08h15-09h45,info B3,Industrie 4.0,LCE3-IoT_A Groupe 1
+Ben Ayed,MERCREDI,08h15-09h45,Amphi C,Systèmes temps réel,LCE3-IoT_A Groupe 1
+Ammar,JEUDI,08h15-09h45,Amphi A,Architecture IoT,LCE3-IoT_A Groupe 1
+Ben Aycha,VENDREDI,08h15-09h45,Amphi C,Big Data,LCE3-IoT_A Groupe 1
+Belhadj Mohamed,LUNDI,10h00-11h30,Labo Lang 1,Atelier Robotique,LCE3-IoT_A Groupe 1
+Sfar,LUNDI,10h00-11h30,Labo Lang 2,Co-design,LCE3-IoT_A Groupe 1
+Abbassi,MERCREDI,10h00-11h30,Amphi B,Atelier Robotique,LCE3-IoT_A Groupe 1
+Abdelhafidh,MARDI,11h40-13h10,Amphi B,Sécurité IoT,LCE3-IoT_A Groupe 1
+Achoura,MERCREDI,11h40-13h10,Amphi C,Techno des rés sans fil IoT,LCE3-IoT_A Groupe 1
+Zemni,JEUDI,11h40-13h10,info A1,Systèmes temps réel,LCE3-IoT_A Groupe 1
+Ben Aycha,VENDREDI,11h40-13h10,info C1,Big Data,LCE3-IoT_A Groupe 1
+Sfar,LUNDI,13h20-14h50,Amphi B,Co-design,LCE3-IoT_A Groupe 1
+Ben Daoud,MARDI,13h20-14h50,Amphi A,Cloud et virtualisation,LCE3-IoT_A Groupe 1
+Sidhom,JEUDI,13h20-14h50,Amphi C,IA & Machine Learning,LCE3-IoT_A Groupe 1
+Khenissi,VENDREDI,13h20-14h50,info A3,IA & Machine Learning,LCE3-IoT_A Groupe 1
+Gharsellaoui,LUNDI,15h00-16h30,info D1,Architectture IoT,LCE3-IoT_A Groupe 1
+Mehri,MARDI,15h00-16h30,A4,Anglais 5,LCE3-IoT_A Groupe 1
+Jrad,VENDREDI,15h00-16h30,Amphi A,Prép. à l'env. Professionnel,LCE3-IoT_A Groupe 1
+Zidi,JEUDI,16h45-18h15,Amphi B,Entreprenariat,LCE3-IoT_A Groupe 1
+Ghammem,VENDREDI,16h45-18h15,info A4,Cloud et Virtualisation,LCE3-IoT_A Groupe 1
+Hassairi,LUNDI,08h15-09h45,Amphi C,Industrie 4.0,LCE3-IoT_A Groupe 2
+Ben Ayed,MERCREDI,08h15-09h45,Amphi C,Systèmes temps réel,LCE3-IoT_A Groupe 2
+Ammar,JEUDI,08h15-09h45,Amphi A,Architecture IoT,LCE3-IoT_A Groupe 2
+Ben Aycha,VENDREDI,08h15-09h45,Amphi C,Big Data,LCE3-IoT_A Groupe 2
+Sfar,LUNDI,10h00-11h30,Labo Lang 2,Co-design,LCE3-IoT_A Groupe 2
+Belhadj Mohamed,LUNDI,10h00-11h30,Labo Lang 1,Atelier Robotique,LCE3-IoT_A Groupe 2
+Abbassi,MERCREDI,10h00-11h30,Amphi B,Atelier Robotique,LCE3-IoT_A Groupe 2
+Zemni,JEUDI,10h00-11h30,info D1,Systèmes temps réel,LCE3-IoT_A Groupe 2
+Abdelhafidh,MARDI,11h40-13h10,Amphi B,Sécurité IoT,LCE3-IoT_A Groupe 2
+Achoura,MERCREDI,11h40-13h10,Amphi C,Techno des rés sans fil IoT,LCE3-IoT_A Groupe 2
+Raddaoui,JEUDI,11h40-13h10,Info C3,Techno des rés sans fil IoT,LCE3-IoT_A Groupe 2
+Ben Aycha,JEUDI,11h40-13h10,info C2,Big Data,LCE3-IoT_A Groupe 2
+Khenissi,VENDREDI,11h40-13h10,info A3,IA & Machine Learning,LCE3-IoT_A Groupe 2
+Sfar,LUNDI,13h20-14h50,Amphi B,Co-design,LCE3-IoT_A Groupe 2
+Ben Daoud,MARDI,13h20-14h50,Amphi A,Cloud et virtualisation,LCE3-IoT_A Groupe 2
+Sidhom,JEUDI,13h20-14h50,Amphi C,IA & Machine Learning,LCE3-IoT_A Groupe 2
+Mehri,MARDI,15h00-16h30,A4,Anglais 5,LCE3-IoT_A Groupe 2
+Raddaoui,JEUDI,15h00-16h30,Info C3,Industrie 4.0,LCE3-IoT_A Groupe 2
+Jrad,VENDREDI,15h00-16h30,Amphi A,Prép. à l'env. Professionnel,LCE3-IoT_A Groupe 2
+Gharsellaoui,LUNDI,16h45-18h15,info D1,Architectture IoT,LCE3-IoT_A Groupe 2
+Zidi,JEUDI,16h45-18h15,Amphi B,Entreprenariat,LCE3-IoT_A Groupe 2
+Ghammem,VENDREDI,16h45-18h15,info A4,Cloud et Virtualisation,LCE3-IoT_A Groupe 2
+Hassairi,LUNDI,08h15-09h45,Amphi C,Industrie 4.0,LCE3-IoT_B Groupe 1
+Sfar,MARDI,08h15-09h45,Labo Lang 2,Co-design,LCE3-IoT_B Groupe 1
+Ben Ayed,MERCREDI,08h15-09h45,Amphi C,Systèmes temps réel,LCE3-IoT_B Groupe 1
+Ammar,JEUDI,08h15-09h45,Amphi A,Architecture IoT,LCE3-IoT_B Groupe 1
+Ben Aycha,VENDREDI,08h15-09h45,Amphi C,Big Data,LCE3-IoT_B Groupe 1
+Mehri,LUNDI,10h00-11h30,A3,Anglais 5,LCE3-IoT_B Groupe 1
+Raddaoui,MARDI,10h00-11h30,info B3,Techno des rés sans fil IoT,LCE3-IoT_B Groupe 1
+Abbassi,MERCREDI,10h00-11h30,Amphi B,Atelier Robotique,LCE3-IoT_B Groupe 1
+Zemni,JEUDI,10h00-11h30,info D1,Systèmes temps réel,LCE3-IoT_B Groupe 1
+Ben Aycha,VENDREDI,10h00-11h30,info C1,Big Data,LCE3-IoT_B Groupe 1
+Ghammem,VENDREDI,10h00-11h30,info A4,Cloud et Virtualisation,LCE3-IoT_B Groupe 1
+Raddaoui,LUNDI,11h40-13h10,salle Internet,Industrie 4.0,LCE3-IoT_B Groupe 1
+Abdelhafidh,MARDI,11h40-13h10,Amphi B,Sécurité IoT,LCE3-IoT_B Groupe 1
+Achoura,MERCREDI,11h40-13h10,Amphi C,Techno des rés sans fil IoT,LCE3-IoT_B Groupe 1
+Khenissi,JEUDI,11h40-13h10,info B3,IA & Machine Learning,LCE3-IoT_B Groupe 1
+Sfar,LUNDI,13h20-14h50,Amphi B,Co-design,LCE3-IoT_B Groupe 1
+Ben Daoud,MARDI,13h20-14h50,Amphi A,Cloud et virtualisation,LCE3-IoT_B Groupe 1
+Sidhom,JEUDI,13h20-14h50,Amphi C,IA & Machine Learning,LCE3-IoT_B Groupe 1
+Belhadj Mohamed,LUNDI,15h00-16h30,Labo Lang 1,Atelier Robotique,LCE3-IoT_B Groupe 1
+Jrad,VENDREDI,15h00-16h30,Amphi A,Prép. à l'env. Professionnel,LCE3-IoT_B Groupe 1
+Gharsellaoui,MARDI,16h45-18h15,info C2,Architectture IoT,LCE3-IoT_B Groupe 1
+Zidi,JEUDI,16h45-18h15,Amphi B,Entreprenariat,LCE3-IoT_B Groupe 1
+Hassairi,LUNDI,08h15-09h45,Amphi C,Industrie 4.0,LCE3-IoT_B Groupe 2
+Sfar,MARDI,08h15-09h45,Labo Lang 2,Co-design,LCE3-IoT_B Groupe 2
+Ben Ayed,MERCREDI,08h15-09h45,Amphi C,Systèmes temps réel,LCE3-IoT_B Groupe 2
+Ammar,JEUDI,08h15-09h45,Amphi A,Architecture IoT,LCE3-IoT_B Groupe 2
+Ben Aycha,VENDREDI,08h15-09h45,Amphi C,Big Data,LCE3-IoT_B Groupe 2
+Mehri,LUNDI,10h00-11h30,A3,Anglais 5,LCE3-IoT_B Groupe 2
+Raddaoui,MARDI,10h00-11h30,info B3,Techno des rés sans fil IoT,LCE3-IoT_B Groupe 2
+Abbassi,MERCREDI,10h00-11h30,Amphi B,Atelier Robotique,LCE3-IoT_B Groupe 2
+Raddaoui,JEUDI,10h00-11h30,Info C3,Industrie 4.0,LCE3-IoT_B Groupe 2
+Ghammem,VENDREDI,10h00-11h30,info A4,Cloud et Virtualisation,LCE3-IoT_B Groupe 2
+Ben Aycha,VENDREDI,10h00-11h30,info C1,Big Data,LCE3-IoT_B Groupe 2
+Abdelhafidh,MARDI,11h40-13h10,Amphi B,Sécurité IoT,LCE3-IoT_B Groupe 2
+Achoura,MERCREDI,11h40-13h10,Amphi C,Techno des rés sans fil IoT,LCE3-IoT_B Groupe 2
+Zemni,JEUDI,11h40-13h10,info A1,Systèmes temps réel,LCE3-IoT_B Groupe 2
+Sfar,LUNDI,13h20-14h50,Amphi B,Co-design,LCE3-IoT_B Groupe 2
+Ben Daoud,MARDI,13h20-14h50,Amphi A,Cloud et virtualisation,LCE3-IoT_B Groupe 2
+Sidhom,JEUDI,13h20-14h50,Amphi C,IA & Machine Learning,LCE3-IoT_B Groupe 2
+Belhadj Mohamed,LUNDI,15h00-16h30,Labo Lang 1,Atelier Robotique,LCE3-IoT_B Groupe 2
+Gharsellaoui,MARDI,15h00-16h30,salle Internet,Architectture IoT,LCE3-IoT_B Groupe 2
+Khenissi,JEUDI,15h00-16h30,info B3,IA & Machine Learning,LCE3-IoT_B Groupe 2
+Jrad,VENDREDI,15h00-16h30,Amphi A,Prép. à l'env. Professionnel,LCE3-IoT_B Groupe 2
+Zidi,JEUDI,16h45-18h15,Amphi B,Entreprenariat,LCE3-IoT_B Groupe 2
+Hassairi,LUNDI,08h15-09h45,A2,Administration des BD,LCE3-IRS_A Groupe 1
+Ben Rhaiem,MARDI,08h15-09h45,A1,Sécurité Des Réseaux,LCE3-IRS_A Groupe 1
+Ben Hadj Belkacem,JEUDI,08h15-09h45,A7,Virtualisation des réseaux,LCE3-IRS_A Groupe 1
+Barboura,VENDREDI,08h15-09h45,salle Internet,Techno des réseaux sans fil,LCE3-IRS_A Groupe 1
+Ben Neji,SAMEDI,08h15-09h45,info B2,Préparation Certif. LPIC 2,LCE3-IRS_A Groupe 1
+Bannour,LUNDI,10h00-11h30,A6,Réseaux multimédia,LCE3-IRS_A Groupe 1
+Achoura,MARDI,10h00-11h30,info A1,Préparation Certif CCNA3,LCE3-IRS_A Groupe 1
+Achoura,MERCREDI,10h00-11h30,info C1,Préparation Certif. CCNA 3,LCE3-IRS_A Groupe 1
+Khenissi,JEUDI,10h00-11h30,info B3,IA & Machine Learning,LCE3-IRS_A Groupe 1
+Ben Neji,SAMEDI,10h00-11h30,A6,Préparation Certif. LPIC 2,LCE3-IRS_A Groupe 1
+Hassairi,LUNDI,11h40-13h10,info B1,Administration des BD,LCE3-IRS_A Groupe 1
+Ghannay,MARDI,11h40-13h10,A3,Virtualisation et conteneur,LCE3-IRS_A Groupe 1
+Ben Daoud,MERCREDI,11h40-13h10,A5,Déploiement services Cloud,LCE3-IRS_A Groupe 1
+Ben Hadj Belkacem,JEUDI,11h40-13h10,Info A2,Virtualisation des réseaux,LCE3-IRS_A Groupe 1
+Fki,VENDREDI,11h40-13h10,C1,Test logiciel Certif ISTQB,LCE3-IRS_A Groupe 1
+Adel,SAMEDI,11h40-13h10,info B1,Déploiement Services Cloud,LCE3-IRS_A Groupe 1
+Ghannay,MARDI,13h20-14h50,info C2,Virtualisation et conteneur,LCE3-IRS_A Groupe 1
+Ben Rhaiem,MARDI,13h20-14h50,info C1,Sécurité Des Réseaux,LCE3-IRS_A Groupe 1
+Sidhom,JEUDI,13h20-14h50,Amphi C,IA & Machine Learning,LCE3-IRS_A Groupe 1
+Fki,VENDREDI,13h20-14h50,A5,Test logiciel (Certif ISTQB),LCE3-IRS_A Groupe 1
+Ben Daoud,MARDI,15h00-16h30,A5,Techno des réseaux sans fil,LCE3-IRS_A Groupe 1
+Mehri,JEUDI,15h00-16h30,A1,Anglais 5,LCE3-IRS_A Groupe 1
+Jrad,VENDREDI,15h00-16h30,Amphi A,Prép. à l'env. Professionnel,LCE3-IRS_A Groupe 1
+Zidi,JEUDI,16h45-18h15,Amphi B,Entreprenariat,LCE3-IRS_A Groupe 1
+Hassairi,LUNDI,08h15-09h45,A2,Administration des BD,LCE3-IRS_A Groupe 2
+Ben Rhaiem,MARDI,08h15-09h45,A1,Sécurité Des Réseaux,LCE3-IRS_A Groupe 2
+Ben Hadj Belkacem,JEUDI,08h15-09h45,A7,Virtualisation des réseaux,LCE3-IRS_A Groupe 2
+Khenissi,VENDREDI,08h15-09h45,info A3,IA & Machine Learning,LCE3-IRS_A Groupe 2
+Bannour,LUNDI,10h00-11h30,A6,Réseaux multimédia,LCE3-IRS_A Groupe 2
+Achoura,MERCREDI,10h00-11h30,info C1,Préparation Certif. CCNA 3,LCE3-IRS_A Groupe 2
+Adel,VENDREDI,10h00-11h30,info A1,Déploiement Services Cloud,LCE3-IRS_A Groupe 2
+Ben Neji,SAMEDI,10h00-11h30,A6,Préparation Certif. LPIC 2,LCE3-IRS_A Groupe 2
+Achoura,LUNDI,11h40-13h10,info A1,Préparation Certif CCNA3,LCE3-IRS_A Groupe 2
+Ghannay,MARDI,11h40-13h10,A3,Virtualisation et conteneur,LCE3-IRS_A Groupe 2
+Ben Daoud,MERCREDI,11h40-13h10,A5,Déploiement services Cloud,LCE3-IRS_A Groupe 2
+Ben Hadj Belkacem,JEUDI,11h40-13h10,Info A2,Virtualisation des réseaux,LCE3-IRS_A Groupe 2
+Fki,VENDREDI,11h40-13h10,C1,Test logiciel Certif ISTQB,LCE3-IRS_A Groupe 2
+Barboura,VENDREDI,11h40-13h10,info C2,Techno des réseaux sans fil,LCE3-IRS_A Groupe 2
+Ben Neji,SAMEDI,11h40-13h10,info B4,Préparation Certif. LPIC 2,LCE3-IRS_A Groupe 2
+Ben Rhaiem,MARDI,13h20-14h50,info C1,Sécurité Des Réseaux,LCE3-IRS_A Groupe 2
+Ghannay,MARDI,13h20-14h50,info C2,Virtualisation et conteneur,LCE3-IRS_A Groupe 2
+Sidhom,JEUDI,13h20-14h50,Amphi C,IA & Machine Learning,LCE3-IRS_A Groupe 2
+Fki,VENDREDI,13h20-14h50,A5,Test logiciel (Certif ISTQB),LCE3-IRS_A Groupe 2
+Hassairi,LUNDI,15h00-16h30,info A4,Administration des BD,LCE3-IRS_A Groupe 2
+Ben Daoud,MARDI,15h00-16h30,A5,Techno des réseaux sans fil,LCE3-IRS_A Groupe 2
+Mehri,JEUDI,15h00-16h30,A1,Anglais 5,LCE3-IRS_A Groupe 2
+Jrad,VENDREDI,15h00-16h30,Amphi A,Prép. à l'env. Professionnel,LCE3-IRS_A Groupe 2
+Zidi,JEUDI,16h45-18h15,Amphi B,Entreprenariat,LCE3-IRS_A Groupe 2
+Fnaiech,MERCREDI,08h15-09h45,A5,Archi des ordinateurs,LCS1-A Groupe 1
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-A Groupe 1
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-A Groupe 1
+Barboura,SAMEDI,08h15-09h45,info B3,Programmation Python,LCS1-A Groupe 1
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-A Groupe 1
+Fnaiech,MARDI,10h00-11h30,Amphi A,Architecture des ordinateurs,LCS1-A Groupe 1
+Torki,MERCREDI,10h00-11h30,Amphi C,Math pour l'Info 1,LCS1-A Groupe 1
+Zribi,JEUDI,10h00-11h30,A3,Logique Formelle,LCS1-A Groupe 1
+KesKes,VENDREDI,10h00-11h30,B1,Math pour l'Info 1,LCS1-A Groupe 1
+Baccouche,SAMEDI,10h00-11h30,Salle Accée lib,Digital Skills 1,LCS1-A Groupe 1
+Dhifet,LUNDI,11h40-13h10,A4,Proba et Stat Descriptives,LCS1-A Groupe 1
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-A Groupe 1
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-A Groupe 1
+Chouk,VENDREDI,11h40-13h10,A4,Francais Pro1,LCS1-A Groupe 1
+Abbassi,SAMEDI,11h40-13h10,Grand Amphi,Programmation Python,LCS1-A Groupe 1
+Omezzine,MARDI,13h20-14h50,B4,Algo Struct de Données I,LCS1-A Groupe 1
+Zaouali,JEUDI,13h20-14h50,Info A2,Système d'exploitation I,LCS1-A Groupe 1
+Ben Kahla,VENDREDI,13h20-14h50,A4,Study Skills 1,LCS1-A Groupe 1
+Fnaiech,MARDI,15h00-16h30,Labo Lang 1,Archi des ordinateurs,LCS1-A Groupe 1
+Jarraya,JEUDI,15h00-16h30,info A4,Technologies Web,LCS1-A Groupe 1
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-A Groupe 1
+Ksibi,LUNDI,16h45-18h15,Info C4,Algo Struct de Données I,LCS1-A Groupe 1
+Ben Fradj,JEUDI,16h45-18h15,B3,Systèmes d'exploitation,LCS1-A Groupe 1
+Fnaiech,LUNDI,08h15-09h45,info C2,Archi des ordinateurs,LCS1-A Groupe 2
+Ksibi,MARDI,08h15-09h45,Info C3,Algo Struct de Données I,LCS1-A Groupe 2
+Fnaiech,MERCREDI,08h15-09h45,A5,Archi des ordinateurs,LCS1-A Groupe 2
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-A Groupe 2
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-A Groupe 2
+Baccouche,SAMEDI,08h15-09h45,Salle Accée lib,Digital Skills 1,LCS1-A Groupe 2
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-A Groupe 2
+Fnaiech,MARDI,10h00-11h30,Amphi A,Architecture des ordinateurs,LCS1-A Groupe 2
+Torki,MERCREDI,10h00-11h30,Amphi C,Math pour l'Info 1,LCS1-A Groupe 2
+Zribi,JEUDI,10h00-11h30,A3,Logique Formelle,LCS1-A Groupe 2
+KesKes,VENDREDI,10h00-11h30,B1,Math pour l'Info 1,LCS1-A Groupe 2
+Dhifet,LUNDI,11h40-13h10,A4,Proba et Stat Descriptives,LCS1-A Groupe 2
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-A Groupe 2
+Zaouali,MERCREDI,11h40-13h10,Info A2,Système d'exploitation I,LCS1-A Groupe 2
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-A Groupe 2
+Chouk,VENDREDI,11h40-13h10,A4,Francais Pro1,LCS1-A Groupe 2
+Abbassi,SAMEDI,11h40-13h10,Grand Amphi,Programmation Python,LCS1-A Groupe 2
+Omezzine,MARDI,13h20-14h50,B4,Algo Struct de Données I,LCS1-A Groupe 2
+Jarraya,JEUDI,13h20-14h50,info A4,Technologies Web,LCS1-A Groupe 2
+Ben Kahla,VENDREDI,13h20-14h50,A4,Study Skills 1,LCS1-A Groupe 2
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-A Groupe 2
+Ben Fradj,JEUDI,16h45-18h15,B3,Systèmes d'exploitation,LCS1-A Groupe 2
+Barboura,VENDREDI,16h45-18h15,info B4,Programmation Python,LCS1-A Groupe 2
+Ksibi,LUNDI,08h15-09h45,Info C4,Algo Struct de Données I,LCS1-B Groupe 1
+Omezzine,MARDI,08h15-09h45,B4,Algo Struct de Données I,LCS1-B Groupe 1
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-B Groupe 1
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-B Groupe 1
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-B Groupe 1
+Fnaiech,MARDI,10h00-11h30,Amphi A,Architecture des ordinateurs,LCS1-B Groupe 1
+Torki,MERCREDI,10h00-11h30,Amphi C,Math pour l'Info 1,LCS1-B Groupe 1
+Chouk,JEUDI,10h00-11h30,C2,Francais Pro1,LCS1-B Groupe 1
+Fnaiech,LUNDI,11h40-13h10,info C2,Archi des ordinateurs,LCS1-B Groupe 1
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-B Groupe 1
+Yahyaoui,MERCREDI,11h40-13h10,salle Internet,Digital Skills 1,LCS1-B Groupe 1
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-B Groupe 1
+Barboura,VENDREDI,11h40-13h10,info B2,Programmation Python,LCS1-B Groupe 1
+Abbassi,SAMEDI,11h40-13h10,Grand Amphi,Programmation Python,LCS1-B Groupe 1
+KesKes,MARDI,13h20-14h50,A4,Math pour l'Info 1,LCS1-B Groupe 1
+Zribi,JEUDI,13h20-14h50,A3,Logique Formelle,LCS1-B Groupe 1
+Jarraya,VENDREDI,13h20-14h50,Info C3,Technologies Web,LCS1-B Groupe 1
+Dhifet,LUNDI,15h00-16h30,A4,Proba et Stat Descriptives,LCS1-B Groupe 1
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-B Groupe 1
+Zaouali,LUNDI,16h45-18h15,info B4,Système d'exploitation I,LCS1-B Groupe 1
+Fnaiech,MARDI,16h45-18h15,A6,Archi des ordinateurs,LCS1-B Groupe 1
+Ben Fradj,JEUDI,16h45-18h15,A5,Systèmes d'exploitation,LCS1-B Groupe 1
+Ben Kahla,VENDREDI,16h45-18h15,A4,Study Skills 1,LCS1-B Groupe 1
+Omezzine,MARDI,08h15-09h45,B4,Algo Struct de Données I,LCS1-B Groupe 2
+Yahyaoui,MERCREDI,08h15-09h45,salle Internet,Digital Skills 1,LCS1-B Groupe 2
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-B Groupe 2
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-B Groupe 2
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-B Groupe 2
+Fnaiech,MARDI,10h00-11h30,Amphi A,Architecture des ordinateurs,LCS1-B Groupe 2
+Torki,MERCREDI,10h00-11h30,Amphi C,Math pour l'Info 1,LCS1-B Groupe 2
+Chouk,JEUDI,10h00-11h30,C2,Francais Pro1,LCS1-B Groupe 2
+Jarraya,VENDREDI,10h00-11h30,Info C3,Technologies Web,LCS1-B Groupe 2
+Zaouali,LUNDI,11h40-13h10,info B4,Système d'exploitation I,LCS1-B Groupe 2
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-B Groupe 2
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-B Groupe 2
+Abbassi,SAMEDI,11h40-13h10,Grand Amphi,Programmation Python,LCS1-B Groupe 2
+Fnaiech,LUNDI,13h20-14h50,info A4,Archi des ordinateurs,LCS1-B Groupe 2
+KesKes,MARDI,13h20-14h50,A4,Math pour l'Info 1,LCS1-B Groupe 2
+Zribi,JEUDI,13h20-14h50,A3,Logique Formelle,LCS1-B Groupe 2
+Barboura,VENDREDI,13h20-14h50,info B4,Programmation Python,LCS1-B Groupe 2
+Dhifet,LUNDI,15h00-16h30,A4,Proba et Stat Descriptives,LCS1-B Groupe 2
+Ksibi,MARDI,15h00-16h30,Info C3,Algo Struct de Données I,LCS1-B Groupe 2
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-B Groupe 2
+Fnaiech,MARDI,16h45-18h15,A6,Archi des ordinateurs,LCS1-B Groupe 2
+Ben Fradj,JEUDI,16h45-18h15,A5,Systèmes d'exploitation,LCS1-B Groupe 2
+Ben Kahla,VENDREDI,16h45-18h15,A4,Study Skills 1,LCS1-B Groupe 2
+Ben Kahla,MARDI,08h15-09h45,A3,Study Skills 1,LCS1-C Groupe 1
+Fnaiech,MERCREDI,08h15-09h45,A5,Archi des ordinateurs,LCS1-C Groupe 1
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-C Groupe 1
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-C Groupe 1
+Fnaiech,SAMEDI,08h15-09h45,Labo Lang 1,Archi des ordinateurs,LCS1-C Groupe 1
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-C Groupe 1
+Fnaiech,MARDI,10h00-11h30,Amphi A,Architecture des ordinateurs,LCS1-C Groupe 1
+Torki,MERCREDI,10h00-11h30,Amphi C,Math pour l'Info 1,LCS1-C Groupe 1
+Zaouali,JEUDI,10h00-11h30,info B2,Système d'exploitation I,LCS1-C Groupe 1
+Chouk,VENDREDI,10h00-11h30,A7,Francais Pro1,LCS1-C Groupe 1
+Zribi,LUNDI,11h40-13h10,A3,Logique Formelle,LCS1-C Groupe 1
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-C Groupe 1
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-C Groupe 1
+Jarraya,VENDREDI,11h40-13h10,Info C3,Technologies Web,LCS1-C Groupe 1
+Abbassi,SAMEDI,11h40-13h10,Grand Amphi,Programmation Python,LCS1-C Groupe 1
+Dhifet,LUNDI,13h20-14h50,A4,Proba et Stat Descriptives,LCS1-C Groupe 1
+Ksibi,MARDI,13h20-14h50,Info C3,Algo Struct de Données I,LCS1-C Groupe 1
+Bayoudh,JEUDI,13h20-14h50,B2,Algo Struct de Données I,LCS1-C Groupe 1
+KesKes,VENDREDI,13h20-14h50,A3,Math pour l'Info 1,LCS1-C Groupe 1
+Ben Khalifa,MARDI,15h00-16h30,Info A2,Programmation Python,LCS1-C Groupe 1
+Ben Fradj,JEUDI,15h00-16h30,B3,Systèmes d'exploitation,LCS1-C Groupe 1
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-C Groupe 1
+Baccouche,VENDREDI,16h45-18h15,Salle Accée lib,Digital Skills 1,LCS1-C Groupe 1
+Zaouali,LUNDI,08h15-09h45,info B4,Système d'exploitation I,LCS1-C Groupe 2
+Ben Kahla,MARDI,08h15-09h45,A3,Study Skills 1,LCS1-C Groupe 2
+Fnaiech,MERCREDI,08h15-09h45,A5,Archi des ordinateurs,LCS1-C Groupe 2
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-C Groupe 2
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-C Groupe 2
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-C Groupe 2
+Fnaiech,MARDI,10h00-11h30,Amphi A,Architecture des ordinateurs,LCS1-C Groupe 2
+Torki,MERCREDI,10h00-11h30,Amphi C,Math pour l'Info 1,LCS1-C Groupe 2
+Jarraya,JEUDI,10h00-11h30,info A3,Technologies Web,LCS1-C Groupe 2
+Chouk,VENDREDI,10h00-11h30,A7,Francais Pro1,LCS1-C Groupe 2
+Zribi,LUNDI,11h40-13h10,A3,Logique Formelle,LCS1-C Groupe 2
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-C Groupe 2
+Fnaiech,MERCREDI,11h40-13h10,info C2,Archi des ordinateurs,LCS1-C Groupe 2
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-C Groupe 2
+Abbassi,SAMEDI,11h40-13h10,Grand Amphi,Programmation Python,LCS1-C Groupe 2
+Dhifet,LUNDI,13h20-14h50,A4,Proba et Stat Descriptives,LCS1-C Groupe 2
+Ben Khalifa,MARDI,13h20-14h50,Info A2,Programmation Python,LCS1-C Groupe 2
+Bayoudh,JEUDI,13h20-14h50,B2,Algo Struct de Données I,LCS1-C Groupe 2
+KesKes,VENDREDI,13h20-14h50,A3,Math pour l'Info 1,LCS1-C Groupe 2
+Ben Fradj,JEUDI,15h00-16h30,B3,Systèmes d'exploitation,LCS1-C Groupe 2
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-C Groupe 2
+Ksibi,MARDI,16h45-18h15,Info C3,Algo Struct de Données I,LCS1-C Groupe 2
+Baccouche,JEUDI,16h45-18h15,salle Internet,Digital Skills 1,LCS1-C Groupe 2
+Marmouch,MARDI,08h15-09h45,Amphi B,Programmation Python,LCS1-D Groupe 1
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-D Groupe 1
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-D Groupe 1
+Yahyaoui,SAMEDI,08h15-09h45,info D1,Digital Skills 1,LCS1-D Groupe 1
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-D Groupe 1
+Ksibi,MARDI,10h00-11h30,Info C3,Algo Struct de Données I,LCS1-D Groupe 1
+Chouk,MERCREDI,10h00-11h30,A4,Francais Pro1,LCS1-D Groupe 1
+Bayoudh,JEUDI,10h00-11h30,A6,Algo Struct de Données I,LCS1-D Groupe 1
+Torki,VENDREDI,10h00-11h30,Amphi A,Math pour l'Info 1,LCS1-D Groupe 1
+Adel,SAMEDI,10h00-11h30,info B1,Technologies Web,LCS1-D Groupe 1
+Abid,LUNDI,11h40-13h10,C1,Proba et Stat Descriptives,LCS1-D Groupe 1
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-D Groupe 1
+Hlel,MERCREDI,11h40-13h10,A6,Math pour l'Info 1,LCS1-D Groupe 1
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-D Groupe 1
+Ben Khalifa,SAMEDI,11h40-13h10,Info A2,Programmation Python,LCS1-D Groupe 1
+Belhadj Mohamed,LUNDI,13h20-14h50,Labo Lang 1,Archi des ordinateurs,LCS1-D Groupe 1
+Belhadj Mohamed,MARDI,13h20-14h50,B2,Archi des ordinateurs,LCS1-D Groupe 1
+Ben Fradj,JEUDI,13h20-14h50,B3,Systèmes d'exploitation,LCS1-D Groupe 1
+Sghir,VENDREDI,13h20-14h50,B1,Logique Formelle,LCS1-D Groupe 1
+Zaouali,LUNDI,15h00-16h30,info B4,Système d'exploitation I,LCS1-D Groupe 1
+Belhadj Mohamed,MARDI,15h00-16h30,Amphi B,Architecture des ordinateurs,LCS1-D Groupe 1
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-D Groupe 1
+Ben Kahla,VENDREDI,15h00-16h30,A4,Study Skills 1,LCS1-D Groupe 1
+Marmouch,MARDI,08h15-09h45,Amphi B,Programmation Python,LCS1-D Groupe 2
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-D Groupe 2
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-D Groupe 2
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-D Groupe 2
+Ben Khalifa,MARDI,10h00-11h30,info B4,Programmation Python,LCS1-D Groupe 2
+Chouk,MERCREDI,10h00-11h30,A4,Francais Pro1,LCS1-D Groupe 2
+Bayoudh,JEUDI,10h00-11h30,A6,Algo Struct de Données I,LCS1-D Groupe 2
+Torki,VENDREDI,10h00-11h30,Amphi A,Math pour l'Info 1,LCS1-D Groupe 2
+Yahyaoui,SAMEDI,10h00-11h30,info D1,Digital Skills 1,LCS1-D Groupe 2
+Abid,LUNDI,11h40-13h10,C1,Proba et Stat Descriptives,LCS1-D Groupe 2
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-D Groupe 2
+Hlel,MERCREDI,11h40-13h10,A6,Math pour l'Info 1,LCS1-D Groupe 2
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-D Groupe 2
+Adel,VENDREDI,11h40-13h10,info B1,Technologies Web,LCS1-D Groupe 2
+Zaouali,LUNDI,13h20-14h50,info B4,Système d'exploitation I,LCS1-D Groupe 2
+Belhadj Mohamed,MARDI,13h20-14h50,B2,Archi des ordinateurs,LCS1-D Groupe 2
+Ben Fradj,JEUDI,13h20-14h50,B3,Systèmes d'exploitation,LCS1-D Groupe 2
+Sghir,VENDREDI,13h20-14h50,B1,Logique Formelle,LCS1-D Groupe 2
+Ksibi,LUNDI,15h00-16h30,Info C4,Algo Struct de Données I,LCS1-D Groupe 2
+Belhadj Mohamed,MARDI,15h00-16h30,Amphi B,Architecture des ordinateurs,LCS1-D Groupe 2
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-D Groupe 2
+Ben Kahla,VENDREDI,15h00-16h30,A4,Study Skills 1,LCS1-D Groupe 2
+Belhadj Mohamed,MARDI,16h45-18h15,Labo Lang 1,Archi des ordinateurs,LCS1-D Groupe 2
+Belhadj Mohamed,LUNDI,08h15-09h45,Labo Lang 1,Archi des ordinateurs,LCS1-E Groupe 1
+Marmouch,MARDI,08h15-09h45,Amphi B,Programmation Python,LCS1-E Groupe 1
+Zaouali,MERCREDI,08h15-09h45,Info A2,Système d'exploitation I,LCS1-E Groupe 1
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-E Groupe 1
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-E Groupe 1
+Ben Khalifa,SAMEDI,08h15-09h45,Info A2,Programmation Python,LCS1-E Groupe 1
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-E Groupe 1
+Yahyaoui,MERCREDI,10h00-11h30,salle Internet,Digital Skills 1,LCS1-E Groupe 1
+Torki,VENDREDI,10h00-11h30,Amphi A,Math pour l'Info 1,LCS1-E Groupe 1
+Ksibi,LUNDI,11h40-13h10,Info C4,Algo Struct de Données I,LCS1-E Groupe 1
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-E Groupe 1
+Chouk,MERCREDI,11h40-13h10,A4,Francais Pro1,LCS1-E Groupe 1
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-E Groupe 1
+KesKes,VENDREDI,11h40-13h10,B1,Math pour l'Info 1,LCS1-E Groupe 1
+Belhadj Mohamed,MARDI,13h20-14h50,B2,Archi des ordinateurs,LCS1-E Groupe 1
+Ben Kahla,MARDI,13h20-14h50,A3,Study Skills 1,LCS1-E Groupe 1
+Ben Fradj,JEUDI,13h20-14h50,B3,Systèmes d'exploitation,LCS1-E Groupe 1
+Adel,VENDREDI,13h20-14h50,info B1,Technologies Web,LCS1-E Groupe 1
+Abid,LUNDI,15h00-16h30,C1,Proba et Stat Descriptives,LCS1-E Groupe 1
+Belhadj Mohamed,MARDI,15h00-16h30,Amphi B,Architecture des ordinateurs,LCS1-E Groupe 1
+Bayoudh,JEUDI,15h00-16h30,B2,Algo Struct de Données I,LCS1-E Groupe 1
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-E Groupe 1
+Sghir,VENDREDI,16h45-18h15,B1,Logique Formelle,LCS1-E Groupe 1
+Marmouch,MARDI,08h15-09h45,Amphi B,Programmation Python,LCS1-E Groupe 2
+Zribi,JEUDI,08h15-09h45,Grand Amphi,Algo Struct de Données I,LCS1-E Groupe 2
+Maaloul,VENDREDI,08h15-09h45,Grand Amphi,Technologies Web 1,LCS1-E Groupe 2
+Adel,SAMEDI,08h15-09h45,info B1,Technologies Web,LCS1-E Groupe 2
+Hassairi,LUNDI,10h00-11h30,Grand Amphi,Système d'exploitation I,LCS1-E Groupe 2
+Belhadj Mohamed,MARDI,10h00-11h30,info C1,Archi des ordinateurs,LCS1-E Groupe 2
+Zaouali,MERCREDI,10h00-11h30,Info A2,Système d'exploitation I,LCS1-E Groupe 2
+Torki,VENDREDI,10h00-11h30,Amphi A,Math pour l'Info 1,LCS1-E Groupe 2
+Ben Khalifa,SAMEDI,10h00-11h30,Info A2,Programmation Python,LCS1-E Groupe 2
+Abid,MARDI,11h40-13h10,Grand Amphi,Proba et Stat Descriptives,LCS1-E Groupe 2
+Chouk,MERCREDI,11h40-13h10,A4,Francais Pro1,LCS1-E Groupe 2
+Zribi,JEUDI,11h40-13h10,Grand Amphi,Logique Formelle,LCS1-E Groupe 2
+KesKes,VENDREDI,11h40-13h10,B1,Math pour l'Info 1,LCS1-E Groupe 2
+Yahyaoui,SAMEDI,11h40-13h10,info D1,Digital Skills 1,LCS1-E Groupe 2
+Ksibi,LUNDI,13h20-14h50,Info C4,Algo Struct de Données I,LCS1-E Groupe 2
+Belhadj Mohamed,MARDI,13h20-14h50,B2,Archi des ordinateurs,LCS1-E Groupe 2
+Ben Kahla,MARDI,13h20-14h50,A3,Study Skills 1,LCS1-E Groupe 2
+Ben Fradj,JEUDI,13h20-14h50,B3,Systèmes d'exploitation,LCS1-E Groupe 2
+Abid,LUNDI,15h00-16h30,C1,Proba et Stat Descriptives,LCS1-E Groupe 2
+Belhadj Mohamed,MARDI,15h00-16h30,Amphi B,Architecture des ordinateurs,LCS1-E Groupe 2
+Bayoudh,JEUDI,15h00-16h30,B2,Algo Struct de Données I,LCS1-E Groupe 2
+Ben Ayed,VENDREDI,15h00-16h30,Grand Amphi,Study Skills 1,LCS1-E Groupe 2
+Sghir,VENDREDI,16h45-18h15,B1,Logique Formelle,LCS1-E Groupe 2
+Abid,LUNDI,08h15-09h45,Grand Amphi,Probabilité et statistique,LCS2-GLSI_A Groupe 1
+Maaloul,MARDI,08h15-09h45,Amphi A,Services des réseaux,LCS2-GLSI_A Groupe 1
+Chahdoura,MERCREDI,08h15-09h45,A6,Graphes et optimisation,LCS2-GLSI_A Groupe 1
+Elayeb,JEUDI,08h15-09h45,info A1,Framework de développement,LCS2-GLSI_A Groupe 1
+Aloulou,LUNDI,10h00-11h30,Amphi A,Ingénierie des BD,LCS2-GLSI_A Groupe 1
+Hadj M'tir,MARDI,10h00-11h30,Grand Amphi,Théorie des langages,LCS2-GLSI_A Groupe 1
+Ben Saleh,JEUDI,10h00-11h30,info A4,Techniques d'Infographie,LCS2-GLSI_A Groupe 1
+Aloui,VENDREDI,10h00-11h30,A5,Anglais 3,LCS2-GLSI_A Groupe 1
+Boukthir,SAMEDI,10h00-11h30,Amphi A,Framework de développement,LCS2-GLSI_A Groupe 1
+Hadj M'tir,LUNDI,11h40-13h10,A6,Théorie des languages,LCS2-GLSI_A Groupe 1
+Nairi,MARDI,11h40-13h10,Info A2,Programmation Java,LCS2-GLSI_A Groupe 1
+Ammar,SAMEDI,11h40-13h10,Amphi A,Techniques d'Infographie,LCS2-GLSI_A Groupe 1
+Nairi,LUNDI,13h20-14h50,Info A2,Programmation Java,LCS2-GLSI_A Groupe 1
+Abid,MARDI,13h20-14h50,A2,Probabilité et statistique,LCS2-GLSI_A Groupe 1
+Maaloul,MARDI,13h20-14h50,info A3,Services des Réseaux,LCS2-GLSI_A Groupe 1
+Chahdoura,JEUDI,13h20-14h50,Amphi A,Graphes et optimisation,LCS2-GLSI_A Groupe 1
+Fdhila,VENDREDI,13h20-14h50,Amphi A,Conception des SI,LCS2-GLSI_A Groupe 1
+Maatoug,LUNDI,15h00-16h30,info A3,Probabilité et statistique,LCS2-GLSI_A Groupe 1
+Abdelhafidh,MARDI,15h00-16h30,Amphi A,Programmation Java,LCS2-GLSI_A Groupe 1
+Fdhila,JEUDI,15h00-16h30,A2,Conception des SI,LCS2-GLSI_A Groupe 1
+Oimezzine,LUNDI,16h45-18h15,info A4,Ingénierie des BD,LCS2-GLSI_A Groupe 1
+Jrad,VENDREDI,16h45-18h15,Amphi A,Gestion d'entreprise,LCS2-GLSI_A Groupe 1
+Abid,LUNDI,08h15-09h45,Grand Amphi,Probabilité et statistique,LCS2-GLSI_A Groupe 2
+Maaloul,MARDI,08h15-09h45,Amphi A,Services des réseaux,LCS2-GLSI_A Groupe 2
+Chahdoura,MERCREDI,08h15-09h45,A6,Graphes et optimisation,LCS2-GLSI_A Groupe 2
+Ben Saleh,JEUDI,08h15-09h45,info A4,Techniques d'Infographie,LCS2-GLSI_A Groupe 2
+Aloulou,LUNDI,10h00-11h30,Amphi A,Ingénierie des BD,LCS2-GLSI_A Groupe 2
+Hadj M'tir,MARDI,10h00-11h30,Grand Amphi,Théorie des langages,LCS2-GLSI_A Groupe 2
+Elayeb,JEUDI,10h00-11h30,info A1,Framework de développement,LCS2-GLSI_A Groupe 2
+Aloui,VENDREDI,10h00-11h30,A5,Anglais 3,LCS2-GLSI_A Groupe 2
+Boukthir,SAMEDI,10h00-11h30,Amphi A,Framework de développement,LCS2-GLSI_A Groupe 2
+Hadj M'tir,LUNDI,11h40-13h10,A6,Théorie des languages,LCS2-GLSI_A Groupe 2
+Maatoug,MARDI,11h40-13h10,info A4,Probabilité et statistique,LCS2-GLSI_A Groupe 2
+Oimezzine,JEUDI,11h40-13h10,info A4,Ingénierie des BD,LCS2-GLSI_A Groupe 2
+Maaloul,VENDREDI,11h40-13h10,Info A2,Services des Réseaux,LCS2-GLSI_A Groupe 2
+Ammar,SAMEDI,11h40-13h10,Amphi A,Techniques d'Infographie,LCS2-GLSI_A Groupe 2
+Abid,MARDI,13h20-14h50,A2,Probabilité et statistique,LCS2-GLSI_A Groupe 2
+Chahdoura,JEUDI,13h20-14h50,Amphi A,Graphes et optimisation,LCS2-GLSI_A Groupe 2
+Fdhila,VENDREDI,13h20-14h50,Amphi A,Conception des SI,LCS2-GLSI_A Groupe 2
+Nairi,LUNDI,15h00-16h30,Info A2,Programmation Java,LCS2-GLSI_A Groupe 2
+Abdelhafidh,MARDI,15h00-16h30,Amphi A,Programmation Java,LCS2-GLSI_A Groupe 2
+Fdhila,JEUDI,15h00-16h30,A2,Conception des SI,LCS2-GLSI_A Groupe 2
+Nairi,LUNDI,16h45-18h15,Info A2,Programmation Java,LCS2-GLSI_A Groupe 2
+Jrad,VENDREDI,16h45-18h15,Amphi A,Gestion d'entreprise,LCS2-GLSI_A Groupe 2
+Abid,LUNDI,08h15-09h45,Grand Amphi,Probabilité et statistique,LCS2-GLSI_B Groupe 1
+Maaloul,MARDI,08h15-09h45,Amphi A,Services des réseaux,LCS2-GLSI_B Groupe 1
+Chahdoura,JEUDI,08h15-09h45,B3,Graphes et optimisation,LCS2-GLSI_B Groupe 1
+Fdhila,VENDREDI,08h15-09h45,A6,Conception des SI,LCS2-GLSI_B Groupe 1
+Aloulou,LUNDI,10h00-11h30,Amphi A,Ingénierie des BD,LCS2-GLSI_B Groupe 1
+Hadj M'tir,MARDI,10h00-11h30,Grand Amphi,Théorie des langages,LCS2-GLSI_B Groupe 1
+Ammar,JEUDI,10h00-11h30,salle Internet,Techniques d'Infographie,LCS2-GLSI_B Groupe 1
+Maaloul,VENDREDI,10h00-11h30,info B4,Services des Réseaux,LCS2-GLSI_B Groupe 1
+Boukthir,SAMEDI,10h00-11h30,Amphi A,Framework de développement,LCS2-GLSI_B Groupe 1
+Nairi,LUNDI,11h40-13h10,Info A2,Programmation Java,LCS2-GLSI_B Groupe 1
+Hadj M'tir,MARDI,11h40-13h10,A2,Théorie des languages,LCS2-GLSI_B Groupe 1
+Elayeb,VENDREDI,11h40-13h10,Labo Lang 2,Framework de développement,LCS2-GLSI_B Groupe 1
+Ammar,SAMEDI,11h40-13h10,Amphi A,Techniques d'Infographie,LCS2-GLSI_B Groupe 1
+Abid,LUNDI,13h20-14h50,C1,Probabilité et statistique,LCS2-GLSI_B Groupe 1
+Nairi,MARDI,13h20-14h50,info B2,Programmation Java,LCS2-GLSI_B Groupe 1
+Chahdoura,JEUDI,13h20-14h50,Amphi A,Graphes et optimisation,LCS2-GLSI_B Groupe 1
+Fdhila,VENDREDI,13h20-14h50,Amphi A,Conception des SI,LCS2-GLSI_B Groupe 1
+Aloui,LUNDI,15h00-16h30,A5,Anglais 3,LCS2-GLSI_B Groupe 1
+Abdelhafidh,MARDI,15h00-16h30,Amphi A,Programmation Java,LCS2-GLSI_B Groupe 1
+Oimezzine,JEUDI,15h00-16h30,info B4,Ingénierie des BD,LCS2-GLSI_B Groupe 1
+Maatoug,LUNDI,16h45-18h15,salle Internet,Probabilité et statistique,LCS2-GLSI_B Groupe 1
+Jrad,VENDREDI,16h45-18h15,Amphi A,Gestion d'entreprise,LCS2-GLSI_B Groupe 1
+Abid,LUNDI,08h15-09h45,Grand Amphi,Probabilité et statistique,LCS2-GLSI_B Groupe 2
+Maaloul,MARDI,08h15-09h45,Amphi A,Services des réseaux,LCS2-GLSI_B Groupe 2
+Nairi,MERCREDI,08h15-09h45,Info C3,Programmation Java,LCS2-GLSI_B Groupe 2
+Chahdoura,JEUDI,08h15-09h45,B3,Graphes et optimisation,LCS2-GLSI_B Groupe 2
+Fdhila,VENDREDI,08h15-09h45,A6,Conception des SI,LCS2-GLSI_B Groupe 2
+Aloulou,LUNDI,10h00-11h30,Amphi A,Ingénierie des BD,LCS2-GLSI_B Groupe 2
+Hadj M'tir,MARDI,10h00-11h30,Grand Amphi,Théorie des langages,LCS2-GLSI_B Groupe 2
+Boukthir,SAMEDI,10h00-11h30,Amphi A,Framework de développement,LCS2-GLSI_B Groupe 2
+Hadj M'tir,MARDI,11h40-13h10,A2,Théorie des languages,LCS2-GLSI_B Groupe 2
+Nairi,MERCREDI,11h40-13h10,info B4,Programmation Java,LCS2-GLSI_B Groupe 2
+Maaloul,VENDREDI,11h40-13h10,info B4,Services des Réseaux,LCS2-GLSI_B Groupe 2
+Ammar,SAMEDI,11h40-13h10,Amphi A,Techniques d'Infographie,LCS2-GLSI_B Groupe 2
+Abid,LUNDI,13h20-14h50,C1,Probabilité et statistique,LCS2-GLSI_B Groupe 2
+Elayeb,MARDI,13h20-14h50,info A4,Framework de développement,LCS2-GLSI_B Groupe 2
+Chahdoura,JEUDI,13h20-14h50,Amphi A,Graphes et optimisation,LCS2-GLSI_B Groupe 2
+Fdhila,VENDREDI,13h20-14h50,Amphi A,Conception des SI,LCS2-GLSI_B Groupe 2
+Aloui,LUNDI,15h00-16h30,A5,Anglais 3,LCS2-GLSI_B Groupe 2
+Abdelhafidh,MARDI,15h00-16h30,Amphi A,Programmation Java,LCS2-GLSI_B Groupe 2
+Ammar,JEUDI,15h00-16h30,salle Internet,Techniques d'Infographie,LCS2-GLSI_B Groupe 2
+Maatoug,LUNDI,16h45-18h15,salle Internet,Probabilité et statistique,LCS2-GLSI_B Groupe 2
+Oimezzine,JEUDI,16h45-18h15,info B4,Ingénierie des BD,LCS2-GLSI_B Groupe 2
+Jrad,VENDREDI,16h45-18h15,Amphi A,Gestion d'entreprise,LCS2-GLSI_B Groupe 2
+Abid,LUNDI,08h15-09h45,Grand Amphi,Probabilité et statistique,LCS2-GLSI_C Groupe 1
+Maaloul,MARDI,08h15-09h45,Amphi A,Services des réseaux,LCS2-GLSI_C Groupe 1
+Oimezzine,JEUDI,08h15-09h45,info B4,Ingénierie des BD,LCS2-GLSI_C Groupe 1
+Aloulou,LUNDI,10h00-11h30,Amphi A,Ingénierie des BD,LCS2-GLSI_C Groupe 1
+Hadj M'tir,MARDI,10h00-11h30,Grand Amphi,Théorie des langages,LCS2-GLSI_C Groupe 1
+Chahdoura,MERCREDI,10h00-11h30,B3,Graphes et optimisation,LCS2-GLSI_C Groupe 1
+Fdhila,JEUDI,10h00-11h30,A2,Conception des SI,LCS2-GLSI_C Groupe 1
+Boukthir,SAMEDI,10h00-11h30,Amphi A,Framework de développement,LCS2-GLSI_C Groupe 1
+Elayeb,MARDI,11h40-13h10,info C2,Framework de développement,LCS2-GLSI_C Groupe 1
+Ammar,JEUDI,11h40-13h10,salle Internet,Techniques d'Infographie,LCS2-GLSI_C Groupe 1
+Aloui,VENDREDI,11h40-13h10,A5,Anglais 3,LCS2-GLSI_C Groupe 1
+Ammar,SAMEDI,11h40-13h10,Amphi A,Techniques d'Infographie,LCS2-GLSI_C Groupe 1
+Hadj M'tir,LUNDI,13h20-14h50,A6,Théorie des languages,LCS2-GLSI_C Groupe 1
+Maaloul,MARDI,13h20-14h50,info A3,Services des Réseaux,LCS2-GLSI_C Groupe 1
+Abid,MARDI,13h20-14h50,A2,Probabilité et statistique,LCS2-GLSI_C Groupe 1
+Chahdoura,JEUDI,13h20-14h50,Amphi A,Graphes et optimisation,LCS2-GLSI_C Groupe 1
+Fdhila,VENDREDI,13h20-14h50,Amphi A,Conception des SI,LCS2-GLSI_C Groupe 1
+Maatoug,LUNDI,15h00-16h30,info A3,Probabilité et statistique,LCS2-GLSI_C Groupe 1
+Abdelhafidh,MARDI,15h00-16h30,Amphi A,Programmation Java,LCS2-GLSI_C Groupe 1
+Zaouali,VENDREDI,15h00-16h30,Info C3,Programmation Java,LCS2-GLSI_C Groupe 1
+Zaouali,JEUDI,16h45-18h15,Info A2,Programmation Java,LCS2-GLSI_C Groupe 1
+Jrad,VENDREDI,16h45-18h15,Amphi A,Gestion d'entreprise,LCS2-GLSI_C Groupe 1
+Abid,LUNDI,08h15-09h45,Grand Amphi,Probabilité et statistique,LCS2-GLSI_C Groupe 2
+Maaloul,MARDI,08h15-09h45,Amphi A,Services des réseaux,LCS2-GLSI_C Groupe 2
+Ammar,JEUDI,08h15-09h45,salle Internet,Techniques d'Infographie,LCS2-GLSI_C Groupe 2
+Aloulou,LUNDI,10h00-11h30,Amphi A,Ingénierie des BD,LCS2-GLSI_C Groupe 2
+Hadj M'tir,MARDI,10h00-11h30,Grand Amphi,Théorie des langages,LCS2-GLSI_C Groupe 2
+Chahdoura,MERCREDI,10h00-11h30,B3,Graphes et optimisation,LCS2-GLSI_C Groupe 2
+Fdhila,JEUDI,10h00-11h30,A2,Conception des SI,LCS2-GLSI_C Groupe 2
+Maaloul,VENDREDI,10h00-11h30,info B4,Services des Réseaux,LCS2-GLSI_C Groupe 2
+Boukthir,SAMEDI,10h00-11h30,Amphi A,Framework de développement,LCS2-GLSI_C Groupe 2
+Oimezzine,LUNDI,11h40-13h10,info B2,Ingénierie des BD,LCS2-GLSI_C Groupe 2
+Elayeb,JEUDI,11h40-13h10,info D1,Framework de développement,LCS2-GLSI_C Groupe 2
+Aloui,VENDREDI,11h40-13h10,A5,Anglais 3,LCS2-GLSI_C Groupe 2
+Ammar,SAMEDI,11h40-13h10,Amphi A,Techniques d'Infographie,LCS2-GLSI_C Groupe 2
+Hadj M'tir,LUNDI,13h20-14h50,A6,Théorie des languages,LCS2-GLSI_C Groupe 2
+Maatoug,MARDI,13h20-14h50,info B3,Probabilité et statistique,LCS2-GLSI_C Groupe 2
+Abid,MARDI,13h20-14h50,A2,Probabilité et statistique,LCS2-GLSI_C Groupe 2
+Chahdoura,JEUDI,13h20-14h50,Amphi A,Graphes et optimisation,LCS2-GLSI_C Groupe 2
+Fdhila,VENDREDI,13h20-14h50,Amphi A,Conception des SI,LCS2-GLSI_C Groupe 2
+Abdelhafidh,MARDI,15h00-16h30,Amphi A,Programmation Java,LCS2-GLSI_C Groupe 2
+Zaouali,JEUDI,15h00-16h30,Info A2,Programmation Java,LCS2-GLSI_C Groupe 2
+Zaouali,MARDI,16h45-18h15,info D1,Programmation Java,LCS2-GLSI_C Groupe 2
+Jrad,VENDREDI,16h45-18h15,Amphi A,Gestion d'entreprise,LCS2-GLSI_C Groupe 2
+Abid,LUNDI,08h15-09h45,Grand Amphi,Probabilité et statistique,LCS2-GLSI_D Groupe 1
+Maaloul,MARDI,08h15-09h45,Amphi A,Services des réseaux,LCS2-GLSI_D Groupe 1
+Chahdoura,JEUDI,08h15-09h45,B3,Graphes et optimisation,LCS2-GLSI_D Groupe 1
+Ben Saleh,VENDREDI,08h15-09h45,info B3,Techniques d'Infographie,LCS2-GLSI_D Groupe 1
+Aloulou,LUNDI,10h00-11h30,Amphi A,Ingénierie des BD,LCS2-GLSI_D Groupe 1
+Hadj M'tir,MARDI,10h00-11h30,Grand Amphi,Théorie des langages,LCS2-GLSI_D Groupe 1
+Fdhila,VENDREDI,10h00-11h30,A6,Conception des SI,LCS2-GLSI_D Groupe 1
+Boukthir,SAMEDI,10h00-11h30,Amphi A,Framework de développement,LCS2-GLSI_D Groupe 1
+Hadj M'tir,LUNDI,11h40-13h10,A6,Théorie des languages,LCS2-GLSI_D Groupe 1
+Maaloul,MARDI,11h40-13h10,info B3,Services des Réseaux,LCS2-GLSI_D Groupe 1
+Nairi,JEUDI,11h40-13h10,info B2,Programmation Java,LCS2-GLSI_D Groupe 1
+Ammar,SAMEDI,11h40-13h10,Amphi A,Techniques d'Infographie,LCS2-GLSI_D Groupe 1
+Abid,LUNDI,13h20-14h50,C1,Probabilité et statistique,LCS2-GLSI_D Groupe 1
+Maatoug,MARDI,13h20-14h50,info B3,Probabilité et statistique,LCS2-GLSI_D Groupe 1
+Chahdoura,JEUDI,13h20-14h50,Amphi A,Graphes et optimisation,LCS2-GLSI_D Groupe 1
+Fdhila,VENDREDI,13h20-14h50,Amphi A,Conception des SI,LCS2-GLSI_D Groupe 1
+Aloulou,LUNDI,15h00-16h30,info C2,Ingénierie des BD,LCS2-GLSI_D Groupe 1
+Abdelhafidh,MARDI,15h00-16h30,Amphi A,Programmation Java,LCS2-GLSI_D Groupe 1
+Nairi,JEUDI,15h00-16h30,info B2,Programmation Java,LCS2-GLSI_D Groupe 1
+Aloui,LUNDI,16h45-18h15,A5,Anglais 3,LCS2-GLSI_D Groupe 1
+Elayeb,MARDI,16h45-18h15,Info A2,Framework de développement,LCS2-GLSI_D Groupe 1
+Jrad,VENDREDI,16h45-18h15,Amphi A,Gestion d'entreprise,LCS2-GLSI_D Groupe 1
+Abid,LUNDI,08h15-09h45,Grand Amphi,Probabilité et statistique,LCS2-GLSI_D Groupe 2
+Maaloul,MARDI,08h15-09h45,Amphi A,Services des réseaux,LCS2-GLSI_D Groupe 2
+Chahdoura,JEUDI,08h15-09h45,B3,Graphes et optimisation,LCS2-GLSI_D Groupe 2
+Elayeb,VENDREDI,08h15-09h45,Info A2,Framework de développement,LCS2-GLSI_D Groupe 2
+Aloulou,LUNDI,10h00-11h30,Amphi A,Ingénierie des BD,LCS2-GLSI_D Groupe 2
+Hadj M'tir,MARDI,10h00-11h30,Grand Amphi,Théorie des langages,LCS2-GLSI_D Groupe 2
+Nairi,JEUDI,10h00-11h30,Labo Lang 1,Programmation Java,LCS2-GLSI_D Groupe 2
+Fdhila,VENDREDI,10h00-11h30,A6,Conception des SI,LCS2-GLSI_D Groupe 2
+Boukthir,SAMEDI,10h00-11h30,Amphi A,Framework de développement,LCS2-GLSI_D Groupe 2
+Hadj M'tir,LUNDI,11h40-13h10,A6,Théorie des languages,LCS2-GLSI_D Groupe 2
+Maatoug,MARDI,11h40-13h10,salle Internet,Probabilité et statistique,LCS2-GLSI_D Groupe 2
+Maaloul,MARDI,11h40-13h10,info B3,Services des Réseaux,LCS2-GLSI_D Groupe 2
+Ben Saleh,VENDREDI,11h40-13h10,info A1,Techniques d'Infographie,LCS2-GLSI_D Groupe 2
+Ammar,SAMEDI,11h40-13h10,Amphi A,Techniques d'Infographie,LCS2-GLSI_D Groupe 2
+Abid,LUNDI,13h20-14h50,C1,Probabilité et statistique,LCS2-GLSI_D Groupe 2
+Chahdoura,JEUDI,13h20-14h50,Amphi A,Graphes et optimisation,LCS2-GLSI_D Groupe 2
+Fdhila,VENDREDI,13h20-14h50,Amphi A,Conception des SI,LCS2-GLSI_D Groupe 2
+Abdelhafidh,MARDI,15h00-16h30,Amphi A,Programmation Java,LCS2-GLSI_D Groupe 2
+Aloulou,JEUDI,15h00-16h30,Info C4,Ingénierie des BD,LCS2-GLSI_D Groupe 2
+Aloui,LUNDI,16h45-18h15,A5,Anglais 3,LCS2-GLSI_D Groupe 2
+Nairi,MARDI,16h45-18h15,info B2,Programmation Java,LCS2-GLSI_D Groupe 2
+Jrad,VENDREDI,16h45-18h15,Amphi A,Gestion d'entreprise,LCS2-GLSI_D Groupe 2
+Bannour,LUNDI,08h15-09h45,info B1,IoT:Appli et Plates Formes,LCS3-GLSI_A Groupe 1
+Aloulou,JEUDI,08h15-09h45,Amphi C,Archi SOA et WebService,LCS3-GLSI_A Groupe 1
+Bayoudhi,VENDREDI,08h15-09h45,Amphi A,Dév d'applications réparties,LCS3-GLSI_A Groupe 1
+Khenissi,SAMEDI,08h15-09h45,info A1,Machine Learning,LCS3-GLSI_A Groupe 1
+Ghammem,LUNDI,10h00-11h30,info C2,Virtualisation et Cloud,LCS3-GLSI_A Groupe 1
+Ben Hassine,MARDI,10h00-11h30,Amphi C,Sécurité informatique,LCS3-GLSI_A Groupe 1
+Abbassi,MERCREDI,10h00-11h30,Amphi A,Analyse des données Lang R,LCS3-GLSI_A Groupe 1
+Ben Aycha,JEUDI,10h00-11h30,Amphi C,Framework et techno Big Data,LCS3-GLSI_A Groupe 1
+Fredj,VENDREDI,10h00-11h30,Salle Accée lib,Archi SOA et WebService,LCS3-GLSI_A Groupe 1
+Abbassi,LUNDI,11h40-13h10,info A3,Analyse des données Lang R,LCS3-GLSI_A Groupe 1
+Ben Daoud,MARDI,11h40-13h10,Amphi C,Virtualisation et Cloud,LCS3-GLSI_A Groupe 1
+Sidhom,JEUDI,11h40-13h10,Amphi C,Machine Learning,LCS3-GLSI_A Groupe 1
+Sadak,VENDREDI,11h40-13h10,salle Internet,Sécurité informatique,LCS3-GLSI_A Groupe 1
+Bannour,MARDI,13h20-14h50,Amphi C,IoT:Appli et Plates formes,LCS3-GLSI_A Groupe 1
+Waderni,MARDI,13h20-14h50,Amphi B,Développement Mobile,LCS3-GLSI_A Groupe 1
+Zidi,JEUDI,13h20-14h50,Grand Amphi,Entreprenariat,LCS3-GLSI_A Groupe 1
+El grayaa,VENDREDI,13h20-14h50,info B2,Dév d'application répartie,LCS3-GLSI_A Groupe 1
+Mehri,LUNDI,15h00-16h30,A2,Anglais 5,LCS3-GLSI_A Groupe 1
+Jrad,JEUDI,15h00-16h30,Amphi A,Prép à l'env. Professionnel,LCS3-GLSI_A Groupe 1
+Jrad,JEUDI,15h00-16h30,A7,Prép Environ Professionnel,LCS3-GLSI_A Groupe 1
+Ben Aycha,VENDREDI,15h00-16h30,info B3,Framework et tech Big Data,LCS3-GLSI_A Groupe 1
+Waderni,MARDI,16h45-18h15,Salle Accée lib,Développement Mobile,LCS3-GLSI_A Groupe 1
+El grayaa,MERCREDI,08h15-09h45,info A4,Dév d'application répartie,LCS3-GLSI_A Groupe 2
+Aloulou,JEUDI,08h15-09h45,Amphi C,Archi SOA et WebService,LCS3-GLSI_A Groupe 2
+Bayoudhi,VENDREDI,08h15-09h45,Amphi A,Dév d'applications réparties,LCS3-GLSI_A Groupe 2
+Ben Hassine,MARDI,10h00-11h30,Amphi C,Sécurité informatique,LCS3-GLSI_A Groupe 2
+Abbassi,MERCREDI,10h00-11h30,Amphi A,Analyse des données Lang R,LCS3-GLSI_A Groupe 2
+Ben Aycha,JEUDI,10h00-11h30,Amphi C,Framework et techno Big Data,LCS3-GLSI_A Groupe 2
+Fredj,LUNDI,11h40-13h10,info A4,Archi SOA et WebService,LCS3-GLSI_A Groupe 2
+Ben Daoud,MARDI,11h40-13h10,Amphi C,Virtualisation et Cloud,LCS3-GLSI_A Groupe 2
+Sidhom,JEUDI,11h40-13h10,Amphi C,Machine Learning,LCS3-GLSI_A Groupe 2
+Sadak,VENDREDI,11h40-13h10,salle Internet,Sécurité informatique,LCS3-GLSI_A Groupe 2
+Abbassi,LUNDI,13h20-14h50,info A3,Analyse des données Lang R,LCS3-GLSI_A Groupe 2
+Bannour,MARDI,13h20-14h50,Amphi C,IoT:Appli et Plates formes,LCS3-GLSI_A Groupe 2
+Waderni,MARDI,13h20-14h50,Amphi B,Développement Mobile,LCS3-GLSI_A Groupe 2
+Zidi,JEUDI,13h20-14h50,Grand Amphi,Entreprenariat,LCS3-GLSI_A Groupe 2
+Ben Aycha,VENDREDI,13h20-14h50,info B3,Framework et tech Big Data,LCS3-GLSI_A Groupe 2
+Mehri,LUNDI,15h00-16h30,A2,Anglais 5,LCS3-GLSI_A Groupe 2
+Bannour,MARDI,15h00-16h30,info B2,IoT:Appli et Plates Formes,LCS3-GLSI_A Groupe 2
+Jrad,JEUDI,15h00-16h30,Amphi A,Prép à l'env. Professionnel,LCS3-GLSI_A Groupe 2
+Jrad,JEUDI,15h00-16h30,A7,Prép Environ Professionnel,LCS3-GLSI_A Groupe 2
+Khenissi,VENDREDI,15h00-16h30,info A3,Machine Learning,LCS3-GLSI_A Groupe 2
+Waderni,LUNDI,16h45-18h15,Info C3,Développement Mobile,LCS3-GLSI_A Groupe 2
+Ghammem,MARDI,16h45-18h15,info C1,Virtualisation et Cloud,LCS3-GLSI_A Groupe 2
+Waderni,LUNDI,08h15-09h45,info D1,Développement Mobile,LCS3-GLSI_B Groupe 1
+Aloulou,JEUDI,08h15-09h45,Amphi C,Archi SOA et WebService,LCS3-GLSI_B Groupe 1
+Bayoudhi,VENDREDI,08h15-09h45,Amphi A,Dév d'applications réparties,LCS3-GLSI_B Groupe 1
+Saafi,LUNDI,10h00-11h30,info B3,Framework et tech Big Data,LCS3-GLSI_B Groupe 1
+Ben Hassine,MARDI,10h00-11h30,Amphi C,Sécurité informatique,LCS3-GLSI_B Groupe 1
+Abbassi,MERCREDI,10h00-11h30,Amphi A,Analyse des données Lang R,LCS3-GLSI_B Groupe 1
+Ben Aycha,JEUDI,10h00-11h30,Amphi C,Framework et techno Big Data,LCS3-GLSI_B Groupe 1
+El grayaa,VENDREDI,10h00-11h30,info B3,Dév d'application répartie,LCS3-GLSI_B Groupe 1
+Bannour,LUNDI,11h40-13h10,info C1,IoT:Appli et Plates Formes,LCS3-GLSI_B Groupe 1
+Ben Daoud,MARDI,11h40-13h10,Amphi C,Virtualisation et Cloud,LCS3-GLSI_B Groupe 1
+Abbassi,MERCREDI,11h40-13h10,info A3,Analyse des données Lang R,LCS3-GLSI_B Groupe 1
+Sidhom,JEUDI,11h40-13h10,Amphi C,Machine Learning,LCS3-GLSI_B Groupe 1
+El ahmer,LUNDI,13h20-14h50,info D1,Machine Learning,LCS3-GLSI_B Groupe 1
+Bannour,MARDI,13h20-14h50,Amphi C,IoT:Appli et Plates formes,LCS3-GLSI_B Groupe 1
+Waderni,MARDI,13h20-14h50,Amphi B,Développement Mobile,LCS3-GLSI_B Groupe 1
+Zidi,JEUDI,13h20-14h50,Grand Amphi,Entreprenariat,LCS3-GLSI_B Groupe 1
+Jrad,VENDREDI,13h20-14h50,A6,Prép Environ Professionnel,LCS3-GLSI_B Groupe 1
+Sadak,VENDREDI,13h20-14h50,salle Internet,Sécurité informatique,LCS3-GLSI_B Groupe 1
+Fredj,LUNDI,15h00-16h30,info C1,Archi SOA et WebService,LCS3-GLSI_B Groupe 1
+Ghammem,MARDI,15h00-16h30,info C1,Virtualisation et Cloud,LCS3-GLSI_B Groupe 1
+Jrad,JEUDI,15h00-16h30,Amphi A,Prép à l'env. Professionnel,LCS3-GLSI_B Groupe 1
+Mehri,VENDREDI,16h45-18h15,A2,Anglais 5,LCS3-GLSI_B Groupe 1
+Fredj,LUNDI,08h15-09h45,info A4,Archi SOA et WebService,LCS3-GLSI_B Groupe 2
+Abbassi,MERCREDI,08h15-09h45,info A3,Analyse des données Lang R,LCS3-GLSI_B Groupe 2
+Aloulou,JEUDI,08h15-09h45,Amphi C,Archi SOA et WebService,LCS3-GLSI_B Groupe 2
+Bayoudhi,VENDREDI,08h15-09h45,Amphi A,Dév d'applications réparties,LCS3-GLSI_B Groupe 2
+Ben Hassine,MARDI,10h00-11h30,Amphi C,Sécurité informatique,LCS3-GLSI_B Groupe 2
+Abbassi,MERCREDI,10h00-11h30,Amphi A,Analyse des données Lang R,LCS3-GLSI_B Groupe 2
+Ben Aycha,JEUDI,10h00-11h30,Amphi C,Framework et techno Big Data,LCS3-GLSI_B Groupe 2
+Waderni,LUNDI,11h40-13h10,Info C3,Développement Mobile,LCS3-GLSI_B Groupe 2
+Ben Daoud,MARDI,11h40-13h10,Amphi C,Virtualisation et Cloud,LCS3-GLSI_B Groupe 2
+El ahmer,MERCREDI,11h40-13h10,info A1,Machine Learning,LCS3-GLSI_B Groupe 2
+Sidhom,JEUDI,11h40-13h10,Amphi C,Machine Learning,LCS3-GLSI_B Groupe 2
+El grayaa,VENDREDI,11h40-13h10,info B3,Dév d'application répartie,LCS3-GLSI_B Groupe 2
+Ghammem,LUNDI,13h20-14h50,info C2,Virtualisation et Cloud,LCS3-GLSI_B Groupe 2
+Bannour,MARDI,13h20-14h50,Amphi C,IoT:Appli et Plates formes,LCS3-GLSI_B Groupe 2
+Waderni,MARDI,13h20-14h50,Amphi B,Développement Mobile,LCS3-GLSI_B Groupe 2
+Zidi,JEUDI,13h20-14h50,Grand Amphi,Entreprenariat,LCS3-GLSI_B Groupe 2
+Jrad,VENDREDI,13h20-14h50,A6,Prép Environ Professionnel,LCS3-GLSI_B Groupe 2
+Bannour,LUNDI,15h00-16h30,salle Internet,IoT:Appli et Plates Formes,LCS3-GLSI_B Groupe 2
+Jrad,JEUDI,15h00-16h30,Amphi A,Prép à l'env. Professionnel,LCS3-GLSI_B Groupe 2
+Sadak,VENDREDI,15h00-16h30,salle Internet,Sécurité informatique,LCS3-GLSI_B Groupe 2
+Saafi,LUNDI,16h45-18h15,info B3,Framework et tech Big Data,LCS3-GLSI_B Groupe 2
+Mehri,VENDREDI,16h45-18h15,A2,Anglais 5,LCS3-GLSI_B Groupe 2
+Bannour,MARDI,08h15-09h45,info C1,IoT:Appli et Plates Formes,LCS3-GLSI_C Groupe 1
+El ahmer,MERCREDI,08h15-09h45,info A1,Machine Learning,LCS3-GLSI_C Groupe 1
+Aloulou,JEUDI,08h15-09h45,Amphi C,Archi SOA et WebService,LCS3-GLSI_C Groupe 1
+Bayoudhi,VENDREDI,08h15-09h45,Amphi A,Dév d'applications réparties,LCS3-GLSI_C Groupe 1
+Fredj,LUNDI,10h00-11h30,info A4,Archi SOA et WebService,LCS3-GLSI_C Groupe 1
+Ben Hassine,MARDI,10h00-11h30,Amphi C,Sécurité informatique,LCS3-GLSI_C Groupe 1
+Abbassi,MERCREDI,10h00-11h30,Amphi A,Analyse des données Lang R,LCS3-GLSI_C Groupe 1
+Ben Aycha,JEUDI,10h00-11h30,Amphi C,Framework et techno Big Data,LCS3-GLSI_C Groupe 1
+Sadak,VENDREDI,10h00-11h30,salle Internet,Sécurité informatique,LCS3-GLSI_C Groupe 1
+Abbassi,SAMEDI,10h00-11h30,info B4,Analyse des données Lang R,LCS3-GLSI_C Groupe 1
+Saafi,LUNDI,11h40-13h10,info B3,Framework et tech Big Data,LCS3-GLSI_C Groupe 1
+Ben Daoud,MARDI,11h40-13h10,Amphi C,Virtualisation et Cloud,LCS3-GLSI_C Groupe 1
+Sidhom,JEUDI,11h40-13h10,Amphi C,Machine Learning,LCS3-GLSI_C Groupe 1
+Jrad,VENDREDI,11h40-13h10,A6,Prép Environ Professionnel,LCS3-GLSI_C Groupe 1
+El grayaa,SAMEDI,11h40-13h10,info A4,Dév d'application répartie,LCS3-GLSI_C Groupe 1
+Waderni,LUNDI,13h20-14h50,Info C3,Développement Mobile,LCS3-GLSI_C Groupe 1
+Bannour,MARDI,13h20-14h50,Amphi C,IoT:Appli et Plates formes,LCS3-GLSI_C Groupe 1
+Waderni,MARDI,13h20-14h50,Amphi B,Développement Mobile,LCS3-GLSI_C Groupe 1
+Zidi,JEUDI,13h20-14h50,Grand Amphi,Entreprenariat,LCS3-GLSI_C Groupe 1
+Ghammem,VENDREDI,13h20-14h50,info A4,Virtualisation et Cloud,LCS3-GLSI_C Groupe 1
+Jrad,JEUDI,15h00-16h30,Amphi A,Prép à l'env. Professionnel,LCS3-GLSI_C Groupe 1
+Mehri,LUNDI,16h45-18h15,A2,Anglais 5,LCS3-GLSI_C Groupe 1
+Saafi,LUNDI,08h15-09h45,info B3,Framework et tech Big Data,LCS3-GLSI_C Groupe 2
+Waderni,MARDI,08h15-09h45,Info C4,Développement Mobile,LCS3-GLSI_C Groupe 2
+Aloulou,JEUDI,08h15-09h45,Amphi C,Archi SOA et WebService,LCS3-GLSI_C Groupe 2
+Bayoudhi,VENDREDI,08h15-09h45,Amphi A,Dév d'applications réparties,LCS3-GLSI_C Groupe 2
+Abbassi,SAMEDI,08h15-09h45,info B4,Analyse des données Lang R,LCS3-GLSI_C Groupe 2
+El ahmer,LUNDI,10h00-11h30,Info C3,Machine Learning,LCS3-GLSI_C Groupe 2
+Ben Hassine,MARDI,10h00-11h30,Amphi C,Sécurité informatique,LCS3-GLSI_C Groupe 2
+Abbassi,MERCREDI,10h00-11h30,Amphi A,Analyse des données Lang R,LCS3-GLSI_C Groupe 2
+Ben Aycha,JEUDI,10h00-11h30,Amphi C,Framework et techno Big Data,LCS3-GLSI_C Groupe 2
+El grayaa,SAMEDI,10h00-11h30,info A4,Dév d'application répartie,LCS3-GLSI_C Groupe 2
+Ben Daoud,MARDI,11h40-13h10,Amphi C,Virtualisation et Cloud,LCS3-GLSI_C Groupe 2
+Sidhom,JEUDI,11h40-13h10,Amphi C,Machine Learning,LCS3-GLSI_C Groupe 2
+Jrad,VENDREDI,11h40-13h10,A6,Prép Environ Professionnel,LCS3-GLSI_C Groupe 2
+Bannour,LUNDI,13h20-14h50,info C1,IoT:Appli et Plates Formes,LCS3-GLSI_C Groupe 2
+Bannour,MARDI,13h20-14h50,Amphi C,IoT:Appli et Plates formes,LCS3-GLSI_C Groupe 2
+Waderni,MARDI,13h20-14h50,Amphi B,Développement Mobile,LCS3-GLSI_C Groupe 2
+Zidi,JEUDI,13h20-14h50,Grand Amphi,Entreprenariat,LCS3-GLSI_C Groupe 2
+Fredj,VENDREDI,13h20-14h50,Salle Accée lib,Archi SOA et WebService,LCS3-GLSI_C Groupe 2
+Sadak,LUNDI,15h00-16h30,Salle Accée lib,Sécurité informatique,LCS3-GLSI_C Groupe 2
+Jrad,JEUDI,15h00-16h30,Amphi A,Prép à l'env. Professionnel,LCS3-GLSI_C Groupe 2
+Ghammem,VENDREDI,15h00-16h30,info A4,Virtualisation et Cloud,LCS3-GLSI_C Groupe 2
+Mehri,LUNDI,16h45-18h15,A2,Anglais 5,LCS3-GLSI_C Groupe 2
+Abbassi,LUNDI,08h15-09h45,info A3,Analyse des données Lang R,LCS3-GLSI_D Groupe 1
+Aloulou,JEUDI,08h15-09h45,Amphi C,Archi SOA et WebService,LCS3-GLSI_D Groupe 1
+Bayoudhi,VENDREDI,08h15-09h45,Amphi A,Dév d'applications réparties,LCS3-GLSI_D Groupe 1
+El grayaa,SAMEDI,08h15-09h45,info A4,Dév d'application répartie,LCS3-GLSI_D Groupe 1
+Waderni,LUNDI,10h00-11h30,info D1,Développement Mobile,LCS3-GLSI_D Groupe 1
+Ben Hassine,MARDI,10h00-11h30,Amphi C,Sécurité informatique,LCS3-GLSI_D Groupe 1
+Abbassi,MERCREDI,10h00-11h30,Amphi A,Analyse des données Lang R,LCS3-GLSI_D Groupe 1
+Ben Aycha,JEUDI,10h00-11h30,Amphi C,Framework et techno Big Data,LCS3-GLSI_D Groupe 1
+Sadak,VENDREDI,10h00-11h30,salle Internet,Sécurité informatique,LCS3-GLSI_D Groupe 1
+El ahmer,LUNDI,11h40-13h10,info D1,Machine Learning,LCS3-GLSI_D Groupe 1
+Ben Daoud,MARDI,11h40-13h10,Amphi C,Virtualisation et Cloud,LCS3-GLSI_D Groupe 1
+Bannour,MERCREDI,11h40-13h10,info B1,IoT:Appli et Plates Formes,LCS3-GLSI_D Groupe 1
+Sidhom,JEUDI,11h40-13h10,Amphi C,Machine Learning,LCS3-GLSI_D Groupe 1
+Fredj,VENDREDI,11h40-13h10,Salle Accée lib,Archi SOA et WebService,LCS3-GLSI_D Groupe 1
+Saafi,LUNDI,13h20-14h50,info B3,Framework et tech Big Data,LCS3-GLSI_D Groupe 1
+Bannour,MARDI,13h20-14h50,Amphi C,IoT:Appli et Plates formes,LCS3-GLSI_D Groupe 1
+Waderni,MARDI,13h20-14h50,Amphi B,Développement Mobile,LCS3-GLSI_D Groupe 1
+Zidi,JEUDI,13h20-14h50,Grand Amphi,Entreprenariat,LCS3-GLSI_D Groupe 1
+Jrad,VENDREDI,13h20-14h50,A6,Prép Environ Professionnel,LCS3-GLSI_D Groupe 1
+Jrad,JEUDI,15h00-16h30,Amphi A,Prép à l'env. Professionnel,LCS3-GLSI_D Groupe 1
+Ghammem,LUNDI,16h45-18h15,info C2,Virtualisation et Cloud,LCS3-GLSI_D Groupe 1
+Mehri,MARDI,16h45-18h15,A4,Anglais 5,LCS3-GLSI_D Groupe 1
+El ahmer,LUNDI,08h15-09h45,Info C3,Machine Learning,LCS3-GLSI_D Groupe 2
+Bannour,MERCREDI,08h15-09h45,info C1,IoT:Appli et Plates Formes,LCS3-GLSI_D Groupe 2
+Aloulou,JEUDI,08h15-09h45,Amphi C,Archi SOA et WebService,LCS3-GLSI_D Groupe 2
+Bayoudhi,VENDREDI,08h15-09h45,Amphi A,Dév d'applications réparties,LCS3-GLSI_D Groupe 2
+Abbassi,LUNDI,10h00-11h30,info A3,Analyse des données Lang R,LCS3-GLSI_D Groupe 2
+Ben Hassine,MARDI,10h00-11h30,Amphi C,Sécurité informatique,LCS3-GLSI_D Groupe 2
+Abbassi,MERCREDI,10h00-11h30,Amphi A,Analyse des données Lang R,LCS3-GLSI_D Groupe 2
+Ben Aycha,JEUDI,10h00-11h30,Amphi C,Framework et techno Big Data,LCS3-GLSI_D Groupe 2
+Sadak,LUNDI,11h40-13h10,Salle Accée lib,Sécurité informatique,LCS3-GLSI_D Groupe 2
+Ben Daoud,MARDI,11h40-13h10,Amphi C,Virtualisation et Cloud,LCS3-GLSI_D Groupe 2
+El grayaa,MERCREDI,11h40-13h10,info A4,Dév d'application répartie,LCS3-GLSI_D Groupe 2
+Sidhom,JEUDI,11h40-13h10,Amphi C,Machine Learning,LCS3-GLSI_D Groupe 2
+Ghammem,VENDREDI,11h40-13h10,info A4,Virtualisation et Cloud,LCS3-GLSI_D Groupe 2
+Bannour,MARDI,13h20-14h50,Amphi C,IoT:Appli et Plates formes,LCS3-GLSI_D Groupe 2
+Waderni,MARDI,13h20-14h50,Amphi B,Développement Mobile,LCS3-GLSI_D Groupe 2
+Zidi,JEUDI,13h20-14h50,Grand Amphi,Entreprenariat,LCS3-GLSI_D Groupe 2
+Jrad,VENDREDI,13h20-14h50,A6,Prép Environ Professionnel,LCS3-GLSI_D Groupe 2
+Saafi,LUNDI,15h00-16h30,info B3,Framework et tech Big Data,LCS3-GLSI_D Groupe 2
+Waderni,MARDI,15h00-16h30,Salle Accée lib,Développement Mobile,LCS3-GLSI_D Groupe 2
+Jrad,JEUDI,15h00-16h30,Amphi A,Prép à l'env. Professionnel,LCS3-GLSI_D Groupe 2
+Fredj,VENDREDI,15h00-16h30,Salle Accée lib,Archi SOA et WebService,LCS3-GLSI_D Groupe 2
+Mehri,MARDI,16h45-18h15,A4,Anglais 5,LCS3-GLSI_D Groupe 2
+Ghannay,MARDI,08h15-09h45,info C2,Virtualisation Avancée,MP1-EXR
+Achoura,MERCREDI,08h15-09h45,C3,Réseaux & Télécoms,MP1-EXR
+Ghannay,JEUDI,08h15-09h45,Info A2,Adm. serv. rés. sous Win,MP1-EXR
+Barboura,VENDREDI,08h15-09h45,A3,Sécurité Réseaux sans fils,MP1-EXR
+Ben Rhaiem,MARDI,10h00-11h30,info C2,Cryptographie,MP1-EXR
+Belhadj Taher,MERCREDI,10h00-11h30,Info C3,Communication Numérique,MP1-EXR
+Ghannay,JEUDI,10h00-11h30,Info A2,Adm. serv. rés. sous Win,MP1-EXR
+Ben Rhaiem,MARDI,11h40-13h10,info C1,Cryptographie,MP1-EXR
+Achoura,MARDI,11h40-13h10,A2,Réseaux Télécoms,MP1-EXR
+Belhadj Taher,MERCREDI,11h40-13h10,Info C3,Communication Numérique,MP1-EXR
+Sokraf,JEUDI,11h40-13h10,A6,Techniques de communication,MP1-EXR
+Zidi,VENDREDI,11h40-13h10,A3,Culture d'entreprises,MP1-EXR
+Ben Hassine,MARDI,13h20-14h50,Info C4,Fondements de la cyber-séc,MP1-EXR
+Ben Hassine,JEUDI,13h20-14h50,Info C4,sécurité Réseaux sans fils,MP1-EXR
+Barboura,VENDREDI,13h20-14h50,info A1,Fondements de Cybersécurité,MP1-EXR
+Barboura,VENDREDI,13h20-14h50,info A1,Sécurité Réseaux sans fils,MP1-EXR
+Ahmed,LUNDI,15h00-16h30,info A1,Adm. serv. rés. soux Linux,MP1-EXR
+Ghannay,MARDI,15h00-16h30,info C2,Virtualisation Avancée,MP1-EXR
+Ben Rhaiem,MARDI,15h00-16h30,A2,Cryptographie,MP1-EXR
+Mehri,VENDREDI,15h00-16h30,A2,Anglais 1,MP1-EXR
+Ahmed,LUNDI,16h45-18h15,info A1,Adm. Serv. Res. sous linux,MP1-EXR
+Mehri,LUNDI,08h15-09h45,A3,Anglais 3,MP2-EXR
+Achoura,MARDI,08h15-09h45,info A1,Migration vers IP v6,MP2-EXR
+Zaabar,MERCREDI,08h15-09h45,info C2,Audit & plan de la séc res,MP2-EXR
+Marrakchi,JEUDI,08h15-09h45,info C1,Concepts avancées de IA,MP2-EXR
+Zaabar,VENDREDI,08h15-09h45,info B1,Préparation Certif CCNP1,MP2-EXR
+Achoura,LUNDI,10h00-11h30,Info C4,Migration vers IP v6,MP2-EXR
+Ben Hadj Belkacem,MARDI,10h00-11h30,Info C4,Réseaux opérateur & mobilité,MP2-EXR
+Zaabar,MERCREDI,10h00-11h30,Info C4,Audit & plan de la séc res,MP2-EXR
+Ben Hassine,JEUDI,10h00-11h30,Info C4,Réseaux Optiques et QoS,MP2-EXR
+Zidi,VENDREDI,10h00-11h30,A3,Gestion des Entreprises,MP2-EXR
+Belkacem,LUNDI,11h40-13h10,A2,Droit et éthique info,MP2-EXR
+Ben Hassine,MARDI,11h40-13h10,Info C4,Réseaux Optiques et QoS,MP2-EXR
+Zaabar,MERCREDI,11h40-13h10,Info C4,Préparation Certif CCNP1,MP2-EXR
+Ben Hassine,JEUDI,11h40-13h10,Info C4,Sécurité réseaux comm privée,MP2-EXR
+Barboura,VENDREDI,11h40-13h10,info C2,Sécurité réseaux comm privé,MP2-EXR
+Marrakchi,VENDREDI,11h40-13h10,Info C4,Concepts avancées de IA,MP2-EXR
+Ghannay,JEUDI,13h20-14h50,C3,Admin avancée serv d'entrep,MP2-EXR
+Ghannay,JEUDI,15h00-16h30,C3,Admin Avancée serv d'entrep,MP2-EXR
+Hadj M'tir,LUNDI,08h15-09h45,info C1,SGBD PLSQL,MP1-SD
+Aloulou,LUNDI,08h15-09h45,info C1,Bases de données NoSql,MP1-SD
+Torki,MERCREDI,08h15-09h45,A1,Fondements Mathématiques,MP1-SD
+Sokraf,JEUDI,08h15-09h45,A6,Techniques de communication,MP1-SD
+Marrakchi,VENDREDI,08h15-09h45,A7,Complexité algorithmique,MP1-SD
+Marrakchi,VENDREDI,08h15-09h45,A7,Calcul parallèle & dist,MP1-SD
+Hadj M'tir,SAMEDI,08h15-09h45,C3,Introduction to XR Dev,MP1-SD
+Hadj M'tir,LUNDI,10h00-11h30,info C1,SGBD PLSQL,MP1-SD
+Ben Ayed,MERCREDI,10h00-11h30,info C2,Introduction Big Data,MP1-SD
+Aloulou,JEUDI,10h00-11h30,info C2,Micro Services,MP1-SD
+Marrakchi,VENDREDI,10h00-11h30,C3,Complexité algorithmique,MP1-SD
+Hadj M'tir,SAMEDI,10h00-11h30,C3,Introduction to XR Dev,MP1-SD
+Aloulou,LUNDI,11h40-13h10,C3,Bases de données NoSql,MP1-SD
+Aloulou,JEUDI,11h40-13h10,info C2,Micro Services,MP1-SD
+Ben Aycha,VENDREDI,11h40-13h10,info C1,Introduction Big Data,MP1-SD
+Torki,VENDREDI,11h40-13h10,A2,Fondements Mathématiques,MP1-SD
+Mehri,LUNDI,13h20-14h50,A3,Anglais 1,MP1-SD
+Marrakchi,JEUDI,13h20-14h50,info C1,Calcul parallèle & Distribué,MP1-SD
+Ben Ayed,VENDREDI,13h20-14h50,A2,Introduction Big Data,MP1-SD
+Zidi,JEUDI,15h00-16h30,A3,Culture d'entreprises,MP1-SD
+Zaouali,VENDREDI,16h45-18h15,Info C3,Atelier statistique R,MP1-SD
+Hamdani,LUNDI,08h15-09h45,A1,Machine Learning 2,MP2-SD_A
+Hamdani,JEUDI,08h15-09h45,A1,Fouille de données Massives,MP2-SD_A
+Zidi,VENDREDI,08h15-09h45,A1,Gestion des Entreprises,MP2-SD_A
+Zribi,LUNDI,10h00-11h30,A1,Traitment Auto lang Naturel,MP2-SD_A
+Abdelhafidh,MARDI,10h00-11h30,A1,Frameworks Big Data,MP2-SD_A
+Abdelhafidh,MERCREDI,10h00-11h30,info C1,Frameworks Big DATA,MP2-SD_A
+Marrakchi,JEUDI,10h00-11h30,info C1,Analyse et Prog Python,MP2-SD_A
+Bayoudhi,VENDREDI,10h00-11h30,A1,Web sémantique,MP2-SD_A
+Ammar,MARDI,11h40-13h10,A1,Internet of Thing IoT,MP2-SD_A
+Marrakchi,JEUDI,11h40-13h10,A1,Analyse et Prog Python,MP2-SD_A
+Bayoudhi,VENDREDI,11h40-13h10,A1,Web sémantique,MP2-SD_A
+Bsir,LUNDI,13h20-14h50,A1,Env Cloud Big Data,MP2-SD_A
+Mehri,MARDI,13h20-14h50,A1,Anglais 3,MP2-SD_A
+Ammar,JEUDI,13h20-14h50,A1,Internet of Thing IoT,MP2-SD_A
+Sidhom,VENDREDI,13h20-14h50,info C1,Projet fédérateur ML,MP2-SD_A
+Hamdani,LUNDI,15h00-16h30,Info C3,Fouille de données massives,MP2-SD_A
+Bsir,LUNDI,15h00-16h30,Info C3,Env Cloud Big Data,MP2-SD_A
+Belkacem,MARDI,15h00-16h30,A1,Droit et éthique info,MP2-SD_A
+Zribi,JEUDI,15h00-16h30,info C1,Traitment Auto lang Naturel,MP2-SD_A
+Sidhom,VENDREDI,15h00-16h30,A1,Projet fédérateur ML,MP2-SD_A
+Hamdani,LUNDI,08h15-09h45,A1,Machine Learning 2,MP2-SD_B
+Hamdani,JEUDI,08h15-09h45,A1,Fouille de données Massives,MP2-SD_B
+Zidi,VENDREDI,08h15-09h45,A1,Gestion des Entreprises,MP2-SD_B
+Zribi,LUNDI,10h00-11h30,A1,Traitment Auto lang Naturel,MP2-SD_B
+Abdelhafidh,MARDI,10h00-11h30,A1,Frameworks Big Data,MP2-SD_B
+Sidhom,JEUDI,10h00-11h30,info B1,Projet fédérateur ML,MP2-SD_B
+Bayoudhi,VENDREDI,10h00-11h30,A1,Web sémantique,MP2-SD_B
+Ammar,MARDI,11h40-13h10,A1,Internet of Thing IoT,MP2-SD_B
+Abdelhafidh,MERCREDI,11h40-13h10,info C1,Frameworks Big DATA,MP2-SD_B
+Marrakchi,JEUDI,11h40-13h10,A1,Analyse et Prog Python,MP2-SD_B
+Bayoudhi,VENDREDI,11h40-13h10,A1,Web sémantique,MP2-SD_B
+Bsir,LUNDI,13h20-14h50,A1,Env Cloud Big Data,MP2-SD_B
+Mehri,MARDI,13h20-14h50,A1,Anglais 3,MP2-SD_B
+Ammar,JEUDI,13h20-14h50,A1,Internet of Thing IoT,MP2-SD_B
+Marrakchi,VENDREDI,13h20-14h50,Info C4,Analyse et Prog Python,MP2-SD_B
+Zribi,LUNDI,15h00-16h30,C3,Traitment Auto lang Naturel,MP2-SD_B
+Belkacem,MARDI,15h00-16h30,A1,Droit et éthique info,MP2-SD_B
+Hamdani,JEUDI,15h00-16h30,C4,Fouille de données massives,MP2-SD_B
+Sidhom,VENDREDI,15h00-16h30,A1,Projet fédérateur ML,MP2-SD_B
+Bsir,LUNDI,16h45-18h15,info C1,Env Cloud Big Data,MP2-SD_B

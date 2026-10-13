@@ -1,0 +1,595 @@
+/* styles.css — the single visual definition of the color-engine vocabulary
+   (js/color.js) plus page layout. Colors come from the Material You engine
+   (js/theme.js) as --md-* custom properties; every var() carries a hex
+   fallback so the page still looks right if js/theme.js is absent. No
+   page-specific JS styling; state class names come only from TT.color. */
+@import url('https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Tiny5&display=swap');
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, sans-serif; margin: 0; padding: 1rem 1.5rem;
+  background: var(--md-surface, #fff); color: var(--md-on-surface, #1b1b1b);
+}
+nav a { margin-right: 1rem; color: var(--md-primary, #0b4da2); }
+/* keep the top-right theme square clear of the nav links */
+nav { padding-right: 2.4rem; }
+h1 { font-size: 1.3rem; margin: .6rem 0 .2rem; }
+#status { color: var(--md-on-surface-variant, #555); font-size: .85em; margin: .2rem 0 .6rem; }
+/* teachers page: centre the title and the session/teacher count line under it */
+body[data-page="teachers"] h1,
+body[data-page="teachers"] #status { text-align: center; }
+/* the teachers title reads as display text: bigger than the generic h1 chrome
+   (2em = twice the 16px body size) and given room above the credit line */
+body[data-page="teachers"] h1 { font-size: 2em; margin: .8rem 0 .6rem; }
+body[data-page="teachers"] .author-credit { 
+    text-align: center; 
+    margin: 1.2rem 0; 
+}
+body[data-page="teachers"] .author-credit a { 
+    color: var(--md-primary); 
+    font-family: "Tiny5", "DejaVu Sans", sans-serif; 
+    font-size: 1.3em; 
+    font-style: normal; 
+    text-decoration: underline;
+}
+body[data-page="teachers"] .author-credit span { 
+    color: var(--md-on-surface-variant); 
+    padding-right: .2em; 
+}
+
+/* ---- theme control: the palette square itself is the button ----
+   One element (no wrapper div, no inner swatch span): the button is pinned to
+   the top-right corner of the page, clear of the nav, and carries the chrome
+   and the 3-sector square itself (the conic gradient IS its background). */
+#themeCycle {
+  position: absolute; top: 1rem; right: 1.5rem; margin: 0;
+  display: inline-block; padding: 0; line-height: 0; cursor: pointer;
+  border: 0;
+  width: 1.5rem; height: 1.5rem; border-radius: 4px; flex: none;
+  /* 3-sector square: conic starts at 12 o'clock, clockwise. Top-right 0-90deg,
+     bottom half 90-270deg, top-left 270-360deg. The `--pal-*` swatches are the
+     snapped solid colors published by js/theme.js (display only; the page still
+     uses --md-*); the hex fallbacks are three distinct curated solids so the
+     square looks right when js/theme.js is absent/blocked. */
+  background: conic-gradient(
+    var(--pal-secondary, #c0392b) 0deg 90deg,
+    var(--pal-primary, #1565c0) 90deg 270deg,
+    var(--pal-tertiary, #2e7d32) 270deg 360deg
+  );
+  box-shadow: inset 0 0 0 1px var(--md-outline-variant, #ccc);
+}
+#themeCycle:hover { filter: brightness(.94); }
+#themeCycle:focus-visible { outline: 2px solid var(--md-primary, #0b4da2); outline-offset: 2px; border-radius: 4px; }
+
+/* ---- search + ghost text + autocomplete ---- */
+#searchWrap {
+  position: relative; max-width: 40rem; margin: .8rem 0;
+  border: 1px solid var(--md-outline-variant, #ccc); border-radius: 8px;
+  background: var(--md-surface-container-lowest, #fff);
+}
+#searchWrap:focus-within {
+  border-color: var(--md-primary, #0b4da2);
+  box-shadow: 0 0 0 2px var(--md-primary-container, #d6e9ff);
+}
+/* ghost layer sits behind the (transparent) input: typed text is
+   transparent here, the input paints over it; the shadow completion and
+   prefix hint render in gray. */
+#ghost {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 0;
+  display: flex; align-items: center; padding: .45rem .6rem;
+  font: inherit; line-height: 1.5; white-space: nowrap; overflow: hidden;
+  pointer-events: none;
+}
+#ghost[hidden] { display: none; }
+#ghostTyped { color: transparent; }
+#ghostPre { color: var(--md-tertiary, #b58900); font-style: italic; }
+#ghostRest { color: var(--md-on-surface-variant, #999); }
+/* keep the runs at their natural widths so the measured pre inset stays exact */
+#ghost > span { flex: 0 0 auto; }
+#search {
+  position: relative; z-index: 1; width: 100%; border: 0; outline: none;
+  padding: .45rem .6rem; font: inherit; line-height: 1.5;
+  /* the prefix hint (ghost) pushes the real text origin + caret right */
+  padding-left: calc(.6rem + var(--ghost-pre, 0px));
+  background: transparent; color: inherit;
+}
+/* mobile-only: a button beside the search box that drops focus (hides the
+   keyboard / leaves list mode). The V is an inline SVG chevron. */
+#searchDone { display: none; }
+#searchClear { display: none; }
+/* JS sets [hidden] while the filter is empty; the id rules here (and the
+   mobile display:flex below) would otherwise outrank the UA [hidden] default. */
+#searchClear[hidden] { display: none; }
+#suggest {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
+  list-style: none; margin: 0; padding: 0;
+  background: var(--md-surface-container, #fff);
+  border: 1px solid var(--md-outline-variant, #ccc); border-top: 0;
+  border-radius: 0 0 8px 8px;
+  max-height: 50vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}
+#suggest[hidden] { display: none; }
+#suggest li { padding: .35rem .6rem; cursor: pointer; border-bottom: 1px solid var(--md-outline-variant, #eee); }
+#suggest li:hover, #suggest li.active {
+  background: var(--md-secondary-container, #eef4ff);
+  color: var(--md-on-secondary-container, #1b1b1b);
+}
+#suggest .kind {
+  display: inline-block; font-size: .72em; color: var(--md-on-primary, #fff);
+  background: var(--md-primary, #666);
+  border-radius: 4px; padding: 0 .35em; margin-right: .4em; text-transform: uppercase;
+}
+#suggest .kind-class { background: var(--md-primary, #0b4da2); color: var(--md-on-primary, #fff); }
+#suggest .kind-subject { background: var(--md-secondary, #6a3fa0); color: var(--md-on-secondary, #fff); }
+#suggest .kind-teacher { background: var(--md-tertiary, #0b6e2f); color: var(--md-on-tertiary, #fff); }
+#suggest .alias { color: var(--md-on-surface-variant, #555); font-size: .82em; }
+#suggest .n, #teacherList .n { color: var(--md-on-surface-variant, #666); font-size: .85em; }
+
+/* ---- teacher list (single list, identical on all viewports) ---- */
+#teacherList {
+  list-style: none; margin: 0; padding: 0; max-height: 60vh; overflow-y: auto;
+  border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
+}
+#teacherList li { padding: .4rem .6rem; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }
+#teacherList li:not(.group-head):hover, #teacherList li:not(.group-head).active {
+  background: var(--md-secondary-container, #eef4ff);
+  color: var(--md-on-secondary-container, #1b1b1b);
+}
+#teacherList li.empty { cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }
+/* grouped-list section header rows (inserted by JS between teacher rows):
+   non-clickable labels, never matched by the li hover/active rules. */
+#teacherList li.group-head {
+  cursor: default; pointer-events: none;
+  color: var(--md-on-surface-variant, #666);
+  font-size: .78em; text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+  background: var(--md-surface-container, #f4f4f4);
+  border-top: 1px solid var(--md-outline-variant, #ccc);
+}
+#teacherList .fmatch, #teacherList .cmatch { display: block; color: var(--md-on-surface-variant, #333); font-size: .82em; }
+#teacherList mark, #suggest mark {
+  background: var(--md-tertiary-container, #ffeb3b);
+  color: var(--md-on-tertiary-container, #1b1b1b);
+}
+
+/* ---- layout: desktop two columns (search+list left, table right) ----
+   The row stretches (#detail included) instead of hugging its content, and the
+   viewport-based min-height makes it a definite full-height box: #detail then
+   reaches the bottom of the screen, which is what lets .empty-state — its only
+   child when present — fill the whole column further down. Body vertical
+   padding on desktop is 1rem + 1rem, hence -2rem (dvh behind vh for the mobile
+   browser chrome). */
+#layout {
+  display: flex; gap: 1rem; align-items: stretch; --gutter: 4.5rem;
+  min-height: calc(100vh - 2rem);
+  min-height: calc(100dvh - 2rem);
+}
+/* keep the picker narrow so the session table gets the room it needs */
+#layout > #listPane { flex: 0 1 22rem; min-width: 0; max-width: 22rem; }
+#layout > #detail { flex: 1 1 0; min-width: 0; margin-top: 0; overflow-x: auto; }
+/* The empty state is #detail's only child when present, so scope a flex
+   container to exactly that case: .empty-state then stretches down the column
+   the layout chain above keeps viewport-tall. Scoped with :has() so the
+   teacher-table / mobile-cards views (and the classes page grids) keep their
+   ordinary block formatting. */
+#detail:has(.empty-state) { display: flex; flex-direction: column; }
+
+/* ---- detail: summary + session table ---- */
+#detail { margin-top: 1rem; }
+#detail .mostly { color: var(--md-on-surface-variant, #666); font-size: .85em; margin: .1rem 0; }
+#detail .summary { color: var(--md-on-surface, #333); font-size: .95em; margin: .4rem 0; }
+#detail .count { color: var(--md-on-surface-variant, #666); font-size: .85em; margin: .5rem 0 .2rem; }
+#detail em { font-style: normal; font-weight: 600; } /* emphasis (color engine) */
+#detail .nomatch, #detail .empty { color: var(--md-on-surface-variant, #555); font-style: italic; }
+
+/* ---- vendored kaomoji webfonts -------------------------------------------
+   The empty-state face is assembled from box-drawing, geometric and technical
+   symbols, plus the odd Indic letter (e.g. ಠ). No single system font covers
+   that set, and the local-only names in the .empty-face stack are absent on
+   many machines — hence tofu boxes. These three static woff2 files carry
+   the corpus' distinctive pieces; plain vendored files, so rendering works
+   offline after checkout (no CDN, no JS font loading):
+     dejavu-sans.woff2        DejaVu Sans (Regular) subset with the corpus'
+                              symbol/box-drawing/geometric/math codepoints —
+                              the coverage workhorse
+     noto-sans-kannada.woff2  Google's Noto Sans Kannada subset — ಠ & friends,
+                              missing from many bare systems
+     noto-sans-symbols.woff2  Google's Noto Sans Symbols (v1) subset —
+                              ⌒ ⌓ ⌔ ⌣ ⃝ ⓛ ⓥ, which the other two lack
+   Greek/Cyrillic/CJK/… letters in the corpus still fall through to the local
+   stack below, which every major OS ships. The DejaVu face declares no
+   unicode-range: it sits first in the stack and only contains corpus
+   codepoints, so family-stack dispatch alone picks it correctly. Licence
+   provenance and how each file was produced: vendor/NOTICE. */
+@font-face {
+  font-family: "DejaVu Sans";
+  font-style: normal;
+  font-weight: 400;
+  src: url("vendor/dejavu-sans.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Noto Sans Kannada";
+  font-style: normal;
+  font-weight: 400;
+  src: url("vendor/noto-sans-kannada.woff2") format("woff2");
+  unicode-range: U+0951-0952, U+0964-0965, U+0B83, U+0C80-0CF3, U+1CD0, U+1CD2-1CD3, U+1CDA, U+1CF2, U+1CF4, U+200C-200D, U+20B9, U+25CC, U+A830-A835;
+}
+@font-face {
+  font-family: "Noto Sans Symbols";
+  font-style: normal;
+  font-weight: 400;
+  src: url("vendor/noto-sans-symbols.woff2") format("woff2");
+  unicode-range: U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AE, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F8D0-1F8D8, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FAC6, U+1FAC8, U+1FACC-1FADD, U+1FADF-1FAEB, U+1FAEF-1FAFA, U+1FB00-1FBFF;
+}
+
+/* Google Font: Tiny5 */
+
+/* giant, faint emoticon + credit filling the empty detail area (no selection).
+   flex: 1 1 auto makes it stretch to fill the detail column — the layout chain
+   keeps that column viewport-tall — while min-height: 45vh stays as the floor
+   for cases where the chain does not (e.g. a short window). */
+#detail .empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  flex: 1 1 auto;
+  /* the single gap between the heading and the face: the container carries no
+     font-size of its own, so 6em here is six times the 16px text size */
+  gap: 6em;
+  min-height: 45vh; padding: 1rem; text-align: center;
+  user-select: none; cursor: pointer; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+#detail .empty-face {
+  font-size: clamp(3rem, 8vw, 4rem); line-height: 1.1;
+  color: var(--md-on-surface, #1b2a44); opacity: .14;
+  /* vendored woff2 faces first (guaranteed glyphs — see the @font-face block
+     above), then local installs for the scripts the corpus shares with
+     ordinary text (Greek, Cyrillic, CJK, …) */
+  font-family: "DejaVu Sans", "Noto Sans Kannada", "Noto Sans Symbols",
+               "Noto Sans Symbols 2", "Noto Sans Symbols", "Segoe UI Symbol",
+               "Apple Symbols", "Noto Sans JP", system-ui, sans-serif;
+  transform-origin: center;
+}
+/* the heading sits above the faint face (app.js emits it first) in display
+   letters; the empty-state `gap` does the separating, so no margin here.
+   DynaPuff (rounded display face, same Google Fonts @import as Tiny5) matches
+   the kaomoji's playful feel, and the face's colour + opacity are copied
+   verbatim so both read as the same faint tint. */
+#detail .no-teacher-selected {
+  color: var(--md-on-surface, #1b2a44);
+  opacity: .14;
+  font-family: "DynaPuff", "DejaVu Sans", system-ui, sans-serif;
+  font-size: clamp(1.75rem, 5vw, 2.75rem); text-align: center;
+}
+#detail .empty-credit {
+  margin-top: 1.5rem; color: var(--md-on-surface-variant, #666);
+  font-size: .8rem; opacity: .7;
+}
+/* pressing the empty area hops the emoticon up (peaking with a zoom) and
+   immediately lands on a different face: app.js swaps the text synchronously and
+   re-randomises --hop-rot on every press, restarting this animation from 0% so
+   the wobble goes into the fresh angle and back. Overshoot easing keeps it
+   cartoonish; the 78%/90% keyframes dip just below the rest line and bounce
+   back up, so the hop settles like a landed spring instead of stopping dead.
+   Duration is mirrored by HOP_MS in js/app.js — keep the two in sync. */
+#detail .empty-state.hopping .empty-face {
+  animation: empty-hop .24s cubic-bezier(.34, 1.56, .64, 1);
+}
+@keyframes empty-hop {
+  0% { transform: translateY(0) scale(1) rotate(0deg); }
+  45% { transform: translateY(var(--hop-trans-y, 0)) scale(1.18) scaleX(1.18) rotate(var(--hop-rot, 0deg)); }
+  78% { transform: translateY(.06em) scale(.985) rotate(0deg); }
+  90% { transform: translateY(-.025em) scale(1.008) rotate(0deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #detail .empty-state.hopping .empty-face { animation: none; }
+}
+#detail table { border-collapse: collapse; width: 100%; margin-top: .5rem; }
+#detail th, #detail td { border: 1px solid var(--md-outline-variant, #ccc); padding: .3rem .5rem; text-align: left; font-size: .92em; }
+#detail th { background: var(--md-surface-container, #f4f4f4); }
+/* marker gutter: borderless + transparent when empty (border:none = zero
+   width, so the neighbouring marked cell's own border wins the
+   collapsed-border conflict and the main grid edge stays continuous). */
+#detail td:empty, #detail th:empty { border: none; padding: 0; background: transparent; }
+#detail tr.now td { background: var(--md-primary-container, #fff3b0); color: var(--md-on-primary-container, #201047); }
+#detail tr.next td { background: var(--md-tertiary-container, #d6e9ff); color: var(--md-on-tertiary-container, #201047); }
+/* dim the whole row (not just the cells) so its border dims with the content */
+#detail tr.dim { opacity: .58; }
+#detail tr.dim td { color: var(--md-on-surface, inherit); }
+#detail tr.daystart td + td { border-top: 2px solid var(--md-outline, #888); }
+#detail .nowtag { color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }
+#detail .nexttag {
+  display: inline-flex; align-items: center; gap: .3em;
+  color: var(--md-on-tertiary-container, #0b4da2); font-weight: bold; white-space: nowrap;
+}
+/* the "next" arrow is an inline SVG so it always renders and tints with the tag */
+.nextarrow {
+  width: 1.1em; height: 1.1em; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2.6;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+#detail .pill {
+  display: inline-block; border: 1px solid var(--md-outline-variant, #bbb); border-radius: 999px;
+  padding: 0 .45em; margin: .05em .15em .05em 0;
+  background: var(--md-secondary-container, #f0f4ff);
+  color: var(--md-on-secondary-container, #1b1b1b);
+  font-size: .75em; white-space: nowrap;
+}
+/* the pill reads the surface it sits on: on a now/next row (or mobile card)
+   it flips to that row's accent color instead of the default container grey */
+#detail tr.now .pill {
+  background: var(--md-primary, #0b4da2); color: var(--md-on-primary, #fff);
+  border-color: transparent;
+}
+#detail tr.next .pill {
+  background: var(--md-tertiary, #7c5260); color: var(--md-on-tertiary, #fff);
+  border-color: transparent;
+}
+#detail .subjlist, #detail .ctree { font-size: .9em; }
+#detail .ctree ul { margin: .1rem 0 .1rem 1.2rem; padding: 0; }
+#detail .ctree li { margin: .1rem 0; }
+#detail .hours { color: var(--md-on-surface-variant, #555); font-size: .85em; }
+
+/* ---- desktop: pull the now/next gutter outside the detail box ----
+   The marker column is the exception: reserve it as --gutter, then shift the
+   whole table left by exactly that much (cancelling the reservation) so the
+   table's first *content* column (Day) — and the name/summary/count text above
+   it — start at the detail box's left edge, while only the gutter hangs into
+   the layout gap. Overflows stay visible so the hanging gutter is not clipped. */
+@media (min-width: 701px) {
+  /* teachers page: the left sidebar owns the header exactly like the mobile
+     screen does — the title is centred inside the pane and the theme square
+     sits at the pane's top-right, not at the far corner of the page. */
+  body[data-page="teachers"] #listPane { position: relative; }
+  body[data-page="teachers"] #themeCycle { top: .55rem; right: 0; }
+  /* keep the teacher list inside the viewport instead of letting it grow the
+     page: the header + search box above it take roughly 12rem, so the list
+     scrolls internally once it no longer fits under them. */
+  #layout > #listPane #teacherList { max-height: calc(100vh - 12rem); overflow-y: auto; }
+  /* gap is wider than the gutter the table hangs into, so the hanging now/next
+     column never touches the teacher list. */
+  #layout { gap: calc(var(--gutter) + 1.25rem); }
+  #layout > #detail { overflow-x: visible; }
+  #layout > #detail table.t-sessions {
+    margin-left: calc(-1 * var(--gutter));
+    width: calc(100% + var(--gutter));
+  }
+  #layout > #detail table.t-sessions th:first-child,
+  #layout > #detail table.t-sessions td:first-child {
+    width: var(--gutter); padding-left: 0; padding-right: 0;
+    /* the row is taller than the marker line (subject/class cells wrap), so
+       centre the NOW/NEXT tag vertically instead of baseline/top-aligning it */
+    vertical-align: middle;
+  }
+  #layout > #detail table.t-sessions .nowtag,
+  #layout > #detail table.t-sessions .nexttag {
+    font-size: .78em; vertical-align: middle;
+  }
+}
+
+/* ---- time page ---- */
+#slotList {
+  list-style: none; margin: 0; padding: 0; max-height: 75vh; overflow-y: auto;
+  border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px;
+}
+#slotList li { padding: .3rem .6rem; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }
+#slotList li:hover, #slotList li.active {
+  background: var(--md-secondary-container, #eef4ff);
+  color: var(--md-on-secondary-container, #1b1b1b);
+}
+#slotList li.bucket { background: var(--md-surface-container, #f4f4f4); font-weight: bold; cursor: default; }
+#slotList li.bucket.today { background: var(--md-surface-container-high, #e8eefb); }
+#slotList li.dim { color: var(--md-on-surface, inherit); opacity: .58; }
+#slotList li.info { cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }
+#slotList li.now { background: var(--md-primary-container, #fff3b0); color: var(--md-on-primary-container, #201047); }
+#slotList li.next { background: var(--md-tertiary-container, #d6e9ff); color: var(--md-on-tertiary-container, #201047); }
+#slotList .nowtag { color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }
+#slotList .nexttag {
+  display: inline-flex; align-items: center; gap: .3em;
+  color: var(--md-on-tertiary-container, #0b4da2); font-weight: bold; white-space: nowrap;
+}
+#slotList ~ #detail table { border-collapse: collapse; width: 100%; margin-top: .5rem; }
+#slotList ~ #detail th, #slotList ~ #detail td { border: 1px solid var(--md-outline-variant, #ccc); padding: .3rem .5rem; text-align: left; font-size: .92em; }
+#slotList ~ #detail th { background: var(--md-surface-container, #f4f4f4); }
+
+/* ---- matrix page ---- */
+#controls { margin: .8rem 0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+#matrixWrap { overflow: auto; max-height: 80vh; }
+#matrix table { border-collapse: collapse; }
+#matrix th, #matrix td { border: 1px solid var(--md-outline-variant, #ccc); padding: .3rem .5rem; font-size: .85em; vertical-align: top; }
+#matrix th { background: var(--md-surface-container, #f4f4f4); }
+#matrix th:first-child, #matrix td:first-child { position: sticky; left: 0; background: var(--md-surface-container, #f4f4f4); white-space: nowrap; }
+#matrix td .cell { margin-bottom: .25rem; }
+#matrix td .room { font-weight: bold; }
+#matrix td .day { color: var(--md-on-surface-variant, #555); font-size: .85em; }
+
+/* ---- narrow screens: the session table becomes cards, the list flattens ---- */
+@media (max-width: 700px) {
+  body { padding: .8rem; --mpad: .8rem; }
+  #themeCycle { top: .8rem; right: .8rem; }
+  /* one column; the list is temporary (search UI) and cards are the default.
+     Flex column keeps the full-height chain alive instead of breaking it at
+     the layout root: #detail (flex: 1 1 0 from the base rule) grows to fill
+     the leftover height. Body padding on mobile is .8rem + .8rem = 1.6rem. */
+  #layout {
+    display: flex; flex-direction: column;
+    min-height: calc(100vh - 1.6rem);
+    min-height: calc(100dvh - 1.6rem);
+  }
+  #layout > #listPane {
+    max-width: none;
+    /* REQUIRED in column direction: the base rule's `flex: 0 1 22rem` would
+       read 22rem as a *height* basis and starve #detail of space, so the pane
+       takes its content height only (neither grows nor shrinks). */
+    flex: 0 0 auto;
+  }
+  #layout:not(.is-list) #teacherList { display: none; }
+  #layout.is-list #detail { display: none; }
+  /* a V-chevron button beside the search box drops focus / hides the keyboard.
+     It appears only while the search box actually holds focus, and it always
+     keeps the rightmost slot: the X is the control that steps aside. */
+  #searchWrap:focus-within #searchDone { display: flex; }
+  #searchDone {
+    align-items: center; justify-content: center;
+    /* rightmost slot, never shifted: the stacking rule below moves the X
+       beside this button, not the other way round */
+    position: absolute; right: 0; top: 0; bottom: 0; width: 2.7rem;
+    border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
+    cursor: pointer; z-index: 2;
+  }
+  #searchDone:active { color: var(--md-primary, #0b4da2); }
+  #searchDone svg {
+    width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  /* the clear "x" is shown only while the filter holds text: JS toggles the
+     [hidden] attribute, and #searchClear[hidden] above beats this id rule.
+     At right: 0 it fills the rightmost slot whenever the focus-gated V is off
+     screen (an unfocused field holding text leaves no hole); the stacking rule
+     below steps it one slot left, immediately beside the V, when both show. */
+  #searchClear {
+    align-items: center; justify-content: center;
+    position: absolute; right: 0; top: 0; bottom: 0; width: 2.7rem;
+    border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
+    cursor: pointer; z-index: 2; display: flex;
+  }
+  #searchClear:active { color: var(--md-primary, #0b4da2); }
+  #searchClear svg {
+    width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  /* stack the two controls on the right edge: the V owns right: 0, so the X
+     yields that slot only while the focus-gated V is actually on screen and
+     sits immediately to the V's left; when the V hides again the X slides back
+     to right: 0 instead of leaving a hole where the V would be. */
+  #searchWrap:focus-within:has(#searchClear:not([hidden])) #searchClear { right: 2.7rem; }
+  /* reserve one control slot by default; only both controls at once (a focused
+     field that also holds text) need the double gutter, so typed text, the ghost
+     completion and its --ghost-pre inset never run underneath a control. */
+  #search { padding-right: 2.7rem; }
+  #searchWrap:focus-within:has(#searchClear:not([hidden])) #search { padding-right: 5.4rem; }
+  /* exactly one clear affordance on mobile: suppress the engine native cancel */
+  #search::-webkit-search-cancel-button, #search::-webkit-search-decoration {
+    -webkit-appearance: none; appearance: none; display: none;
+  }
+  #teacherList { max-width: none; max-height: none; border: 0; overflow: visible; }
+  /* flattened rows: simple line separators, not self-enclosed cards.
+     Negative side margins + matching padding make each separator run
+     edge-to-edge across the viewport (cancelling body's .8rem padding);
+     also full-bleeds any .group-head header rows in the list. */
+  #teacherList li {
+    border: 0; border-bottom: 1px solid var(--md-outline-variant, #eee);
+    border-radius: 0;
+    margin-left: calc(-1 * var(--mpad));
+    margin-right: calc(-1 * var(--mpad));
+    padding: .5rem var(--mpad);
+  }
+  #teacherList li:last-child { border-bottom: 0; }
+  #detail table, #detail tbody { display: block; }
+  #detail tr:has(th) { display: none; }
+  #detail tr:has(td) {
+    display: flex; flex-wrap: wrap; gap: 0 .5rem;
+    border: 1px solid var(--md-outline-variant, #ccc); border-radius: 8px;
+    margin: 0 0 .6rem; padding: .5rem .7rem;
+  }
+  #detail tr.now:has(td) { background: var(--md-primary-container, #fff3b0); }
+  #detail tr.next:has(td) { background: var(--md-tertiary-container, #d6e9ff); }
+  #detail tr.now td, #detail tr.next td { background: transparent; }
+  #detail td { display: block; border: none; padding: .12rem 0; }
+  #detail td:empty, #detail th:empty { display: none; }
+  /* cards separate by margin, not the collapsed-grid day separator */
+  #detail tr.daystart td + td { border-top: none; }
+  #detail td.c-day { flex: 1 1 100%; order: 1; font-weight: bold; text-transform: capitalize; }
+  #detail td.c-time { flex: 1 1 100%; order: 2; }
+  #detail td.c-subject { flex: 1 1 100%; order: 3; }
+  #detail td.c-room { order: 4; }
+  #detail td.c-class { order: 5; }
+  #detail td.c-day::before, #detail td.c-time::before,
+  #detail td.c-subject::before, #detail td.c-room::before {
+    color: var(--md-on-surface-variant, #666); font-size: .78em; font-weight: normal;
+    text-transform: uppercase; letter-spacing: .05em; margin-right: .4em;
+  }
+  #detail td.c-day::before { content: "Day: "; }
+  #detail td.c-time::before { content: "Time: "; }
+  #detail td.c-subject::before { content: "Subject: "; }
+  #detail td.c-room::before { content: "Room: "; }
+}
+
+/* ---- classes page: class list + week grid (issue 032) ---- */
+/* The class list mirrors #teacherList (a catalogue browser, not a ranked
+   result list). The week grid draws the selected class's week: days as
+   columns, the six fixed slots as rows, each cell listing the sessions held
+   then. A semi-transparent red cursor crosses the grid at the current time,
+   its arrowhead resting in the narrow gutter beside the time column. */
+#classList {
+  list-style: none; margin: 0; padding: 0; max-height: 60vh; overflow-y: auto;
+  border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
+}
+#classList li { padding: .4rem .6rem; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }
+#classList li:hover, #classList li.active {
+  background: var(--md-secondary-container, #eef4ff);
+  color: var(--md-on-secondary-container, #1b1b1b);
+}
+#classList li.empty { cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }
+#classList .n { color: var(--md-on-surface-variant, #666); font-size: .85em; }
+#classList .alias { color: var(--md-on-surface-variant, #555); font-size: .82em; }
+
+/* week grid */
+.weekwrap { position: relative; margin-top: .5rem; }
+table.week { border-collapse: collapse; width: 100%; }
+table.week th, table.week td { border: 1px solid var(--md-outline-variant, #ccc); padding: .3rem .4rem; font-size: .85em; vertical-align: top; text-align: left; }
+table.week thead th { background: var(--md-surface-container, #f4f4f4); }
+/* the cursor gutter: a narrow borderless column beside the time column where
+   the red cursor's arrowhead rests */
+table.week th.cgutter, table.week td.cgutter { width: 1.4rem; border: none; padding: 0; background: transparent; }
+table.week th.c-time, table.week td.c-time { white-space: nowrap; font-weight: 600; }
+table.week th.today { background: var(--md-surface-container-high, #e8eefb); }
+table.week td.c-cell.now { background: var(--md-primary-container, #fff3b0); }
+table.week td.c-cell.next { background: var(--md-tertiary-container, #d6e9ff); }
+table.week .sess { margin-bottom: .25rem; }
+table.week .s-subject { font-weight: 600; }
+table.week .s-teacher, table.week .s-room { color: var(--md-on-surface-variant, #555); }
+/* union views label every line with the class it comes from */
+table.week .s-class { display: block; color: var(--md-on-surface-variant, #666); font-size: .8em; font-style: italic; }
+
+/* the red cursor: a semi-transparent line crossing the grid at the current
+   time, with a right-pointing arrowhead in the gutter */
+.cursor {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: rgba(220, 38, 38, .55);
+  pointer-events: none; z-index: 5;
+}
+.cursor .cursor-arrow {
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid rgba(220, 38, 38, .75);
+}
+
+/* ---- classes page on narrow screens ---- */
+@media (max-width: 700px) {
+  /* the week grid is wider than the phone: scroll it horizontally
+     inside its own box (the cursor lives inside .weekwrap, so it
+     scrolls with the grid). The generic mobile rules above flatten
+     #detail tables into stacked cards — hidden header row, flex-wrapped
+     rows, block cells — which would destroy the grid and the cursor
+     crossing it; the week grid re-asserts the table layout instead. */
+  .weekwrap { overflow-x: auto; }
+  #detail table.week { display: table; min-width: 42rem; }
+  #detail .weekwrap tbody { display: table-row-group; }
+  #detail .weekwrap tr { display: table-row; border: 0; margin: 0; padding: 0; }
+  #detail .weekwrap th, #detail .weekwrap td { display: table-cell; }
+  /* positional context survives in a scrolling grid, so the generic
+     "Time: " cell prefix is noise here */
+  #detail .weekwrap td.c-time::before { content: none; }
+  /* the class list flattens exactly like the teacher list */
+  #classList { max-width: none; max-height: none; border: 0; overflow: visible; }
+  #classList li {
+    border: 0; border-bottom: 1px solid var(--md-outline-variant, #eee);
+    border-radius: 0;
+    margin-left: calc(-1 * var(--mpad));
+    margin-right: calc(-1 * var(--mpad));
+    padding: .5rem var(--mpad);
+  }
+  #classList li:last-child { border-bottom: 0; }
+}
+
