@@ -412,6 +412,9 @@ TT.app = (function () {
     search.addEventListener('input', onInput);
     search.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
+        // <input type="search"> clears the field on Esc by default; cancel
+        // that so Esc only dismisses the menu and keeps the typed filter.
+        e.preventDefault();
         if (!suggest.hidden) { renderSuggest([]); renderGhost(); }
         return;
       }
@@ -969,6 +972,9 @@ TT.app = (function () {
     search.addEventListener('input', onInput);
     search.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
+        // <input type="search"> clears the field on Esc by default; cancel
+        // that so Esc only dismisses the menu and keeps the typed filter.
+        e.preventDefault();
         if (!suggest.hidden) { renderSuggest([]); renderGhost(); }
         return;
       }
