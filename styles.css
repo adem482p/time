@@ -4,6 +4,23 @@
    fallback so the page still looks right if js/theme.js is absent. No
    page-specific JS styling; state class names come only from TT.color. */
 @import url('https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Tiny5&display=swap');
+/* ---- search monospace (issue 001) ----------------------------------------
+   The ghost completion overlay sits behind the transparent input and measures
+   the prefix hint to shift the caret (--ghost-pre). Proportional fonts make
+   that overlay drift (notably on space), so the search box uses GitHub's
+   Monaspace (Neon) with a system-mono fallback: every glyph — space included —
+   shares one advance width, keeping typed text, ghost and caret aligned. This
+   is a workaround that keeps the cursor looking correct; it does not fix the
+   shadow-text space handling itself (issue 002). Remote woff2/woff via the
+   Fontsource CDN (OFL-1.1), same pattern as the Google Fonts @import above. */
+@font-face {
+  font-family: "Monaspace Neon";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/fontsource/fonts/monaspace-neon@5.3.0/latin-400-normal.woff2") format("woff2"),
+       url("https://cdn.jsdelivr.net/fontsource/fonts/monaspace-neon@5.3.0/latin-400-normal.woff") format("woff");
+}
 * { box-sizing: border-box; }
 body {
   font-family: system-ui, sans-serif; margin: 0; padding: 1rem 1.5rem;
@@ -91,6 +108,15 @@ body[data-page="teachers"] .author-credit span {
   /* the prefix hint (ghost) pushes the real text origin + caret right */
   padding-left: calc(.6rem + var(--ghost-pre, 0px));
   background: transparent; color: inherit;
+}
+/* monospace search (issue 001): input + ghost share one fixed-width stack so
+   the overlay, the typed text and the caret stay aligned on every keystroke
+   (space included). Placed after the #search/#ghost blocks because their
+   `font: inherit` shorthand would otherwise reset the family. Scoped to
+   #search/#ghost — not #searchWrap — so the suggestion dropdown keeps the
+   page's proportional type. */
+#search, #ghost {
+  font-family: "Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 /* mobile-only: a button beside the search box that drops focus (hides the
    keyboard / leaves list mode). The V is an inline SVG chevron. */
