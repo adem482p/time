@@ -894,10 +894,13 @@ TT.app = (function () {
     // "class:" prefix hint (the whole page is class-scoped). Adapts the
     // shadowText prefix rule without forking match.js.
     function classGhost(q, row) {
-      q = String(q == null ? '' : q).trim();
-      if (!q || !row) return null;
-      if (row.label && row.label.toLowerCase().indexOf(model.normStr(q)) === 0)
-        return { pre: '', rest: row.label.slice(q.length) };
+      // Same strict rule as match.shadowText (issue #2): raw typed string,
+      // case-insensitive, space like any other character.
+      var raw = String(q == null ? '' : q);
+      if (!raw || !raw.trim() || !row) return null;
+      var rl = raw.toLowerCase();
+      if (row.label && row.label.toLowerCase().indexOf(rl) === 0)
+        return { pre: '', rest: row.label.slice(raw.length) };
       return null;
     }
 

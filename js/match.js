@@ -575,15 +575,21 @@ TT.match = (function () {
   //   typed "algo"        -> commit "subject:Algo Struct…"     -> pre "subject:", rest "o Struct…"
   //   typed "subject:al"  -> commit "subject:Algo Struct…"     -> rest "go Struct…"
   function shadowText(query, row) {
-    var q = String(query == null ? '' : query).trim();
-    if (!q || !row) return null;
-    if (row.commit && row.commit.toLowerCase().indexOf(model.normStr(q)) === 0)
-      return { pre: '', rest: row.commit.slice(q.length) };
+    // Space is an ordinary character: the raw typed string (case-insensitive,
+    // no trim/collapse) must be a proper prefix of the target, otherwise the
+    // ghost disappears (issue #2). E.g. "machine " completes to "Learning"
+    // (single space from the user), while "machine  " diverges and returns
+    // null instead of a normalized match.
+    var raw = String(query == null ? '' : query);
+    if (!raw || !raw.trim() || !row) return null;
+    var rl = raw.toLowerCase();
+    if (row.commit && row.commit.toLowerCase().indexOf(rl) === 0)
+      return { pre: '', rest: row.commit.slice(raw.length) };
     var pm = /^(subject|class|teacher):/i.exec(row.commit || '');
-    if (pm && row.label && row.label.toLowerCase().indexOf(model.normStr(q)) === 0)
-      return { pre: pm[1].toLowerCase() + ':', rest: row.label.slice(q.length) };
-    if (row.label && row.label.toLowerCase().indexOf(model.normStr(q)) === 0)
-      return { pre: '', rest: row.label.slice(q.length) };
+    if (pm && row.label && row.label.toLowerCase().indexOf(rl) === 0)
+      return { pre: pm[1].toLowerCase() + ':', rest: row.label.slice(raw.length) };
+    if (row.label && row.label.toLowerCase().indexOf(rl) === 0)
+      return { pre: '', rest: row.label.slice(raw.length) };
     return null;
   }
 

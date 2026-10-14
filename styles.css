@@ -93,13 +93,13 @@ body[data-page="teachers"] .author-credit span {
 #ghost {
   position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 0;
   display: flex; align-items: center; padding: .45rem .6rem;
-  font: inherit; line-height: 1.5; white-space: nowrap; overflow: hidden;
+  font: inherit; line-height: 1.5; white-space: pre; overflow: hidden;
   pointer-events: none;
 }
 #ghost[hidden] { display: none; }
-#ghostTyped { color: transparent; }
-#ghostPre { color: var(--md-tertiary, #b58900); font-style: italic; }
-#ghostRest { color: var(--md-on-surface-variant, #999); }
+#ghostTyped { color: transparent; white-space: pre; }
+#ghostPre { color: var(--md-tertiary, #b58900); font-style: italic; white-space: pre; }
+#ghostRest { color: var(--md-on-surface-variant, #999); white-space: pre; }
 /* keep the runs at their natural widths so the measured pre inset stays exact */
 #ghost > span { flex: 0 0 auto; }
 #search {
