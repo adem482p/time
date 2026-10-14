@@ -10,6 +10,17 @@ TT.app = (function () {
   var C = color.CLASSES;
   var esc = TT.data.esc;
 
+  // Mobile gate (issue 007): coarse pointers (touch/soft keyboard) have no
+  // Escape key to opt out of the pre-focused first suggestion, so Enter must
+  // commit the typed query until the user explicitly picks a row. Guarded
+  // like the prefers-reduced-motion query below; defaults to false (desktop)
+  // when window/matchMedia is absent (e.g. node tests).
+  function isCoarsePointer() {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    try { return !!window.matchMedia('(pointer: coarse)').matches; }
+    catch (e) { return false; }
+  }
+
   // Manual right-arrow for the "Next" marker. Drawn as SVG (not the Unicode
   // glyph) so it renders identically across platforms and inherits the tag color.
   var NEXT_ARROW = '<svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true">' +
@@ -290,7 +301,11 @@ TT.app = (function () {
       suggestRows = rows;
       suggest.innerHTML = '';
       suggest.hidden = !rows.length;
-      suggestIdx = rows.length ? 0 : -1; // first suggestion pre-focused
+      // Mobile (coarse pointer): no pre-focus, so Enter commits the typed
+      // query until the user explicitly arrows/taps (issue 007). Desktop
+      // keeps the pre-focused first row. Ghost derives from suggestIdx,
+      // so -1 also means no ghost.
+      suggestIdx = rows.length ? (isCoarsePointer() ? -1 : 0) : -1; // desktop pre-focuses row 0; mobile starts unselected
       rows.forEach(function (r, i) {
         var li = document.createElement('li');
         li.className = color.suggestion({ kind: r.kind, active: i === suggestIdx }).join(' ');
@@ -401,7 +416,10 @@ TT.app = (function () {
         return;
       }
       if (e.key === 'Tab') {
-        if (!suggest.hidden && suggestRows.length) {
+        // Issue 007: Tab must not accept an implicit (non-explicit)
+        // selection on mobile (suggestIdx -1) — same gate as Enter.
+        // Desktop is unchanged (fresh idx is 0, still accepts).
+        if (!suggest.hidden && suggestRows.length && suggestIdx >= 0) {
           e.preventDefault();
           acceptSuggest(suggestRows[suggestIdx]);
         }
@@ -842,7 +860,11 @@ TT.app = (function () {
       suggestRows = rows;
       suggest.innerHTML = '';
       suggest.hidden = !rows.length;
-      suggestIdx = rows.length ? 0 : -1; // first suggestion pre-focused
+      // Mobile (coarse pointer): no pre-focus, so Enter commits the typed
+      // query until the user explicitly arrows/taps (issue 007). Desktop
+      // keeps the pre-focused first row. Ghost derives from suggestIdx,
+      // so -1 also means no ghost.
+      suggestIdx = rows.length ? (isCoarsePointer() ? -1 : 0) : -1; // desktop pre-focuses row 0; mobile starts unselected
       rows.forEach(function (r, i) {
         var li = document.createElement('li');
         li.className = color.suggestion({ kind: r.kind, active: i === suggestIdx }).join(' ');
@@ -951,7 +973,10 @@ TT.app = (function () {
         return;
       }
       if (e.key === 'Tab') {
-        if (!suggest.hidden && suggestRows.length) {
+        // Issue 007: Tab must not accept an implicit (non-explicit)
+        // selection on mobile (suggestIdx -1) — same gate as Enter.
+        // Desktop is unchanged (fresh idx is 0, still accepts).
+        if (!suggest.hidden && suggestRows.length && suggestIdx >= 0) {
           e.preventDefault();
           acceptSuggest(suggestRows[suggestIdx]);
         }
