@@ -80,11 +80,10 @@ TT.app = (function () {
     // Decorative easter egg: every press on the empty area immediately swaps in
     // a different face and restarts the hop from 0%, so the interaction keeps up
     // with however fast the user taps (no press is swallowed, no face is
-    // coalesced). Each press also picks a fresh signed rotation for --hop-rot,
-    // consumed at the hop's peak. The restart is remove-class -> forced reflow
+    // coalesced). The restart is remove-class -> forced reflow
     // -> re-add-class (re-adding a live class alone does not replay a CSS
     // animation); the single listener below clears the class when the hop ends.
-    // Reduced motion swaps instantly with no hop, rotation or `hopping` class.
+    // Reduced motion swaps instantly with no hop or `hopping` class.
     detail.addEventListener('click', function (e) {
       var empty = e.target && e.target.closest && e.target.closest('.empty-state');
       if (!empty) return;
@@ -95,8 +94,13 @@ TT.app = (function () {
       if (reducedMotion && reducedMotion.matches) return;
       var angle = (Math.random() < .5 ? -1 : 1) * (8 + Math.random() * 12);
       empty.style.setProperty('--hop-rot', angle + 'deg');
-      var transY = (Math.random() - 0.5) + 'em';
-      empty.style.setProperty('--hop-trans-y', transY);
+      var transX = (Math.random() - 0.5) * 1.2;
+      var transY = (Math.random() - 0.5) * 1.2;
+      empty.style.setProperty('--hop-trans-x', transX + 'em');
+      empty.style.setProperty('--hop-trans-y', transY + 'em');
+      // overshoot: ~15% of throw distance, opposite direction (spring-back)
+      empty.style.setProperty('--hop-overshoot-x', (-transX * 0.15) + 'em');
+      empty.style.setProperty('--hop-overshoot-y', (-transY * 0.15) + 'em');
       empty.classList.remove('hopping');
       void empty.offsetWidth;
       empty.classList.add('hopping');

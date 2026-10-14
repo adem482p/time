@@ -262,22 +262,25 @@ body[data-page="teachers"] .author-credit span {
   margin-top: 1.5rem; color: var(--md-on-surface-variant, #666);
   font-size: .8rem; opacity: .7;
 }
-/* pressing the empty area hops the emoticon up (peaking with a zoom) and
+/* pressing the empty area hops the emoticon (peaking with a zoom) and
    immediately lands on a different face: app.js swaps the text synchronously and
-   re-randomises --hop-rot on every press, restarting this animation from 0% so
-   the wobble goes into the fresh angle and back. Overshoot easing keeps it
-   cartoonish; the 78%/90% keyframes dip just below the rest line and bounce
-   back up, so the hop settles like a landed spring instead of stopping dead.
+   re-randomises --hop-rot/--hop-trans-x/--hop-trans-y on every press, restarting
+   this animation from 0% so the wobble goes into the fresh angle and back.
+   Subtle squash-and-stretch via independent scaleX/scaleY preserves visual
+   volume: slight stretch at peak, slight squash on landing. Global scale() adds
+   a gentle zoom. Overshoot easing keeps it lively; the 70%/85% keyframes dip
+   and bounce so the hop settles like a landed spring instead of stopping dead.
    Duration is mirrored by HOP_MS in js/app.js — keep the two in sync. */
 #detail .empty-state.hopping .empty-face {
   animation: empty-hop .24s cubic-bezier(.34, 1.56, .64, 1);
 }
 @keyframes empty-hop {
-  0% { transform: translateY(0) scale(1) rotate(0deg); }
-  45% { transform: translateY(var(--hop-trans-y, 0)) scale(1.18) scaleX(1.18) rotate(var(--hop-rot, 0deg)); }
-  78% { transform: translateY(.06em) scale(.985) rotate(0deg); }
-  90% { transform: translateY(-.025em) scale(1.008) rotate(0deg); }
-  100% { transform: translateY(0) scale(1) rotate(0deg); }
+  0%    { transform: translateX(0) translateY(0) rotate(0deg)    scale(1)    scaleY(1)    scaleX(1); }
+  35%   { transform: translateX(var(--hop-trans-x, 0)) translateY(var(--hop-trans-y, 0)) rotate(var(--hop-rot, 0deg)) scale(1.2) scaleY(1.15) scaleX(.88);   }
+  55%   { transform: translateX(0) translateY(0) rotate(0deg)    scale(1.08) scaleY(.88)   scaleX(1.14); }
+  70%   { transform: translateX(var(--hop-overshoot-x, 0)) translateY(var(--hop-overshoot-y, 0)) rotate(0deg)    scale(1.03) scaleY(1.03) scaleX(.97); }
+  85%   { transform: translateX(0) translateY(0) rotate(0deg)    scale(1.015) scaleY(1.015) scaleX(.985); }
+  100%  { transform: translateX(0) translateY(0) rotate(0deg)    scale(1)    scaleY(1)    scaleX(1); }
 }
 @media (prefers-reduced-motion: reduce) {
   #detail .empty-state.hopping .empty-face { animation: none; }
