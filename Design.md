@@ -107,10 +107,12 @@ The project opens the PDFs through three stages:
 
 1. **Timetable PDFs** — the raw input, one file per track and year (the master
    specializations are published as separate files), as distributed to students.
-2. **Single CSV** — the parser (`parse_timetables.py`) flattens all PDFs into one
-   `emplois.csv` with columns `professor,day,time,room,subject,field`, where
-   `field` carries the class name. This file is the single source of truth; every
-   page reads it and nothing else.
+2. **Single CSV** — the parser (`extract.py`) flattens all PDFs into one
+   `emplois.csv` with columns `professor,day,time,room,subject,field,week,source`,
+   where `field` carries the class name, `week` carries the week-alternation
+   marker (`SA` or `SB`; empty means every week), and `source`
+   identifies the exact page (`<pdf basename> p<page number>`). This file is the
+   single source of truth; every page reads it and nothing else.
 3. **Web pages** — static pages that load the CSV and provide services on top of it
    (below). No backend, no build step: re-running the parser updates the site.
 
@@ -128,9 +130,9 @@ page naming it (`LBC3-EB_A`, `MP1-SD`).
 Every page is a fixed grid: six time-slot columns crossed with six day rows. A
 cell holds one or more sessions. A session line opens with its kind — `C_`
 (lecture), `TD_` (tutorial), `TP_` (lab) — prefixed to the subject, followed on
-later lines by the teacher's name and the room. A session may carry the semester
-tag `S1`; when a slot alternates weekly, its two alternatives carry the week tags
-`SA` and `SB`. Text may spill across column boundaries, and a cell may stack two
+later lines by the teacher's name and the room. A session may carry the semestre tag `S1` (stripped at parse time,
+never preserved in `week`); when a slot alternates weekly, its two alternatives
+carry the week tags `SA` and `SB`. Text may spill across column boundaries, and a cell may stack two
 sessions.
 
 ## Service: Matrix

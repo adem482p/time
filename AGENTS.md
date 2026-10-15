@@ -2,9 +2,12 @@
 
 ## Project
 
-- The raw input is a set of timetable PDFs in `pdfs/`. A parser flattens them into
-  a single CSV with columns `professor,day,time,room,subject,field`, where `field`
-  carries the class name.
+- The raw input is a set of timetable PDFs in `pdfs/`. A parser (`extract.py`)
+  flattens them into a single CSV with columns
+  `professor,day,time,room,subject,field,week,source`, where `field`
+  carries the class name, `week` carries the week-alternation marker
+  (`SA`/`SB`, empty = every week; `S1` is a semestre label stripped at parse
+  time, never a week), and `source` identifies the exact PDF page.
 - That CSV is the single source of truth for the site: every page reads it and
   nothing else. Re-running the parser updates the site; there is no build step and
   no backend.

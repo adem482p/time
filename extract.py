@@ -2,9 +2,9 @@
 """Parse ISIM Mahdia timetable PDFs (pdfs/) into a flat CSV.
 
 Usage:
-    python3 parse_timetables.py [--out emplois.csv]
+    python3 extract.py [--out emplois.csv]
 
-Output columns: professor,day,time,room,subject,field
+Output columns: professor,day,time,room,subject,field,week,source
 
 Strategy (no third-party deps, uses poppler `pdftohtml -xml`):
 - Each PDF = N sections x 3 pages (combined + Groupe 1 + Groupe 2).
@@ -31,7 +31,11 @@ SLOTS = ["08h15-09h45", "10h00-11h30", "11h40-13h10",
 
 SUBJECT_RE = re.compile(r"^(C_|TD_|TP_)\s*(.+?)\s*$")
 GROUP_RE = re.compile(r"<[^>]*>\s*Groupe\s*[12]", re.IGNORECASE)
+# Strip S1/SA/SB from teacher/room text. S1 is a semestre label ("Semestre 1",
+# cf. page titles "Semestre 1 (du 14/09/26 au 10/01/27)"), NOT a week marker —
+# only SA/SB denote alternating weeks. Week capture below uses SA/SB only.
 WEEK_RE = re.compile(r"\bS1\b|\bSA\b|\bSB\b")
+WEEK_MARK_RE = re.compile(r"^(SA|SB)$")
 ROOM_KEYWORDS = ("FSEG", "INFO", "info", "Info", "Amphi", "AMPHI",
                  "Salle", "salle", "Labo", "labo", "Grand", "Internet",
                  "internet", "Accée", "accée", "lib", "Lang", "lang")
@@ -95,7 +99,7 @@ def is_room_like(s):
     return False
 
 
-def parse_page(page_el):
+def parse_page(page_el, pdf_name="", page_no=None):
     """Return list of session dicts (without field) for one Groupe page.
 
     Hybrid anchor method:
@@ -103,6 +107,15 @@ def parse_page(page_el):
     - other tokens attach to the same-row subject (same y, nearest x — this
       also catches teacher/room text spilling over a column boundary), else
       to the preceding subject in the same grid cell (teacher/room lines below).
+    - week-alternation markers (standalone SA/SB tokens) attach to the
+      nearest subject in the same grid column by |dy| and are reported in
+      the session's `week` value instead of being silently stripped.
+      (S1 tokens are stripped from teacher/room text like SA/SB but never
+      populate `week`: S1 is the semestre label, not a week. Reference for
+      future week-aware display: current week is B, next week is A, and
+      weeks start on Monday.)
+    - `pdf_name`/`page_no` identify the source page (`<basename> p<n>`,
+      1-based); both optional so unit tests can call parse_page(page_el).
     """
     W = float(page_el.get("width", 1262))
     H = float(page_el.get("height", 892))
@@ -174,7 +187,7 @@ def parse_page(page_el):
                 continue
             subjects.append({"tok": t, "di": di, "col": ci, "y": t["y"],
                              "x": t["x"], "subject": m.group(2).strip(),
-                             "rest_toks": []})
+                             "rest_toks": [], "week_toks": []})
         else:
             others.append(t)
 
@@ -182,6 +195,27 @@ def parse_page(page_el):
     for t in others:
         di = day_of(t["y"])
         if di is None:
+            continue
+        # 0) week-alternation markers: a standalone SA/SB token (after
+        # GROUP strip) names the weeks its session runs on. S1 looks
+        # identical in the grid but is the semestre label ("Semestre 1"),
+        # not a week, so it is never captured here — it is still stripped
+        # from teacher/room text by WEEK_RE in split_teacher_room/parse_rest.
+        # Capture it here — before WEEK_RE stripping in
+        # split_teacher_room/parse_rest can see it — and attach it to the
+        # nearest subject in the same grid column by |dy|. Ties go to the
+        # following (below) subject, since markers sit above their session.
+        # (Display reference: current week B, next A, weeks start Monday.)
+        if WEEK_MARK_RE.match(GROUP_RE.sub("", t["s"]).strip()):
+            tc = col_of_left(t["x"])
+            if tc is None:
+                tc = col_of_center(t["xc"])
+            cand = [s for s in subjects
+                    if s["col"] == tc] if tc is not None else []
+            if cand:
+                best = min(cand, key=lambda s: (abs(s["y"] - t["y"]),
+                                                0 if s["y"] > t["y"] else 1))
+                best["week_toks"].append(t)
             continue
         # 1) same-cell subjects: token's own column (by left edge) with a
         # generous vertical window (~1.2 text lines). This handles subjects
@@ -246,10 +280,17 @@ def parse_page(page_el):
         rest = [" ".join(p["s"] for p in sorted(ln["toks"], key=lambda t: t["x"]))
                 for ln in sorted(lines, key=lambda l: l["y"])]
         teacher, room = parse_rest(rest)
+        # first attached marker wins if several landed on one subject.
+        week = ""
+        if b["week_toks"]:
+            week = GROUP_RE.sub("", sorted(
+                b["week_toks"], key=lambda t: (t["y"], t["x"]))[0]["s"]).strip()
+        source = f"{pdf_name} p{page_no}" if pdf_name and page_no else ""
         sessions.append({"day": ordered_days[b["di"]],
                          "time": SLOTS[b["col"]],
                          "room": room.strip(), "subject": b["subject"].strip(),
-                         "professor": teacher})
+                         "professor": teacher, "week": week,
+                         "source": source})
     return sessions
 
 
@@ -348,14 +389,15 @@ def main():
             elif t:
                 current = t.split()[0]
         current = None
-        for pg, t in zip(pages, titles):
+        pdf_base = os.path.basename(pdf)
+        for pg_no, (pg, t) in enumerate(zip(pages, titles), start=1):
             if t.startswith("Groupe"):
                 section = current
                 grp = "Groupe " + ("1" if "Groupe 1" in t else "2")
                 if section is None:
                     continue
                 field = f"{section} {grp}"
-                for s in parse_page(pg):
+                for s in parse_page(pg, pdf_base, pg_no):
                     s["field"] = field
                     rows.append(s)
             elif t:
@@ -364,7 +406,7 @@ def main():
                 if section not in sec_has_group:
                     # standalone section (e.g. LBC3-EB_A): parse combined page
                     field = section
-                    for s in parse_page(pg):
+                    for s in parse_page(pg, pdf_base, pg_no):
                         s["field"] = field
                         rows.append(s)
                 # else: skip combined page (dup of Groupe pages)
@@ -372,11 +414,13 @@ def main():
         print(f"{os.path.basename(pdf)}: {len(pages)} pages -> {len([r for r in rows if True])} rows total so far")
 
     with open(args.out, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["professor", "day", "time", "room", "subject", "field"])
+        w = csv.DictWriter(f, fieldnames=["professor", "day", "time", "room",
+                                          "subject", "field", "week", "source"])
         w.writeheader()
         for r in rows:
             w.writerow({k: r.get(k, "") for k in
-                        ["professor", "day", "time", "room", "subject", "field"]})
+                        ["professor", "day", "time", "room",
+                         "subject", "field", "week", "source"]})
     print(f"Wrote {len(rows)} rows to {args.out}")
 
 
