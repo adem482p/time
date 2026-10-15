@@ -450,7 +450,7 @@ body[data-page="teachers"] .author-credit span {
        takes its content height only (neither grows nor shrinks). */
     flex: 0 0 auto;
   }
-  #layout:not(.is-list) #teacherList { display: none; }
+  #layout:not(.is-list) #teacherList, #layout:not(.is-list) #classList { display: none; }
   #layout.is-list #detail { display: none; }
   /* a V-chevron button beside the search box drops focus / hides the keyboard.
      It appears only while the search box actually holds focus, and it always
