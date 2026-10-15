@@ -364,6 +364,12 @@ body[data-page="classes"] .author-credit span {
 #detail .ctree li { margin: .1rem 0; }
 #detail .hours { color: var(--md-on-surface-variant, #555); font-size: .85em; }
 
+/* Keep the theme color below the fold on pages whose body is exactly one
+   viewport tall with taller content overflowing visibly (desktop
+   teachers/classes below): the body background only covers the viewport,
+   so the canvas carries the same color further down. */
+html { background: var(--md-surface, #fff); }
+
 /* ---- desktop: pull the now/next gutter outside the detail box ----
    The marker column is the exception: reserve it as --gutter, then shift the
    whole table left by exactly that much (cancelling the reservation) so the
@@ -371,6 +377,21 @@ body[data-page="classes"] .author-credit span {
    it — start at the detail box's left edge, while only the gutter hangs into
    the layout gap. Overflows stay visible so the hanging gutter is not clipped. */
 @media (min-width: 701px) {
+  /* The page itself is a column flexbox exactly one viewport tall
+     (border-box keeps body padding inside the height): the nav, if any,
+     takes its natural height and #layout shrinks to exactly the rest, so
+     the empty states never come with a scrollbar. A fixed height (not
+     min-height) is what lets the shrink engage; taller content simply
+     overflows visibly and the document still scrolls (the global html
+     background above keeps the theme color below the fold). */
+  body[data-page="teachers"], body[data-page="classes"] {
+    height: 100vh;
+    height: 100dvh;
+    display: flex; flex-direction: column;
+  }
+  body[data-page="teachers"] #layout, body[data-page="classes"] #layout {
+    flex: 1 1 auto; min-height: 0;
+  }
   /* teachers + classes pages: the left sidebar owns the header exactly like the mobile
      screen does — the title is centred inside the pane and the theme square
      sits at the pane's top-right, not at the far corner of the page. */
@@ -379,10 +400,18 @@ body[data-page="classes"] .author-credit span {
   body[data-page="teachers"] #themeCycle,
   body[data-page="classes"] #themeCycle { top: .55rem; right: 0; }
   /* keep the teacher/class list inside the viewport instead of letting it grow the
-     page: the header + search box above it take roughly 12rem, so the list
-     scrolls internally once it no longer fits under them. */
-  #layout > #listPane #teacherList { max-height: calc(100vh - 12rem); overflow-y: auto; }
-  #layout > #listPane #classList { max-height: calc(100vh - 12rem); overflow-y: auto; }
+     page: the pane is a flex column capped at the viewport height, so the list
+     absorbs exactly the space left under the header + search box and scrolls
+     internally. No magic-number estimate of the chrome above it (the previous
+     12rem cap was short of the real header height, pushing the page past the
+     viewport with a scrollbar on load). */
+  #layout > #listPane {
+    display: flex; flex-direction: column;
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+  }
+  #layout > #listPane #teacherList,
+  #layout > #listPane #classList { flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; }
   /* gap is wider than the gutter the table hangs into, so the hanging now/next
      column never touches the teacher list. */
   #layout { gap: calc(var(--gutter) + 1.25rem); }
@@ -456,6 +485,11 @@ body[data-page="classes"] .author-credit span {
     min-height: calc(100vh - 1.6rem);
     min-height: calc(100dvh - 1.6rem);
   }
+  /* classes page carries a nav above #layout (two lines on narrow): same
+     exact-viewport trick as desktop, so the empty state fits instead of
+     stacking the nav on top of a full-viewport layout. */
+  body[data-page="classes"] { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  body[data-page="classes"] #layout { flex: 1 1 auto; min-height: 0; }
   #layout > #listPane {
     max-width: none;
     /* REQUIRED in column direction: the base rule's `flex: 0 1 22rem` would
