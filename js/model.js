@@ -252,21 +252,70 @@ TT.model = (function () {
   // Fuse sessions on (professor,day,time,room,subject). Deterministic:
   // key-order independent, pills sorted, rows ordered by cmpFusedSession.
   // Pills are reduced via the corpus Grouping (issue 002 semantics).
+  //
+  // Stage 2 folds stage-1 rows sharing (professor,day,time) — one real
+  // event taught in several classrooms — into a single row whose room and
+  // subject list every alternative ("A or B"). Singleton groups pass
+  // through untouched (no `merged` marker, no `week` field). Merged rows
+  // carry the union week ('' when weekly or mixed SA/SB — never 'S1') and
+  // `merged: true`. The final output stays sorted by cmpFusedSession.
   function fuseSessions(sessions, grouping) {
     var groups = {};
+    var weekSets = {};   // fusionKey -> { raw week value: true } (stage-2 input)
     (sessions || []).forEach(function (s) {
       var k = fusionKey(s);
-      if (!groups[k]) groups[k] = { professor: s.professor, day: s.day,
-        time: s.time, room: s.room, subject: s.subject, fields: [] };
+      if (!groups[k]) {
+        groups[k] = { professor: s.professor, day: s.day,
+          time: s.time, room: s.room, subject: s.subject, fields: [] };
+        weekSets[k] = {};
+      }
       groups[k].fields.push(s.field);
+      weekSets[k][s.week || ''] = true;
     });
-    var out = Object.keys(groups).map(function (k) {
+    var stage1 = Object.keys(groups).map(function (k) {
       var g = groups[k];
       g.fields = Object.keys(g.fields.reduce(function (acc, f) {
         acc[f] = true; return acc;
       }, {})).sort(localeCmp);
       g.pills = pillsFor(grouping, g.fields);
-      return g;
+      return { row: g, weeks: weekSets[k] };
+    });
+    stage1.sort(function (a, b) { return cmpFusedSession(a.row, b.row); });
+    var buckets = {}, order = [];
+    stage1.forEach(function (e) {
+      var k = JSON.stringify([e.row.professor, e.row.day, e.row.time]);
+      if (!buckets[k]) { buckets[k] = []; order.push(k); }
+      buckets[k].push(e);
+    });
+    var out = order.map(function (k) {
+      var members = buckets[k];
+      if (members.length === 1) return members[0].row;
+      members.sort(function (a, b) { return cmpFusedSession(a.row, b.row); });
+      var first = members[0].row;
+      var rooms = {}, subjects = {}, fields = {}, weeks = {};
+      members.forEach(function (e) {
+        var r = e.row;
+        var room = r.room || '';
+        if (room !== '') rooms[room] = true;
+        subjects[r.subject] = true;
+        (r.fields || []).forEach(function (f) { fields[f] = true; });
+        Object.keys(e.weeks).forEach(function (w) { weeks[w] = true; });
+      });
+      var roomList = Object.keys(rooms).sort(localeCmp);
+      var subjectList = Object.keys(subjects).sort(localeCmp);
+      var fieldList = Object.keys(fields).sort(localeCmp);
+      var weekKeys = Object.keys(weeks);
+      var week = (weekKeys.length === 1 &&
+        (weekKeys[0] === 'SA' || weekKeys[0] === 'SB')) ? weekKeys[0] : '';
+      return {
+        professor: first.professor, day: first.day, time: first.time,
+        room: roomList.join(' or '),
+        subject: subjectList.join(' or '),
+        fields: fieldList,
+        pills: pillsFor(grouping, fieldList),
+        week: week,
+        merged: true
+      };
     });
     return out.sort(cmpFusedSession);
   }
