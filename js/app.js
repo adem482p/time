@@ -460,16 +460,10 @@ TT.app = (function () {
       syncList();
     });
     search.addEventListener('blur', function () {
-      // delayed so a mousedown accept / list-item click lands before the
-      // overlay hides and before the mobile list swaps back to cards
-      setTimeout(function () {
-        if (document.activeElement !== search) {
-          searchFocused = false;
-          renderSuggest([]);
-          renderGhost();
-          syncList();
-        }
-      }, 120);
+      searchFocused = false;
+      renderSuggest([]);
+      renderGhost();
+      syncList();
     });
 
     // the mobile V-chevron button beside the input removes focus (hides the
@@ -1145,14 +1139,10 @@ TT.app = (function () {
       syncList();
     });
     search.addEventListener('blur', function () {
-      setTimeout(function () {
-        if (document.activeElement !== search) {
-          searchFocused = false;
-          renderSuggest([]);
-          renderGhost();
-          syncList();
-        }
-      }, 120);
+      searchFocused = false;
+      renderSuggest([]);
+      renderGhost();
+      syncList();
     });
 
     if (searchDone) searchDone.addEventListener('click', function () {
