@@ -93,13 +93,21 @@ function sun(hh, mm) { return new RealDate(2026, 9, 11, hh, mm); } // Sunday
 
 // ---- output parsing -------------------------------------------------------
 
+function headingsOf(html) {
+  var out = [];
+  var re = /<h3 class="day-head">([^<]*)<\/h3>/g;
+  var m;
+  while ((m = re.exec(html))) out.push(m[1]);
+  return out;
+}
+
 function sectionsOf(html) {
   return html.split('<section').slice(1).map(function (chunk) {
-    var tag = (/class="([^"]*)"/.exec(chunk) || [])[1] || '';
-    var day = (/day-head">([^<]*)</.exec(chunk) || [])[1];
-    var tables = chunk.split('<table').slice(1);
-    var rows = chunk.split('<tr').slice(1).filter(function (r) { return r.indexOf('<td') !== -1; });
-    return { chunk: chunk, cls: tag, day: day, tables: tables, rows: rows };
+    var inner = chunk.slice(0, chunk.indexOf('</section>'));
+    var tag = (/class="([^"]*)"/.exec(inner) || [])[1] || '';
+    var tables = inner.split('<table').slice(1);
+    var rows = inner.split('<tr').slice(1).filter(function (r) { return r.indexOf('<td') !== -1; });
+    return { chunk: inner, cls: tag, tables: tables, rows: rows };
   });
 }
 
@@ -107,7 +115,7 @@ function rowTime(row) { return (/c-time">([^<]*)</.exec(row) || [])[1]; }
 
 // ---- structural asserts on the showTeacher source slice -------------------
 
-test('showTeacher emits one section per day with no Day column', function () {
+test('showTeacher emits one heading + section per day with no Day column', function () {
   var fn = showTeacherFn();
   assert.ok(fn.indexOf('<section class="day-group') !== -1, 'missing day-group section');
   assert.ok(fn.indexOf('<h3 class="day-head">') !== -1, 'missing day-head h3');
@@ -117,6 +125,9 @@ test('showTeacher emits one section per day with no Day column', function () {
   assert.ok(fn.indexOf('<th>Day') === -1, 'no Day header in teacher output');
   assert.ok(fn.indexOf('c-day') === -1, 'no c-day cells in teacher output');
   assert.ok(fn.indexOf('<hr') === -1, 'no rule elements in teacher output');
+  // heading is a sibling BEFORE the card, not a child of it
+  assert.ok(fn.indexOf('<h3 class="day-head">') < fn.indexOf('<section class="day-group'),
+    'day-head h3 must be emitted before the day-group section');
   // single count caption above all groups, breakdown unchanged
   assert.strictEqual(fn.split('p class="count"').length - 1, 1, 'exactly one p.count');
   assert.ok(fn.indexOf('breakdownHTML(t)') !== -1, 'breakdown block must be kept');
@@ -160,19 +171,35 @@ function checkInvariants(name, clock) {
   });
 
   var html = runShowTeacher(name, clock);
+  var heads = headingsOf(html);
   var secs = sectionsOf(html);
 
-  // one section per distinct day, Monday-first, none for empty days
+  // one heading + one section per distinct day, Monday-first, none for empty days
   var distinct = [];
   ss.forEach(function (s) { if (distinct.indexOf(s.day) === -1) distinct.push(s.day); });
-  assert.deepStrictEqual(secs.map(function (g) { return g.day; }),
-    distinct.map(function (d) { return model.frDay(d); }),
-    name + ': one section per distinct day, Monday-first');
+  var wantHeads = distinct.map(function (d) { return model.frDay(d); });
+  assert.deepStrictEqual(heads, wantHeads,
+    name + ': one h3 per distinct day, Monday-first');
+  assert.strictEqual(secs.length, distinct.length,
+    name + ': one section per distinct day');
   main(store.days).forEach(function (d) {
     if (distinct.indexOf(d) === -1)
       assert.ok(html.indexOf('day-head">' + model.frDay(d) + '<') === -1,
-        name + ': no section for empty day ' + d);
+        name + ': no heading for empty day ' + d);
   });
+
+  // h3 is a sibling PRECEDING the card, never a child of it
+  secs.forEach(function (g) {
+    assert.ok(g.chunk.indexOf('day-head') === -1,
+      name + ': day-head must not live inside the section card');
+  });
+  distinct.forEach(function (d) {
+    var fr = model.frDay(d);
+    assert.ok(html.indexOf('<h3 class="day-head">' + fr + '</h3><section class="day-group') !== -1,
+      name + ': heading for ' + d + ' must immediately precede its section');
+  });
+  assert.strictEqual(html.split('<h3 class="day-head">').length - 1, distinct.length,
+    name + ': exactly one heading per day group');
 
   // no Day column / day markers in the markup
   assert.ok(html.indexOf('c-day') === -1, name + ': no c-day cells');
@@ -193,8 +220,8 @@ function checkInvariants(name, clock) {
 
   // NOW/NEXT markers land on the same rows as the pre-change logic
   var gotNow = {}, gotNext = {};
-  secs.forEach(function (g) {
-    var day = main(store.days).filter(function (d) { return model.frDay(d) === g.day; })[0];
+  secs.forEach(function (g, gi) {
+    var day = distinct[gi];
     g.rows.forEach(function (r) {
       var key = day + '|' + rowTime(r);
       if (r.indexOf('nowtag') !== -1) gotNow[key] = true;
@@ -205,21 +232,21 @@ function checkInvariants(name, clock) {
   assert.deepStrictEqual(gotNext, wantNext, name + ': NEXT rows match pre-change logic');
 
   // dim on the section iff its day has no now/next
-  secs.forEach(function (g) {
-    var day = main(store.days).filter(function (d) { return model.frDay(d) === g.day; })[0];
+  secs.forEach(function (g, gi) {
+    var day = distinct[gi];
     assert.strictEqual(g.cls.split(' ').indexOf('dim') !== -1, !live[day],
       name + ': dim on section iff day has no now/next (' + day + ')');
   });
 
   // single count above the first group, h2 before h3, day name once, breakdown kept
   assert.strictEqual(html.split('class="count"').length - 1, 1, 'single p.count');
-  assert.ok(html.indexOf('class="count"') < html.indexOf('<section'),
+  assert.ok(html.indexOf('class="count"') < html.indexOf('<h3'),
     'p.count sits above all groups');
   assert.ok(html.indexOf('<h2>') !== -1 && html.indexOf('<h2>') < html.indexOf('<h3'),
     'h2 (teacher) precedes h3 (days)');
-  secs.forEach(function (g) {
-    assert.strictEqual(g.chunk.split('>' + g.day + '<').length - 1, 1,
-      'day name exactly once per group');
+  heads.forEach(function (fr) {
+    assert.strictEqual(html.split('>' + fr + '<').length - 1, 1,
+      'day name exactly once in the output (' + fr + ')');
   });
   assert.ok(html.indexOf('Subjects (ranked by hours)') !== -1, 'breakdown subjects kept');
   assert.ok(html.indexOf('Classes (ranked by hours)') !== -1, 'breakdown classes kept');
@@ -269,7 +296,7 @@ test('styles.css re-scopes the desktop gutter hang to per-group tables', functio
     'unscoped teacher gutter rule must be gone');
 });
 
-test('mobile cards key on the section with tr + tr dividers', function () {
+test('mobile cards key on the section with tr + tr dividers, heading outside', function () {
   var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
   assert.ok(narrow.indexOf('#detail .day-group') !== -1, 'mobile card must key on the section');
   var card = narrow.slice(narrow.indexOf('#detail .day-group {'),
@@ -277,10 +304,33 @@ test('mobile cards key on the section with tr + tr dividers', function () {
   ['border:', 'border-radius', 'padding', 'margin'].forEach(function (tok) {
     assert.ok(card.indexOf(tok) !== -1, 'section card needs ' + tok);
   });
+  // the heading is a sibling BEFORE the card, never a child of it
+  assert.ok(narrow.indexOf('#detail .day-group .day-head') === -1,
+    'heading must not be styled as a child of the card');
+  assert.ok(narrow.indexOf('#detail .day-head') !== -1,
+    'mobile must style the outside heading');
   assert.ok(narrow.indexOf('.day-group tr:has(td) + tr:has(td)') !== -1,
     'stacked rows need a tr + tr divider');
   var div = narrow.slice(narrow.indexOf('.day-group tr:has(td) + tr:has(td)'));
   assert.ok(div.slice(0, 120).indexOf('border-top') !== -1, 'divider must be a border-top');
+});
+
+test('mobile tinted rows full-bleed across the day-group card', function () {
+  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  ['tr.now', 'tr.next'].forEach(function (tok) {
+    assert.ok(narrow.indexOf('.day-group ' + tok) !== -1,
+      'tinted ' + tok + ' rows inside .day-group must be handled');
+  });
+  var bleed = narrow.slice(narrow.indexOf('.day-group tr.now'));
+  assert.ok(bleed.indexOf('margin-left: -.7rem') !== -1, 'full-bleed needs negative left margin');
+  assert.ok(bleed.indexOf('margin-right: -.7rem') !== -1, 'full-bleed needs negative right margin');
+  assert.ok(bleed.indexOf('padding-left: .7rem') !== -1, 'content stays inset via left padding');
+  assert.ok(bleed.indexOf('padding-right: .7rem') !== -1, 'content stays inset via right padding');
+  // vertical rhythm untouched: only horizontal margins/padding, no vertical override
+  var rule = bleed.slice(bleed.indexOf('{'), bleed.indexOf('}') + 1);
+  assert.ok(rule.indexOf('padding:') === -1, 'must not reset the .35rem vertical padding');
+  assert.ok(rule.indexOf('margin:') === -1 || rule.indexOf('margin-left') !== -1,
+    'must not reset the vertical margins');
 });
 
 test('styles.css keeps the classes guards intact', function () {

@@ -267,8 +267,8 @@ TT.app = (function () {
         byDay[s.day].push({ s: s, i: i });
       });
       dayOrder.forEach(function (day) {
-        h += '<section class="day-group' + (liveDays[day] ? '' : ' dim') + '">';
         h += '<h3 class="day-head">' + esc(model.frDay(day)) + '</h3>';
+        h += '<section class="day-group' + (liveDays[day] ? '' : ' dim') + '">';
         h += '<table class="t-sessions"><tr><th></th><th>Time</th><th>Room</th><th>Subject</th><th>Class</th></tr>';
         byDay[day].forEach(function (entry) {
           var s = entry.s;
