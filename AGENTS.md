@@ -2,7 +2,7 @@
 
 ## Project
 
-- The raw input is a set of timetable PDFs in `pdfs/`. A parser (`extract.py`)
+- The raw input is a set of timetable PDFs in `data/pdfs/`. A parser (`data/extract.py`)
   flattens them into a single CSV with columns
   `professor,day,time,room,subject,field,week,source`, where `field`
   carries the class name, `week` carries the week-alternation marker

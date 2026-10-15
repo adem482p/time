@@ -107,7 +107,7 @@ The project opens the PDFs through three stages:
 
 1. **Timetable PDFs** — the raw input, one file per track and year (the master
    specializations are published as separate files), as distributed to students.
-2. **Single CSV** — the parser (`extract.py`) flattens all PDFs into one
+2. **Single CSV** — the parser (`data/extract.py`) flattens all PDFs into one
    `emplois.csv` with columns `professor,day,time,room,subject,field,week,source`,
    where `field` carries the class name, `week` carries the week-alternation
    marker (`SA` or `SB`; empty means every week), and `source`

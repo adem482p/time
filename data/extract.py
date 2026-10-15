@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Parse ISIM Mahdia timetable PDFs (pdfs/) into a flat CSV.
+"""Parse ISIM Mahdia timetable PDFs (data/pdfs/) into a flat CSV.
 
 Usage:
-    python3 extract.py [--out emplois.csv]
+    python3 data/extract.py [--out emplois.csv]
 
 Output columns: professor,day,time,room,subject,field,week,source
 
@@ -351,7 +351,7 @@ def parse_rest(rest_list):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pdfs", default="pdfs")
+    ap.add_argument("--pdfs", default="data/pdfs")
     ap.add_argument("--out", default="emplois.csv")
     args = ap.parse_args()
 
