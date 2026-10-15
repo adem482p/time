@@ -31,24 +31,30 @@ nav a { margin-right: 1rem; color: var(--md-primary, #0b4da2); }
 nav { padding-right: 2.4rem; }
 h1 { font-size: 1.3rem; margin: .6rem 0 .2rem; }
 #status { color: var(--md-on-surface-variant, #555); font-size: .85em; margin: .2rem 0 .6rem; }
-/* teachers page: centre the title and the session/teacher count line under it */
+/* teachers + classes pages: centre the title and the session/teacher count line under it */
 body[data-page="teachers"] h1,
-body[data-page="teachers"] #status { text-align: center; }
-/* the teachers title reads as display text: bigger than the generic h1 chrome
+body[data-page="teachers"] #status,
+body[data-page="classes"] h1,
+body[data-page="classes"] #status { text-align: center; }
+/* the teachers + classes titles read as display text: bigger than the generic h1 chrome
    (2em = twice the 16px body size) and given room above the credit line */
-body[data-page="teachers"] h1 { font-size: 2em; margin: .8rem 0 .6rem; }
-body[data-page="teachers"] .author-credit { 
+body[data-page="teachers"] h1,
+body[data-page="classes"] h1 { font-size: 2em; margin: .8rem 0 .6rem; }
+body[data-page="teachers"] .author-credit,
+body[data-page="classes"] .author-credit { 
     text-align: center; 
     margin: 1.2rem 0; 
 }
-body[data-page="teachers"] .author-credit a { 
+body[data-page="teachers"] .author-credit a,
+body[data-page="classes"] .author-credit a { 
     color: var(--md-primary); 
     font-family: "Tiny5", "DejaVu Sans", sans-serif; 
     font-size: 1.3em; 
     font-style: normal; 
     text-decoration: underline;
 }
-body[data-page="teachers"] .author-credit span { 
+body[data-page="teachers"] .author-credit span,
+body[data-page="classes"] .author-credit span { 
     color: var(--md-on-surface-variant); 
     padding-right: .2em; 
 }
@@ -278,7 +284,8 @@ body[data-page="teachers"] .author-credit span {
    DynaPuff (rounded display face, same Google Fonts @import as Tiny5) matches
    the kaomoji's playful feel, and the face's colour + opacity are copied
    verbatim so both read as the same faint tint. */
-#detail .no-teacher-selected {
+#detail .no-teacher-selected,
+#detail .no-class-selected {
   color: var(--md-on-surface, #1b2a44);
   opacity: .14;
   font-family: "DynaPuff", "DejaVu Sans", system-ui, sans-serif;
@@ -364,15 +371,18 @@ body[data-page="teachers"] .author-credit span {
    it — start at the detail box's left edge, while only the gutter hangs into
    the layout gap. Overflows stay visible so the hanging gutter is not clipped. */
 @media (min-width: 701px) {
-  /* teachers page: the left sidebar owns the header exactly like the mobile
+  /* teachers + classes pages: the left sidebar owns the header exactly like the mobile
      screen does — the title is centred inside the pane and the theme square
      sits at the pane's top-right, not at the far corner of the page. */
-  body[data-page="teachers"] #listPane { position: relative; }
-  body[data-page="teachers"] #themeCycle { top: .55rem; right: 0; }
-  /* keep the teacher list inside the viewport instead of letting it grow the
+  body[data-page="teachers"] #listPane,
+  body[data-page="classes"] #listPane { position: relative; }
+  body[data-page="teachers"] #themeCycle,
+  body[data-page="classes"] #themeCycle { top: .55rem; right: 0; }
+  /* keep the teacher/class list inside the viewport instead of letting it grow the
      page: the header + search box above it take roughly 12rem, so the list
      scrolls internally once it no longer fits under them. */
   #layout > #listPane #teacherList { max-height: calc(100vh - 12rem); overflow-y: auto; }
+  #layout > #listPane #classList { max-height: calc(100vh - 12rem); overflow-y: auto; }
   /* gap is wider than the gutter the table hangs into, so the hanging now/next
      column never touches the teacher list. */
   #layout { gap: calc(var(--gutter) + 1.25rem); }
@@ -392,6 +402,9 @@ body[data-page="teachers"] .author-credit span {
   #layout > #detail table.t-sessions .nexttag {
     font-size: .78em; vertical-align: middle;
   }
+  /* the session card list is the narrow-screen view of a class week; the
+     desktop grid (table.week) stays the only view here. */
+  #layout > #detail table.c-sessions { display: none; }
 }
 
 /* ---- time page ---- */
@@ -529,10 +542,16 @@ body[data-page="teachers"] .author-credit span {
   #detail td.c-day { flex: 1 1 100%; order: 1; font-weight: bold; text-transform: capitalize; }
   #detail td.c-time { flex: 1 1 100%; order: 2; }
   #detail td.c-subject { flex: 1 1 100%; order: 3; }
+  /* the classes session list adds a teacher cell the teachers page has no
+     cells for, so this rule leaves the teachers page unaffected: it ties with
+     c-room at order 4, and the tie breaks deterministically by DOM order —
+     renderWeek emits the teacher cell before the room cell. */
+  #detail td.c-teacher { order: 4; }
   #detail td.c-room { order: 4; }
   #detail td.c-class { order: 5; }
   #detail td.c-day::before, #detail td.c-time::before,
-  #detail td.c-subject::before, #detail td.c-room::before {
+  #detail td.c-subject::before, #detail td.c-room::before,
+  #detail td.c-teacher::before {
     color: var(--md-on-surface-variant, #666); font-size: .78em; font-weight: normal;
     text-transform: uppercase; letter-spacing: .05em; margin-right: .4em;
   }
@@ -540,6 +559,7 @@ body[data-page="teachers"] .author-credit span {
   #detail td.c-time::before { content: "Time: "; }
   #detail td.c-subject::before { content: "Subject: "; }
   #detail td.c-room::before { content: "Room: "; }
+  #detail td.c-teacher::before { content: "Teacher: "; }
 }
 
 /* ---- classes page: class list + week grid (issue 032) ---- */
@@ -571,13 +591,15 @@ table.week thead th { background: var(--md-surface-container, #f4f4f4); }
 table.week th.cgutter, table.week td.cgutter { width: 1.4rem; border: none; padding: 0; background: transparent; }
 table.week th.c-time, table.week td.c-time { white-space: nowrap; font-weight: 600; }
 table.week th.today { background: var(--md-surface-container-high, #e8eefb); }
+/* tint the whole current-day column the same fill as the header above it;
+   placed before the now/next cell rules so now/next still win on equal
+   specificity */
+table.week td.c-cell.today { background: var(--md-surface-container-high, #e8eefb); }
 table.week td.c-cell.now { background: var(--md-primary-container, #fff3b0); }
 table.week td.c-cell.next { background: var(--md-tertiary-container, #d6e9ff); }
 table.week .sess { margin-bottom: .25rem; }
 table.week .s-subject { font-weight: 600; }
 table.week .s-teacher, table.week .s-room { color: var(--md-on-surface-variant, #555); }
-/* union views label every line with the class it comes from */
-table.week .s-class { display: block; color: var(--md-on-surface-variant, #666); font-size: .8em; font-style: italic; }
 
 /* the red cursor: a semi-transparent line crossing the grid at the current
    time, with a right-pointing arrowhead in the gutter */
@@ -596,20 +618,10 @@ table.week .s-class { display: block; color: var(--md-on-surface-variant, #666);
 
 /* ---- classes page on narrow screens ---- */
 @media (max-width: 700px) {
-  /* the week grid is wider than the phone: scroll it horizontally
-     inside its own box (the cursor lives inside .weekwrap, so it
-     scrolls with the grid). The generic mobile rules above flatten
-     #detail tables into stacked cards — hidden header row, flex-wrapped
-     rows, block cells — which would destroy the grid and the cursor
-     crossing it; the week grid re-asserts the table layout instead. */
-  .weekwrap { overflow-x: auto; }
-  #detail table.week { display: table; min-width: 42rem; }
-  #detail .weekwrap tbody { display: table-row-group; }
-  #detail .weekwrap tr { display: table-row; border: 0; margin: 0; padding: 0; }
-  #detail .weekwrap th, #detail .weekwrap td { display: table-cell; }
-  /* positional context survives in a scrolling grid, so the generic
-     "Time: " cell prefix is noise here */
-  #detail .weekwrap td.c-time::before { content: none; }
+  /* narrow screens show the session card list (table.c-sessions, shaped into
+     cards by the generic mobile rules above) instead of the desktop week
+     grid. */
+  #detail .weekwrap { display: none; }
   /* the class list flattens exactly like the teacher list */
   #classList { max-width: none; max-height: none; border: 0; overflow: visible; }
   #classList li {

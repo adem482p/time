@@ -384,8 +384,17 @@ test('classes.html carries the teachers-page structure and script stack', functi
    'js/theme.js', 'js/color.js', 'js/app.js'].forEach(function (s) {
     assert.ok(html.indexOf('src="' + s + '"') !== -1, 'missing script ' + s);
   });
-  // the empty state is plain text, so the kaomoji vendor is not loaded
-  assert.ok(html.indexOf('kaomoji') === -1);
+  // the kaomoji empty state mirrors the teachers page, so the vendor is loaded
+  assert.ok(html.indexOf('src="vendor/kaomoji.js"') !== -1, 'kaomoji vendor must be loaded');
+  // the author credit mirrors the teachers page, right after the status line
+  assert.ok(html.indexOf('class="author-credit"') !== -1, 'missing author-credit');
+  assert.ok(html.indexOf('https://github.com/adem482p') !== -1, 'missing author link');
+  // SEO head mirrors the teachers page with classes-specific URLs/descriptions
+  assert.ok(html.indexOf('name="description"') !== -1, 'missing meta description');
+  assert.ok(html.indexOf('name="theme-color"') !== -1, 'missing theme-color');
+  assert.ok(html.indexOf('rel="canonical"') !== -1, 'missing canonical');
+  assert.ok(html.indexOf('https://adem482p.github.io/time/classes.html') !== -1,
+    'canonical/og:url must use the classes.html URL');
   ['id="searchWrap"', 'id="search"', 'id="suggest"', 'id="classList"',
    'id="detail"', 'id="status"', 'id="themeCycle"',
    'id="searchDone"', 'id="searchClear"'].forEach(function (id) {
@@ -408,7 +417,136 @@ test('styles.css gains a classes section without touching the mobile block', fun
   assert.ok(css.indexOf('classes page') !== -1);
   assert.ok(css.indexOf('table.week') !== -1);
   assert.ok(css.indexOf('.cursor') !== -1);
+  // the current-day column is tinted like its header, before now/next so
+  // now/next still win on equal specificity
+  assert.ok(css.indexOf('td.c-cell.today') !== -1, 'missing c-cell.today column tint');
+  assert.ok(css.indexOf('td.c-cell.today') < css.indexOf('td.c-cell.now'),
+    'c-cell.today must come before c-cell.now');
+  // the classes empty state shares the teachers empty-state heading style
+  assert.ok(css.indexOf('no-class-selected') !== -1, 'missing no-class-selected style');
   // the pre-existing mobile search-button block is intact (rule text per
   // issue 031: the V owns right:0 and the X is the control that steps aside)
   assert.ok(css.indexOf('#searchWrap:focus-within:has(#searchClear:not([hidden])) #searchClear') !== -1);
+});
+
+// ---- leaf-only selection + session cards (issue 047) -----------------------
+
+// The page filters the match layer down to leaves in app.js; the match layer
+// itself is untouched, so the tests replicate the page's filter here.
+function leafSet() {
+  var set = {};
+  groups.leaves.forEach(function (n) { set[n.key] = true; });
+  return set;
+}
+
+test('the leaf-filtered catalogue is exactly the leaf set', function () {
+  var set = leafSet();
+  var rows = match.classSearch(index, '').filter(function (r) {
+    return set[(r.node && r.node.key) || r.label];
+  });
+  assert.strictEqual(rows.length, groups.leaves.length);
+  var labels = rows.map(function (r) { return r.label; });
+  assert.ok(labels.indexOf('GLSI3D1') !== -1, 'leaf GLSI3D1 must be kept');
+  assert.ok(labels.indexOf('LCS1') === -1, 'interior LCS1 must be excluded');
+  assert.ok(labels.indexOf('LCS') === -1, 'interior LCS must be excluded');
+  // the same filter on a mid-hierarchy query drops the interior node itself
+  var sub = match.classSearch(index, 'lcs1');
+  assert.ok(sub.map(function (r) { return r.label; }).indexOf('LCS1') !== -1,
+    'match layer still returns the interior node (filtering lives in app.js)');
+  var kept = sub.filter(function (r) { return set[(r.node && r.node.key) || r.label]; });
+  assert.ok(kept.length < sub.length);
+  kept.forEach(function (r) {
+    assert.ok(groups.byKey[r.label].isLeaf(), r.label + ' must be a leaf');
+  });
+  // class autocomplete entries resolve through the same leaf set
+  var sug = match.suggest(index, 'lcs1').filter(function (r) { return r.kind === 'class'; });
+  var sugKept = sug.filter(function (r) { return set[r.label]; });
+  assert.ok(sug.length > sugKept.length, 'suggest still offers interior classes (app.js filters them)');
+  sugKept.forEach(function (r) {
+    assert.ok(groups.byKey[r.label].isLeaf(), r.label + ' must be a leaf');
+  });
+});
+
+test('leaf week sessions stay in (day, slot) order', function () {
+  var w = model.classWeek(groups, 'GLSI3D1');
+  assert.strictEqual(w.leaves.length, 1);
+  for (var i = 1; i < w.sessions.length; i++) {
+    assert.ok(model.cmpSession(w.sessions[i - 1], w.sessions[i]) <= 0);
+  }
+  // dayCursor boundaries are unchanged by the leaf/card work
+  assert.strictEqual(model.dayCursor(at(11, 10, 0), store.slots).visible, false); // Sunday
+  assert.strictEqual(model.dayCursor(at(12, 7, 0), store.slots).phase, 'before');
+  assert.strictEqual(model.dayCursor(at(12, 19, 0), store.slots).phase, 'after');
+  assert.strictEqual(model.dayCursor(at(12, 9, 45), store.slots).next, '10h00-11h30'); // gap
+});
+
+function classesSection() {
+  var src = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
+  return src.slice(src.indexOf('function initClassesPage'), src.indexOf('function boot('));
+}
+
+test('app.js selects leaves only (no broader classes)', function () {
+  var sec = classesSection();
+  // leaf lookup built once from groups.leaves, applied to every surface
+  assert.ok(sec.indexOf('groups.leaves.forEach') !== -1, 'missing leafSet build');
+  assert.ok(sec.indexOf('function isLeafRow') !== -1, 'missing isLeafRow');
+  assert.ok(sec.indexOf('function leafRows') !== -1, 'missing leafRows');
+  assert.ok(sec.indexOf('leafRows(match.classSearch(index, q))') !== -1,
+    'onInput/commit must leaf-filter classSearch rows');
+  assert.ok(sec.indexOf('leafRows(match.classSearch(index, \'\'))') !== -1,
+    'initial paint must leaf-filter the catalogue');
+  assert.ok(sec.indexOf('leafSet[r.label]') !== -1,
+    'classSuggestions must leaf-filter suggest rows');
+  // single-leaf gates: exact refs and showClass take the nomatch path otherwise
+  assert.ok(sec.indexOf('leaves.length === 1') !== -1, 'missing single-leaf commit gate');
+  assert.ok(sec.indexOf('week.leaves.length !== 1') !== -1, 'missing single-leaf showClass gate');
+  // the union rendering is gone: no per-line class label, no rotation helper
+  assert.ok(sec.indexOf('s-class') === -1, 'union s-class span must be gone');
+  assert.ok(sec.indexOf('isUnion') === -1, 'isUnion must be gone');
+  assert.ok(sec.indexOf('orderedDays') === -1, 'orderedDays rotation must be gone');
+  assert.ok(sec.indexOf('isNarrow') === -1, 'isNarrow gate must be gone');
+});
+
+test('app.js emits a teacher-style session list with today-only marking', function () {
+  var sec = classesSection();
+  assert.ok(sec.indexOf('<table class="c-sessions">') !== -1, 'missing c-sessions table');
+  assert.ok(sec.indexOf('<th>Teacher</th><th>Subject</th><th>Room</th>') !== -1,
+    'c-sessions header must be Day/Time/Teacher/Subject/Room');
+  assert.ok(sec.indexOf('c-teacher') !== -1, 'missing c-teacher cells');
+  assert.ok(sec.indexOf('<p class="count">') !== -1, 'missing session count caption');
+  // today-only model: isCurrentSession + the computed cursor, never the
+  // wrapping nextSessionIdx
+  assert.ok(sec.indexOf('model.isCurrentSession(s.day, s.time, now)') !== -1);
+  assert.ok(sec.indexOf('s.time === cursor.next') !== -1, 'next must reuse the cursor');
+  assert.ok(sec.indexOf('nextSessionIdx(') === -1, 'must not use the wrapping nextSessionIdx');
+  assert.ok(sec.indexOf('color.sessionRow(') !== -1, 'list rows must use color.sessionRow');
+  assert.ok(sec.indexOf('NEXT_ARROW') !== -1, 'list gutter must reuse NEXT_ARROW');
+  // the desktop grid is untouched in structure: Monday-first store.days loops
+  assert.ok(sec.indexOf('store.days.forEach') !== -1, 'grid must iterate store.days');
+  assert.ok(sec.indexOf('table class="week"') !== -1 || sec.indexOf('<table class="week">') !== -1,
+    'grid table.week must be kept');
+});
+
+test('styles.css hides the grid/list per viewport and labels teacher cells', function () {
+  var css = readPage('styles.css');
+  // desktop hides the card list; narrow hides the grid
+  assert.ok(css.indexOf('#layout > #detail table.c-sessions { display: none; }') !== -1,
+    'missing desktop c-sessions hide');
+  assert.ok(css.indexOf('#detail .weekwrap { display: none; }') !== -1,
+    'missing narrow weekwrap hide');
+  // the dead scroll-grid overrides are gone
+  assert.ok(css.indexOf('.weekwrap { overflow-x: auto; }') === -1);
+  assert.ok(css.indexOf('min-width: 42rem') === -1);
+  assert.ok(css.indexOf('td.c-time::before { content: none') === -1);
+  // teacher cells join the mobile card layout with a label
+  assert.ok(css.indexOf('#detail td.c-teacher { order: 4; }') !== -1,
+    'missing c-teacher card order');
+  assert.ok(css.indexOf('td.c-teacher::before') !== -1, 'missing c-teacher card label');
+  assert.ok(css.indexOf('content: "Teacher: ";') !== -1);
+  // retained invariants: today-before-now order, list hide rule, flattening
+  assert.ok(css.indexOf('td.c-cell.today') < css.indexOf('td.c-cell.now'));
+  assert.ok(css.indexOf('#layout:not(.is-list) #classList') !== -1,
+    'classList hide rule must stay');
+  assert.ok(css.indexOf('#classList { max-width: none;') !== -1,
+    'classList flattening must stay');
 });

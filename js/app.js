@@ -638,12 +638,14 @@ TT.app = (function () {
   // ---- classes page -----------------------------------------------------------
 
   // Student-facing class timetable (issue 032). The class is chosen through a
-  // live search over the grouping hierarchy (match.classSearch + the class
-  // entries of match.suggest); selecting one draws its week as a grid — days
-  // as columns, the six slots as rows — with a semi-transparent red cursor at
-  // the current time and the current/next slot cells highlighted. A broader
-  // class (interior node) shows the union of every timetable beneath it, each
-  // line labelled with the class it comes from.
+  // live search over the leaf classes only (match.classSearch + the class
+  // entries of match.suggest, both filtered to groups.leaves); selecting one
+  // draws its week as a grid — days as columns, the six slots as rows — with
+  // a semi-transparent red cursor at the current time and the current/next
+  // slot cells highlighted. Broader classes (interior nodes) are not
+  // selectable: they never appear in the catalogue and exact references to
+  // them take the no-match path. On narrow screens the grid is replaced by a
+  // teacher-style session card list (table.c-sessions).
   function initClassesPage(store, modelObjs, index) {
     var search = document.getElementById('search');
     var searchDone = document.getElementById('searchDone');
@@ -660,6 +662,16 @@ TT.app = (function () {
     var groups = modelObjs.groups;
     var now = new Date();
     var suggestIdx = -1;
+    // Leaf-only selection: the catalogue, the autocomplete and the commit
+    // gate only ever offer the leaf classes (one timetable each). Interior
+    // nodes (broader classes) are excluded everywhere below.
+    var leafSet = {};
+    groups.leaves.forEach(function (n) { leafSet[n.key] = true; });
+    function isLeafRow(r) {
+      var k = (r.node && r.node.key) || r.label;
+      return !!leafSet[k];
+    }
+    function leafRows(rows) { return rows.filter(isLeafRow); }
     var suggestRows = [];
     var searchFocused = false;
     var lastResultCount = -1;
@@ -677,8 +689,80 @@ TT.app = (function () {
       if (searchClear) searchClear.hidden = !search.value;
     }
 
+    // A giant, faint emoticon fills the detail area whenever no class is
+    // selected (initial load, or the filter cleared back to empty). The faces
+    // come from the vendored kaomoji library (vendor/kaomoji.js, CC BY 4.0);
+    // one is drawn per page load. The library spans short faces to very wide
+    // ones, so the decoration only uses the ones that comfortably fit the
+    // detail column, with a lone face as a no-library fallback. Pressing the
+    // empty area makes the face hop and land on a different one (decorative,
+    // mouse/tap-only easter egg — see the listener below).
+    var HOP_MS = 240; // keep in sync with the empty-hop duration in styles.css
+    var reducedMotion = (typeof window !== 'undefined' && window.matchMedia)
+      ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+
+    function facePool() {
+      if (!(TT.kaomoji && TT.kaomoji.all)) return [];
+      return TT.kaomoji.all().filter(function (f) { return f.length <= 12; });
+    }
+    var emptyFace = (function () {
+      var pool = facePool();
+      if (!pool.length) return TT.kaomoji && TT.kaomoji.random ? TT.kaomoji.random() : '(＾▽＾)';
+      return pool[Math.floor(Math.random() * pool.length)];
+    })();
+
+    // pick a face from the same pool that differs from the current one; the
+    // filter bounds the choice, so the selection always terminates (and a
+    // ≤1-entry pool simply returns the unchanged face).
+    function nextFace() {
+      var pool = facePool().filter(function (f) { return f !== emptyFace; });
+      if (!pool.length) return emptyFace;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    // Decorative easter egg: every press on the empty area immediately swaps in
+    // a different face and restarts the hop from 0%, so the interaction keeps up
+    // with however fast the user taps (no press is swallowed, no face is
+    // coalesced). The restart is remove-class -> forced reflow
+    // -> re-add-class (re-adding a live class alone does not replay a CSS
+    // animation); the single listener below clears the class when the hop ends.
+    // Reduced motion swaps instantly with no hop or `hopping` class.
+    detail.addEventListener('click', function (e) {
+      var empty = e.target && e.target.closest && e.target.closest('.empty-state');
+      if (!empty) return;
+      var face = empty.querySelector('.empty-face');
+      if (!face) return;
+      emptyFace = nextFace();
+      face.textContent = emptyFace;
+      if (reducedMotion && reducedMotion.matches) return;
+      var angle = (Math.random() < .5 ? -1 : 1) * (8 + Math.random() * 12);
+      empty.style.setProperty('--hop-rot', angle + 'deg');
+      var transX = (Math.random() - 0.5) * 1.2;
+      var transY = (Math.random() - 0.5) * 1.2;
+      empty.style.setProperty('--hop-trans-x', transX + 'em');
+      empty.style.setProperty('--hop-trans-y', transY + 'em');
+      // overshoot: ~15% of throw distance, opposite direction (spring-back)
+      empty.style.setProperty('--hop-overshoot-x', (-transX * 0.15) + 'em');
+      empty.style.setProperty('--hop-overshoot-y', (-transY * 0.15) + 'em');
+      empty.classList.remove('hopping');
+      void empty.offsetWidth;
+      empty.classList.add('hopping');
+    });
+    // One persistent listener (added once, not per press) clears the hop class
+    // when the animation ends; it is delegated on #detail so it survives the
+    // detail innerHTML re-renders.
+    detail.addEventListener('animationend', function (e) {
+      var empty = e.target && e.target.closest && e.target.closest('.empty-state');
+      if (empty) empty.classList.remove('hopping');
+    });
+
     function emptyStateHTML() {
-      return '<p class="empty">Search for a class to see its week.</p>';
+      // heading first, face below it: the empty-state flex `gap` separates the
+      // two, so the heading reads on top of the emoticon.
+      return '<div class="empty-state" aria-hidden="true">' +
+        '<div class="no-class-selected">No Class Selected</div>' +
+        '<div class="empty-face">' + esc(emptyFace) + '</div>' +
+      '</div>';
     }
 
     // ---- class list -----------------------------------------------------
@@ -748,7 +832,6 @@ TT.app = (function () {
 
     function renderWeek(week) {
       var cursor = model.dayCursor(now, store.slots);
-      var isUnion = week.leaves.length > 1;
       var by = indexByDaySlot(week);
       var h = '<h2>' + esc(week.name) + '</h2>';
       h += '<p class="mostly">' + week.leaves.length + ' class(es) · ' +
@@ -768,6 +851,7 @@ TT.app = (function () {
           var isNow = cursor.visible && d === cursor.today && slot === cursor.cur;
           var isNext = cursor.visible && d === cursor.today && slot === cursor.next;
           var cls = color.weekCell({ isNow: isNow, isNext: isNext });
+          if (cursor.visible && d === cursor.today) cls.push(C.today);
           var sessions = by[d + '|' + slot] || [];
           h += '<td class="c-cell' + (cls.length ? ' ' + cls.join(' ') : '') +
             '" data-day="' + esc(d) + '" data-slot="' + esc(slot) + '">';
@@ -776,7 +860,6 @@ TT.app = (function () {
               '<span class="s-subject">' + esc(s.subject) + '</span>' +
               '<span class="s-teacher">' + esc(s.professor || '—') + '</span>' +
               '<span class="s-room">' + esc(s.room || '—') + '</span>' +
-              (isUnion ? '<span class="s-class">' + esc(s.classLabel) + '</span>' : '') +
               '</div>';
           });
           h += '</td>';
@@ -788,6 +871,41 @@ TT.app = (function () {
         (cursor.visible ? '' : ' style="display:none"') +
         '><div class="cursor-arrow"></div></div>';
       h += '</div>';
+      // Session card list for narrow screens (teacher-style cards via the
+      // generic mobile table rules; hidden on desktop by CSS). Row marking
+      // mirrors showTeacher with today-only semantics: the same `now` and the
+      // computed `cursor` keep the grid and the list consistent; never
+      // nextSessionIdx (it wraps into the coming days).
+      h += '<p class="count">' + week.sessions.length + ' session(s).</p>';
+      h += '<table class="c-sessions"><tr><th></th><th>Day</th><th>Time</th>' +
+        '<th>Teacher</th><th>Subject</th><th>Room</th></tr>';
+      var liveDays = {};
+      week.sessions.forEach(function (s) {
+        if (model.isCurrentSession(s.day, s.time, now) ||
+            (cursor.visible && s.day === cursor.today && s.time === cursor.next))
+          liveDays[s.day] = true;
+      });
+      var prevDay = null;
+      week.sessions.forEach(function (s) {
+        var isNow = model.isCurrentSession(s.day, s.time, now);
+        var isNext = !isNow && cursor.visible && s.day === cursor.today && s.time === cursor.next;
+        var dayStart = prevDay !== null && s.day !== prevDay;
+        prevDay = s.day;
+        var cls = color.sessionRow({
+          isNow: isNow, isNext: isNext, dayStart: dayStart,
+          dimIdle: !liveDays[s.day]
+        });
+        h += '<tr' + (cls.length ? ' class="' + cls.join(' ') + '"' : '') + '><td>' +
+          (isNow ? '<span class="nowtag">● NOW</span>' : '') +
+          (isNext ? '<span class="nexttag">' + NEXT_ARROW + 'NEXT</span>' : '') +
+          '</td><td class="c-day">' + esc(model.frDay(s.day)) +
+          '</td><td class="c-time">' + esc(s.time) +
+          '</td><td class="c-teacher">' + esc(s.professor || '—') +
+          '</td><td class="c-subject">' + esc(s.subject) +
+          '</td><td class="c-room">' + esc(s.room || '—') +
+          '</td></tr>';
+      });
+      h += '</table>';
       detail.innerHTML = h;
       if (layout) layout.classList.remove('is-list');
       syncClear();
@@ -804,6 +922,7 @@ TT.app = (function () {
         var isNext = cursor.visible && td.dataset.day === cursor.today && td.dataset.slot === cursor.next;
         td.classList.toggle(C.now, isNow);
         td.classList.toggle(C.next, isNext);
+        td.classList.toggle(C.today, cursor.visible && td.dataset.day === cursor.today);
       });
       detail.querySelectorAll('th.c-day').forEach(function (th) {
         th.classList.toggle(C.today, cursor.visible && th.dataset.day === cursor.today);
@@ -846,7 +965,7 @@ TT.app = (function () {
 
     function showClass(ref) {
       var week = model.classWeek(groups, ref);
-      if (!week.leaves.length) {
+      if (week.leaves.length !== 1) {
         detail.innerHTML = '<p class="nomatch">No class matches "' + esc(ref) + '".</p>';
         markActive(null);
         if (layout) layout.classList.remove('is-list');
@@ -937,14 +1056,17 @@ TT.app = (function () {
 
     function classSuggestions(q) {
       // the page is class-scoped: keep only the class entries of the shared
-      // autocomplete, so teachers/subjects never appear here.
-      return match.suggest(index, q).filter(function (r) { return r.kind === 'class'; });
+      // autocomplete, so teachers/subjects never appear here — and leaf-only,
+      // so broader classes are never offered.
+      return match.suggest(index, q).filter(function (r) {
+        return r.kind === 'class' && leafSet[r.label];
+      });
     }
 
     function onInput() {
       var q = search.value;
       syncClear();
-      var rows = match.classSearch(index, q);
+      var rows = leafRows(match.classSearch(index, q));
       renderList(rows);
       renderSuggest(classSuggestions(q));
       renderGhost();
@@ -958,12 +1080,12 @@ TT.app = (function () {
       syncClear();
       renderSuggest([]);
       renderGhost();
-      var rows = match.classSearch(index, q);
+      var rows = leafRows(match.classSearch(index, q));
       renderList(rows);
       if (!q.trim()) {
         detail.innerHTML = emptyStateHTML();
         markActive(null);
-      } else if (model.classWeek(groups, q).leaves.length) {
+      } else if (model.classWeek(groups, q).leaves.length === 1) {
         showClass(q);
       } else if (rows.length === 1) {
         showClass(rows[0].label);
@@ -1041,8 +1163,8 @@ TT.app = (function () {
       });
     }
 
-    // initial paint: full class catalogue, empty detail
-    renderList(match.classSearch(index, ''));
+    // initial paint: full leaf catalogue, empty detail
+    renderList(leafRows(match.classSearch(index, '')));
     detail.innerHTML = emptyStateHTML();
     syncList();
     syncClear();
