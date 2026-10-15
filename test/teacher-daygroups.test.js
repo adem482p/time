@@ -345,6 +345,10 @@ test('mobile tinted rows full-bleed across the day-group card', function () {
   assert.ok(narrow.indexOf('padding-top: .85rem') !== -1, 'content stays put (.5 + .35)');
   assert.ok(narrow.indexOf('margin-bottom: -.5rem') !== -1, 'bottom bleed cancels card padding');
   assert.ok(narrow.indexOf('padding-bottom: .85rem') !== -1, 'content stays put (.5 + .35)');
+  // the base #detail table margin-top would collapse with the top bleed to
+  // net zero, so day-group tables zero it (card padding spaces first rows)
+  assert.ok(narrow.indexOf('#detail .day-group table { margin-top: 0; }') !== -1,
+    'day-group table must drop the base margin-top');
 });
 
 test('styles.css keeps the classes guards intact', function () {

@@ -629,6 +629,11 @@ html { background: var(--md-surface, #fff); }
   }
   #detail .day-head { margin: .8rem 0 .2rem; }
   #detail .day-group table, #detail .day-group tbody { display: block; }
+  /* the base #detail table rule carries margin-top:.5rem for standalone
+     tables; inside the card it would collapse with a tinted first row's
+     -.5rem to net zero (leaving the padding visible), so it is zeroed
+     here — the card's own padding already spaces the first row. */
+  #detail .day-group table { margin-top: 0; }
   #detail .day-group tr:has(td) {
     border: 0; border-radius: 0; margin: 0; padding: .35rem 0;
   }
