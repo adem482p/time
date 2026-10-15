@@ -683,9 +683,11 @@ TT.theme = (function () {
    * 7. presets                                                    *
    * ============================================================= */
 
-  // Named presets. The first is the default: a true black-and-white
-  // (monochrome) scheme. The rest keep the site's original palettes and add
-  // seeds/variants extracted from the Minus and Mihon Android apps.
+  // Named presets. Monochrome is first in the cycle order; the fresh-visitor
+  // default is DEFAULT_PRESET below (ISIM Blue). The rest keep the site's
+  // original palettes and add seeds/variants extracted from the Minus and
+  // Mihon Android apps.
+  var DEFAULT_PRESET = 'ISIM Blue';
   var PRESETS = [
     { name: 'Monochrome', primary: '#000000', variant: 'monochrome' },
     { name: 'ISIM Blue', primary: '#0b4da2', secondary: '#4b5f7d', tertiary: '#7c5260' },
@@ -748,7 +750,7 @@ TT.theme = (function () {
 
   var current = {
     primary: null, secondary: null, tertiary: null, error: null,
-    dark: false, contrast: 0, variant: null, preset: PRESETS[0].name
+    dark: false, contrast: 0, variant: null, preset: DEFAULT_PRESET
   };
 
   function kebab(role) { return role.replace(/([A-Z])/g, '-$1').toLowerCase(); }
@@ -957,9 +959,9 @@ TT.theme = (function () {
 
     state = readState();
     cycleIndex = indexOfPreset(cycleList, state.preset);
-    // A fresh visitor starts on the black-and-white default (preset 0), even
-    // though an inherited "System" accent may be prepended to the cycle list.
-    if (cycleIndex < 0) cycleIndex = Math.max(0, indexOfPreset(cycleList, PRESETS[0].name));
+    // A fresh visitor starts on the ISIM Blue default, even though an
+    // inherited "System" accent may be prepended to the cycle list.
+    if (cycleIndex < 0) cycleIndex = Math.max(0, indexOfPreset(cycleList, DEFAULT_PRESET));
 
     // The scheme follows the system and re-applies when it changes.
     var m = darkMedia();
