@@ -191,9 +191,10 @@ TT.app = (function () {
         h += '<br><span class="cmatch">' + match.highlightHTML(m.label, m.ranges) + '</span>';
       });
       li.innerHTML = h;
-      // explicit selection echoes the full name into the filter (the echo no
-      // longer lives in showTeacher, so the automatic jump cannot clobber it)
-      li.onclick = function () { search.value = r.teacher; showTeacher(r.teacher); };
+      // The filter is the source of truth for the list: selecting a row must
+      // not rewrite it, so the result list stays as-is and the user can move
+      // to the next hit.
+      li.onclick = function () { showTeacher(r.teacher); };
       list.appendChild(li);
     }
 
@@ -234,10 +235,10 @@ TT.app = (function () {
     function showTeacher(name) {
       var t = modelObjs.teachers[name];
       if (!t) return;
-      // NB: showTeacher never writes search.value — it is also reached from the
-      // automatic single-result jump (onInput/commit), which must not rewrite
-      // the user's in-progress query (e.g. a typed trailing space). Explicit
-      // selection sites (renderItem's click, acceptSuggest) echo the value.
+      // NB: showTeacher never writes search.value — neither the automatic
+      // single-result jump (onInput/commit) nor an explicit list selection
+      // may rewrite the user's filter; only an autocomplete accept
+      // (acceptSuggest) commits a new filter value.
       renderSuggest([]);
       renderGhost();
       var ss = model.fuseSessions(store.sessionsOf(name), modelObjs.groups);
@@ -285,7 +286,7 @@ TT.app = (function () {
       markActive(name);
       // a selection always shows the detail/card view
       if (layout) layout.classList.remove('is-list');
-      // selecting a teacher writes the filter; keep the clear "x" in step
+      // the filter is untouched by selection; keep the clear "x" in step
       syncClear();
     }
 
