@@ -364,6 +364,21 @@ body[data-page="classes"] .author-credit span {
 #detail .ctree li { margin: .1rem 0; }
 #detail .hours { color: var(--md-on-surface-variant, #555); font-size: .85em; }
 
+/* ---- teacher day groups (one section per weekday, shared DOM) ----
+   The section groups a day's sessions on every viewport; only the styling
+   differs (desktop tables vs mobile cards). The heading reuses the
+   li.group-head section-label language (small uppercase label, never the
+   DynaPuff/Tiny5 display faces) so it sits below the h2 teacher name.
+   Between groups is spacing (margin), never a rule element. */
+#detail .day-group { margin: 0 0 1rem; }
+#detail .day-head {
+  color: var(--md-on-surface-variant, #666);
+  font-size: .78em; text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+  margin: .8rem 0 .2rem;
+}
+/* dim the whole group (not just the rows) so its border dims with the content */
+#detail .day-group.dim { opacity: .58; }
+
 /* Keep the theme color below the fold on pages whose body is exactly one
    viewport tall with taller content overflowing visibly (desktop
    teachers/classes below): the body background only covers the viewport,
@@ -416,19 +431,19 @@ html { background: var(--md-surface, #fff); }
      column never touches the teacher list. */
   #layout { gap: calc(var(--gutter) + 1.25rem); }
   #layout > #detail { overflow-x: visible; }
-  #layout > #detail table.t-sessions {
+  #layout > #detail .day-group table.t-sessions {
     margin-left: calc(-1 * var(--gutter));
     width: calc(100% + var(--gutter));
   }
-  #layout > #detail table.t-sessions th:first-child,
-  #layout > #detail table.t-sessions td:first-child {
+  #layout > #detail .day-group table.t-sessions th:first-child,
+  #layout > #detail .day-group table.t-sessions td:first-child {
     width: var(--gutter); padding-left: 0; padding-right: 0;
     /* the row is taller than the marker line (subject/class cells wrap), so
        centre the NOW/NEXT tag vertically instead of baseline/top-aligning it */
     vertical-align: middle;
   }
-  #layout > #detail table.t-sessions .nowtag,
-  #layout > #detail table.t-sessions .nexttag {
+  #layout > #detail .day-group table.t-sessions .nowtag,
+  #layout > #detail .day-group table.t-sessions .nexttag {
     font-size: .78em; vertical-align: middle;
   }
   /* the session card list is the narrow-screen view of a class week; the
@@ -594,6 +609,26 @@ html { background: var(--md-surface, #fff); }
   #detail td.c-subject::before { content: "Subject: "; }
   #detail td.c-room::before { content: "Room: "; }
   #detail td.c-teacher::before { content: "Teacher: "; }
+  /* teacher day groups: the SECTION is the card (the classes c-sessions
+     list keeps the per-row cards from the generic rules above). The inner
+     table collapses to block like any mobile table; session rows stay
+     stacked flex blocks but lose the card chrome, separated instead by
+     inset top dividers (tr + tr) — no <hr> elements in the DOM. The
+     divider spans the section's content box, so the card padding insets it
+     from the card edge. Higher specificity than the generic tr:has(td)
+     card rule, so these overrides win for teacher groups only. */
+  #detail .day-group {
+    border: 1px solid var(--md-outline-variant, #ccc); border-radius: 8px;
+    margin: 0 0 .6rem; padding: .5rem .7rem;
+  }
+  #detail .day-group .day-head { margin: 0 0 .2rem; }
+  #detail .day-group table, #detail .day-group tbody { display: block; }
+  #detail .day-group tr:has(td) {
+    border: 0; border-radius: 0; margin: 0; padding: .35rem 0;
+  }
+  #detail .day-group tr:has(td) + tr:has(td) {
+    border-top: 1px solid var(--md-outline-variant, #eee);
+  }
 }
 
 /* ---- classes page: class list + week grid (issue 032) ---- */

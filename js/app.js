@@ -251,7 +251,6 @@ TT.app = (function () {
       h += '<p class="summary">' + model.teacherSummary(name, ss, now2) + '</p>';
       // the session count is a caption for the list: keep it above the cards
       h += '<p class="count">' + ss.length + ' session(s).</p>';
-      h += '<table class="t-sessions"><tr><th></th><th>Day</th><th>Time</th><th>Room</th><th>Subject</th><th>Class</th></tr>';
       var upcoming = model.nextSessionIdx(ss, now2);
       // days with no live stake (no now/next session) render dimmed
       var liveDays = {};
@@ -259,28 +258,38 @@ TT.app = (function () {
         if (model.isCurrentSession(s.day, s.time, now2) || upcoming.has(i))
           liveDays[s.day] = true;
       });
-      var prevDay = null;
+      // one section per non-empty day, Monday-first (fused output is already
+      // in cmpSession order, so first-seen day order is the week order)
+      var dayOrder = [];
+      var byDay = {};
       ss.forEach(function (s, i) {
-        var isNow = model.isCurrentSession(s.day, s.time, now2);
-        var isNext = !isNow && upcoming.has(i);
-        var dayStart = i > 0 && s.day !== prevDay;
-        prevDay = s.day;
-        var cls = color.sessionRow({
-          isNow: isNow, isNext: isNext, dayStart: dayStart,
-          dimIdle: !liveDays[s.day]
-        });
-        h += '<tr' + (cls.length ? ' class="' + cls.join(' ') + '"' : '') + '><td>' +
-          (isNow ? '<span class="nowtag">● NOW</span>' : '') +
-          (isNext ? '<span class="nexttag">' + NEXT_ARROW + 'NEXT</span>' : '') +
-          '</td><td class="c-day">' + esc(model.frDay(s.day)) +
-          '</td><td class="c-time">' + esc(s.time) +
-          '</td><td class="c-room">' + esc(s.room || '—') +
-          '</td><td class="c-subject">' + esc(s.subject) +
-          '</td><td class="c-class">' +
-          s.pills.map(function (p) { return '<span class="pill">' + esc(p) + '</span>'; }).join(' ') +
-          '</td></tr>';
+        if (!byDay[s.day]) { byDay[s.day] = []; dayOrder.push(s.day); }
+        byDay[s.day].push({ s: s, i: i });
       });
-      h += '</table>';
+      dayOrder.forEach(function (day) {
+        h += '<section class="day-group' + (liveDays[day] ? '' : ' dim') + '">';
+        h += '<h3 class="day-head">' + esc(model.frDay(day)) + '</h3>';
+        h += '<table class="t-sessions"><tr><th></th><th>Time</th><th>Room</th><th>Subject</th><th>Class</th></tr>';
+        byDay[day].forEach(function (entry) {
+          var s = entry.s;
+          var isNow = model.isCurrentSession(s.day, s.time, now2);
+          var isNext = !isNow && upcoming.has(entry.i);
+          var cls = color.sessionRow({
+            isNow: isNow, isNext: isNext,
+            dimIdle: false
+          });
+          h += '<tr' + (cls.length ? ' class="' + cls.join(' ') + '"' : '') + '><td>' +
+            (isNow ? '<span class="nowtag">● NOW</span>' : '') +
+            (isNext ? '<span class="nexttag">' + NEXT_ARROW + 'NEXT</span>' : '') +
+            '</td><td class="c-time">' + esc(s.time) +
+            '</td><td class="c-room">' + esc(s.room || '—') +
+            '</td><td class="c-subject">' + esc(s.subject) +
+            '</td><td class="c-class">' +
+            s.pills.map(function (p) { return '<span class="pill">' + esc(p) + '</span>'; }).join(' ') +
+            '</td></tr>';
+        });
+        h += '</table></section>';
+      });
       h += breakdownHTML(t);
       detail.innerHTML = h;
       markActive(name);
