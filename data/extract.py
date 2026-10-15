@@ -4,9 +4,10 @@
 Usage:
     python3 data/extract.py [--out emplois.csv]
 
-Output columns: professor,day,time,room,subject,field,week,source
+Output columns: professor,day,time,room,subject,field,week,source,color
 
-Strategy (no third-party deps, uses poppler `pdftohtml -xml`):
+Strategy (no third-party deps, uses poppler `pdftohtml -xml` and
+`pdftocairo -svg`):
 - Each PDF = N sections x 3 pages (combined + Groupe 1 + Groupe 2).
   Only Groupe pages are parsed (combined pages would duplicate).
   Sections with no Groupe pages (e.g. LBC3-EB_A) are parsed directly.
@@ -14,12 +15,18 @@ Strategy (no third-party deps, uses poppler `pdftohtml -xml`):
 - xml <text> tokens are assigned to a (day, col) cell by coordinates,
   merged into lines by y, then split into sessions anchored on
   subject lines starting with C_/TD_/TP_.
+- `color` is the background fill of the timetable cell each session was
+  parsed from, read from a per-page `pdftocairo -svg` rendering and
+  normalized to lowercase `#rrggbb` (empty when no fill contains the
+  session's probe point). SVG extraction failures degrade to empty
+  `color`, never abort the run.
 """
 import argparse
 import csv
 import glob
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -46,6 +53,132 @@ TITLE_RE = re.compile(r"(.+?)\s*-\s*Semestre")
 def pdf_to_xml(pdf_path, xml_path):
     subprocess.run(["pdftohtml", "-xml", "-stdout", pdf_path],
                    check=True, stdout=open(xml_path, "wb"))
+
+
+# SVG cell fills: session cells are axis-aligned filled rect <path>s
+# (grid lines are stroked paths with fill="none"). Tiny filled rects are
+# text highlights behind day labels and SA/SB markers, not session cells:
+# half-cell session fills are ~106x39 svg units, highlights are ~17x10.
+FILL_MIN_W = 50.0
+FILL_MIN_H = 20.0
+CONTAIN_EPS = 0.5
+
+RGB_PCT_RE = re.compile(
+    r"rgb\(\s*([\d.]+)%\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)")
+RGB_INT_RE = re.compile(
+    r"rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)")
+PATH_TAG_RE = re.compile(r"<path\b([^>]*)>")
+ATTR_RE = re.compile(r'([\w-]+)="([^"]*)"')
+FLOATS_RE = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?")
+VIEWBOX_RE = re.compile(
+    r"<svg\b[^>]*viewBox=\"\s*[\d.eE+-]+\s+[\d.eE+-]+\s+"
+    r"([\d.eE+-]+)\s+([\d.eE+-]+)\s*\"")
+
+
+def fill_to_hex(fill):
+    """Normalize an SVG fill to lowercase #rrggbb. Returns '' if unknown."""
+    fill = (fill or "").strip().lower()
+    m = RGB_PCT_RE.fullmatch(fill)
+    if m:
+        vals = tuple(max(0, min(255, int(round(float(v) * 255 / 100))))
+                     for v in m.groups())
+        return "#%02x%02x%02x" % vals
+    m = RGB_INT_RE.fullmatch(fill)
+    if m:
+        vals = tuple(max(0, min(255, int(v))) for v in m.groups())
+        return "#%02x%02x%02x" % vals
+    if re.fullmatch(r"#[0-9a-f]{6}", fill):
+        return fill
+    if re.fullmatch(r"#[0-9a-f]{3}", fill):
+        return "#" + "".join(c * 2 for c in fill[1:])
+    return ""
+
+
+def parse_svg_fills(svg_text):
+    """Extract session-cell fills from one pdftocairo -svg page.
+
+    Returns (svg_w, svg_h, rects) with rects as
+    [(x0, y0, x1, y1, '#rrggbb'), ...] in SVG user units.
+    Only untransformed axis-aligned rect paths large enough to be
+    session cells are kept; strokes, highlights and unknown fills
+    are ignored.
+    """
+    rects = []
+    m = VIEWBOX_RE.search(svg_text)
+    if not m:
+        return 0, 0, []
+    svg_w, svg_h = float(m.group(1)), float(m.group(2))
+    for pm in PATH_TAG_RE.finditer(svg_text):
+        attrs = dict(ATTR_RE.findall(pm.group(1)))
+        fill = attrs.get("fill", "")
+        if not fill or fill == "none":
+            continue
+        if "transform" in attrs:
+            continue
+        d = attrs.get("d", "")
+        nums = [float(v) for v in FLOATS_RE.findall(d)]
+        if len(nums) < 8 or len(nums) % 2:
+            continue
+        xs = nums[0::2]
+        ys = nums[1::2]
+        # axis-aligned rectangle: at most 2 distinct x and y values
+        if len(set(round(v, 3) for v in xs)) > 2:
+            continue
+        if len(set(round(v, 3) for v in ys)) > 2:
+            continue
+        x0, x1 = min(xs), max(xs)
+        y0, y1 = min(ys), max(ys)
+        if x1 - x0 < FILL_MIN_W or y1 - y0 < FILL_MIN_H:
+            continue
+        hexcol = fill_to_hex(fill)
+        if not hexcol:
+            continue
+        rects.append((x0, y0, x1, y1, hexcol))
+    return svg_w, svg_h, rects
+
+
+def svg_color_at(pdf_path, page_no, page_el, svg_prefix):
+    """Build an (x, y)-xml-coords -> '#rrggbb' lookup for one PDF page.
+
+    Renders the page with `pdftocairo -svg`, then self-calibrates per
+    page: pdftohtml-xml coords and SVG user units share the page origin
+    and differ by scale only, so sx = xml_w / svg_w, sy = xml_h / svg_h
+    (SVG text is vectorized glyph <use> paths, so no shared text anchors
+    exist to fit an offset; empirically the offset is ~0: the page-title
+    x maps at 1.5004 vs the dimension scale 1.4990, a 0.2-unit gap).
+    Each session probes with its subject token's left-edge-plus-epsilon
+    point; the smallest containing fill wins (handles stacked half-cell
+    fills over full-cell backgrounds). Raises on any failure — the
+    caller degrades to empty colors.
+    """
+    subprocess.run(["pdftocairo", "-svg", "-f", str(page_no),
+                    "-l", str(page_no), pdf_path, svg_prefix],
+                   check=True)
+    svg_path = (svg_prefix if os.path.exists(svg_prefix)
+                else svg_prefix + ".svg")
+    with open(svg_path, encoding="utf-8", errors="replace") as f:
+        svg_text = f.read()
+    svg_w, svg_h, rects = parse_svg_fills(svg_text)
+    if not svg_w or not svg_h:
+        raise ValueError("no viewBox in SVG output")
+    xml_w = float(page_el.get("width", 1262))
+    xml_h = float(page_el.get("height", 892))
+    sx = xml_w / svg_w
+    sy = xml_h / svg_h
+
+    def color_at(x, y):
+        px, py = x / sx, y / sy
+        best = None
+        for (x0, y0, x1, y1, c) in rects:
+            if (x0 - CONTAIN_EPS <= px <= x1 + CONTAIN_EPS
+                    and y0 - CONTAIN_EPS <= py <= y1 + CONTAIN_EPS):
+                area = (x1 - x0) * (y1 - y0)
+                key = (area, x0, y0)
+                if best is None or key < best[0]:
+                    best = (key, c)
+        return best[1] if best else ""
+
+    return color_at
 
 
 def clean_token(s):
@@ -99,7 +232,7 @@ def is_room_like(s):
     return False
 
 
-def parse_page(page_el, pdf_name="", page_no=None):
+def parse_page(page_el, pdf_name="", page_no=None, color_at=None):
     """Return list of session dicts (without field) for one Groupe page.
 
     Hybrid anchor method:
@@ -116,6 +249,8 @@ def parse_page(page_el, pdf_name="", page_no=None):
       weeks start on Monday.)
     - `pdf_name`/`page_no` identify the source page (`<basename> p<n>`,
       1-based); both optional so unit tests can call parse_page(page_el).
+    - `color_at` is an optional (x, y)-in-xml-coords -> '#rrggbb'
+      lookup for the page (see svg_color_at); without it `color` is ''.
     """
     W = float(page_el.get("width", 1262))
     H = float(page_el.get("height", 892))
@@ -286,11 +421,19 @@ def parse_page(page_el, pdf_name="", page_no=None):
             week = GROUP_RE.sub("", sorted(
                 b["week_toks"], key=lambda t: (t["y"], t["x"]))[0]["s"]).strip()
         source = f"{pdf_name} p{page_no}" if pdf_name and page_no else ""
+        if color_at is not None:
+            try:
+                color = color_at(b["tok"]["x"] + 2,
+                                 b["tok"]["y"] + b["tok"]["h"] / 2)
+            except Exception:
+                color = ""
+        else:
+            color = ""
         sessions.append({"day": ordered_days[b["di"]],
                          "time": SLOTS[b["col"]],
                          "room": room.strip(), "subject": b["subject"].strip(),
                          "professor": teacher, "week": week,
-                         "source": source})
+                         "source": source, "color": color})
     return sessions
 
 
@@ -361,6 +504,8 @@ def main():
         sys.exit(1)
 
     rows = []
+    svg_tmpdir = tempfile.mkdtemp(prefix="extract-svg-")
+    svg_prefix = os.path.join(svg_tmpdir, "pg")
     for pdf in pdfs:
         with tempfile.NamedTemporaryFile(suffix=".xml", delete=False) as f:
             xml_path = f.name
@@ -390,6 +535,27 @@ def main():
                 current = t.split()[0]
         current = None
         pdf_base = os.path.basename(pdf)
+        # pages to parse (Groupe pages + standalone sections): render each
+        # once with pdftocairo -svg for the color column; an SVG failure
+        # degrades that page to empty colors, never aborts the run.
+        want = set()
+        tmp_current = None
+        for pg_no, t in enumerate(titles, start=1):
+            if t.startswith("Groupe"):
+                want.add(pg_no)
+            elif t:
+                tmp_current = t.split()[0]
+                if tmp_current not in sec_has_group:
+                    want.add(pg_no)
+        color_ats = {}
+        for pg_no in sorted(want):
+            try:
+                color_ats[pg_no] = svg_color_at(
+                    pdf, pg_no, pages[pg_no - 1], svg_prefix)
+            except Exception as e:
+                print(f"SVG color skipped for {pdf_base} p{pg_no}: {e}",
+                      file=sys.stderr)
+                color_ats[pg_no] = None
         for pg_no, (pg, t) in enumerate(zip(pages, titles), start=1):
             if t.startswith("Groupe"):
                 section = current
@@ -397,7 +563,8 @@ def main():
                 if section is None:
                     continue
                 field = f"{section} {grp}"
-                for s in parse_page(pg, pdf_base, pg_no):
+                for s in parse_page(pg, pdf_base, pg_no,
+                                    color_at=color_ats.get(pg_no)):
                     s["field"] = field
                     rows.append(s)
             elif t:
@@ -406,7 +573,8 @@ def main():
                 if section not in sec_has_group:
                     # standalone section (e.g. LBC3-EB_A): parse combined page
                     field = section
-                    for s in parse_page(pg, pdf_base, pg_no):
+                    for s in parse_page(pg, pdf_base, pg_no,
+                                        color_at=color_ats.get(pg_no)):
                         s["field"] = field
                         rows.append(s)
                 # else: skip combined page (dup of Groupe pages)
@@ -415,13 +583,15 @@ def main():
 
     with open(args.out, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["professor", "day", "time", "room",
-                                          "subject", "field", "week", "source"])
+                                          "subject", "field", "week", "source",
+                                          "color"])
         w.writeheader()
         for r in rows:
             w.writerow({k: r.get(k, "") for k in
                         ["professor", "day", "time", "room",
-                         "subject", "field", "week", "source"]})
+                         "subject", "field", "week", "source", "color"]})
     print(f"Wrote {len(rows)} rows to {args.out}")
+    shutil.rmtree(svg_tmpdir, ignore_errors=True)
 
 
 if __name__ == "__main__":

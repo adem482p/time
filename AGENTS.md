@@ -7,7 +7,9 @@
   `professor,day,time,room,subject,field,week,source`, where `field`
   carries the class name, `week` carries the week-alternation marker
   (`SA`/`SB`, empty = every week; `S1` is a semestre label stripped at parse
-  time, never a week), and `source` identifies the exact PDF page.
+  time, never a week), `source` identifies the exact PDF page, and `color`
+  carries the background fill color of the timetable cell the session was
+  parsed from (lowercase `#rrggbb`, empty when no fill contains it).
 - That CSV is the single source of truth for the site: every page reads it and
   nothing else. Re-running the parser updates the site; there is no build step and
   no backend.

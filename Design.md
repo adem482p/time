@@ -108,10 +108,13 @@ The project opens the PDFs through three stages:
 1. **Timetable PDFs** — the raw input, one file per track and year (the master
    specializations are published as separate files), as distributed to students.
 2. **Single CSV** — the parser (`data/extract.py`) flattens all PDFs into one
-   `emplois.csv` with columns `professor,day,time,room,subject,field,week,source`,
+   `emplois.csv` with columns
+   `professor,day,time,room,subject,field,week,source,color`,
    where `field` carries the class name, `week` carries the week-alternation
-   marker (`SA` or `SB`; empty means every week), and `source`
-   identifies the exact page (`<pdf basename> p<page number>`). This file is the
+   marker (`SA` or `SB`; empty means every week), `source`
+   identifies the exact page (`<pdf basename> p<page number>`), and `color`
+   carries the background fill of the timetable cell the session was parsed
+   from (lowercase `#rrggbb`; empty when no fill contains it). This file is the
    single source of truth; every page reads it and nothing else.
 3. **Web pages** — static pages that load the CSV and provide services on top of it
    (below). No backend, no build step: re-running the parser updates the site.
@@ -128,7 +131,9 @@ the class from the preceding page. A class without cohorts contributes a single
 page naming it (`LBC3-EB_A`, `MP1-SD`).
 
 Every page is a fixed grid: six time-slot columns crossed with six day rows. A
-cell holds one or more sessions. A session line opens with its kind — `C_`
+cell holds one or more sessions and carries a background fill color (green,
+orange, yellow, light green, pink, light blue in the current PDFs) that the
+parser transcribes into the `color` column. A session line opens with its kind — `C_`
 (lecture), `TD_` (tutorial), `TP_` (lab) — prefixed to the subject, followed on
 later lines by the teacher's name and the room. A session may carry the semestre tag `S1` (stripped at parse time,
 never preserved in `week`); when a slot alternates weekly, its two alternatives
