@@ -331,6 +331,20 @@ test('mobile tinted rows full-bleed across the day-group card', function () {
   assert.ok(rule.indexOf('padding:') === -1, 'must not reset the .35rem vertical padding');
   assert.ok(rule.indexOf('margin:') === -1 || rule.indexOf('margin-left') !== -1,
     'must not reset the vertical margins');
+  // card clips square tinted backgrounds to its rounded corners
+  var cardBlock = narrow.slice(narrow.indexOf('#detail .day-group {'),
+    narrow.indexOf('}', narrow.indexOf('#detail .day-group {')) + 1);
+  assert.ok(cardBlock.indexOf('overflow:') !== -1, 'card must clip full-bleed rows round');
+  // vertical full-bleed: tinted first/last rows cancel the .5rem card padding
+  // (header tr is tbody's first child, so first session row is :nth-child(2))
+  assert.ok(narrow.indexOf('.day-group tr.now:has(td):nth-child(2)') !== -1,
+    'tinted first row must bleed to the card top');
+  assert.ok(narrow.indexOf('.day-group tr.now:has(td):last-child') !== -1,
+    'tinted last row must bleed to the card bottom');
+  assert.ok(narrow.indexOf('margin-top: -.5rem') !== -1, 'top bleed cancels card padding');
+  assert.ok(narrow.indexOf('padding-top: .85rem') !== -1, 'content stays put (.5 + .35)');
+  assert.ok(narrow.indexOf('margin-bottom: -.5rem') !== -1, 'bottom bleed cancels card padding');
+  assert.ok(narrow.indexOf('padding-bottom: .85rem') !== -1, 'content stays put (.5 + .35)');
 });
 
 test('styles.css keeps the classes guards intact', function () {

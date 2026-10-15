@@ -624,6 +624,8 @@ html { background: var(--md-surface, #fff); }
   #detail .day-group {
     border: 1px solid var(--md-outline-variant, #ccc); border-radius: 8px;
     margin: 0 0 .6rem; padding: .5rem .7rem;
+    /* clip full-bleed tinted rows to the rounded corners */
+    overflow: clip;
   }
   #detail .day-head { margin: .8rem 0 .2rem; }
   #detail .day-group table, #detail .day-group tbody { display: block; }
@@ -641,6 +643,21 @@ html { background: var(--md-surface, #fff); }
   #detail .day-group tr.next:has(td) {
     margin-left: -.7rem; margin-right: -.7rem;
     padding-left: .7rem; padding-right: .7rem;
+  }
+  /* vertical full-bleed: the card's .5rem top/bottom padding would inset a
+     tinted first/last row the same way. The header tr is always tbody's
+     first child, so the first session row is :nth-child(2); padding grows
+     by exactly the cancelled amount (.5 + .35 = .85) so content stays put
+     while the background reaches the card edge (clipped round by the
+     overflow rule above). A lone tinted row matches both and bleeds all
+     four sides. */
+  #detail .day-group tr.now:has(td):nth-child(2),
+  #detail .day-group tr.next:has(td):nth-child(2) {
+    margin-top: -.5rem; padding-top: .85rem;
+  }
+  #detail .day-group tr.now:has(td):last-child,
+  #detail .day-group tr.next:has(td):last-child {
+    margin-bottom: -.5rem; padding-bottom: .85rem;
   }
 }
 
