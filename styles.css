@@ -514,6 +514,12 @@ html { background: var(--md-surface, #fff); }
   }
   #layout:not(.is-list) #teacherList, #layout:not(.is-list) #classList { display: none; }
   #layout.is-list #detail { display: none; }
+  /* the whole page scrolls: #detail must not become an inner scroll
+     container. The base rule's overflow-x:auto would compute overflow-y to
+     auto and trap the scroll inside #detail (heading + search stuck); here
+     it expands with its content and the document scrolls instead. Desktop
+     keeps the base rule for the hanging gutter/Grid overflow. */
+  #layout > #detail { overflow: visible; }
   /* a V-chevron button beside the search box drops focus / hides the keyboard.
      It appears only while the search box actually holds focus, and it always
      keeps the rightmost slot: the X is the control that steps aside. */

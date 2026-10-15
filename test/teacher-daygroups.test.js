@@ -351,6 +351,12 @@ test('mobile tinted rows full-bleed across the day-group card', function () {
     'day-group table must drop the base margin-top');
 });
 
+test('mobile detail expands with the page instead of inner-scrolling', function () {
+  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  assert.ok(narrow.indexOf('#layout > #detail { overflow: visible; }') !== -1,
+    'narrow #detail must not trap scroll (base overflow-x:auto computes overflow-y:auto)');
+});
+
 test('styles.css keeps the classes guards intact', function () {
   assert.ok(CSS_SRC.indexOf('#layout > #detail table.c-sessions { display: none; }') !== -1,
     'retained c-sessions desktop hide');
