@@ -248,8 +248,6 @@ TT.app = (function () {
         esc(t.topSubject ? t.topSubject.name : '—') + '</p>' +
         '<p class="mostly">Mostly teaches ' +
         esc(t.topClass ? t.topClass.compactName() : '—') + '</p>';
-      h += '<p class="summary">' + model.teacherSummary(name, ss, now2) + '</p>';
-      // the session count is a caption for the list: keep it above the cards
       h += '<p class="count">' + ss.length + ' session(s).</p>';
       var upcoming = model.nextSessionIdx(ss, now2);
       // days with no live stake (no now/next session) render dimmed
