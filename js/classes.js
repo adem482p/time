@@ -232,8 +232,6 @@ TT.app = (function () {
       var cursor = model.dayCursor(now, store.slots);
       var by = indexByDaySlot(week);
       var h = '<h2>' + esc(week.name) + '</h2>';
-      h += '<p class="mostly">' + week.leaves.length + ' class(es) · ' +
-        week.sessions.length + ' session(s)</p>';
       h += '<div class="weekwrap"><table class="week"><thead><tr>';
       h += '<th class="cgutter"></th><th class="timecol"></th>';
       store.days.forEach(function (d) {
@@ -277,7 +275,6 @@ TT.app = (function () {
       // today-only semantics: the same `now` and the computed `cursor` keep
       // the grid and the list consistent; never nextSessionIdx (it wraps
       // into the coming days).
-      h += '<p class="count">' + week.sessions.length + ' session(s).</p>';
       // days with no live stake (no now/next session) render dimmed
       var liveDays = {};
       week.sessions.forEach(function (s) {

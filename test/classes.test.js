@@ -495,10 +495,10 @@ function classesSection() {
 }
 
 // The mobile card-list block: the day-grouped c-sessions markup at the end
-// of renderWeek (count caption through the last day-group section).
+// of renderWeek (liveDays computation through the last day-group section).
 function classesListBlock() {
   var sec = classesSection();
-  var start = sec.indexOf('h += \'<p class="count">\'');
+  var start = sec.indexOf('var liveDays = {};');
   var end = sec.indexOf('detail.innerHTML = h;', start);
   assert.ok(start !== -1 && end !== -1 && end > start, 'classes list block bounds');
   return sec.slice(start, end);
@@ -534,7 +534,7 @@ test('classes.js emits a teacher-style day-grouped session list with today-only 
     list.indexOf('<th>Teacher</th><th>Subject</th><th>Room</th>') !== -1,
     'c-sessions header must be Time/Teacher/Subject/Room with no Day column');
   assert.ok(list.indexOf('c-teacher') !== -1, 'missing c-teacher cells');
-  assert.ok(list.indexOf('<p class="count">') !== -1, 'missing session count caption');
+  assert.ok(list.indexOf('<p class="count">') === -1, 'no session count caption');
   // today-only model: isCurrentSession + the computed cursor, never the
   // wrapping nextSessionIdx
   assert.ok(list.indexOf('model.isCurrentSession(s.day, s.time, now)') !== -1);
@@ -753,10 +753,8 @@ function checkClassesInvariants(key, clock) {
       key + ': dim on section iff day has no now/next (' + day + ')');
   });
 
-  // single count above the first group, h2-free heading order kept simple
-  assert.strictEqual(html.split('class="count"').length - 1, 1, 'single p.count');
-  assert.ok(html.indexOf('class="count"') < html.indexOf('<h3'),
-    'p.count sits above all groups');
+  // no count captions; h2-free heading order kept simple
+  assert.strictEqual(html.split('class="count"').length - 1, 0, 'no p.count');
   return { week: week, html: html };
 }
 

@@ -130,8 +130,8 @@ test('showTeacher emits one heading + section per day with no Day column', funct
   // heading is a sibling BEFORE the card, not a child of it
   assert.ok(fn.indexOf('<h3 class="day-head">') < fn.indexOf('<section class="day-group'),
     'day-head h3 must be emitted before the day-group section');
-  // single count caption above all groups, breakdown unchanged
-  assert.strictEqual(fn.split('p class="count"').length - 1, 1, 'exactly one p.count');
+  // breakdown unchanged
+  assert.strictEqual(fn.split('p class="count"').length - 1, 0, 'no session count captions');
   assert.ok(fn.indexOf('breakdownHTML(t)') !== -1, 'breakdown block must be kept');
 });
 
@@ -248,10 +248,8 @@ function checkInvariants(name, clock) {
       name + ': dim on section iff day has no now/next (' + day + ')');
   });
 
-  // single count above the first group, h2 before h3, day name once, breakdown kept
-  assert.strictEqual(html.split('class="count"').length - 1, 1, 'single p.count');
-  assert.ok(html.indexOf('class="count"') < html.indexOf('<h3'),
-    'p.count sits above all groups');
+  // h2 before h3, day name once, breakdown kept
+  assert.strictEqual(html.split('class="count"').length - 1, 0, 'no session count captions');
   assert.ok(html.indexOf('<h2>') !== -1 && html.indexOf('<h2>') < html.indexOf('<h3'),
     'h2 (teacher) precedes h3 (days)');
   heads.forEach(function (fr) {

@@ -267,7 +267,6 @@ TT.app = (function () {
         esc(t.topSubject ? t.topSubject.name : '—') + '</p>' +
         '<p class="mostly">Mostly teaches ' +
         esc(t.topClass ? t.topClass.compactName() : '—') + '</p>';
-      h += '<p class="count">' + ss.length + ' session(s).</p>';
       var upcoming = model.nextSessionIdx(ss, now2);
       // days with no live stake (no now/next session) render dimmed
       var liveDays = {};
