@@ -306,6 +306,20 @@ test('styles.css re-scopes the desktop gutter hang to per-group tables', functio
     'unscoped teacher gutter rule must be gone');
 });
 
+test('day headings show on mobile only, never on desktop', function () {
+  var deskStart = CSS_SRC.indexOf('@media (min-width: 701px)');
+  var narrowStart = CSS_SRC.indexOf('@media (max-width: 700px)');
+  assert.ok(deskStart !== -1 && narrowStart !== -1 && deskStart < narrowStart,
+    'expected desktop block before narrow block');
+  var desktop = CSS_SRC.slice(deskStart, narrowStart);
+  var hideAt = desktop.indexOf('#detail .day-head');
+  assert.ok(hideAt !== -1 && desktop.slice(hideAt, hideAt + 60).indexOf('display: none') !== -1,
+    'desktop must hide day headings');
+  var narrow = CSS_SRC.slice(narrowStart);
+  assert.ok(!/\.day-head\s*\{\s*display\s*:\s*none/.test(narrow),
+    'narrow must keep day headings visible');
+});
+
 test('mobile cards key on the section with tr + tr dividers, heading outside', function () {
   var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
   assert.ok(narrow.indexOf('#detail .day-group') !== -1, 'mobile card must key on the section');

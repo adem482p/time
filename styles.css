@@ -446,6 +446,9 @@ html { background: var(--md-surface, #fff); }
   #layout > #detail .day-group table.t-sessions .nexttag {
     font-size: .78em; vertical-align: middle;
   }
+  /* day headings are a mobile pattern (the card needs its label); on desktop
+     the grouped tables stand alone */
+  #detail .day-head { display: none; }
   /* the session card list is the narrow-screen view of a class week; the
      desktop grid (table.week) stays the only view here. */
   #layout > #detail table.c-sessions { display: none; }
