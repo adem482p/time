@@ -512,15 +512,11 @@ html { background: var(--md-surface, #fff); }
        takes its content height only (neither grows nor shrinks). */
     flex: 0 0 auto;
   }
-  /* one-pane-at-a-time swap is a touch (coarse-pointer) pattern: tap targets
-     need the full screen, and taps land before blur so the swap never eats
-     them. Fine-pointer narrow windows (desktop resized small) keep both
-     panes stacked and visible instead, so mouse clicks always land on a
-     visible row. */
-  @media (pointer: coarse) {
-    #layout:not(.is-list) #teacherList, #layout:not(.is-list) #classList { display: none; }
-    #layout.is-list #detail { display: none; }
-  }
+  /* one pane at a time on narrow screens: focusing the filter shows the
+     menu, selecting shows the cards. Blur touches neither (it only drops
+     the autocomplete overlay), so a press in flight can never lose its row. */
+  #layout:not(.is-list) #teacherList, #layout:not(.is-list) #classList { display: none; }
+  #layout.is-list #detail { display: none; }
   /* the whole page scrolls: #detail must not become an inner scroll
      container. The base rule's overflow-x:auto would compute overflow-y to
      auto and trap the scroll inside #detail (heading + search stuck); here
