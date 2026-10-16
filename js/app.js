@@ -45,7 +45,8 @@ TT.app = (function () {
     var suggestIdx = -1;
     var suggestRows = [];
     // mobile state machine: one class `is-list` on #layout, absent = cards.
-    // Derived at focus/blur/onInput/commit; showTeacher forces cards.
+    // Derived at focus/onInput/commit; showTeacher forces cards. Blur only
+    // drops the suggest overlay, never the menu.
     var searchFocused = false;
     var lastResultCount = -1;
 
@@ -460,19 +461,23 @@ TT.app = (function () {
       searchFocused = true;
       syncList();
     });
+    // blur only drops the autocomplete overlay: menu visibility is
+    // selection-driven (selecting shows cards, focusing shows the menu),
+    // so losing focus must never hide the row a press is about to land on.
     search.addEventListener('blur', function () {
-      searchFocused = false;
       renderSuggest([]);
       renderGhost();
-      syncList();
     });
 
     // the mobile V-chevron button beside the input removes focus (hides the
-    // on-screen keyboard and drops out of list mode); it blurs itself too so
-    // the #searchWrap:focus-within glow clears and the button hides again
+    // on-screen keyboard) and explicitly leaves list mode for the cards; it
+    // blurs itself too so the #searchWrap:focus-within glow clears and the
+    // button hides again
     if (searchDone) searchDone.addEventListener('click', function () {
       search.blur();
       searchDone.blur();
+      searchFocused = false;
+      syncList();
     });
 
     // the always-visible mobile X clears the filter exactly like a manual
@@ -1141,16 +1146,21 @@ TT.app = (function () {
       searchFocused = true;
       syncList();
     });
+    // blur only drops the autocomplete overlay: menu visibility is
+    // selection-driven (selecting shows cards, focusing shows the menu),
+    // so losing focus must never hide the row a press is about to land on.
     search.addEventListener('blur', function () {
-      searchFocused = false;
       renderSuggest([]);
       renderGhost();
-      syncList();
     });
 
+    // the mobile V-chevron explicitly leaves list mode for the cards (blur
+    // alone no longer does); it blurs itself too so focus fully clears
     if (searchDone) searchDone.addEventListener('click', function () {
       search.blur();
       searchDone.blur();
+      searchFocused = false;
+      syncList();
     });
 
     if (searchClear) {

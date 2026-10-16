@@ -387,3 +387,21 @@ test('styles.css keeps the classes guards intact', function () {
   assert.ok(CSS_SRC.indexOf('td.c-cell.today') < CSS_SRC.indexOf('td.c-cell.now'),
     'c-cell.today stays before c-cell.now');
 });
+
+test('menu visibility is selection-driven, never blur-driven', function () {
+  var teachers = APP_SRC.slice(APP_SRC.indexOf('function initTeachersPage'), APP_SRC.indexOf('function initTimePage'));
+  var classes = APP_SRC.slice(APP_SRC.indexOf('function initClassesPage'), APP_SRC.indexOf('function boot('));
+  [teachers, classes].forEach(function (sec, i) {
+    var tag = i ? 'classes' : 'teachers';
+    var at = sec.indexOf("addEventListener('blur'");
+    var blur = sec.slice(at, sec.indexOf('});', at) + 3);
+    assert.ok(blur.indexOf('renderSuggest([])') !== -1, tag + ': blur drops the overlay');
+    assert.ok(blur.indexOf('searchFocused') === -1, tag + ': blur must not touch menu state');
+    assert.ok(blur.indexOf('syncList()') === -1, tag + ': blur must not toggle panes');
+    assert.ok(blur.indexOf('setTimeout') === -1, tag + ': no deferred blur');
+    assert.ok(sec.indexOf('searchFocused = true') !== -1, tag + ': focus arms the menu');
+    assert.ok(sec.indexOf("layout.classList.remove('is-list')") !== -1,
+      tag + ': selection dismisses the menu');
+  });
+  assert.ok(APP_SRC.indexOf('setTimeout') === -1, 'no setTimeout left outside the cursor interval');
+});
