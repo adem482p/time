@@ -36,7 +36,8 @@ var index = match.buildIndex(store, modelObjs);
 
 function main(arr) { return Array.prototype.slice.call(arr); }
 
-var APP_SRC = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
+var APP_SRC = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
+var CLASSES_SRC = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
 var CSS_SRC = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
 
 // ---- source slices -------------------------------------------------------
@@ -148,13 +149,21 @@ test('showTeacher tracks no prevDay/dayStart; dim lives on the section', functio
   assert.ok(fn.indexOf('upcoming.has(') !== -1, 'NEXT logic unchanged');
 });
 
-test('the classes path keeps its Day column and dayStart (untouched)', function () {
-  var sec = APP_SRC.slice(APP_SRC.indexOf('function initClassesPage'), APP_SRC.indexOf('function boot('));
+test('the classes list lives in js/classes.js with day groups (teachers file untouched)', function () {
+  // the per-page split: neither page script defines the other's init
+  assert.ok(APP_SRC.indexOf('function initClassesPage') === -1,
+    'teachers file must not define initClassesPage');
+  assert.ok(CLASSES_SRC.indexOf('function initTeachersPage') === -1,
+    'classes file must not define initTeachersPage');
+  // the classes card list mirrors the teacher day groups: heading outside
+  // the card, no Day column, dim on the section
+  var sec = CLASSES_SRC.slice(CLASSES_SRC.indexOf('function initClassesPage'));
   assert.ok(sec.indexOf('<table class="c-sessions">') !== -1, 'c-sessions table must stay');
-  assert.ok(sec.indexOf('c-day') !== -1, 'classes list keeps its Day column');
-  assert.ok(sec.indexOf('dayStart') !== -1, 'classes dayStart must stay');
+  assert.ok(sec.indexOf('<h3 class="day-head">') !== -1, 'classes list must group by day');
+  assert.ok(sec.indexOf('<section class="day-group') !== -1, 'classes list must use day-group sections');
+  assert.ok(sec.indexOf("'<td class=\"c-day\">'") === -1, 'classes list must drop the Day column');
   var colorSrc = fs.readFileSync(path.join(ROOT, 'js/color.js'), 'utf8');
-  assert.ok(colorSrc.indexOf('dayStart') !== -1, 'color.js dayStart key must stay for classes');
+  assert.ok(colorSrc.indexOf('dayStart') !== -1, 'color.js dayStart key must stay');
 });
 
 // ---- behavioral battery (shared by every fixture) -------------------------
@@ -386,8 +395,8 @@ test('styles.css keeps the classes guards intact', function () {
 });
 
 test('menu visibility is selection-driven, never blur-driven', function () {
-  var teachers = APP_SRC.slice(APP_SRC.indexOf('function initTeachersPage'), APP_SRC.indexOf('function initTimePage'));
-  var classes = APP_SRC.slice(APP_SRC.indexOf('function initClassesPage'), APP_SRC.indexOf('function boot('));
+  var teachers = APP_SRC.slice(APP_SRC.indexOf('function initTeachersPage'));
+  var classes = CLASSES_SRC.slice(CLASSES_SRC.indexOf('function initClassesPage'));
   [teachers, classes].forEach(function (sec, i) {
     var tag = i ? 'classes' : 'teachers';
     var at = sec.indexOf("addEventListener('blur'");
@@ -400,18 +409,21 @@ test('menu visibility is selection-driven, never blur-driven', function () {
     assert.ok(sec.indexOf("layout.classList.remove('is-list')") !== -1,
       tag + ': selection dismisses the menu');
   });
-  assert.ok(APP_SRC.indexOf('setTimeout') === -1, 'no setTimeout left outside the cursor interval');
-  var clicks = APP_SRC.split("search.addEventListener('click'").length - 1;
+  assert.ok(APP_SRC.indexOf('setTimeout') === -1, 'no setTimeout left in the teachers page');
+  assert.ok(CLASSES_SRC.indexOf('setTimeout') === -1, 'no setTimeout left in the classes page');
+  var clicks = APP_SRC.split("search.addEventListener('click'").length - 1 +
+    CLASSES_SRC.split("search.addEventListener('click'").length - 1;
   assert.strictEqual(clicks, 2, 'both pages bring the menu back on filter-box taps');
 });
 
 test('exact name selects even among partial matches (both pages)', function () {
   function sliceFn(sig) {
-    var start = APP_SRC.indexOf(sig);
+    var src = APP_SRC.indexOf(sig) !== -1 ? APP_SRC : CLASSES_SRC;
+    var start = src.indexOf(sig);
     assert.ok(start !== -1, sig + ' found');
-    var end = APP_SRC.indexOf('\n    }', start);
+    var end = src.indexOf('\n    }', start);
     assert.ok(end !== -1, sig + ' bounds');
-    return APP_SRC.slice(start, end + '\n    }'.length);
+    return src.slice(start, end + '\n    }'.length);
   }
   function runExact(src, args) {
     var sandbox = { console: console, model: model };
@@ -434,7 +446,7 @@ test('exact name selects even among partial matches (both pages)', function () {
   assert.strictEqual(runExact(sliceFn('function exactClass(rows, q)'), [rows, 'GLSI']), null,
     'partial class query selects nothing');
   // wiring: commit consults the exact helper before the count branches
-  var teachers = APP_SRC.slice(APP_SRC.indexOf('function initTeachersPage'), APP_SRC.indexOf('function initTimePage'));
+  var teachers = APP_SRC.slice(APP_SRC.indexOf('function initTeachersPage'));
   var commitFn = teachers.slice(teachers.indexOf('function commit()'), teachers.indexOf("search.addEventListener('input'"));
   assert.ok(commitFn.indexOf('var exact = exactTeacher(res, q);') !== -1, 'commit computes exact first');
   assert.ok(commitFn.indexOf('if (exact) {') !== -1, 'exact hit selects immediately');
@@ -442,7 +454,7 @@ test('exact name selects even among partial matches (both pages)', function () {
     'exact wins before the single-hit branch');
   assert.ok(commitFn.indexOf('if (!selected) syncList();') !== -1,
     'selection must suppress the trailing menu re-show');
-  var classes = APP_SRC.slice(APP_SRC.indexOf('function initClassesPage'), APP_SRC.indexOf('function boot('));
+  var classes = CLASSES_SRC.slice(CLASSES_SRC.indexOf('function initClassesPage'));
   assert.ok(classes.indexOf('var like = exactClass(rows, q);') !== -1, 'classes commit computes exact');
   assert.ok(classes.indexOf('showClass(like);') !== -1, 'exact class label selects');
 });

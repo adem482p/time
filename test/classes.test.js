@@ -389,7 +389,7 @@ test('classes.html carries the teachers-page structure and script stack', functi
   var html = readPage('classes.html');
   assert.ok(html.indexOf('data-page="classes"') !== -1);
   ['js/data.js', 'js/libgroups.js', 'js/model.js', 'js/match.js',
-   'js/theme.js', 'js/color.js', 'js/app.js'].forEach(function (s) {
+   'js/theme.js', 'js/color.js', 'js/classes.js'].forEach(function (s) {
     assert.ok(html.indexOf('src="' + s + '"') !== -1, 'missing script ' + s);
   });
   // the kaomoji empty state mirrors the teachers page, so the vendor is loaded
@@ -489,8 +489,19 @@ test('leaf week sessions stay in (day, slot) order', function () {
 });
 
 function classesSection() {
-  var src = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
-  return src.slice(src.indexOf('function initClassesPage'), src.indexOf('function boot('));
+  var src = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
+  assert.ok(src.indexOf('function boot(') === -1, 'classes file carries no shared boot');
+  return src.slice(src.indexOf('function initClassesPage'));
+}
+
+// The mobile card-list block: the day-grouped c-sessions markup at the end
+// of renderWeek (count caption through the last day-group section).
+function classesListBlock() {
+  var sec = classesSection();
+  var start = sec.indexOf('h += \'<p class="count">\'');
+  var end = sec.indexOf('detail.innerHTML = h;', start);
+  assert.ok(start !== -1 && end !== -1 && end > start, 'classes list block bounds');
+  return sec.slice(start, end);
 }
 
 test('app.js selects leaves only (no broader classes)', function () {
@@ -515,24 +526,70 @@ test('app.js selects leaves only (no broader classes)', function () {
   assert.ok(sec.indexOf('isNarrow') === -1, 'isNarrow gate must be gone');
 });
 
-test('app.js emits a teacher-style session list with today-only marking', function () {
+test('classes.js emits a teacher-style day-grouped session list with today-only marking', function () {
   var sec = classesSection();
-  assert.ok(sec.indexOf('<table class="c-sessions">') !== -1, 'missing c-sessions table');
-  assert.ok(sec.indexOf('<th>Teacher</th><th>Subject</th><th>Room</th>') !== -1,
-    'c-sessions header must be Day/Time/Teacher/Subject/Room');
-  assert.ok(sec.indexOf('c-teacher') !== -1, 'missing c-teacher cells');
-  assert.ok(sec.indexOf('<p class="count">') !== -1, 'missing session count caption');
+  var list = classesListBlock();
+  assert.ok(list.indexOf('<table class="c-sessions">') !== -1, 'missing c-sessions table');
+  assert.ok(list.indexOf('<th></th><th>Time</th>') !== -1 &&
+    list.indexOf('<th>Teacher</th><th>Subject</th><th>Room</th>') !== -1,
+    'c-sessions header must be Time/Teacher/Subject/Room with no Day column');
+  assert.ok(list.indexOf('c-teacher') !== -1, 'missing c-teacher cells');
+  assert.ok(list.indexOf('<p class="count">') !== -1, 'missing session count caption');
   // today-only model: isCurrentSession + the computed cursor, never the
   // wrapping nextSessionIdx
-  assert.ok(sec.indexOf('model.isCurrentSession(s.day, s.time, now)') !== -1);
-  assert.ok(sec.indexOf('s.time === cursor.next') !== -1, 'next must reuse the cursor');
+  assert.ok(list.indexOf('model.isCurrentSession(s.day, s.time, now)') !== -1);
+  assert.ok(list.indexOf('s.time === cursor.next') !== -1, 'next must reuse the cursor');
   assert.ok(sec.indexOf('nextSessionIdx(') === -1, 'must not use the wrapping nextSessionIdx');
-  assert.ok(sec.indexOf('color.sessionRow(') !== -1, 'list rows must use color.sessionRow');
-  assert.ok(sec.indexOf('NEXT_ARROW') !== -1, 'list gutter must reuse NEXT_ARROW');
+  assert.ok(list.indexOf('color.sessionRow(') !== -1, 'list rows must use color.sessionRow');
+  assert.ok(list.indexOf('NEXT_ARROW') !== -1, 'list gutter must reuse NEXT_ARROW');
   // the desktop grid is untouched in structure: Monday-first store.days loops
   assert.ok(sec.indexOf('store.days.forEach') !== -1, 'grid must iterate store.days');
   assert.ok(sec.indexOf('table class="week"') !== -1 || sec.indexOf('<table class="week">') !== -1,
     'grid table.week must be kept');
+});
+
+test('classes row click keeps the filter (G1 keep-filter)', function () {
+  var sec = classesSection();
+  var at = sec.indexOf('li.onclick = function ()');
+  assert.ok(at !== -1, 'row click handler found');
+  var handler = sec.slice(at, sec.indexOf('};', at) + 2);
+  assert.ok(handler.indexOf('showClass(r.label)') !== -1, 'row click shows the class directly');
+  assert.ok(handler.indexOf('search.value =') === -1, 'row click must not rewrite the filter');
+  // the sanctioned commit path still writes the filter
+  var accept = sec.slice(sec.indexOf('function acceptSuggest(row)'));
+  assert.ok(accept.indexOf('search.value = row.label') !== -1,
+    'acceptSuggest keeps the commit write');
+});
+
+test('classes card list groups by day with no Day column (G2)', function () {
+  var list = classesListBlock();
+  // one h3 heading + one section per day, heading OUTSIDE the card
+  assert.ok(list.indexOf('<h3 class="day-head">') !== -1, 'missing day-head h3');
+  assert.ok(list.indexOf('<section class="day-group') !== -1, 'missing day-group section');
+  assert.ok(list.indexOf('<h3 class="day-head">') < list.indexOf('<section class="day-group'),
+    'day-head h3 must be emitted before the day-group section');
+  // first-seen day grouping over the (day, slot)-ordered week
+  assert.ok(list.indexOf('dayOrder.forEach') !== -1, 'missing first-seen day grouping');
+  assert.ok(list.indexOf('byDay[day]') !== -1, 'missing per-day rows');
+  // the day lives in the heading once: no Day header, no c-day cells
+  assert.ok(list.indexOf('<th>Day') === -1, 'no Day header in the classes list');
+  assert.ok(list.indexOf('c-day') === -1, 'no c-day cells in the classes list');
+  assert.ok(list.indexOf('<hr') === -1, 'no rule elements in the classes list');
+});
+
+test('classes dim lives on the section, rows stay plain (G3)', function () {
+  var list = classesListBlock();
+  assert.ok(list.indexOf('liveDays') !== -1, 'liveDays computation must stay');
+  assert.ok(list.indexOf('(liveDays[day] ? \'\' : \' dim\')') !== -1,
+    'dim must move to the section');
+  assert.ok(list.indexOf('dimIdle: false') !== -1, 'list rows must pass dimIdle:false');
+  assert.ok(list.indexOf('dayStart') === -1, 'dayStart must not reach color.sessionRow here');
+  assert.ok(list.indexOf('prevDay') === -1, 'prevDay tracking must be gone');
+  assert.ok(classesSection().indexOf('dayStart') === -1,
+    'no dayStart left anywhere in the classes page');
+  // color.sessionRow itself is untouched (still supports the dayStart key)
+  var colorSrc = fs.readFileSync(path.join(ROOT, 'js/color.js'), 'utf8');
+  assert.ok(colorSrc.indexOf('dayStart') !== -1, 'color.js dayStart key must stay');
 });
 
 test('styles.css hides the grid/list per viewport and labels teacher cells', function () {
@@ -557,4 +614,164 @@ test('styles.css hides the grid/list per viewport and labels teacher cells', fun
     'classList hide rule must stay');
   assert.ok(css.indexOf('#classList { max-width: none;') !== -1,
     'classList flattening must stay');
+});
+
+// ---- day-grouped card list behavior (G2/G3) -----------------------------------
+
+// The list block at the end of renderWeek is straight-line HTML building over
+// (week, cursor, now), so the behavioral tests drive the real block source
+// in a vm sandbox with an injected clock, mirroring
+// test/teacher-daygroups.test.js.
+vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/color.js'), 'utf8'),
+  { TT: TT, console: console });
+var color = TT.color;
+
+var CLASSES_SRC = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
+
+function classesArrow() {
+  var start = CLASSES_SRC.indexOf('var NEXT_ARROW =');
+  var end = CLASSES_SRC.indexOf('</svg>\';', start);
+  assert.ok(start !== -1 && end !== -1, 'NEXT_ARROW bounds');
+  return CLASSES_SRC.slice(start, end + '</svg>\';'.length);
+}
+
+function runClassesList(week, now) {
+  var cursor = model.dayCursor(now, store.slots);
+  var sandbox = {
+    console: console,
+    model: model, color: color, esc: data.esc,
+    week: week, cursor: cursor, now: now
+  };
+  vm.createContext(sandbox);
+  var html = vm.runInContext(
+    classesArrow() + '\nvar h = \'\';\n' + classesListBlock() + '\nh;',
+    sandbox, { filename: 'classes-list-harness' });
+  return { html: html, cursor: cursor };
+}
+
+function classHeadingsOf(html) {
+  var out = [];
+  var re = /<h3 class="day-head">([^<]*)<\/h3>/g;
+  var m;
+  while ((m = re.exec(html))) out.push(m[1]);
+  return out;
+}
+
+function classSectionsOf(html) {
+  return html.split('<section').slice(1).map(function (chunk) {
+    var inner = chunk.slice(0, chunk.indexOf('</section>'));
+    var tag = (/class="([^"]*)"/.exec(inner) || [])[1] || '';
+    var tables = inner.split('<table').slice(1);
+    var rows = inner.split('<tr').slice(1).filter(function (r) { return r.indexOf('<td') !== -1; });
+    return { chunk: inner, cls: tag, tables: tables, rows: rows };
+  });
+}
+
+function classRowTime(row) { return (/c-time">([^<]*)</.exec(row) || [])[1]; }
+
+function checkClassesInvariants(key, clock) {
+  var week = model.classWeek(groups, key);
+  assert.strictEqual(week.leaves.length, 1, key + ' must resolve to one leaf');
+  var res = runClassesList(week, clock);
+  var html = res.html, cursor = res.cursor;
+  var live = {};
+  var wantNow = {}, wantNext = {};
+  week.sessions.forEach(function (s) {
+    var isNow = model.isCurrentSession(s.day, s.time, clock);
+    var isNext = !isNow && cursor.visible && s.day === cursor.today && s.time === cursor.next;
+    if (isNow || isNext) live[s.day] = true;
+    if (isNow) wantNow[s.day + '|' + s.time] = true;
+    else if (isNext) wantNext[s.day + '|' + s.time] = true;
+  });
+
+  var heads = classHeadingsOf(html);
+  var secs = classSectionsOf(html);
+
+  // one heading + one section per distinct day, Monday-first, none for empty days
+  var distinct = [];
+  week.sessions.forEach(function (s) { if (distinct.indexOf(s.day) === -1) distinct.push(s.day); });
+  assert.ok(distinct.length > 1, key + ' must span several days to prove grouping');
+  var wantHeads = distinct.map(function (d) { return model.frDay(d); });
+  assert.deepStrictEqual(heads, wantHeads,
+    key + ': one h3 per distinct day, Monday-first');
+  assert.deepStrictEqual(distinct,
+    main(store.days).filter(function (d) { return distinct.indexOf(d) !== -1; }),
+    key + ': day order is the Monday-first store order');
+  assert.strictEqual(secs.length, distinct.length,
+    key + ': one section per distinct day');
+  main(store.days).forEach(function (d) {
+    if (distinct.indexOf(d) === -1)
+      assert.ok(html.indexOf('day-head">' + model.frDay(d) + '<') === -1,
+        key + ': no heading for empty day ' + d);
+  });
+
+  // h3 is a sibling PRECEDING the card, never a child of it
+  secs.forEach(function (g) {
+    assert.ok(g.chunk.indexOf('day-head') === -1,
+      key + ': day-head must not live inside the section card');
+  });
+  distinct.forEach(function (d) {
+    var fr = model.frDay(d);
+    assert.ok(html.indexOf('<h3 class="day-head">' + fr + '</h3><section class="day-group') !== -1,
+      key + ': heading for ' + d + ' must immediately precede its section');
+  });
+
+  // no Day column / day markers in the markup
+  assert.ok(html.indexOf('c-day') === -1, key + ': no c-day cells');
+  assert.ok(html.indexOf('Day</th>') === -1, key + ': no Day header');
+  assert.ok(html.indexOf('daystart') === -1, key + ': no daystart class');
+  assert.ok(html.indexOf('<hr') === -1, key + ': no rule elements');
+
+  // row total == week.sessions.length; per-table header cells match data cells
+  assert.strictEqual(html.split('<td class="c-time">').length - 1, week.sessions.length,
+    key + ': row total == week.sessions.length');
+  secs.forEach(function (g) {
+    assert.strictEqual(g.tables.length, 1, 'one table per group');
+    assert.strictEqual(g.tables[0].split('<th').length - 1, 5, 'header has 5 columns');
+    g.rows.forEach(function (r) {
+      assert.strictEqual(r.split('<td').length - 1, 5, 'row has 5 cells');
+    });
+  });
+
+  // NOW/NEXT markers land on the cursor-computed rows
+  var gotNow = {}, gotNext = {};
+  secs.forEach(function (g, gi) {
+    var day = distinct[gi];
+    g.rows.forEach(function (r) {
+      var rowKey = day + '|' + classRowTime(r);
+      if (r.indexOf('nowtag') !== -1) gotNow[rowKey] = true;
+      if (r.indexOf('nexttag') !== -1) gotNext[rowKey] = true;
+    });
+  });
+  assert.deepStrictEqual(gotNow, wantNow, key + ': NOW rows match cursor logic');
+  assert.deepStrictEqual(gotNext, wantNext, key + ': NEXT rows match cursor logic');
+
+  // dim on the section iff its day has no now/next
+  secs.forEach(function (g, gi) {
+    var day = distinct[gi];
+    assert.strictEqual(g.cls.split(' ').indexOf('dim') !== -1, !live[day],
+      key + ': dim on section iff day has no now/next (' + day + ')');
+  });
+
+  // single count above the first group, h2-free heading order kept simple
+  assert.strictEqual(html.split('class="count"').length - 1, 1, 'single p.count');
+  assert.ok(html.indexOf('class="count"') < html.indexOf('<h3'),
+    'p.count sits above all groups');
+  return { week: week, html: html };
+}
+
+function friClass(hh, mm) { return new Date(2026, 9, 16, hh, mm); } // Friday
+function sunClass(hh, mm) { return new Date(2026, 9, 11, hh, mm); } // Sunday
+
+test('GLSI3D1 at Fri 12:00 groups its week with live Friday markers', function () {
+  var r = checkClassesInvariants('GLSI3D1', friClass(12, 0));
+  assert.ok(r.html.indexOf('nowtag') !== -1, 'expected a NOW marker');
+  assert.ok(r.html.indexOf('nexttag') !== -1, 'expected a NEXT marker');
+});
+
+test('GLSI3D1 on Sunday morning dims every group with no markers', function () {
+  var r = checkClassesInvariants('GLSI3D1', sunClass(10, 0));
+  assert.ok(r.html.indexOf('nowtag') === -1, 'nothing is NOW on Sunday');
+  assert.ok(r.html.indexOf('nexttag') === -1, 'nothing is NEXT on Sunday');
+  assert.ok(r.html.indexOf('day-group dim') !== -1, 'every group dims on Sunday');
 });

@@ -1,0 +1,552 @@
+// js/teachers.js — teachers page wiring. Self-contained per page: the shared
+// head (TT.app IIFE + model/match/color aliases + coarse-pointer gate +
+// NEXT_ARROW) is duplicated from js/app.js by design, not imported — zero
+// coupling, no load-order constraints. All coloring decisions go through
+// TT.color; all matching through TT.match; all domain data through TT.model.
+// This file owns DOM only.
+var TT = TT || {};
+TT.app = (function () {
+  var model = TT.model;
+  var match = TT.match;
+  var color = TT.color;
+  var C = color.CLASSES;
+  var esc = TT.data.esc;
+
+  // Mobile gate (issue 007): coarse pointers (touch/soft keyboard) have no
+  // Escape key to opt out of the pre-focused first suggestion, so Enter must
+  // commit the typed query until the user explicitly picks a row. Guarded
+  // like the prefers-reduced-motion query below; defaults to false (desktop)
+  // when window/matchMedia is absent (e.g. node tests).
+  function isCoarsePointer() {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    try { return !!window.matchMedia('(pointer: coarse)').matches; }
+    catch (e) { return false; }
+  }
+
+  // Manual right-arrow for the "Next" marker. Drawn as SVG (not the Unicode
+  // glyph) so it renders identically across platforms and inherits the tag color.
+  var NEXT_ARROW = '<svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<path d="M4 12h14M12 6l6 6-6 6"/></svg>';
+
+  // ---- teachers page ---------------------------------------------------------
+
+  function initTeachersPage(store, modelObjs, index) {
+    var search = document.getElementById('search');
+    var searchDone = document.getElementById('searchDone');
+    var searchClear = document.getElementById('searchClear');
+    var ghost = document.getElementById('ghost');
+    var ghostTyped = document.getElementById('ghostTyped');
+    var ghostPre = document.getElementById('ghostPre');
+    var ghostRest = document.getElementById('ghostRest');
+    var suggest = document.getElementById('suggest');
+    var list = document.getElementById('teacherList');
+    var detail = document.getElementById('detail');
+    var status = document.getElementById('status');
+    var layout = document.getElementById('layout');
+    var now = new Date();
+    var suggestIdx = -1;
+    var suggestRows = [];
+    // mobile state machine: one class `is-list` on #layout, absent = cards.
+    // Derived at focus/onInput/commit; showTeacher forces cards. Blur only
+    // drops the suggest overlay, never the menu.
+    var searchFocused = false;
+    var lastResultCount = -1;
+
+    // A giant, faint emoticon fills the detail area whenever no teacher is
+    // selected (initial load, or the filter cleared back to empty). The faces
+    // come from the vendored kaomoji library (vendor/kaomoji.js, CC BY 4.0);
+    // one is drawn per page load. The library spans short faces to very wide
+    // ones, so the decoration only uses the ones that comfortably fit the
+    // detail column, with a lone face as a no-library fallback. Pressing the
+    // empty area makes the face hop and land on a different one (decorative,
+    // mouse/tap-only easter egg — see the listener below).
+    var HOP_MS = 240; // keep in sync with the empty-hop duration in styles.css
+    var reducedMotion = (typeof window !== 'undefined' && window.matchMedia)
+      ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+
+    function facePool() {
+      if (!(TT.kaomoji && TT.kaomoji.all)) return [];
+      return TT.kaomoji.all().filter(function (f) { return f.length <= 12; });
+    }
+    var emptyFace = (function () {
+      var pool = facePool();
+      if (!pool.length) return TT.kaomoji && TT.kaomoji.random ? TT.kaomoji.random() : '(＾▽＾)';
+      return pool[Math.floor(Math.random() * pool.length)];
+    })();
+    function emptyStateHTML() {
+      // heading first, face below it: the empty-state flex `gap` separates the
+      // two, so the heading reads on top of the emoticon.
+      return '<div class="empty-state" aria-hidden="true">' +
+        '<div class="no-teacher-selected">No Teacher Selected</div>' +
+        '<div class="empty-face">' + esc(emptyFace) + '</div>' +
+      '</div>';
+    }
+
+    // pick a face from the same pool that differs from the current one; the
+    // filter bounds the choice, so the selection always terminates (and a
+    // ≤1-entry pool simply returns the unchanged face).
+    function nextFace() {
+      var pool = facePool().filter(function (f) { return f !== emptyFace; });
+      if (!pool.length) return emptyFace;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    // Decorative easter egg: every press on the empty area immediately swaps in
+    // a different face and restarts the hop from 0%, so the interaction keeps up
+    // with however fast the user taps (no press is swallowed, no face is
+    // coalesced). The restart is remove-class -> forced reflow
+    // -> re-add-class (re-adding a live class alone does not replay a CSS
+    // animation); the single listener below clears the class when the hop ends.
+    // Reduced motion swaps instantly with no hop or `hopping` class.
+    detail.addEventListener('click', function (e) {
+      var empty = e.target && e.target.closest && e.target.closest('.empty-state');
+      if (!empty) return;
+      var face = empty.querySelector('.empty-face');
+      if (!face) return;
+      emptyFace = nextFace();
+      face.textContent = emptyFace;
+      if (reducedMotion && reducedMotion.matches) return;
+      var angle = (Math.random() < .5 ? -1 : 1) * (8 + Math.random() * 12);
+      empty.style.setProperty('--hop-rot', angle + 'deg');
+      var transX = (Math.random() - 0.5) * 1.2;
+      var transY = (Math.random() - 0.5) * 1.2;
+      empty.style.setProperty('--hop-trans-x', transX + 'em');
+      empty.style.setProperty('--hop-trans-y', transY + 'em');
+      // overshoot: ~15% of throw distance, opposite direction (spring-back)
+      empty.style.setProperty('--hop-overshoot-x', (-transX * 0.15) + 'em');
+      empty.style.setProperty('--hop-overshoot-y', (-transY * 0.15) + 'em');
+      empty.classList.remove('hopping');
+      void empty.offsetWidth;
+      empty.classList.add('hopping');
+    });
+    // One persistent listener (added once, not per press) clears the hop class
+    // when the animation ends; it is delegated on #detail so it survives the
+    // detail innerHTML re-renders.
+    detail.addEventListener('animationend', function (e) {
+      var empty = e.target && e.target.closest && e.target.closest('.empty-state');
+      if (empty) empty.classList.remove('hopping');
+    });
+
+    // availability is time-dependent: compute once per page load, reuse for
+    // list ordering only (never a committed-query key, no visual encoding).
+    var avail = {};
+    store.teachers.forEach(function (n) {
+      avail[n] = model.availability(store.sessionsOf(n), now);
+    });
+    status.textContent = store.size + ' sessions · ' + store.teachers.length + ' teachers';
+
+    // List/detail swap state: `is-list` is present iff the search box is
+    // focused and the most recent render did not leave exactly one result.
+    // Only narrow CSS reads the class (one pane at a time); wider screens
+    // keep both panes visible and this only toggles state.
+    function syncList() {
+      if (!layout) return;
+      layout.classList.toggle('is-list', searchFocused && lastResultCount !== 1);
+    }
+
+    // Mobile clear "x": it is shown only while the filter holds text. Called
+    // wherever search.value can change (typing, commit, selection, clear, boot).
+    function syncClear() {
+      if (searchClear) searchClear.hidden = !search.value;
+    }
+
+    // ---- list rendering (sections, identical on all viewports) ----
+
+    function renderList(sections) {
+      var total = 0;
+      sections.forEach(function (s) { total += s.hits.length; });
+      lastResultCount = total;
+      list.innerHTML = '';
+      if (!total) {
+        var li0 = document.createElement('li');
+        li0.className = 'empty';
+        li0.textContent = 'No teachers match.';
+        list.appendChild(li0);
+        return;
+      }
+      // a header row introduces each fallback section; the primary
+      // matches-all block stays unlabelled, and a lone section needs none
+      var many = sections.length > 1;
+      sections.forEach(function (sec) {
+        if (many && sec.key !== 'all' && sec.label) {
+          var head = document.createElement('li');
+          head.className = 'group-head';
+          head.textContent = sec.label;
+          list.appendChild(head);
+        }
+        sec.hits.forEach(renderItem);
+      });
+    }
+
+    function renderItem(r) {
+      var li = document.createElement('li');
+      var cls = color.teacherItem({});
+      cls.push(r.exact ? C.exact : C.partial);
+      li.className = cls.join(' ');
+      li.dataset.name = r.teacher;
+      var h = match.highlightHTML(r.teacher, r.nameRanges) +
+        ' <span class="n">(' + store.sessionsOf(r.teacher).length + ')</span>';
+      if (r.relevantSessions > 0)
+        h += ' <span class="n">(' + model.hoursLabel(r.relevantSessions) + ' relevant)</span>';
+      r.subjectMatches.slice(0, 3).forEach(function (m) {
+        h += '<br><span class="fmatch">' + match.highlightHTML(m.label, m.ranges) + '</span>';
+      });
+      r.classMatches.slice(0, 3).forEach(function (m) {
+        h += '<br><span class="cmatch">' + match.highlightHTML(m.label, m.ranges) + '</span>';
+      });
+      li.innerHTML = h;
+      // The filter is the source of truth for the list: selecting a row must
+      // not rewrite it, so the result list stays as-is and the user can move
+      // to the next hit.
+      li.onclick = function () { showTeacher(r.teacher); };
+      list.appendChild(li);
+    }
+
+    // the single hit of a one-result section (used for auto-jump)
+    function onlyHit(res) {
+      var hit = null;
+      res.sections.forEach(function (sec) {
+        if (sec.hits.length === 1) hit = sec.hits[0];
+      });
+      return hit;
+    }
+
+    // An exact teacher name selects even among partial matches: tapping a
+    // suggest row commits its text, and that text may still match others
+    // (e.g. "Ben Haj" also matches "Ben Hadj Belkacem") — the exact hit
+    // wins so every selection dismisses the menu.
+    function exactTeacher(res, q) {
+      var want = model.normStr(q.trim());
+      var found = null;
+      res.sections.forEach(function (sec) {
+        (sec.hits || []).forEach(function (h) {
+          if (!found && h.teacher && model.normStr(h.teacher) === want) found = h.teacher;
+        });
+      });
+      return found;
+    }
+
+    // ---- teacher detail -------------------------------------------------
+
+    function breakdownHTML(t) {
+      var h = '<h3>Subjects (ranked by hours)</h3><ul class="subjlist">';
+      t.subjects.forEach(function (s) {
+        h += '<li>' + esc(s.name) + ' <span class="hours">' + model.hoursLabel(s.sessions) +
+          ' (' + (s.share * 100).toFixed(1) + '%)</span></li>';
+      });
+      h += '</ul><h3>Classes (ranked by hours)</h3><ul class="ctree">';
+      t.classStats.children.forEach(function (b) { h += treeHTML(b); });
+      return h + '</ul>';
+    }
+
+    function treeHTML(nd) {
+      var h = '<li>' + esc(nd.key) + ' <span class="hours">' +
+        model.hoursLabel(nd.sessions) + ' (' +
+        (nd.shareOfParent * 100).toFixed(1) + '%)</span>';
+      if (nd.children.length) {
+        h += '<ul>';
+        nd.children.forEach(function (k) { h += treeHTML(k); });
+        h += '</ul>';
+      }
+      return h + '</li>';
+    }
+
+    function showTeacher(name) {
+      var t = modelObjs.teachers[name];
+      if (!t) return;
+      // NB: showTeacher never writes search.value — neither the automatic
+      // single-result jump (onInput/commit) nor an explicit list selection
+      // may rewrite the user's filter; only an autocomplete accept
+      // (acceptSuggest) commits a new filter value.
+      renderSuggest([]);
+      renderGhost();
+      var ss = model.fuseSessions(store.sessionsOf(name), modelObjs.groups);
+      var now2 = new Date();
+      var h = '<h2>' + esc(name) + '</h2>' +
+        '<p class="mostly">Mostly teaches ' +
+        esc(t.topSubject ? t.topSubject.name : '—') + '</p>' +
+        '<p class="mostly">Mostly teaches ' +
+        esc(t.topClass ? t.topClass.compactName() : '—') + '</p>';
+      h += '<p class="count">' + ss.length + ' session(s).</p>';
+      var upcoming = model.nextSessionIdx(ss, now2);
+      // days with no live stake (no now/next session) render dimmed
+      var liveDays = {};
+      ss.forEach(function (s, i) {
+        if (model.isCurrentSession(s.day, s.time, now2) || upcoming.has(i))
+          liveDays[s.day] = true;
+      });
+      // one section per non-empty day, Monday-first (fused output is already
+      // in cmpSession order, so first-seen day order is the week order)
+      var dayOrder = [];
+      var byDay = {};
+      ss.forEach(function (s, i) {
+        if (!byDay[s.day]) { byDay[s.day] = []; dayOrder.push(s.day); }
+        byDay[s.day].push({ s: s, i: i });
+      });
+      dayOrder.forEach(function (day) {
+        h += '<h3 class="day-head">' + esc(model.frDay(day)) + '</h3>';
+        h += '<section class="day-group' + (liveDays[day] ? '' : ' dim') + '">';
+        h += '<table class="t-sessions"><tr><th></th><th>Time</th><th>Room</th><th>Subject</th><th>Class</th></tr>';
+        byDay[day].forEach(function (entry) {
+          var s = entry.s;
+          var isNow = model.isCurrentSession(s.day, s.time, now2);
+          var isNext = !isNow && upcoming.has(entry.i);
+          var cls = color.sessionRow({
+            isNow: isNow, isNext: isNext,
+            dimIdle: false
+          });
+          h += '<tr' + (cls.length ? ' class="' + cls.join(' ') + '"' : '') + '><td>' +
+            (isNow ? '<span class="nowtag">● NOW</span>' : '') +
+            (isNext ? '<span class="nexttag">' + NEXT_ARROW + 'NEXT</span>' : '') +
+            '</td><td class="c-time">' + esc(s.time) +
+            '</td><td class="c-room">' + esc(s.room || '—') +
+            '</td><td class="c-subject">' + esc(s.subject) +
+            '</td><td class="c-class">' +
+            s.pills.map(function (p) { return '<span class="pill">' + esc(p) + '</span>'; }).join(' ') +
+            '</td></tr>';
+        });
+        h += '</table></section>';
+      });
+      h += breakdownHTML(t);
+      detail.innerHTML = h;
+      markActive(name);
+      // a selection always shows the detail/card view
+      if (layout) layout.classList.remove('is-list');
+      // the filter is untouched by selection; keep the clear "x" in step
+      syncClear();
+    }
+
+    function markActive(name) {
+      list.querySelectorAll('li[data-name]').forEach(function (li) {
+        li.classList.toggle(C.active, li.dataset.name === name);
+      });
+    }
+
+    // ---- autocomplete overlay + shadow text ------------------------------
+
+    function renderSuggest(rows) {
+      suggestRows = rows;
+      suggest.innerHTML = '';
+      suggest.hidden = !rows.length;
+      // Mobile (coarse pointer): no pre-focus, so Enter commits the typed
+      // query until the user explicitly arrows/taps (issue 007). Desktop
+      // keeps the pre-focused first row. Ghost derives from suggestIdx,
+      // so -1 also means no ghost.
+      suggestIdx = rows.length ? (isCoarsePointer() ? -1 : 0) : -1; // desktop pre-focuses row 0; mobile starts unselected
+      rows.forEach(function (r, i) {
+        var li = document.createElement('li');
+        li.className = color.suggestion({ kind: r.kind, active: i === suggestIdx }).join(' ');
+        var body;
+        if (r.kind === 'class') {
+          body = match.highlightHTML(r.label, r.ranges) +
+            (r.detail ? ' <span class="alias">— ' + esc(r.detail) + '</span>' : '');
+        } else if (r.kind === 'teacher') {
+          body = match.highlightHTML(r.label, r.ranges) +
+            ' <span class="n">(' + store.sessionsOf(r.label).length + ')</span>';
+        } else {
+          body = match.highlightHTML(r.label, r.ranges);
+        }
+        li.innerHTML = '<span class="kind kind-' + r.kind + '">' + r.kind + '</span>' + body;
+        // mousedown guard: accept before input blur can hide the overlay.
+        li.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          acceptSuggest(r);
+        });
+        suggest.appendChild(li);
+      });
+      paintActive();
+    }
+
+    function paintActive() {
+      suggest.querySelectorAll('li').forEach(function (li, i) {
+        li.classList.toggle(C.active, i === suggestIdx);
+      });
+    }
+
+    function renderGhost() {
+      var row = suggestRows[suggestIdx];
+      var sh = row ? match.shadowText(search.value, row) : null;
+      if (sh) {
+        ghost.hidden = false;
+        ghostPre.textContent = sh.pre;
+        ghostTyped.textContent = search.value;
+        ghostRest.textContent = sh.rest;
+        // The prefix hint renders before the typed run, so the real input's
+        // text origin (and caret) must move right by the hint's width; the
+        // transparent typed run then sits exactly under the real text.
+        var preW = sh.pre ? ghostPre.getBoundingClientRect().width : 0;
+        if (preW) search.style.setProperty('--ghost-pre', preW + 'px');
+        else search.style.removeProperty('--ghost-pre');
+      } else {
+        ghost.hidden = true;
+        ghostPre.textContent = '';
+        ghostTyped.textContent = '';
+        ghostRest.textContent = '';
+        search.style.removeProperty('--ghost-pre');
+      }
+    }
+
+    function acceptSuggest(row) {
+      search.value = row.commit;
+      syncClear();
+      renderSuggest([]);
+      renderGhost();
+      commit();
+    }
+
+    // ---- grouped live search ------------------------------------------------
+
+    function onInput() {
+      var q = search.value;
+      syncClear();
+      var res = match.searchSections(index, q, avail);
+      renderList(res.sections);
+      renderSuggest(match.suggest(index, q));
+      renderGhost();
+      // an empty filter means nothing is selected: blank the detail area
+      if (!q.trim()) { detail.innerHTML = emptyStateHTML(); markActive(null); }
+      // exactly one result left -> auto-jump to the table view
+      if (res.total === 1) {
+        var only = onlyHit(res);
+        if (only) showTeacher(only.teacher);
+      }
+      syncList();
+    }
+
+    function commit() {
+      var q = search.value;
+      syncClear();
+      renderSuggest([]);
+      renderGhost();
+      if (!q.trim()) {
+        renderList(match.searchSections(index, '', avail).sections);
+        detail.innerHTML = emptyStateHTML();
+        markActive(null);
+        syncList();
+        return;
+      }
+      var res = match.searchSections(index, q, avail);
+      renderList(res.sections);
+      var exact = exactTeacher(res, q);
+      var selected = false;
+      if (exact) {
+        showTeacher(exact);
+        selected = true;
+      } else if (!res.total) {
+        detail.innerHTML = '<p class="nomatch">No match for "' + esc(q) + '".</p>';
+      } else if (res.total === 1) {
+        var only = onlyHit(res);
+        if (only) { showTeacher(only.teacher); selected = true; }
+      }
+      // a selection dismisses the menu; syncList would put it back since the
+      // rendered count is not 1
+      if (!selected) syncList();
+    }
+
+    search.addEventListener('input', onInput);
+    search.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        // <input type="search"> clears the field on Esc by default; cancel
+        // that so Esc only dismisses the menu and keeps the typed filter.
+        e.preventDefault();
+        if (!suggest.hidden) { renderSuggest([]); renderGhost(); }
+        return;
+      }
+      if (e.key === 'Tab') {
+        // Issue 007: Tab must not accept an implicit (non-explicit)
+        // selection on mobile (suggestIdx -1) — same gate as Enter.
+        // Desktop is unchanged (fresh idx is 0, still accepts).
+        if (!suggest.hidden && suggestRows.length && suggestIdx >= 0) {
+          e.preventDefault();
+          acceptSuggest(suggestRows[suggestIdx]);
+        }
+        return;
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (suggest.hidden) return;
+        e.preventDefault();
+        var items = suggest.querySelectorAll('li');
+        if (!items.length) return;
+        suggestIdx = e.key === 'ArrowDown'
+          ? (suggestIdx + 1) % items.length
+          : (suggestIdx - 1 + items.length) % items.length;
+        paintActive();
+        renderGhost();
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!suggest.hidden && suggestRows.length && suggestIdx >= 0)
+          acceptSuggest(suggestRows[suggestIdx]);
+        else commit();
+      }
+    });
+    search.addEventListener('focus', function () {
+      searchFocused = true;
+      syncList();
+    });
+    // tapping the filter box always brings the menu back: focus alone does
+    // not refire while the box never lost focus (row taps keep it focused),
+    // but click fires on every tap.
+    search.addEventListener('click', function () {
+      searchFocused = true;
+      syncList();
+    });
+    // blur only drops the autocomplete overlay: menu visibility is
+    // selection-driven (selecting shows cards, focusing shows the menu),
+    // so losing focus must never hide the row a press is about to land on.
+    search.addEventListener('blur', function () {
+      renderSuggest([]);
+      renderGhost();
+    });
+
+    // the mobile V-chevron button beside the input removes focus (hides the
+    // on-screen keyboard) and explicitly leaves list mode for the cards; it
+    // blurs itself too so the #searchWrap:focus-within glow clears and the
+    // button hides again
+    if (searchDone) searchDone.addEventListener('click', function () {
+      search.blur();
+      searchDone.blur();
+      searchFocused = false;
+      syncList();
+    });
+
+    // the always-visible mobile X clears the filter exactly like a manual
+    // clear (empty query -> full list + emoticon detail). mousedown is
+    // prevented so the button never takes focus; search.focus() keeps the
+    // keyboard, the V and mobile list mode available and stops the blur
+    // handler from firing.
+    if (searchClear) {
+      searchClear.addEventListener('mousedown', function (e) { e.preventDefault(); });
+      searchClear.addEventListener('click', function () {
+        search.value = '';
+        syncClear();
+        search.focus();
+        commit();
+      });
+    }
+
+    // initial paint: full list (available-today raised), faint emoticon detail
+    renderList(match.searchSections(index, '', avail).sections);
+    detail.innerHTML = emptyStateHTML();
+    syncList();
+    syncClear();
+  }
+
+  // ---- boot --------------------------------------------------------------------
+
+  function bootTeachersPage(store) {
+    var modelObjs = model.buildAll(store);
+    var index = match.buildIndex(store, modelObjs);
+    initTeachersPage(store, modelObjs, index);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    TT.data.loadStore().then(bootTeachersPage).catch(function (err) {
+      var st = document.getElementById('status');
+      if (st) st.textContent = 'Failed to load emplois.csv: ' + err;
+    });
+  });
+
+  return { boot: bootTeachersPage };
+})();
