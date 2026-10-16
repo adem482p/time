@@ -177,7 +177,7 @@ body[data-page="classes"] .author-credit span {
   border-top: 1px solid var(--md-outline-variant, #ccc);
 }
 #teacherList .fmatch, #teacherList .cmatch { display: block; color: var(--md-on-surface-variant, #333); font-size: .82em; }
-#teacherList mark, #suggest mark {
+#teacherList mark, #classList mark, #suggest mark {
   background: var(--md-tertiary-container, #ffeb3b);
   color: var(--md-on-tertiary-container, #1b1b1b);
 }
