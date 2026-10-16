@@ -27,11 +27,12 @@ function loadStack() {
 }
 
 var TT = loadStack();
-var data = TT.data, model = TT.model, color = TT.color;
+var data = TT.data, model = TT.model, color = TT.color, match = TT.match;
 
 var store = data.createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 var modelObjs = model.buildAll(store);
 var groups = modelObjs.groups;
+var index = match.buildIndex(store, modelObjs);
 
 function main(arr) { return Array.prototype.slice.call(arr); }
 
@@ -357,22 +358,18 @@ test('mobile detail expands with the page instead of inner-scrolling', function 
     'narrow #detail must not trap scroll (base overflow-x:auto computes overflow-y:auto)');
 });
 
-test('one-pane swap is gated on coarse pointers', function () {
+test('narrow screens swap menu and cards on focus/select only', function () {
   var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
-  var gate = narrow.indexOf('@media (pointer: coarse)');
-  assert.ok(gate !== -1, 'swap rules need a coarse-pointer gate');
-  var gated = narrow.slice(gate);
-  assert.ok(gated.indexOf('#layout:not(.is-list) #teacherList') !== -1,
-    'list hide rule lives inside the coarse gate');
-  assert.ok(gated.indexOf('#layout.is-list #detail') !== -1,
-    'detail hide rule lives inside the coarse gate');
-  // outside the gate (fine pointers, narrow or wide) both panes stay visible:
-  // nothing before the gate may hide either pane via is-list
-  var ungated = narrow.slice(0, gate);
-  assert.ok(ungated.indexOf('#layout:not(.is-list)') === -1,
-    'no is-list hiding outside the coarse gate');
-  assert.ok(ungated.indexOf('#layout.is-list') === -1,
-    'no is-list hiding outside the coarse gate');
+  // one pane at a time, with no pointer gate: focusing the filter shows the
+  // menu, selecting shows the cards, blur affects neither
+  assert.ok(narrow.indexOf('#layout:not(.is-list) #teacherList') !== -1,
+    'narrow hides the teacher list off-menu');
+  assert.ok(narrow.indexOf('#layout:not(.is-list) #classList') !== -1,
+    'narrow hides the class list off-menu');
+  assert.ok(narrow.indexOf('#layout.is-list #detail') !== -1,
+    'narrow hides detail while on-menu');
+  assert.ok(narrow.indexOf('@media (pointer: coarse)') === -1,
+    'swap must not depend on pointer type');
 });
 
 test('styles.css keeps the classes guards intact', function () {
@@ -404,4 +401,48 @@ test('menu visibility is selection-driven, never blur-driven', function () {
       tag + ': selection dismisses the menu');
   });
   assert.ok(APP_SRC.indexOf('setTimeout') === -1, 'no setTimeout left outside the cursor interval');
+  var clicks = APP_SRC.split("search.addEventListener('click'").length - 1;
+  assert.strictEqual(clicks, 2, 'both pages bring the menu back on filter-box taps');
+});
+
+test('exact name selects even among partial matches (both pages)', function () {
+  function sliceFn(sig) {
+    var start = APP_SRC.indexOf(sig);
+    assert.ok(start !== -1, sig + ' found');
+    var end = APP_SRC.indexOf('\n    }', start);
+    assert.ok(end !== -1, sig + ' bounds');
+    return APP_SRC.slice(start, end + '\n    }'.length);
+  }
+  function runExact(src, args) {
+    var sandbox = { console: console, model: model };
+    vm.createContext(sandbox);
+    var names = src.indexOf('function exactTeacher') !== -1 ? 'exactTeacher' : 'exactClass';
+    return vm.runInContext(src + '\n' + names + '(' + args.map(function (a) {
+      return JSON.stringify(a);
+    }).join(',') + ');', sandbox, { filename: 'exact-harness' });
+  }
+  var res = match.searchSections(index, 'Ben Haj', null);
+  assert.strictEqual(res.total, 2, 'Ben Haj fixture must match two teachers');
+  assert.strictEqual(runExact(sliceFn('function exactTeacher(res, q)'), [res, 'Ben Haj']), 'Ben Haj');
+  assert.strictEqual(runExact(sliceFn('function exactTeacher(res, q)'),
+    [match.searchSections(index, 'Ben ', null), 'Ben ']), null, 'partial query selects nothing');
+  assert.strictEqual(runExact(sliceFn('function exactTeacher(res, q)'),
+    [match.searchSections(index, '', null), '']), null, 'empty query selects nothing');
+  var rows = match.classSearch(index, 'GLSI3D1');
+  assert.ok(rows.length >= 1, 'GLSI3D1 fixture must return class rows');
+  assert.strictEqual(runExact(sliceFn('function exactClass(rows, q)'), [rows, 'GLSI3D1']), 'GLSI3D1');
+  assert.strictEqual(runExact(sliceFn('function exactClass(rows, q)'), [rows, 'GLSI']), null,
+    'partial class query selects nothing');
+  // wiring: commit consults the exact helper before the count branches
+  var teachers = APP_SRC.slice(APP_SRC.indexOf('function initTeachersPage'), APP_SRC.indexOf('function initTimePage'));
+  var commitFn = teachers.slice(teachers.indexOf('function commit()'), teachers.indexOf("search.addEventListener('input'"));
+  assert.ok(commitFn.indexOf('var exact = exactTeacher(res, q);') !== -1, 'commit computes exact first');
+  assert.ok(commitFn.indexOf('if (exact) {') !== -1, 'exact hit selects immediately');
+  assert.ok(commitFn.indexOf('var exact = exactTeacher(res, q);') < commitFn.indexOf('res.total === 1'),
+    'exact wins before the single-hit branch');
+  assert.ok(commitFn.indexOf('if (!selected) syncList();') !== -1,
+    'selection must suppress the trailing menu re-show');
+  var classes = APP_SRC.slice(APP_SRC.indexOf('function initClassesPage'), APP_SRC.indexOf('function boot('));
+  assert.ok(classes.indexOf('var like = exactClass(rows, q);') !== -1, 'classes commit computes exact');
+  assert.ok(classes.indexOf('showClass(like);') !== -1, 'exact class label selects');
 });

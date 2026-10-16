@@ -135,8 +135,8 @@ TT.app = (function () {
 
     // List/detail swap state: `is-list` is present iff the search box is
     // focused and the most recent render did not leave exactly one result.
-    // Only coarse-pointer narrow CSS reads the class (one pane at a time);
-    // everywhere else both panes stay visible and this only toggles state.
+    // Only narrow CSS reads the class (one pane at a time); wider screens
+    // keep both panes visible and this only toggles state.
     function syncList() {
       if (!layout) return;
       layout.classList.toggle('is-list', searchFocused && lastResultCount !== 1);
@@ -207,6 +207,21 @@ TT.app = (function () {
         if (sec.hits.length === 1) hit = sec.hits[0];
       });
       return hit;
+    }
+
+    // An exact teacher name selects even among partial matches: tapping a
+    // suggest row commits its text, and that text may still match others
+    // (e.g. "Ben Haj" also matches "Ben Hadj Belkacem") — the exact hit
+    // wins so every selection dismisses the menu.
+    function exactTeacher(res, q) {
+      var want = model.normStr(q.trim());
+      var found = null;
+      res.sections.forEach(function (sec) {
+        (sec.hits || []).forEach(function (h) {
+          if (!found && h.teacher && model.normStr(h.teacher) === want) found = h.teacher;
+        });
+      });
+      return found;
     }
 
     // ---- teacher detail -------------------------------------------------
@@ -410,13 +425,20 @@ TT.app = (function () {
       }
       var res = match.searchSections(index, q, avail);
       renderList(res.sections);
-      if (!res.total) {
+      var exact = exactTeacher(res, q);
+      var selected = false;
+      if (exact) {
+        showTeacher(exact);
+        selected = true;
+      } else if (!res.total) {
         detail.innerHTML = '<p class="nomatch">No match for "' + esc(q) + '".</p>';
       } else if (res.total === 1) {
         var only = onlyHit(res);
-        if (only) showTeacher(only.teacher);
+        if (only) { showTeacher(only.teacher); selected = true; }
       }
-      syncList();
+      // a selection dismisses the menu; syncList would put it back since the
+      // rendered count is not 1
+      if (!selected) syncList();
     }
 
     search.addEventListener('input', onInput);
@@ -458,6 +480,13 @@ TT.app = (function () {
       }
     });
     search.addEventListener('focus', function () {
+      searchFocused = true;
+      syncList();
+    });
+    // tapping the filter box always brings the menu back: focus alone does
+    // not refire while the box never lost focus (row taps keep it focused),
+    // but click fires on every tap.
+    search.addEventListener('click', function () {
       searchFocused = true;
       syncList();
     });
@@ -688,8 +717,8 @@ TT.app = (function () {
     status.textContent = store.size + ' sessions · ' + groups.leaves.length + ' classes';
 
     // List/detail swap state: one class `is-list` on #layout, absent = cards.
-    // Only coarse-pointer narrow CSS reads it; everywhere else both panes
-    // stay visible and this only toggles state.
+    // Only narrow CSS reads it; wider screens keep both panes visible and
+    // this only toggles state.
     function syncList() {
       if (!layout) return;
       layout.classList.toggle('is-list', searchFocused && lastResultCount !== 1);
@@ -1084,6 +1113,17 @@ TT.app = (function () {
       syncList();
     }
 
+    // An exact class label selects even among partial matches (mirror of
+    // exactTeacher): tapping a suggest row commits its text, which may
+    // still match others — the exact leaf wins.
+    function exactClass(rows, q) {
+      var want = model.normStr(q.trim());
+      for (var i = 0; i < rows.length; i++) {
+        if (model.normStr(rows[i].label) === want) return rows[i].label;
+      }
+      return null;
+    }
+
     function commit() {
       var q = search.value;
       syncClear();
@@ -1091,17 +1131,26 @@ TT.app = (function () {
       renderGhost();
       var rows = leafRows(match.classSearch(index, q));
       renderList(rows);
+      var like = exactClass(rows, q);
+      var picked = false;
       if (!q.trim()) {
         detail.innerHTML = emptyStateHTML();
         markActive(null);
       } else if (model.classWeek(groups, q).leaves.length === 1) {
         showClass(q);
+        picked = true;
+      } else if (like) {
+        showClass(like);
+        picked = true;
       } else if (rows.length === 1) {
         showClass(rows[0].label);
+        picked = true;
       } else if (!rows.length) {
         detail.innerHTML = '<p class="nomatch">No match for "' + esc(q) + '".</p>';
       }
-      syncList();
+      // a selection dismisses the menu; syncList would put it back since
+      // the rendered count is not 1
+      if (!picked) syncList();
     }
 
     search.addEventListener('input', onInput);
@@ -1143,6 +1192,13 @@ TT.app = (function () {
       }
     });
     search.addEventListener('focus', function () {
+      searchFocused = true;
+      syncList();
+    });
+    // tapping the filter box always brings the menu back: focus alone does
+    // not refire while the box never lost focus (row taps keep it focused),
+    // but click fires on every tap.
+    search.addEventListener('click', function () {
       searchFocused = true;
       syncList();
     });
