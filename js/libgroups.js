@@ -54,6 +54,20 @@
   // first. Their canonical spelling is applied via canonicalSpecialization().
   var SPEC_TOKENS = ['GLSI', 'IRS', 'IOT', 'EXR', 'BI', 'EB', 'SD'];
 
+  var SPEC_START_YEAR = { GLSI:2, BI:2, IRS:2, IOT:2, EB:3, SD:1, EXR:1 };
+  var CURRENT_HALF = 1; // all PDFs are "Semestre 1 (du 14/09/26 au 10/01/27)"; flip to 2 for S2 PDFs
+
+  // Program semester for a specialization's track year:
+  // 2 * (trackYear - start) + CURRENT_HALF, where start is the track year in
+  // which the specialization begins (uppercased lookup, so IoT->IOT works).
+  // Common branches (slot === track) never call this.
+  function semOf(spec, trackYear) {
+    var u = String(spec == null ? '' : spec).toUpperCase();
+    var start = SPEC_START_YEAR[u];
+    if (start == null) { return String(trackYear); }
+    return String(2 * ((+trackYear) - start) + CURRENT_HALF);
+  }
+
   // Level ordering, shallow -> deep.
   var LEVEL_ORDER = ['track', 'year', 'specialization', 'section', 'cohort'];
 
@@ -250,7 +264,7 @@
       var spec = specs[j];
       uniquePush(bucket.specs, spec);
       var slot = isCommon ? track : spec;
-      var specKey = slot + year;
+      var specKey = isCommon ? slot + year : slot + semOf(spec, year);
 
       var existing = cat.specNodes[specKey];
       if (existing) {
@@ -487,7 +501,7 @@
           canonSpec = track;
         } else if (canonSpec) {
           if (entry.specs.indexOf(canonSpec) === -1) { out.reason = CODES.UNKNOWN_SPECIALIZATION; return out; }
-          specKey = canonSpec + year;
+          specKey = canonSpec + semOf(canonSpec, year);
         } else if (entry.specKeys.length === 1) {
           specKey = entry.specKeys[0];
           canonSpec = entry.specs[0];
@@ -518,8 +532,10 @@
       }
     } else {
       // Permissive structural parse: build a key when unambiguous.
+      // Track-qualified input carries the track year and maps to the program
+      // semester; bare spec+digit input already names the semester.
       if (canonSpec && year) {
-        specKey = canonSpec + year;
+        specKey = track ? canonSpec + semOf(canonSpec, year) : canonSpec + year;
       } else if (track && year) {
         specKey = track + year;
       }
@@ -569,11 +585,13 @@
     return s;
   }
 
-  // Compact (canonical key) form, e.g. `EB3A`, `LBC1A`, `GLSI3D1`.
+  // Compact (canonical key) form, e.g. `EB1A`, `LBC1A`, `GLSI3D1`.
   function formatCompact(levels) {
     levels = levels || {};
     var slot = levels.commonBranch ? levels.track : (levels.specialization || levels.track);
-    return (slot || '') + (levels.year || '') + (levels.section || '') + (levels.cohort || '');
+    var sem = levels.commonBranch ? levels.year :
+      (levels.year == null ? '' : semOf(levels.specialization || levels.track, levels.year));
+    return (slot || '') + (sem || '') + (levels.section || '') + (levels.cohort || '');
   }
 
   /* ------------------------------------------------------------------ *
@@ -733,7 +751,7 @@
       if (entry.common) {
         out.push(entry.key);
       } else if (p.specialization) {
-        var sk = p.specialization + p.year;
+        var sk = p.specialization + semOf(p.specialization, p.year);
         if (cat.specNodes[sk]) { out.push(sk); }
       } else {
         for (var i = 0; i < entry.specKeys.length; i++) { out.push(entry.specKeys[i]); }
@@ -983,7 +1001,7 @@
     if (!entry) { return null; }
     if (entry.common) { return entry.key; }
     if (p.specialization) {
-      var sk = p.specialization + p.year;
+      var sk = p.specialization + semOf(p.specialization, p.year);
       return cat.specNodes[sk] ? sk : null;
     }
     if (entry.specKeys.length === 1) { return entry.specKeys[0]; }
@@ -1033,7 +1051,7 @@
       } else {
         for (var s = 0; s < entry.specs.length; s++) {
           var spec = entry.specs[s];
-          var specKey = spec + entry.year;
+          var specKey = spec + semOf(spec, entry.year);
           // A specKey can be claimed by more than one (track, year) bucket when
           // a catalogue override injects a specialization. Materialise it once.
           if (g.byKey[specKey]) { continue; }

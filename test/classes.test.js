@@ -77,9 +77,9 @@ test('classWeek resolves an interior prefix to the union beneath it', function (
 });
 
 test('classWeek unions every candidate of an ambiguous prefix', function () {
-  // "GLSI" spans years 2 and 3 — the union of both, not just the first.
+  // "GLSI" spans semesters 1 and 3 — the union of both, not just the first.
   var w = model.classWeek(groups, 'GLSI');
-  var want = groups.byKey['GLSI2'].leaves().concat(groups.byKey['GLSI3'].leaves());
+  var want = groups.byKey['GLSI1'].leaves().concat(groups.byKey['GLSI3'].leaves());
   assert.strictEqual(w.leaves.length, want.length);
   assert.strictEqual(w.name, 'GLSI');
   var keys = w.leaves.map(function (l) { return l.key; }).sort();
@@ -93,7 +93,7 @@ test('classWeek resolves a track node and a full-name reference', function () {
 
   var w2 = model.classWeek(groups, 'LCS2-GLSI_C Groupe 2');
   assert.strictEqual(w2.leaves.length, 1);
-  assert.strictEqual(w2.leaves[0].key, 'GLSI2C2');
+  assert.strictEqual(w2.leaves[0].key, 'GLSI1C2');
   assert.strictEqual(w2.name, 'LCS2-GLSI_C Groupe 2');
 });
 
@@ -341,10 +341,18 @@ test('classSearch ranks a year prefix first', function () {
 
 test('classSearch matches a full name via its own tier', function () {
   // the entry's own fullName "LCS2-GLSI_C Groupe 2" is an own
-  // match, so GLSI2C2 outranks the alias-only hits
+  // match, so GLSI1C2 outranks the alias-only hits
   var rows = match.classSearch(index, 'LCS2-GLSI_C Groupe 2');
-  assert.strictEqual(rows[0].label, 'GLSI2C2');
+  assert.strictEqual(rows[0].label, 'GLSI1C2');
   assert.ok(rows[0].score > rows[1].score);
+});
+
+test('classSearch matches a semester compact prefix', function () {
+  var rows = match.classSearch(index, 'glsi1a');
+  assert.deepStrictEqual(
+    main(rows.map(function (r) { return r.label; })),
+    ['GLSI1A', 'GLSI1A1', 'GLSI1A2']
+  );
 });
 
 test('classSearch matches a descendant raw spelling', function () {

@@ -81,20 +81,27 @@ specializations have a single section, others reach `H`.
 **Names.** The full name writes the levels in order, exactly as the source prints
 them, dropping the levels a class does not have: `LCS2-GLSI_A Groupe 1`,
 `LBC3-EB_A`, `MP1-SD`. The compact name is
-`<specialization><year><section><cohort>` — `GLSI3D1`, `LCS1A2`, `BI2E1`, `SD2A`,
-`EB3A` — where the specialization slot holds the subfield or, for a common branch,
-the track tag. Track-first and specialization-first spellings are aliases:
-`LCS-3-GLSI` ≡ `GLSI3`.
+`<specialization><semester><section><cohort>` — `GLSI3D1`, `LCS1A2`, `BI1E1`, `SD3A`,
+`EB1A` — where the specialization slot holds the subfield or, for a common branch,
+the track tag. The semester digit is the specialization's program semester, not
+the track year: `semester = 2 * (trackYear - start) + CURRENT_HALF`, with
+`start` per specialization (`GLSI:2`, `BI:2`, `IRS:2`, `IOT:2`, `EB:3`, `SD:1`,
+`EXR:1`) and `CURRENT_HALF = 1` for the current S1 PDFs (flip to `2` for S2 PDFs).
+Common branches never map and keep the track year (`LCS1`, `LBC1A2`). Track-first
+and specialization-first spellings are aliases:
+`LCS-3-GLSI` ≡ `GLSI3`, `LCS2-GLSI_A Groupe 1` ≡ `GLSI1A1`.
 
 **Resolution.** Any prefix of a fully specified class is itself a valid class and
-denotes everything beneath it: `GLSI3` covers every year-3 GLSI section and
+denotes everything beneath it: `GLSI3` covers every semester-3 GLSI section and
 cohort; `LCS1-A` covers both cohorts of section `A`. Resolution runs against the
 set of known specializations, not merely the ones that appear in the timetables on
 hand: a reference is ambiguous when that set names more than one candidate. Bare
-`GLSI` is ambiguous because it spans years 2 and 3. `LCS2` is unambiguous today
-because CS year 2 names a single specialization, and becomes ambiguous the moment
-it names several. A reference whose candidate set is empty is invalid and reported,
-never silently mapped: `GLSI1`, `EB2` and unknown subfields are all invalid.
+`GLSI` is ambiguous because it spans semesters 1 and 3 (`[GLSI1, GLSI3]`). `LCS2`
+is unambiguous today because CS year 2 names a single specialization (→`GLSI1`),
+and becomes ambiguous the moment it names several. A bare year digit names the
+semester, so a reference whose candidate set is empty is invalid and reported,
+never silently mapped: `GLSI2`, `GLSI4`, `BI2`, `IRS2`, `IoT2`, `SD2`, `EXR2`,
+`EB3` and unknown subfields are all invalid, while `GLSI1`/`GLSI3` resolve.
 
 A reference does not carry a semester. The semester is a property of time, not of
 a class: semester 1 runs 14/09–10/01, and the rest of the academic year is

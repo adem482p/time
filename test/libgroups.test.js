@@ -87,13 +87,13 @@ test('section and cohort sets are read from the data', function () {
   assert.strictEqual(keys(grouping.sections('LBC1')), 'LBC1A,LBC1B,LBC1C,LBC1D,LBC1E,LBC1F,LBC1G,LBC1H');
   assert.strictEqual(keys(grouping.cohorts('LBC1A')), 'LBC1A1,LBC1A2');
   assert.strictEqual(keys(grouping.sections('IRS3')), 'IRS3A');
-  assert.strictEqual(keys(grouping.sections('SD2')), 'SD2A,SD2B');
+  assert.strictEqual(keys(grouping.sections('SD3')), 'SD3A,SD3B');
 });
 
 test('LBC3-EB has a section but no cohorts', function () {
-  assert.strictEqual(keys(grouping.sections('EB3')), 'EB3A');
-  assert.strictEqual(grouping.cohorts('EB3A').length, 0);
-  assert.ok(grouping.resolveOne('EB3A').isLeaf());
+  assert.strictEqual(keys(grouping.sections('EB1')), 'EB1A');
+  assert.strictEqual(grouping.cohorts('EB1A').length, 0);
+  assert.ok(grouping.resolveOne('EB1A').isLeaf());
 });
 
 test('MP1-SD is a fully specified class with no section or cohort', function () {
@@ -108,11 +108,11 @@ test('MP1-SD is a fully specified class with no section or cohort', function () 
 
 test('broad references are valid and ambiguous', function () {
   var cases = [
-    ['GLSI', ['GLSI2', 'GLSI3']],
-    ['LBC3', ['BI3', 'EB3']],
+    ['GLSI', ['GLSI1', 'GLSI3']],
+    ['LBC3', ['BI3', 'EB1']],
     ['MP1', ['EXR1', 'SD1']],
-    ['LCS', ['LCS1', 'GLSI2', 'GLSI3']],
-    ['MP', ['EXR1', 'SD1', 'EXR2', 'SD2']]
+    ['LCS', ['LCS1', 'GLSI1', 'GLSI3']],
+    ['MP', ['EXR1', 'SD1', 'EXR3', 'SD3']]
   ];
   cases.forEach(function (c) {
     var r = grouping.resolve(c[0]);
@@ -128,17 +128,24 @@ test('interior and leaf references resolve as expected', function () {
   assert.strictEqual(g3.key, 'GLSI3');
   assert.strictEqual(g3.leaves().length, 8);
 
-  assert.strictEqual(grouping.resolveOne('LCS2').key, 'GLSI2');       // unambiguous: one CS year-2 spec
+  assert.strictEqual(grouping.resolveOne('LCS2').key, 'GLSI1');       // unambiguous: one CS year-2 spec
   assert.strictEqual(grouping.resolveOne('LCS3-GLSI_D Groupe 1').key, 'GLSI3D1');
   assert.strictEqual(grouping.resolveOne('LCS1-A').key, 'LCS1A');
   assert.strictEqual(grouping.resolveOne('LCS1-A').leaves().length, 2);
-  assert.strictEqual(grouping.resolveOne('MP2-SD_A').key, 'SD2A');
+  assert.strictEqual(grouping.resolveOne('MP2-SD_A').key, 'SD3A');
 });
 
 test('invalid references are reported, never silently mapped', function () {
   var reasons = {
     '': 'EMPTY',
-    'GLSI1': 'UNKNOWN_YEAR',
+    'GLSI2': 'UNKNOWN_YEAR',
+    'GLSI4': 'UNKNOWN_YEAR',
+    'BI2': 'UNKNOWN_YEAR',
+    'IRS2': 'UNKNOWN_YEAR',
+    'IOT2': 'UNKNOWN_YEAR',
+    'SD2': 'UNKNOWN_YEAR',
+    'EXR2': 'UNKNOWN_YEAR',
+    'EB3': 'UNKNOWN_YEAR',
     'EB2': 'UNKNOWN_YEAR',
     'XYZ': 'UNKNOWN_TRACK',
     'GLSI3-Z': 'UNKNOWN_SECTION',
@@ -176,14 +183,14 @@ test('resolve never throws; resolveOne throws for invalid and ambiguous', functi
 test('input is lenient: case, separators, ordering and aliases', function () {
   assert.strictEqual(grouping.resolveOne('  glsi-3-d-1 ').key, 'GLSI3D1');
   assert.strictEqual(grouping.resolveOne('LCS-3-GLSI').key, 'GLSI3');
-  assert.strictEqual(grouping.resolveOne('lcs2-glsi_a groupe 2').key, 'GLSI2A2');
-  assert.strictEqual(grouping.resolveOne('iot2').specialization, 'IoT');
+  assert.strictEqual(grouping.resolveOne('lcs2-glsi_a groupe 2').key, 'GLSI1A2');
+  assert.strictEqual(grouping.resolveOne('iot1').specialization, 'IoT');
   assert.strictEqual(grouping.resolveOne('IOT3-A').specialization, 'IoT');
 });
 
 test('track-implied references are accepted', function () {
-  assert.strictEqual(grouping.resolveOne('LCS2A1').key, 'GLSI2A1');
-  assert.strictEqual(grouping.resolveOne('LCS2GLSI').key, 'GLSI2');
+  assert.strictEqual(grouping.resolveOne('LCS2A1').key, 'GLSI1A1');
+  assert.strictEqual(grouping.resolveOne('LCS2GLSI').key, 'GLSI1');
 });
 
 test('common-branch compact form is accepted', function () {
@@ -197,12 +204,31 @@ test('a runtime catalogue can forward-declare offerings', function () {
   var g = Groups.build({ rows: rows, catalogue: { LCS2: ['GLSI', 'SD'] } });
   var lcs2 = g.resolve('LCS2');
   assert.strictEqual(lcs2.status, 'ambiguous');
-  assert.deepStrictEqual(candidateKeys(lcs2).sort(), ['GLSI2', 'SD2']);
+  assert.deepStrictEqual(candidateKeys(lcs2).sort(), ['GLSI1', 'SD3']);
 
-  // SD2 has no rows yet but is known to the catalogue, so it resolves.
-  var sd2 = g.resolve('SD2');
-  assert.strictEqual(sd2.status, 'ok');
-  assert.strictEqual(sd2.node.key, 'SD2');
+  // SD3 has no rows yet but is known to the catalogue, so it resolves.
+  var sd3 = g.resolve('SD3');
+  assert.strictEqual(sd3.status, 'ok');
+  assert.strictEqual(sd3.node.key, 'SD3');
+});
+
+test('short names use the program semester, not the track year', function () {
+  // Track-qualified input parses the track year then maps to the semester.
+  assert.strictEqual(grouping.leafFor('LCS2-GLSI_A Groupe 1').key, 'GLSI1A1');
+  assert.strictEqual(grouping.resolveOne('LCS2A1').key, 'GLSI1A1');
+  // Bare digit input already names the semester and validates against it.
+  assert.strictEqual(grouping.resolve('GLSI1').status, 'ok');
+  assert.strictEqual(grouping.resolveOne('GLSI1').key, 'GLSI1');
+  assert.strictEqual(grouping.resolveOne('EB1').key, 'EB1');
+  assert.strictEqual(grouping.resolve('GLSI2').status, 'invalid');
+  assert.strictEqual(grouping.resolve('GLSI2').reason, 'UNKNOWN_YEAR');
+  var amb = grouping.resolve('GLSI');
+  assert.strictEqual(amb.status, 'ambiguous');
+  assert.deepStrictEqual(candidateKeys(amb).sort(), ['GLSI1', 'GLSI3']);
+  // No semester-2/4 GLSI keys exist anywhere in the catalogue.
+  Object.keys(grouping.byKey).forEach(function (k) {
+    assert.ok(/GLSI[24]/.test(k) === false, 'no GLSI2/GLSI4 key: ' + k);
+  });
 });
 
 test('builder failures are typed GroupsErrors', function () {
@@ -229,10 +255,10 @@ test('canonical full and compact formatting', function () {
 
   assert.strictEqual(
     Groups.formatCompact({ track: 'LBC', year: 3, specialization: 'EB', section: 'A', cohort: null }),
-    'EB3A');
+    'EB1A');
   assert.strictEqual(
     Groups.formatCompact({ track: 'LCS', year: 2, specialization: 'GLSI', section: 'A', cohort: '1' }),
-    'GLSI2A1');
+    'GLSI1A1');
 });
 
 test('the library has no time, DOM, Node or network dependencies', function () {
