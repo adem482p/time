@@ -357,6 +357,24 @@ test('mobile detail expands with the page instead of inner-scrolling', function 
     'narrow #detail must not trap scroll (base overflow-x:auto computes overflow-y:auto)');
 });
 
+test('one-pane swap is gated on coarse pointers', function () {
+  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  var gate = narrow.indexOf('@media (pointer: coarse)');
+  assert.ok(gate !== -1, 'swap rules need a coarse-pointer gate');
+  var gated = narrow.slice(gate);
+  assert.ok(gated.indexOf('#layout:not(.is-list) #teacherList') !== -1,
+    'list hide rule lives inside the coarse gate');
+  assert.ok(gated.indexOf('#layout.is-list #detail') !== -1,
+    'detail hide rule lives inside the coarse gate');
+  // outside the gate (fine pointers, narrow or wide) both panes stay visible:
+  // nothing before the gate may hide either pane via is-list
+  var ungated = narrow.slice(0, gate);
+  assert.ok(ungated.indexOf('#layout:not(.is-list)') === -1,
+    'no is-list hiding outside the coarse gate');
+  assert.ok(ungated.indexOf('#layout.is-list') === -1,
+    'no is-list hiding outside the coarse gate');
+});
+
 test('styles.css keeps the classes guards intact', function () {
   assert.ok(CSS_SRC.indexOf('#layout > #detail table.c-sessions { display: none; }') !== -1,
     'retained c-sessions desktop hide');

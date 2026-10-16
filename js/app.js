@@ -132,9 +132,10 @@ TT.app = (function () {
     });
     status.textContent = store.size + ' sessions · ' + store.teachers.length + ' teachers';
 
-    // Mobile rule: `is-list` is present iff the search box is focused and the
-    // most recent render did not leave exactly one result. Desktop CSS ignores
-    // the class entirely; this only toggles state.
+    // List/detail swap state: `is-list` is present iff the search box is
+    // focused and the most recent render did not leave exactly one result.
+    // Only coarse-pointer narrow CSS reads the class (one pane at a time);
+    // everywhere else both panes stay visible and this only toggles state.
     function syncList() {
       if (!layout) return;
       layout.classList.toggle('is-list', searchFocused && lastResultCount !== 1);
@@ -681,7 +682,9 @@ TT.app = (function () {
 
     status.textContent = store.size + ' sessions · ' + groups.leaves.length + ' classes';
 
-    // mobile state machine: one class `is-list` on #layout, absent = cards.
+    // List/detail swap state: one class `is-list` on #layout, absent = cards.
+    // Only coarse-pointer narrow CSS reads it; everywhere else both panes
+    // stay visible and this only toggles state.
     function syncList() {
       if (!layout) return;
       layout.classList.toggle('is-list', searchFocused && lastResultCount !== 1);
