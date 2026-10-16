@@ -162,19 +162,6 @@ TT.app = (function () {
 
     // ---- class list -----------------------------------------------------
 
-    // Union session count of a node's whole subtree, memoized. The
-    // grouping is immutable for the page's lifetime, so each node's
-    // count is computed once (the full-catalogue paint touches every
-    // node) and every later keystroke is an O(1) lookup. Mirrors the
-    // teacher list's "(N)" badge; node.sessions alone would show (0)
-    // for every interior node, whose timetable lives beneath it.
-    var countCache = {};
-    function weekCount(node) {
-      if (!(node.key in countCache))
-        countCache[node.key] = model.classWeek(groups, node).sessions.length;
-      return countCache[node.key];
-    }
-
     function renderList(rows) {
       lastResultCount = rows.length;
       var active = String(activeKey).toUpperCase();
@@ -195,7 +182,6 @@ TT.app = (function () {
         var h = match.highlightHTML(r.label, r.ranges);
         if (r.node && r.node.fullName() !== r.label)
           h += ' <span class="alias">— ' + esc(r.node.fullName()) + '</span>';
-        if (r.node) h += ' <span class="n">(' + weekCount(r.node) + ')</span>';
         li.innerHTML = h;
         // The filter is the source of truth for the list: selecting a row must
         // not rewrite it, so the result list stays as-is and the user can move

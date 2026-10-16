@@ -773,3 +773,9 @@ test('GLSI3D1 on Sunday morning dims every group with no markers', function () {
   assert.ok(r.html.indexOf('nexttag') === -1, 'nothing is NEXT on Sunday');
   assert.ok(r.html.indexOf('day-group dim') !== -1, 'every group dims on Sunday');
 });
+
+test('class list rows carry no session count badge', function () {
+  var src = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
+  assert.ok(src.indexOf('weekCount') === -1, 'no per-row session counting');
+  assert.ok(src.indexOf('span class="n"') === -1, 'no count badge in class rows');
+});
