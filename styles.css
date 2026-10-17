@@ -732,7 +732,7 @@ table.week .s-teacher, table.week .s-room { color: var(--md-on-surface-variant, 
      cards by the generic mobile rules above) instead of the desktop week
      grid. */
   #detail .weekwrap { display: none; }
-  #detail table.c-all { display: none; }
+  #detail .week-head { display: none; }
   /* the class list flattens exactly like the teacher list */
   #classList { max-width: none; max-height: none; border: 0; overflow: visible; }
   #classList li {

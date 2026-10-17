@@ -592,24 +592,23 @@ test('classes dim lives on the section, rows stay plain (G3)', function () {
   assert.ok(colorSrc.indexOf('dayStart') !== -1, 'color.js dayStart key must stay');
 });
 
-test('styles.css hides the grid/list per viewport and labels teacher cells', function () {
+test('styles.css hides the week grid per viewport and labels teacher cells', function () {
   var css = readPage('styles.css');
-  // desktop shows the card list; narrow hides the grid and the full table
+  // desktop shows the day tables; narrow hides the WHOLE WEEK label and grid
   assert.ok(css.indexOf('#layout > #detail table.c-sessions { display: none; }') === -1,
     'desktop must keep the classes day tables visible');
   assert.ok(css.indexOf('#detail .weekwrap { display: none; }') !== -1,
     'missing narrow weekwrap hide');
-  assert.ok(css.indexOf('#detail table.c-all { display: none; }') !== -1,
-    'missing narrow full-table hide');
-  assert.ok(css.indexOf('#detail table.c-all { display: none; }') >
+  assert.ok(css.indexOf('#detail .week-head { display: none; }') !== -1,
+    'missing narrow WHOLE WEEK label hide');
+  assert.ok(css.indexOf('#detail .week-head { display: none; }') >
     css.lastIndexOf('@media (max-width: 700px)'),
-    'the full-table hide must live in a narrow block');
+    'the WHOLE WEEK label hide must live in a narrow block');
+  assert.ok(css.indexOf('c-all') === -1, 'the flat full table is gone from the CSS');
   var deskStart = css.indexOf('@media (min-width: 701px)');
   var narrowStart = css.indexOf('@media (max-width: 700px)');
   assert.ok(deskStart !== -1 && narrowStart !== -1 && deskStart < narrowStart,
     'expected desktop block before narrow block');
-  assert.ok(css.slice(deskStart, narrowStart).indexOf('c-all') === -1,
-    'no c-all rule in the desktop block');
   // the dead scroll-grid overrides are gone
   assert.ok(css.indexOf('.weekwrap { overflow-x: auto; }') === -1);
   assert.ok(css.indexOf('min-width: 42rem') === -1);
@@ -732,6 +731,9 @@ function checkClassesInvariants(key, clock) {
   assert.ok(html.indexOf('Day</th>') === -1, key + ': no Day header');
   assert.ok(html.indexOf('daystart') === -1, key + ': no daystart class');
   assert.ok(html.indexOf('<hr') === -1, key + ': no rule elements');
+  // the WHOLE WEEK label and the flat full table stay outside the day-list block
+  assert.ok(html.indexOf('week-head') === -1, key + ': the WHOLE WEEK label stays outside the day-list block');
+  assert.ok(html.indexOf('c-all') === -1, key + ': no flat full-table markup in the day groups');
 
   // row total == week.sessions.length; per-table header cells match data cells
   assert.strictEqual(html.split('<td class="c-time">').length - 1, week.sessions.length,
@@ -791,9 +793,9 @@ test('class list rows carry no session count badge', function () {
   assert.ok(src.indexOf('span class="n"') === -1, 'no count badge in class rows');
 });
 
-// ---- full session table (issue 048) -------------------------------------------
+// ---- whole-week label + grid (issue 049) -------------------------------------
 
-test('renderWeek emits day groups, then the week grid, then the full table', function () {
+test('renderWeek emits day groups, then the WHOLE WEEK label, then the week grid', function () {
   var src = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
   var start = src.indexOf('function renderWeek');
   var end = src.indexOf('function applyCursor');
@@ -801,24 +803,29 @@ test('renderWeek emits day groups, then the week grid, then the full table', fun
   var slice = src.slice(start, end);
   var prev = -1;
   ['<h2>', '<h3 class="day-head">', '<section class="day-group',
-   '<div class="weekwrap"', '<table class="c-all">', 'detail.innerHTML = h;'].forEach(function (m) {
+   '<h3 class="day-head week-head">WHOLE WEEK</h3>',
+   '<div class="weekwrap"><table class="week">', 'detail.innerHTML = h;'].forEach(function (m) {
     var at = slice.indexOf(m);
     assert.ok(at !== -1, 'renderWeek must emit ' + m);
     assert.ok(at > prev, 'renderWeek emissions must be in order at ' + m);
     prev = at;
   });
-  assert.ok(slice.indexOf('<tr><th>Day</th><th>Time</th><th>Teacher</th><th>Subject</th><th>Room</th></tr>') !== -1,
-    'full table must carry the five-column header');
-  // grouping is built exactly once, for the day sections
   function count(hay, needle) { return hay.split(needle).length - 1; }
+  assert.strictEqual(count(src, '<h3 class="day-head week-head">WHOLE WEEK</h3>'), 1,
+    'the WHOLE WEEK label must be emitted exactly once');
+  // the flat full table is gone: no emission, no leftovers anywhere
+  assert.ok(src.indexOf('<table class="c-all">') === -1, 'no c-all table emission');
+  assert.ok(src.indexOf('<th>Day</th>') === -1, 'no five-column Day header left');
+  assert.ok(src.indexOf('c-all') === -1, 'no c-all string anywhere in classes.js');
+  // only two week.sessions.forEach walks remain in renderWeek: the liveDays
+  // computation and the day grouping (the third was the flat table's)
+  assert.strictEqual(count(slice, 'week.sessions.forEach'), 2,
+    'exactly two week.sessions.forEach in renderWeek (liveDays + day grouping)');
+  // grouping is built exactly once, for the day sections
   assert.strictEqual(count(src, 'var byDay = {};'), 1, 'byDay must be declared exactly once');
   assert.strictEqual(count(src, 'var dayOrder = [];'), 1, 'dayOrder must be declared exactly once');
   assert.strictEqual(count(src, 'dayOrder.forEach'), 1,
     'exactly one dayOrder.forEach (the sections loop)');
-  var gridToAssign = slice.slice(slice.indexOf('<div class="weekwrap"'),
-    slice.indexOf('detail.innerHTML = h;'));
-  assert.ok(gridToAssign.indexOf('week.sessions.forEach') !== -1,
-    'the full table must iterate week.sessions');
   assert.ok(src.indexOf('nextSessionIdx(') === -1, 'must not use the wrapping nextSessionIdx');
   // the session-row helper is declared between liveDays and the first day-head
   var liveAt = slice.indexOf('var liveDays = {};');
@@ -826,88 +833,4 @@ test('renderWeek emits day groups, then the week grid, then the full table', fun
   assert.ok(liveAt !== -1 && headAt > liveAt, 'liveDays must precede the first day-head');
   assert.ok(/function \w+\(/.test(slice.slice(liveAt, headAt)),
     'session-row helper must be declared between liveDays and the day-head emission');
-});
-
-// The full table is straight-line HTML building over (week, cursor, now) like
-// the day-groups block, so it is driven the same way in a vm sandbox: part 1
-// (the re-bounded list block) defines the shared session-row helper exactly as
-// production does, part 2 appends the full table in the same context so h
-// accumulates.
-function runClassesFullTable(week, now) {
-  var cursor = model.dayCursor(now, store.slots);
-  var sandbox = {
-    console: console,
-    model: model, color: color, esc: data.esc,
-    week: week, cursor: cursor, now: now
-  };
-  vm.createContext(sandbox);
-  var part1 = classesListBlock();
-  var start = CLASSES_SRC.indexOf("h += '<table class=\"c-all\">'");
-  var end = CLASSES_SRC.indexOf('detail.innerHTML = h;', start);
-  assert.ok(start !== -1 && end !== -1 && end > start, 'full table bounds');
-  var part2 = CLASSES_SRC.slice(start, end);
-  vm.runInContext(classesArrow() + '\nvar h = \'\';\n' + part1,
-    sandbox, { filename: 'classes-fulltable-part1' });
-  var html = vm.runInContext(part2 + '\nh;', sandbox,
-    { filename: 'classes-fulltable-part2' });
-  return { html: html, cursor: cursor };
-}
-
-function checkFullTable(key, clock) {
-  var week = model.classWeek(groups, key);
-  assert.strictEqual(week.leaves.length, 1, key + ' must resolve to one leaf');
-  var res = runClassesFullTable(week, clock);
-  var html = res.html, cursor = res.cursor;
-  var at = html.indexOf('<table class="c-all">');
-  assert.ok(at !== -1, 'full table must be emitted');
-  var tail = html.slice(at);
-  // exact five-column header, no marker gutter column
-  assert.ok(tail.indexOf('<tr><th>Day</th><th>Time</th><th>Teacher</th>' +
-    '<th>Subject</th><th>Room</th></tr>') !== -1,
-    key + ': full table must carry the five-column header');
-  var dataRows = tail.split('<tr').slice(1).filter(function (r) { return r.indexOf('<td') !== -1; });
-  assert.strictEqual(dataRows.length, week.sessions.length,
-    key + ': every session of the week appears exactly once');
-  // Day cell == frDay(session day), Monday-first non-decreasing in store order
-  var rank = {};
-  main(store.days).forEach(function (d, i) { rank[d] = i; });
-  dataRows.forEach(function (r, i) {
-    var s = week.sessions[i];
-    var cell = (/<td>([^<]*)</.exec(r) || [])[1];
-    assert.strictEqual(cell.trim(), model.frDay(s.day),
-      key + ': row ' + i + ' Day cell must be the session day name');
-    if (i) assert.ok(rank[week.sessions[i - 1].day] <= rank[s.day],
-      key + ': rows must stay Monday-first');
-  });
-  // now/next markers recomputed with the same today-only cursor formulas
-  var wantNow = {}, wantNext = {};
-  week.sessions.forEach(function (s) {
-    var isNow = model.isCurrentSession(s.day, s.time, clock);
-    var isNext = !isNow && cursor.visible && s.day === cursor.today && s.time === cursor.next;
-    if (isNow) wantNow[s.day + '|' + s.time] = true;
-    else if (isNext) wantNext[s.day + '|' + s.time] = true;
-  });
-  var gotNow = {}, gotNext = {};
-  dataRows.forEach(function (r, i) {
-    var key2 = week.sessions[i].day + '|' + classRowTime(r);
-    if (r.indexOf('nowtag') !== -1) gotNow[key2] = true;
-    if (r.indexOf('nexttag') !== -1) gotNext[key2] = true;
-  });
-  assert.deepStrictEqual(gotNow, wantNow, key + ': NOW rows match cursor logic');
-  assert.deepStrictEqual(gotNext, wantNext, key + ': NEXT rows match cursor logic');
-  // plain table: no day-group leftovers or chrome
-  ['c-day', 'daystart', '<hr', 'class="count"', 'weekCount', 'span class="n"'].forEach(function (tok) {
-    assert.ok(tail.indexOf(tok) === -1, key + ': full table must not carry ' + tok);
-  });
-  return { tail: tail, week: week };
-}
-
-test('GLSI3D1 full table lists the whole week: live markers at Fri 12:00, none on Sunday', function () {
-  var fri = checkFullTable('GLSI3D1', friClass(12, 0));
-  assert.ok(fri.tail.indexOf('nowtag') !== -1, 'expected a NOW marker');
-  assert.ok(fri.tail.indexOf('nexttag') !== -1, 'expected a NEXT marker');
-  var sun = checkFullTable('GLSI3D1', sunClass(10, 0));
-  assert.ok(sun.tail.indexOf('nowtag') === -1, 'nothing is NOW on Sunday');
-  assert.ok(sun.tail.indexOf('nexttag') === -1, 'nothing is NEXT on Sunday');
-  assert.ok(sun.tail.indexOf('dim') === -1, 'the full table never dims');
 });

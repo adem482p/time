@@ -220,8 +220,8 @@ TT.app = (function () {
       var h = '<h2>' + esc(week.name) + '</h2>';
       // Per-day session groups, rendered on every viewport: desktop shows the
       // sections above the week grid, narrow screens shape them into cards
-      // (teacher-style, via the generic mobile table rules; the grid and the
-      // full table below are display:none on narrow). One day-group section
+      // (teacher-style, via the generic mobile table rules; the whole-week
+      // label and grid below are display:none on narrow). One day-group section
       // per non-empty day, Monday-first, mirroring showTeacher — the day
       // lives in the heading once, so there is no Day column and `dim`
       // moves to the section. Row marking mirrors showTeacher with
@@ -235,10 +235,9 @@ TT.app = (function () {
             (cursor.visible && s.day === cursor.today && s.time === cursor.next))
           liveDays[s.day] = true;
       });
-      // One session row, shared by the day-group tables and the full table
-      // below: the Day cell holds dayLabel (empty in the day groups — the
-      // heading already names the day) plus the NOW/NEXT tag when marked.
-      function sessionRow(s, dayLabel) {
+      // One session row for the day-group tables: the first cell is the
+      // NOW/NEXT tag when marked (the heading already names the day).
+      function sessionRow(s) {
         var isNow = model.isCurrentSession(s.day, s.time, now);
         var isNext = !isNow && cursor.visible && s.day === cursor.today && s.time === cursor.next;
         var cls = color.sessionRow({
@@ -246,8 +245,6 @@ TT.app = (function () {
           dimIdle: false
         });
         return '<tr' + (cls.length ? ' class="' + cls.join(' ') + '"' : '') + '><td>' +
-          dayLabel +
-          (dayLabel && (isNow || isNext) ? ' ' : '') +
           (isNow ? '<span class="nowtag">● NOW</span>' : '') +
           (isNext ? '<span class="nexttag">' + NEXT_ARROW + 'NEXT</span>' : '') +
           '</td><td class="c-time">' + esc(s.time) +
@@ -270,14 +267,15 @@ TT.app = (function () {
         h += '<table class="c-sessions"><tr><th></th><th>Time</th>' +
           '<th>Teacher</th><th>Subject</th><th>Room</th></tr>';
         byDay[day].forEach(function (s) {
-          h += sessionRow(s, '');
+          h += sessionRow(s);
         });
         h += '</table></section>';
       });
-      // the week grid <div class="weekwrap"> + red cursor, moved below the day
-      // groups (issue 048): desktop reads the day sections first, then the
-      // grid, then the full table; on narrow screens both the grid and the
-      // full table are display:none.
+      // the week grid <div class="weekwrap"> + red cursor (days as columns),
+      // after the day sections (issue 048). Desktop labels it WHOLE WEEK below;
+      // on narrow screens the label and this grid are display:none — the day
+      // cards are the whole narrow view.
+      h += '<h3 class="day-head week-head">WHOLE WEEK</h3>';
       h += '<div class="weekwrap"><table class="week"><thead><tr>';
       h += '<th class="cgutter"></th><th class="timecol"></th>';
       store.days.forEach(function (d) {
@@ -313,16 +311,6 @@ TT.app = (function () {
         (cursor.visible ? '' : ' style="display:none"') +
         '><div class="cursor-arrow"></div></div>';
       h += '</div>';
-      // Plain full session table: every session of the week exactly once
-      // (week.sessions is already in cmpSession, Monday-first order), five
-      // columns Day/Time/Teacher/Subject/Room with the NOW/NEXT tag inside
-      // the Day cell; like the grid it is display:none on narrow screens.
-      h += '<table class="c-all">';
-      h += '<tr><th>Day</th><th>Time</th><th>Teacher</th><th>Subject</th><th>Room</th></tr>';
-      week.sessions.forEach(function (s) {
-        h += sessionRow(s, esc(model.frDay(s.day)));
-      });
-      h += '</table>';
       detail.innerHTML = h;
       if (layout) layout.classList.remove('is-list');
       syncClear();
