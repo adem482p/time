@@ -25,8 +25,9 @@
   - `## Description` (observed vs expected), `## Root cause`, `## Repro steps`
     (commands + URL + clicks).
   - `## Discussion`: append-only, chronological, one
-    `### <Role> <topic> (YYYY-MM-DD)` entry per role. Never reorder or rewrite
-    another role's entries.
+    `### <Role> <topic> (YYYY-MM-DD)` entry per contribution. A role may appear
+    several times (a loop of requests and re-evaluations produces several
+    maintainer entries). Never reorder or rewrite another role's entries.
 
 ## Roles
 
@@ -39,6 +40,11 @@ The main agent coordinates; subagents do the work in parallel.
   holds the context should get its kindred tasks, instead of two subagents racing
   over the same files.
 - **Corrections** — fix subagent output using the big picture the subagent cannot see.
+- **Running the request loop** — when a maintainer entry ends with requests,
+  spawn one agent per request (folding kindred requests into one agent), have
+  each append its findings to the issue thread, then re-spawn the maintainer to
+  re-evaluate — repeat until it declares a final decision — and only then hand
+  the criteria to an Implementer.
 - **Merging** — once a subagent finishes implementation, review its diff and merge it.
 - Git is the main agent's alone: worktrees, commits and merges happen here.
 
@@ -55,12 +61,34 @@ The main agent coordinates; subagents do the work in parallel.
 1. **Reporter** — read-only, no code changes. Confirms the bug against the code and
    data, writes the issue file (`Description`, `Root cause`, `Repro steps`, empty
    `Discussion`). Returns the root cause and what it did not do.
-2. **Maintainer** — read-only, no code changes. Its job is to do the necessary
-   research: establish how the relevant code and data actually behave, then decide
-   whether the issue is valid and in scope. Appends a
-   `### Maintainer triage (YYYY-MM-DD)` entry with a verdict, numbered acceptance
-   criteria, and risks/constraints (regressions to guard, invariants to preserve).
-   Returns the criteria.
+2. **Maintainer** — the steward of the issue, and of the codebase it lands in.
+   Its main job is **not** triage: it is to figure out the *best way to handle
+   the issue*, taking into account the maintainability of the project, future
+   development, and design decisions (existing conventions, the shape of the
+   code, how this change will be read and extended later). It researches the
+   relevant code and data as needed — read-only — then decides whether the issue
+   is valid, in scope, and, above all, *how* to solve it.
+
+   The maintainer is willing to revise the architecture and change things at a
+   deeper level when that is the right answer, instead of piling up state and
+   behaviour to work around issues. A fix that adds a special case may be
+   rejected in favour of one that removes the need for it.
+
+   Each round, it appends a `### Maintainer decision (YYYY-MM-DD)` entry (topic
+   may be `triage`, `re-evaluation`, etc.) with its verdict/decision, the
+   reasoning (including any architectural direction), numbered acceptance
+   criteria when it is ready for implementation, and risks/constraints
+   (regressions to guard, invariants to preserve).
+
+   **Requests**: a maintainer entry may end with requests — things it wants
+   researched, verified, designed, or prototyped before it can decide, or to
+   inform a deeper rework. The main agent spawns one agent per request (in its
+   own worktree if code is involved); each such agent appends its own entry to
+   the issue's `## Discussion` and returns its findings to the main agent. The
+   main agent then re-spawns the maintainer, which reads the whole thread,
+   re-evaluates, and either issues further requests or settles on a final
+   decision. This loops until the maintainer declares a final decision; only
+   then does the Implementer act. The maintainer never edits code itself.
 3. **Implementer** — the minimal diff that honors the criteria. Verifies in place
    (node assertions + `curl` 200 from the dev server; no browser available),
    appends a `### Fix implemented (YYYY-MM-DD)` entry with the exact diff and
