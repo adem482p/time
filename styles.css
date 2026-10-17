@@ -431,27 +431,21 @@ html { background: var(--md-surface, #fff); }
      column never touches the teacher list. */
   #layout { gap: calc(var(--gutter) + 1.25rem); }
   #layout > #detail { overflow-x: visible; }
-  #layout > #detail .day-group table.t-sessions {
+  #layout > #detail .day-group table {
     margin-left: calc(-1 * var(--gutter));
     width: calc(100% + var(--gutter));
   }
-  #layout > #detail .day-group table.t-sessions th:first-child,
-  #layout > #detail .day-group table.t-sessions td:first-child {
+  #layout > #detail .day-group table th:first-child,
+  #layout > #detail .day-group table td:first-child {
     width: var(--gutter); padding-left: 0; padding-right: 0;
     /* the row is taller than the marker line (subject/class cells wrap), so
        centre the NOW/NEXT tag vertically instead of baseline/top-aligning it */
     vertical-align: middle;
   }
-  #layout > #detail .day-group table.t-sessions .nowtag,
-  #layout > #detail .day-group table.t-sessions .nexttag {
+  #layout > #detail .day-group table .nowtag,
+  #layout > #detail .day-group table .nexttag {
     font-size: .78em; vertical-align: middle;
   }
-  /* day headings are a mobile pattern (the card needs its label); on desktop
-     the grouped tables stand alone */
-  #detail .day-head { display: none; }
-  /* the session card list is the narrow-screen view of a class week; the
-     desktop grid (table.week) stays the only view here. */
-  #layout > #detail table.c-sessions { display: none; }
 }
 
 /* ---- time page ---- */
@@ -738,6 +732,7 @@ table.week .s-teacher, table.week .s-room { color: var(--md-on-surface-variant, 
      cards by the generic mobile rules above) instead of the desktop week
      grid. */
   #detail .weekwrap { display: none; }
+  #detail table.c-all { display: none; }
   /* the class list flattens exactly like the teacher list */
   #classList { max-width: none; max-height: none; border: 0; overflow: visible; }
   #classList li {

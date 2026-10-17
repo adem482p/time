@@ -298,24 +298,25 @@ test('styles.css defines day-group/day-head in the group-head language', functio
 });
 
 test('styles.css re-scopes the desktop gutter hang to per-group tables', function () {
-  assert.ok(CSS_SRC.indexOf('.day-group table.t-sessions') !== -1,
+  assert.ok(CSS_SRC.indexOf('#layout > #detail .day-group table') !== -1,
     'gutter hang must apply per .day-group table');
   assert.ok(CSS_SRC.indexOf('#detail table.t-sessions') === -1,
     'unscoped teacher gutter rule must be gone');
 });
 
-test('day headings show on mobile only, never on desktop', function () {
+test('day headings show on every viewport', function () {
   var deskStart = CSS_SRC.indexOf('@media (min-width: 701px)');
   var narrowStart = CSS_SRC.indexOf('@media (max-width: 700px)');
   assert.ok(deskStart !== -1 && narrowStart !== -1 && deskStart < narrowStart,
     'expected desktop block before narrow block');
   var desktop = CSS_SRC.slice(deskStart, narrowStart);
-  var hideAt = desktop.indexOf('#detail .day-head');
-  assert.ok(hideAt !== -1 && desktop.slice(hideAt, hideAt + 60).indexOf('display: none') !== -1,
-    'desktop must hide day headings');
+  assert.ok(desktop.indexOf('#detail .day-head') === -1,
+    'desktop must not rule on day headings');
+  assert.ok(!/\.day-head\s*\{\s*display\s*:\s*none/.test(CSS_SRC),
+    'no day-head may be hidden on any viewport');
   var narrow = CSS_SRC.slice(narrowStart);
-  assert.ok(!/\.day-head\s*\{\s*display\s*:\s*none/.test(narrow),
-    'narrow must keep day headings visible');
+  assert.ok(narrow.indexOf('#detail .day-head') !== -1,
+    'narrow must keep styling the day heading');
 });
 
 test('mobile cards key on the section with tr + tr dividers, heading outside', function () {
@@ -394,8 +395,8 @@ test('narrow screens swap menu and cards on focus/select only', function () {
 });
 
 test('styles.css keeps the classes guards intact', function () {
-  assert.ok(CSS_SRC.indexOf('#layout > #detail table.c-sessions { display: none; }') !== -1,
-    'retained c-sessions desktop hide');
+  assert.ok(CSS_SRC.indexOf('#layout > #detail table.c-sessions { display: none; }') === -1,
+    'desktop must keep the classes day tables visible');
   assert.ok(CSS_SRC.indexOf('#detail .weekwrap { display: none; }') !== -1,
     'retained weekwrap narrow hide');
   assert.ok(CSS_SRC.indexOf('#detail td.c-teacher { order: 4; }') !== -1,
