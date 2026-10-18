@@ -497,6 +497,40 @@ TT.model = (function () {
     return null;
   }
 
+  // Issue 050: start-from-today day lists for the day-group listings.
+  // `anchorDay` is the unified rule: `today` iff some session today still
+  // has an end after `now` (an in-progress session counts); otherwise the
+  // first day, scanning forward cyclically through DAYS from the day after
+  // today, that has any session. Sunday is not in DAYS and never has
+  // sessions, so a Sunday (or post-Saturday) wrap lands on LUNDI. Never
+  // DIMANCHE; null for an empty session list.
+  function anchorDay(sessions, now) {
+    now = now || new Date();
+    var mins = now.getHours() * 60 + now.getMinutes();
+    var today = JS_DAY[now.getDay()];
+    var ss = sessions || [];
+    if (ss.some(function (s) {
+      return s.day === today && slotMinutes(s.time)[1] > mins;
+    })) return today;
+    var start = DAY_IDX[today] - 1; // 0-based DAYS position; NaN on Sunday
+    for (var k = 1; k <= 6; k++) {
+      var d = DAYS[(((start + k) % 6) + 6) % 6];
+      if (ss.some(function (s) { return s.day === d; })) return d;
+    }
+    return null;
+  }
+
+  // Rotate a Monday-first distinct-day list so the listing starts at the
+  // anchor day (see anchorDay). Pure: the input is never mutated; an empty
+  // list or a null anchor returns the days unchanged.
+  function startFromToday(days, sessions, now) {
+    var a = anchorDay(sessions, now);
+    if (a === null) return days.slice();
+    var i = days.indexOf(a);
+    if (i <= 0) return days.slice();
+    return days.slice(i).concat(days.slice(0, i));
+  }
+
   // ---- teacher summary sentence (issues 006/008 semantics) ---------------
 
   // Wrap an interpolated data value: HTML-escaped inside literal
@@ -573,6 +607,7 @@ TT.model = (function () {
     slotMinutes: slotMinutes, isCurrentSession: isCurrentSession,
     dayCursor: dayCursor,
     nextKey: nextKey, nextSessionIdx: nextSessionIdx, availability: availability,
+    startFromToday: startFromToday,
     teacherSummary: teacherSummary
   };
 })();

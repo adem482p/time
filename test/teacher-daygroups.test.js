@@ -91,6 +91,7 @@ function runShowTeacher(name, clock) {
 }
 
 function fri(hh, mm) { return new RealDate(2026, 9, 16, hh, mm); } // Friday
+function sat(hh, mm) { return new RealDate(2026, 9, 17, hh, mm); } // Saturday
 function sun(hh, mm) { return new RealDate(2026, 9, 11, hh, mm); } // Sunday
 
 // ---- output parsing -------------------------------------------------------
@@ -184,12 +185,13 @@ function checkInvariants(name, clock) {
   var heads = headingsOf(html);
   var secs = sectionsOf(html);
 
-  // one heading + one section per distinct day, Monday-first, none for empty days
+  // one heading + one section per distinct day, start-from-today, none for empty days
   var distinct = [];
   ss.forEach(function (s) { if (distinct.indexOf(s.day) === -1) distinct.push(s.day); });
-  var wantHeads = distinct.map(function (d) { return model.frDay(d); });
+  var rotated = main(model.startFromToday(distinct, ss, clock));
+  var wantHeads = rotated.map(function (d) { return model.frDay(d); });
   assert.deepStrictEqual(heads, wantHeads,
-    name + ': one h3 per distinct day, Monday-first');
+    name + ': one h3 per distinct day, start-from-today');
   assert.strictEqual(secs.length, distinct.length,
     name + ': one section per distinct day');
   main(store.days).forEach(function (d) {
@@ -231,7 +233,7 @@ function checkInvariants(name, clock) {
   // NOW/NEXT markers land on the same rows as the pre-change logic
   var gotNow = {}, gotNext = {};
   secs.forEach(function (g, gi) {
-    var day = distinct[gi];
+    var day = rotated[gi];
     g.rows.forEach(function (r) {
       var key = day + '|' + rowTime(r);
       if (r.indexOf('nowtag') !== -1) gotNow[key] = true;
@@ -243,7 +245,7 @@ function checkInvariants(name, clock) {
 
   // dim on the section iff its day has no now/next
   secs.forEach(function (g, gi) {
-    var day = distinct[gi];
+    var day = rotated[gi];
     assert.strictEqual(g.cls.split(' ').indexOf('dim') !== -1, !live[day],
       name + ': dim on section iff day has no now/next (' + day + ')');
   });
@@ -264,6 +266,7 @@ function checkInvariants(name, clock) {
 test('Barboura at Fri 12:00 groups 12 fused rows with live Friday markers', function () {
   var r = checkInvariants('Barboura', fri(12, 0));
   assert.strictEqual(r.ss.length, 12, 'Barboura fuses to 12 rows');
+  assert.strictEqual(headingsOf(r.html)[0], 'vendredi');
   // Friday 12h00 sits inside 11h40-13h10: that row is NOW, 13h20-14h50 is NEXT
   assert.ok(r.html.indexOf('nowtag') !== -1, 'expected a NOW marker');
   assert.ok(r.html.indexOf('nexttag') !== -1, 'expected a NEXT marker');
@@ -272,13 +275,23 @@ test('Barboura at Fri 12:00 groups 12 fused rows with live Friday markers', func
 test('Dlima at Fri 12:00 marks only the single next capsule, no NOW', function () {
   var r = checkInvariants('Dlima', fri(12, 0));
   assert.strictEqual(r.ss.length, 10, 'Dlima keeps 10 rows');
+  // the rotation case from the issue: vendredi first, then mardi… cyclic
+  assert.strictEqual(headingsOf(r.html)[0], 'vendredi');
   assert.ok(r.html.indexOf('nowtag') === -1, 'no NOW at Fri 12:00 for Dlima');
   assert.strictEqual(r.html.split('nexttag').length - 1, 1, 'single NEXT capsule');
 });
 
 test('Barboura on Sunday morning marks the wrapped next session only', function () {
   var r = checkInvariants('Barboura', sun(10, 0));
+  assert.strictEqual(headingsOf(r.html)[0], 'jeudi');
   assert.ok(r.html.indexOf('nowtag') === -1, 'nothing is NOW on Sunday');
+  assert.ok(r.html.indexOf('nexttag') !== -1, 'wrapped NEXT still marks');
+});
+
+test('Barboura at Sat 18:30 rolls past the finished Saturday to Thursday', function () {
+  var r = checkInvariants('Barboura', sat(18, 30));
+  assert.strictEqual(headingsOf(r.html)[0], 'jeudi');
+  assert.ok(r.html.indexOf('nowtag') === -1, 'nothing is NOW at Sat 18:30');
   assert.ok(r.html.indexOf('nexttag') !== -1, 'wrapped NEXT still marks');
 });
 

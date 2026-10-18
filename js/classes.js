@@ -222,9 +222,9 @@ TT.app = (function () {
       // sections above the week grid, narrow screens shape them into cards
       // (teacher-style, via the generic mobile table rules; the whole-week
       // label and grid below are display:none on narrow). One day-group section
-      // per non-empty day, Monday-first, mirroring showTeacher — the day
-      // lives in the heading once, so there is no Day column and `dim`
-      // moves to the section. Row marking mirrors showTeacher with
+      // per non-empty day, cyclic from today (issue 050), mirroring showTeacher
+      // — the day lives in the heading once, so there is no Day column and
+      // `dim` moves to the section. Row marking mirrors showTeacher with
       // today-only semantics: the same `now` and the computed `cursor` keep
       // the grid and the lists consistent; never nextSessionIdx (it wraps
       // into the coming days).
@@ -253,14 +253,15 @@ TT.app = (function () {
           '</td><td class="c-room">' + esc(s.room || '—') +
           '</td></tr>';
       }
-      // one section per non-empty day, Monday-first (classWeek output is
-      // already in cmpSession order, so first-seen day order is the week order)
+      // one section per non-empty day, cyclic from today (issue 050: the
+      // first-seen Monday-first day order is rotated to the anchor day)
       var dayOrder = [];
       var byDay = {};
       week.sessions.forEach(function (s) {
         if (!byDay[s.day]) { byDay[s.day] = []; dayOrder.push(s.day); }
         byDay[s.day].push(s);
       });
+      dayOrder = model.startFromToday(dayOrder, week.sessions, now);
       dayOrder.forEach(function (day) {
         h += '<h3 class="day-head">' + esc(model.frDay(day)) + '</h3>';
         h += '<section class="day-group' + (liveDays[day] ? '' : ' dim') + '">';

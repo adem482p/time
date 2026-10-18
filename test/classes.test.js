@@ -277,6 +277,44 @@ test('dayCursor just before the day ends', function () {
   assert.ok(Math.abs(c.frac - (89 / 90)) < 1e-9);
 });
 
+test('startFromToday rotates a day list per the unified anchor rule (issue 050)', function () {
+  var days = ['LUNDI', 'MARDI', 'MERCREDI'];
+  var ss = [{ day: 'LUNDI', time: '08h15-09h45' }, { day: 'MERCREDI', time: '10h00-11h30' }];
+  // before phase: today's sessions are all ahead -> today first
+  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(12, 7, 0))),
+    ['LUNDI', 'MARDI', 'MERCREDI']);
+  // in progress: the session's end is after now -> today first
+  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(12, 9, 0))),
+    ['LUNDI', 'MARDI', 'MERCREDI']);
+  // boundary: a session ending exactly at now counts as ended -> roll
+  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(12, 9, 45))),
+    ['MERCREDI', 'LUNDI', 'MARDI']);
+  // slot gap after today's only session ended -> roll to the next session day
+  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(12, 9, 50))),
+    ['MERCREDI', 'LUNDI', 'MARDI']);
+  // no sessions today at all -> next cyclic day with sessions
+  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(13, 9, 0))),
+    ['MERCREDI', 'LUNDI', 'MARDI']);
+  // weekday evening wrap (Friday's sessions ended, Saturday has none here)
+  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(16, 18, 30))),
+    ['LUNDI', 'MARDI', 'MERCREDI']);
+  // Saturday wrap past Sunday -> Monday
+  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(17, 15, 26))),
+    ['LUNDI', 'MARDI', 'MERCREDI']);
+  // Sunday (rule 2): null anchor -> the Monday-first input stays
+  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(11, 10, 0))),
+    ['LUNDI', 'MARDI', 'MERCREDI']);
+  // degenerate: empty list / empty sessions -> unchanged
+  assert.deepStrictEqual(main(model.startFromToday([], [], at(12, 9, 0))), []);
+  // degenerate: single-day list at a wrap clock -> unchanged
+  assert.deepStrictEqual(main(model.startFromToday(['LUNDI'], ss, at(17, 15, 26))),
+    ['LUNDI']);
+  // pure: the input array is never mutated (a real rotation happens here)
+  var copy = days.slice();
+  main(model.startFromToday(days, ss, at(13, 9, 0)));
+  assert.deepStrictEqual(days, copy, 'input array is not mutated');
+});
+
 // ---- week grid shape ------------------------------------------------------
 
 test('the grid is drawn from the six fixed days and slots', function () {
@@ -697,13 +735,14 @@ function checkClassesInvariants(key, clock) {
   var heads = classHeadingsOf(html);
   var secs = classSectionsOf(html);
 
-  // one heading + one section per distinct day, Monday-first, none for empty days
+  // one heading + one section per distinct day, start-from-today, none for empty days
   var distinct = [];
   week.sessions.forEach(function (s) { if (distinct.indexOf(s.day) === -1) distinct.push(s.day); });
   assert.ok(distinct.length > 1, key + ' must span several days to prove grouping');
-  var wantHeads = distinct.map(function (d) { return model.frDay(d); });
+  var rotated = main(model.startFromToday(distinct, week.sessions, clock));
+  var wantHeads = rotated.map(function (d) { return model.frDay(d); });
   assert.deepStrictEqual(heads, wantHeads,
-    key + ': one h3 per distinct day, Monday-first');
+    key + ': one h3 per distinct day, start-from-today');
   assert.deepStrictEqual(distinct,
     main(store.days).filter(function (d) { return distinct.indexOf(d) !== -1; }),
     key + ': day order is the Monday-first store order');
@@ -749,7 +788,7 @@ function checkClassesInvariants(key, clock) {
   // NOW/NEXT markers land on the cursor-computed rows
   var gotNow = {}, gotNext = {};
   secs.forEach(function (g, gi) {
-    var day = distinct[gi];
+    var day = rotated[gi];
     g.rows.forEach(function (r) {
       var rowKey = day + '|' + classRowTime(r);
       if (r.indexOf('nowtag') !== -1) gotNow[rowKey] = true;
@@ -761,7 +800,7 @@ function checkClassesInvariants(key, clock) {
 
   // dim on the section iff its day has no now/next
   secs.forEach(function (g, gi) {
-    var day = distinct[gi];
+    var day = rotated[gi];
     assert.strictEqual(g.cls.split(' ').indexOf('dim') !== -1, !live[day],
       key + ': dim on section iff day has no now/next (' + day + ')');
   });
@@ -776,15 +815,43 @@ function sunClass(hh, mm) { return new Date(2026, 9, 11, hh, mm); } // Sunday
 
 test('GLSI3D1 at Fri 12:00 groups its week with live Friday markers', function () {
   var r = checkClassesInvariants('GLSI3D1', friClass(12, 0));
+  assert.strictEqual(classHeadingsOf(r.html)[0], 'vendredi');
   assert.ok(r.html.indexOf('nowtag') !== -1, 'expected a NOW marker');
   assert.ok(r.html.indexOf('nexttag') !== -1, 'expected a NEXT marker');
 });
 
 test('GLSI3D1 on Sunday morning dims every group with no markers', function () {
   var r = checkClassesInvariants('GLSI3D1', sunClass(10, 0));
+  assert.strictEqual(classHeadingsOf(r.html)[0], 'lundi');
   assert.ok(r.html.indexOf('nowtag') === -1, 'nothing is NOW on Sunday');
   assert.ok(r.html.indexOf('nexttag') === -1, 'nothing is NEXT on Sunday');
   assert.ok(r.html.indexOf('day-group dim') !== -1, 'every group dims on Sunday');
+});
+
+test('GLSI3D1 at Fri 18:30 rolls the day groups forward to Saturday', function () {
+  var r = checkClassesInvariants('GLSI3D1', at(16, 18, 30));
+  assert.strictEqual(classHeadingsOf(r.html)[0], 'samedi');
+  assert.ok(r.html.indexOf('nowtag') === -1, 'nothing is NOW at Fri 18:30');
+  assert.ok(r.html.indexOf('nexttag') === -1, 'nothing is NEXT at Fri 18:30');
+});
+
+test('GLSI3D1 at Thu 15:30 starts at Thursday (a session is in progress)', function () {
+  var r = checkClassesInvariants('GLSI3D1', at(15, 15, 30));
+  assert.strictEqual(classHeadingsOf(r.html)[0], 'jeudi');
+  assert.ok(r.html.indexOf('nowtag') !== -1, 'expected a NOW marker (in progress)');
+});
+
+test('GLSI3D1 at Sat 15:26 wraps the finished Saturday back to Monday', function () {
+  var r = checkClassesInvariants('GLSI3D1', at(17, 15, 26));
+  assert.strictEqual(classHeadingsOf(r.html)[0], 'lundi');
+  assert.ok(r.html.indexOf('nowtag') === -1,
+    'nothing is NOW at Sat 15:26 (its only Saturday session ended 09:45)');
+});
+
+test('SD1 at Tue 09:00 starts at Wednesday (no Tuesday sessions)', function () {
+  var r = checkClassesInvariants('SD1', at(13, 9, 0));
+  assert.deepStrictEqual(classHeadingsOf(r.html),
+    ['mercredi', 'jeudi', 'vendredi', 'samedi', 'lundi']);
 });
 
 test('class list rows carry no session count badge', function () {
@@ -826,6 +893,14 @@ test('renderWeek emits day groups, then the WHOLE WEEK label, then the week grid
   assert.strictEqual(count(src, 'var dayOrder = [];'), 1, 'dayOrder must be declared exactly once');
   assert.strictEqual(count(src, 'dayOrder.forEach'), 1,
     'exactly one dayOrder.forEach (the sections loop)');
+  // the whole-week grid stays Monday-first (issue 050): from the weekwrap
+  // marker to the innerHTML write, only the two store.days loops feed it
+  var gridTail = slice.slice(slice.indexOf('<div class="weekwrap"><table class="week">'),
+    slice.indexOf('detail.innerHTML = h;'));
+  assert.strictEqual(count(gridTail, 'store.days.forEach'), 2,
+    'the week grid keeps its two Monday-first store.days loops');
+  assert.strictEqual(count(gridTail, 'startFromToday'), 0,
+    'startFromToday must not reach the whole-week grid');
   assert.ok(src.indexOf('nextSessionIdx(') === -1, 'must not use the wrapping nextSessionIdx');
   // the session-row helper is declared between liveDays and the first day-head
   var liveAt = slice.indexOf('var liveDays = {};');

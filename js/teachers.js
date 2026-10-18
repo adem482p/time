@@ -274,14 +274,15 @@ TT.app = (function () {
         if (model.isCurrentSession(s.day, s.time, now2) || upcoming.has(i))
           liveDays[s.day] = true;
       });
-      // one section per non-empty day, Monday-first (fused output is already
-      // in cmpSession order, so first-seen day order is the week order)
+      // one section per non-empty day, cyclic from today (issue 050: the
+      // first-seen Monday-first day order is rotated to the anchor day)
       var dayOrder = [];
       var byDay = {};
       ss.forEach(function (s, i) {
         if (!byDay[s.day]) { byDay[s.day] = []; dayOrder.push(s.day); }
         byDay[s.day].push({ s: s, i: i });
       });
+      dayOrder = model.startFromToday(dayOrder, ss, now2);
       dayOrder.forEach(function (day) {
         h += '<h3 class="day-head">' + esc(model.frDay(day)) + '</h3>';
         h += '<section class="day-group' + (liveDays[day] ? '' : ' dim') + '">';
