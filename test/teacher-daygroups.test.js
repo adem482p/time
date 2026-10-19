@@ -38,6 +38,7 @@ function main(arr) { return Array.prototype.slice.call(arr); }
 
 var APP_SRC = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
 var CLASSES_SRC = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
+var INDEX_SRC = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 var CSS_SRC = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
 
 // ---- source slices -------------------------------------------------------
@@ -423,18 +424,49 @@ test('styles.css keeps the classes guards intact', function () {
 test('menu visibility is selection-driven, never blur-driven', function () {
   var teachers = APP_SRC.slice(APP_SRC.indexOf('function initTeachersPage'));
   var classes = CLASSES_SRC.slice(CLASSES_SRC.indexOf('function initClassesPage'));
+  function handlerSlice(sec, sig) {
+    var at = sec.indexOf(sig);
+    assert.ok(at !== -1, sig + ' handler found');
+    return sec.slice(at, sec.indexOf('});', at) + 3);
+  }
+  // blur stays pure on both pages: it drops the suggest overlay and nothing
+  // else (3909bd9 — a press in flight must never lose its row)
   [teachers, classes].forEach(function (sec, i) {
     var tag = i ? 'classes' : 'teachers';
-    var at = sec.indexOf("addEventListener('blur'");
-    var blur = sec.slice(at, sec.indexOf('});', at) + 3);
+    var blur = handlerSlice(sec, "addEventListener('blur'");
     assert.ok(blur.indexOf('renderSuggest([])') !== -1, tag + ': blur drops the overlay');
-    assert.ok(blur.indexOf('searchFocused') === -1, tag + ': blur must not touch menu state');
     assert.ok(blur.indexOf('syncList()') === -1, tag + ': blur must not toggle panes');
     assert.ok(blur.indexOf('setTimeout') === -1, tag + ': no deferred blur');
-    assert.ok(sec.indexOf('searchFocused = true') !== -1, tag + ': focus arms the menu');
     assert.ok(sec.indexOf("layout.classList.remove('is-list')") !== -1,
       tag + ': selection dismisses the menu');
   });
+  // teachers: blur writes neither nav fact nor any menu-edge function
+  var teachersBlur = handlerSlice(teachers, "addEventListener('blur'");
+  ['menuOpen', 'openMenu', 'closeMenu'].forEach(function (tok) {
+    assert.ok(teachersBlur.indexOf(tok) === -1, 'teachers: blur must not touch ' + tok);
+  });
+  // classes keeps its old fact name (out of scope for issue 056)
+  var classesBlur = handlerSlice(classes, "addEventListener('blur'");
+  assert.ok(classesBlur.indexOf('searchFocused') === -1, 'classes: blur must not touch menu state');
+  assert.ok(classes.indexOf('searchFocused = true') !== -1, 'classes: focus arms the menu');
+  function fnSlice(sec, sig) {
+    var start = sec.indexOf(sig);
+    assert.ok(start !== -1, sig + ' found');
+    var end = sec.indexOf('}', start);
+    assert.ok(end !== -1, sig + ' bounds');
+    return sec.slice(start, end + 1);
+  }
+  // the menu edges: openMenu arms the fact, closeMenu drops it + focus
+  var openSlice = fnSlice(teachers, 'function openMenu()');
+  assert.ok(openSlice.indexOf('menuOpen = true') !== -1, 'openMenu arms the fact');
+  var closeSlice = fnSlice(teachers, 'function closeMenu()');
+  assert.ok(closeSlice.indexOf('menuOpen = false') !== -1, 'closeMenu drops the fact');
+  assert.ok(closeSlice.indexOf('search.blur()') !== -1, 'closeMenu removes focus');
+  // focus and filter-box taps bring the menu back through openMenu
+  assert.ok(handlerSlice(teachers, "addEventListener('focus'").indexOf('openMenu()') !== -1,
+    'teachers: focus opens the menu');
+  assert.ok(handlerSlice(teachers, "search.addEventListener('click'").indexOf('openMenu()') !== -1,
+    'teachers: a filter-box tap opens the menu');
   assert.ok(APP_SRC.indexOf('setTimeout') === -1, 'no setTimeout left in the teachers page');
   assert.ok(CLASSES_SRC.indexOf('setTimeout') === -1, 'no setTimeout left in the classes page');
   var clicks = APP_SRC.split("search.addEventListener('click'").length - 1 +
@@ -478,9 +510,70 @@ test('exact name selects even among partial matches (both pages)', function () {
   assert.ok(commitFn.indexOf('if (exact) {') !== -1, 'exact hit selects immediately');
   assert.ok(commitFn.indexOf('var exact = exactTeacher(res, q);') < commitFn.indexOf('res.total === 1'),
     'exact wins before the single-hit branch');
-  assert.ok(commitFn.indexOf('if (!selected) syncList();') !== -1,
-    'selection must suppress the trailing menu re-show');
+  assert.ok(commitFn.indexOf('selectTeacher(exact);') !== -1,
+    'exact commit selects through the single funnel');
+  assert.ok(commitFn.indexOf('selectTeacher(only.teacher);') !== -1,
+    'single-hit commit selects through the single funnel');
+  assert.ok(commitFn.indexOf('showTeacher(') === -1,
+    'commit must not bypass the selection funnel');
   var classes = CLASSES_SRC.slice(CLASSES_SRC.indexOf('function initClassesPage'));
   assert.ok(classes.indexOf('var like = exactClass(rows, q);') !== -1, 'classes commit computes exact');
   assert.ok(classes.indexOf('showClass(like);') !== -1, 'exact class label selects');
+});
+
+test('teachers nav chrome: state-gated back arrow, teacher overlay, V gone', function () {
+  ['id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"'].forEach(function (id) {
+    assert.ok(INDEX_SRC.indexOf(id) !== -1, 'index.html missing ' + id);
+  });
+  assert.ok(INDEX_SRC.indexOf('id="searchDone"') === -1,
+    'the V-chevron is gone from the teachers page');
+  var base = CSS_SRC.slice(0, CSS_SRC.indexOf('@media (max-width: 700px)'));
+  assert.ok(base.indexOf('#searchBack { display: none; }') !== -1,
+    'desktop armour: the back arrow is display:none at base');
+  assert.ok(base.indexOf('#searchOverlay { display: none; }') !== -1,
+    'desktop armour: the teacher overlay is display:none at base');
+  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  assert.ok(narrow.indexOf('#layout.is-list #searchBack') !== -1,
+    'back arrow is gated on the list state, not on focus');
+  assert.ok(narrow.indexOf('#searchOverlay:not([hidden])') !== -1,
+    'overlay renders from its attribute on narrow screens');
+  assert.ok(CSS_SRC.indexOf('#searchWrap:focus-within #searchBack') === -1,
+    'the back control must never be focus-gated (anti-D4 regression pin)');
+});
+
+test('nav machine: single selection/empty funnels, harness-safe showTeacher', function () {
+  assert.ok(APP_SRC.indexOf('var menuOpen = false;') !== -1, 'menuOpen fact declared');
+  assert.ok(APP_SRC.indexOf('var selectedTeacher = null;') !== -1, 'selectedTeacher fact declared');
+  assert.ok(APP_SRC.indexOf('var lastResultCount') === -1, 'lastResultCount is dead');
+  var fn = showTeacherFn();
+  assert.ok(fn.indexOf('menuOpen') === -1, 'showTeacher must not read menuOpen (vm harness)');
+  assert.ok(fn.indexOf('search.blur') === -1, 'showTeacher must not blur (vm harness)');
+  function fnBody(sig) {
+    var start = APP_SRC.indexOf(sig);
+    assert.ok(start !== -1, sig + ' found');
+    var end = APP_SRC.indexOf('\n    }', start);
+    assert.ok(end !== -1, sig + ' bounds');
+    return APP_SRC.slice(start, end + '\n    }'.length);
+  }
+  var sel = fnBody('function selectTeacher(name)');
+  ['selectedTeacher = name', 'showTeacher(name)', 'search.blur()', 'menuOpen = false'].forEach(function (tok) {
+    assert.ok(sel.indexOf(tok) !== -1, 'selectTeacher: ' + tok);
+  });
+  var emp = fnBody('function showEmpty()');
+  ['selectedTeacher = null', 'emptyStateHTML()', 'markActive(null)'].forEach(function (tok) {
+    assert.ok(emp.indexOf(tok) !== -1, 'showEmpty: ' + tok);
+  });
+  var inputFn = fnBody('function onInput()');
+  assert.ok(inputFn.indexOf('showEmpty();') !== -1, 'onInput: empty filter deselects');
+  assert.ok(inputFn.indexOf('selectTeacher(only.teacher)') !== -1, 'onInput: auto-jump selects via the funnel');
+  var rowStart = APP_SRC.indexOf('function renderItem(r)');
+  var rowWiring = APP_SRC.slice(rowStart, APP_SRC.indexOf('function onlyHit(res)', rowStart));
+  assert.ok(rowWiring.indexOf('selectTeacher(r.teacher)') !== -1, 'row tap selects via the funnel');
+  var ovStart = APP_SRC.indexOf('searchOverlay.addEventListener');
+  assert.ok(ovStart !== -1, 'overlay wiring found');
+  var ovWiring = APP_SRC.slice(ovStart, APP_SRC.indexOf('showEmpty();', ovStart) + 'showEmpty();'.length);
+  assert.ok(ovWiring.indexOf('openMenu()') !== -1, 'overlay tap reopens the list');
+  assert.ok(ovWiring.indexOf('search.focus()') !== -1, 'overlay tap focuses the box');
+  assert.ok(ovWiring.indexOf('stopPropagation') !== -1, 'overlay X does not bubble to the surface');
+  assert.ok(ovWiring.indexOf('showEmpty()') !== -1, 'overlay X deselects');
 });

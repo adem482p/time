@@ -128,6 +128,9 @@ body[data-page="classes"] .author-credit span {
    keyboard / leaves list mode). The V is an inline SVG chevron. */
 #searchDone { display: none; }
 #searchClear { display: none; }
+/* mobile nav chrome (issue 056): desktop never shows it; the narrow block may */
+#searchBack { display: none; }
+#searchOverlay { display: none; }
 /* JS sets [hidden] while the filter is empty; the id rules here (and the
    mobile display:flex below) would otherwise outrank the UA [hidden] default. */
 #searchClear[hidden] { display: none; }
@@ -537,6 +540,54 @@ html { background: var(--md-surface, #fff); }
     width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
     stroke-linecap: round; stroke-linejoin: round;
   }
+  /* issue 056: the back arrow replaces the V on the teachers page. It is
+     state-gated (#layout.is-list), never focus-gated, so an outside-tap
+     blur leaves the list with a visible way back; it hides with the menu. */
+  #layout.is-list #searchBack {
+    display: flex; align-items: center; justify-content: center;
+    position: absolute; left: 0; top: 0; bottom: 0; width: 2.7rem;
+    border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
+    cursor: pointer; z-index: 2;
+  }
+  #layout.is-list #searchBack:active { color: var(--md-primary, #0b4da2); }
+  #layout.is-list #searchBack svg {
+    width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  /* the input text and the ghost completion clear the back-arrow slot
+     while the list is open (composing with the --ghost-pre inset) */
+  #layout.is-list #search { padding-left: calc(2.7rem + .6rem + var(--ghost-pre, 0px)); }
+  #layout.is-list #ghost { padding-left: calc(2.7rem + .6rem); }
+  /* state=teacher: the overlay IS the box — deselect X left, centered name,
+     decorative chevron right; the whole surface is one click target that
+     reopens the list */
+  #searchOverlay:not([hidden]) {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3;
+    display: flex; align-items: center;
+    background: var(--md-surface-container-lowest, #fff);
+    padding: .45rem .6rem; cursor: pointer;
+  }
+  /* the deselect X reuses the #searchClear slot look, at the overlay's left */
+  #overlayClear {
+    flex: 0 0 auto; width: 2.7rem; align-self: stretch;
+    display: flex; align-items: center; justify-content: center;
+    border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
+    cursor: pointer;
+  }
+  #overlayClear:active { color: var(--md-primary, #0b4da2); }
+  #overlayClear svg {
+    width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  #overlayName {
+    flex: 1 1 auto; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .overlay-drop {
+    flex: 0 0 auto; width: 1.5rem; height: 1.5rem;
+    fill: none; stroke: var(--md-on-surface-variant, #555); stroke-width: 2.4;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
   /* the clear "x" is shown only while the filter holds text: JS toggles the
      [hidden] attribute, and #searchClear[hidden] above beats this id rule.
      At right: 0 it fills the rightmost slot whenever the focus-gated V is off
@@ -556,13 +607,15 @@ html { background: var(--md-surface, #fff); }
   /* stack the two controls on the right edge: the V owns right: 0, so the X
      yields that slot only while the focus-gated V is actually on screen and
      sits immediately to the V's left; when the V hides again the X slides back
-     to right: 0 instead of leaving a hole where the V would be. */
-  #searchWrap:focus-within:has(#searchClear:not([hidden])) #searchClear { right: 2.7rem; }
+     to right: 0 instead of leaving a hole where the V would be. Classes page
+     only (issue 056): the V is dead on teachers, so the stepping rule (and
+     its double gutter) would leave a phantom 2.7rem hole there. */
+  body[data-page="classes"] #searchWrap:focus-within:has(#searchClear:not([hidden])) #searchClear { right: 2.7rem; }
   /* reserve one control slot by default; only both controls at once (a focused
      field that also holds text) need the double gutter, so typed text, the ghost
      completion and its --ghost-pre inset never run underneath a control. */
   #search { padding-right: 2.7rem; }
-  #searchWrap:focus-within:has(#searchClear:not([hidden])) #search { padding-right: 5.4rem; }
+  body[data-page="classes"] #searchWrap:focus-within:has(#searchClear:not([hidden])) #search { padding-right: 5.4rem; }
   /* exactly one clear affordance on mobile: suppress the engine native cancel */
   #search::-webkit-search-cancel-button, #search::-webkit-search-decoration {
     -webkit-appearance: none; appearance: none; display: none;
