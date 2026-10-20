@@ -563,8 +563,11 @@ html { background: var(--md-surface, #fff); }
     position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3;
     display: flex; align-items: center;
     background: var(--md-surface-container-lowest, #fff);
+    border-radius: 8px;
     padding: .45rem .6rem; cursor: pointer;
   }
+  /* issue 057: while the overlay is the box, the input under it is invisible — keyed on the overlay's attribute, never on focus */
+  #searchWrap:has(#searchOverlay:not([hidden])) #search { visibility: hidden; }
   /* the deselect X reuses the #searchClear slot look, at the overlay's left */
   #overlayClear {
     flex: 0 0 auto; width: 2.7rem; align-self: stretch;

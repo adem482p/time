@@ -540,6 +540,19 @@ test('teachers nav chrome: state-gated back arrow, teacher overlay, V gone', fun
     'overlay renders from its attribute on narrow screens');
   assert.ok(CSS_SRC.indexOf('#searchWrap:focus-within #searchBack') === -1,
     'the back control must never be focus-gated (anti-D4 regression pin)');
+  // issue 057: the overlay matches the wrap's box chrome (radius only) and the
+  // input under it goes invisible, keyed on the overlay's attribute
+  var ovAt = narrow.indexOf('#searchOverlay:not([hidden])');
+  var ovRule = narrow.slice(ovAt, narrow.indexOf('}', ovAt));
+  assert.ok(ovRule.indexOf('border-radius: 8px') !== -1,
+    'overlay takes the wrap 8px radius (square corners over the rounded box = issue 057)');
+  assert.ok(narrow.indexOf('#searchWrap:has(#searchOverlay:not([hidden])) #search') !== -1,
+    'the input hides while the overlay shows (narrow block)');
+  assert.ok(CSS_SRC.indexOf('#searchWrap:has(#searchOverlay:not([hidden])) #search')
+    > CSS_SRC.indexOf('@media (max-width: 700px)'),
+    'the input-hide rule must stay narrow-only (a base-level copy would blank the desktop input)');
+  assert.ok(CSS_SRC.indexOf('#searchWrap:focus-within #search ') === -1,
+    'the input hide keys on the overlay attribute, never on focus');
 });
 
 test('nav machine: single selection/empty funnels, harness-safe showTeacher', function () {
