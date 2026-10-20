@@ -27,3 +27,9 @@ test('the time/matrix pages never build a match index', function () {
   assert.ok(readSrc('js/app.js').indexOf('buildIndex') === -1,
     'buildIndex must stay out of app.js');
 });
+
+test('the dead #themeName label path stays removed (issue 059)', function () {
+  var src = readSrc('js/theme.js');
+  assert.ok(src.indexOf('themeName') === -1, 'themeName must stay removed');
+  assert.ok(src.indexOf('labelEl') === -1, 'labelEl must stay removed');
+});

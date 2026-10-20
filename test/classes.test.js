@@ -1163,3 +1163,39 @@ test('classes nav machine: single selection/empty funnels, harness-safe week sli
   var bootTail = src.slice(src.indexOf('// initial paint'), src.indexOf('clock.subscribe(onTick);'));
   assert.ok(bootTail.indexOf('showEmpty();') !== -1, 'boot paints through the empty funnel');
 });
+
+// ---- theme button tooltip (issue 059) --------------------------------------
+
+test('the theme button carries a media-gated data-tip tooltip (issue 059)', function () {
+  var html = readPage('classes.html');
+  var css = readPage('styles.css');
+  var src = readPage('js/theme.js');
+  // markup: the static title stays as the honest no-JS fallback, no #themeName
+  assert.ok(html.indexOf('title="Cycle color preset"') !== -1,
+    'the static no-JS title fallback must stay in the markup');
+  assert.ok(html.indexOf('id="themeName"') === -1, 'the dead #themeName label must stay absent');
+  // CSS: the ::after bubble reads its text from data-tip
+  var tipStart = css.indexOf('#themeCycle::after');
+  assert.ok(tipStart !== -1, 'missing #themeCycle::after tooltip rule');
+  var tipBlock = css.slice(tipStart, css.indexOf('}', tipStart) + 1);
+  ['content: attr(data-tip, none)', 'pointer-events: none', 'z-index: 20',
+   'var(--md-inverse-surface', 'var(--md-inverse-on-surface'].forEach(function (s) {
+    assert.ok(tipBlock.indexOf(s) !== -1, 'tooltip block missing ' + s);
+  });
+  // the hover show occurs exactly once and only inside the hover media gate
+  // (a bare :hover would leave a sticky bubble on touch taps)
+  var hov = css.indexOf('#themeCycle:hover::after');
+  assert.ok(hov !== -1, 'missing hover show rule');
+  assert.strictEqual(hov, css.lastIndexOf('#themeCycle:hover::after'),
+    'the hover show must occur exactly once');
+  assert.ok(hov > css.indexOf('@media (hover: hover)'),
+    'the hover show must come after (inside) the @media (hover: hover) gate');
+  // JS: one description feeds aria-label and data-tip; the native title is out
+  ["setAttribute('aria-label'", "setAttribute('data-tip'", "removeAttribute('title')"].forEach(function (s) {
+    assert.ok(src.indexOf(s) !== -1, 'js/theme.js missing ' + s);
+  });
+  assert.ok(src.indexOf('— click to change') !== -1,
+    'the description string bytes stay unchanged');
+  assert.ok(src.indexOf("setAttribute('title'") === -1,
+    'js/theme.js must never write the native title');
+});

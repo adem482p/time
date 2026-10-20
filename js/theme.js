@@ -912,7 +912,6 @@ TT.theme = (function () {
   var state = { preset: null };
   var cycleList = null;
   var cycleIndex = 0;
-  var labelEl = null;
   var btnEl = null;
   var inited = false;
 
@@ -928,13 +927,13 @@ TT.theme = (function () {
     if (p.variant) opts.variant = p.variant;
     var theme = apply(opts);
     current.preset = p.name;
-    if (labelEl) labelEl.textContent = p.name;
-    // The visible control is now just the palette square: name the preset in
-    // the tooltip / accessible label so cycling 15 schemes stays legible.
+    // The visible control is just the palette square: the description feeds the
+    // aria-label and the CSS tooltip (data-tip); the native title is retired
+    // after init, so the styled ::after bubble is the only tooltip.
     if (btnEl) {
       var desc = 'Theme: ' + p.name + ' — click to change';
-      btnEl.setAttribute('title', desc);
       btnEl.setAttribute('aria-label', desc);
+      btnEl.setAttribute('data-tip', desc);
     }
     syncMeta(theme.surface);
     writeState(state);
@@ -948,7 +947,9 @@ TT.theme = (function () {
     if (!btn) return null;
     inited = true;
     btnEl = btn;
-    labelEl = document.getElementById('themeName');
+    // The ::after tooltip owns hover after init; `title` survives only in the
+    // static markup, as the honest no-JS fallback.
+    btn.removeAttribute('title');
     cycleList = buildCycleList();
 
     // One button cycles the presets.
