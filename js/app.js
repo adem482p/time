@@ -1,14 +1,13 @@
 // js/app.js — page wiring for the time + matrix pages. Boots the store +
-// analysis + match layers and dispatches to the per-page renderers
+// analysis layer and dispatches to the per-page renderers
 // (body[data-page]). The teachers and classes pages moved to js/teachers.js
 // and js/classes.js (same shared head, self-contained per page); this file
 // keeps only what time.html and timetable.html load. All coloring decisions
-// go through TT.color; all matching through TT.match; all domain data
-// through TT.model. This file owns DOM only.
+// go through TT.color; all domain data through TT.model. This file owns
+// DOM only.
 var TT = TT || {};
 TT.app = (function () {
   var model = TT.model;
-  var match = TT.match;
   var color = TT.color;
   var C = color.CLASSES;
   var esc = TT.data.esc;
@@ -175,7 +174,6 @@ TT.app = (function () {
   // and classes boot from js/teachers.js / js/classes.js (see header).
   function boot(store) {
     var modelObjs = model.buildAll(store);
-    var index = match.buildIndex(store, modelObjs);
     var page = document.body.getAttribute('data-page');
     if (page === 'time') initTimePage(store, modelObjs);
     else if (page === 'matrix') initTimetablePage(store, modelObjs);

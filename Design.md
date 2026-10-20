@@ -173,13 +173,14 @@ where?"
 ## Service: Classes
 A view with classes as the main object — the student-facing counterpart to the
 teacher and time views. The class is chosen through a live search over the
-grouping hierarchy: any named class is selectable, whether fully specified or an
-interior prefix, and a broader class shows the union of every timetable beneath
-it, each line labelled with the class it comes from. Selecting a class draws its
+catalogue: only leaves — fully specified classes that own a timetable of their
+own — are listed, offered by autocomplete and selectable, and a reference to a
+broader class reports no match. Selecting a class draws its
 week as a grid with the days as columns and the six slots as rows; each cell lists
 the sessions held then, every line giving the subject, the teacher and the room. A
 semi-transparent red cursor crosses the grid at the current time, its arrowhead
 resting in a small gutter beside the time column, and the current and next slots
 are highlighted — the next only while it is still today, with nothing marked at
-all on Sunday, before the day begins, or once it has ended. It answers "what does
-this class have right now, and where?"
+all on Sunday, before the day begins, or once it has ended. On narrow screens the
+week collapses into stacked session cards, as the teachers view does. It answers
+"what does this class have right now, and where?"

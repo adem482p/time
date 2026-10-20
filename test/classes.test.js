@@ -477,7 +477,7 @@ test('styles.css gains a classes section without touching the mobile block', fun
 
 // ---- leaf-only selection + session cards (issue 047) -----------------------
 
-// The page filters the match layer down to leaves in app.js; the match layer
+// The page filters the match layer down to leaves in classes.js; the match layer
 // itself is untouched, so the tests replicate the page's filter here.
 function leafSet() {
   var set = {};
@@ -498,7 +498,7 @@ test('the leaf-filtered catalogue is exactly the leaf set', function () {
   // the same filter on a mid-hierarchy query drops the interior node itself
   var sub = match.classSearch(index, 'lcs1');
   assert.ok(sub.map(function (r) { return r.label; }).indexOf('LCS1') !== -1,
-    'match layer still returns the interior node (filtering lives in app.js)');
+    'match layer still returns the interior node (filtering lives in classes.js)');
   var kept = sub.filter(function (r) { return set[(r.node && r.node.key) || r.label]; });
   assert.ok(kept.length < sub.length);
   kept.forEach(function (r) {
@@ -507,7 +507,7 @@ test('the leaf-filtered catalogue is exactly the leaf set', function () {
   // class autocomplete entries resolve through the same leaf set
   var sug = match.suggest(index, 'lcs1').filter(function (r) { return r.kind === 'class'; });
   var sugKept = sug.filter(function (r) { return set[r.label]; });
-  assert.ok(sug.length > sugKept.length, 'suggest still offers interior classes (app.js filters them)');
+  assert.ok(sug.length > sugKept.length, 'suggest still offers interior classes (classes.js filters them)');
   sugKept.forEach(function (r) {
     assert.ok(groups.byKey[r.label].isLeaf(), r.label + ' must be a leaf');
   });
@@ -542,7 +542,7 @@ function classesListBlock() {
   return sec.slice(start, end);
 }
 
-test('app.js selects leaves only (no broader classes)', function () {
+test('classes.js selects leaves only (no broader classes)', function () {
   var sec = classesSection();
   // leaf lookup built once from groups.leaves, applied to every surface
   assert.ok(sec.indexOf('groups.leaves.forEach') !== -1, 'missing leafSet build');

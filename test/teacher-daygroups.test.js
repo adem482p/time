@@ -1,7 +1,7 @@
 // Tests for the teacher day groups (one shared DOM for desktop + mobile) —
 // run with `node --test test/`.
 //
-// showTeacher is a closure inside js/app.js, so the behavioral tests drive
+// showTeacher is a closure inside js/teachers.js, so the behavioral tests drive
 // the real function source (breakdownHTML + treeHTML + showTeacher slice)
 // in a vm sandbox with stubbed document/detail and a stubbed clock.
 

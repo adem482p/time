@@ -593,95 +593,12 @@ TT.match = (function () {
     return null;
   }
 
-  // ---- committed exact queries (issue 010 semantics) --------------------------
-
-  // query ::= constraint (whitespace constraint)*,
-  // constraint ::= [prefix] value, prefix ::= 'teacher:'|'class:'|'subject:'.
-  // A prefixed constraint swallows following bare tokens ("subject:A B"
-  // keeps "A B" together). Bare tokens resolve class-exact -> subject-exact
-  // -> teacher-exact; anything else lands in unknown (=> zero hits, no
-  // fuzzy fallback — this is the exact boundary).
-  function parseExactQuery(text, index) {
-    var tokens = String(text == null ? '' : text).trim().split(/\s+/).filter(Boolean);
-    var groups = [];
-    tokens.forEach(function (tok) {
-      var m = /^(teacher|class|subject):(.*)$/i.exec(tok);
-      if (m) groups.push({ prefix: m[1].toLowerCase(), value: m[2], open: true });
-      else if (groups.length && groups[groups.length - 1].open)
-        groups[groups.length - 1].value += ' ' + tok;
-      else groups.push({ prefix: null, value: tok, open: false });
-    });
-    var parsed = { teacher: null, classes: [], subjects: [], unknown: [] };
-    var seenC = {}, seenS = {};
-    groups.forEach(function (g) {
-      var v = g.value.trim();
-      if (!v) return;
-      var hit;
-      if (g.prefix === 'teacher') {
-        hit = index.teachersByNorm[model.normStr(v)];
-        if (hit) parsed.teacher = hit;
-        else parsed.unknown.push('teacher:' + v);
-      } else if (g.prefix === 'class') {
-        hit = resolveClass(index, v);
-        if (hit && !seenC[hit]) { seenC[hit] = true; parsed.classes.push(hit); }
-        else if (!hit) parsed.unknown.push('class:' + v);
-      } else if (g.prefix === 'subject') {
-        hit = index.subjectsByNorm[model.normStr(v)];
-        if (hit && !seenS[hit]) { seenS[hit] = true; parsed.subjects.push(hit); }
-        else if (!hit) parsed.unknown.push('subject:' + v);
-      } else {
-        hit = resolveClass(index, v);
-        if (hit && !seenC[hit]) { seenC[hit] = true; parsed.classes.push(hit); return; }
-        hit = index.subjectsByNorm[model.normStr(v)];
-        if (hit && !seenS[hit]) { seenS[hit] = true; parsed.subjects.push(hit); return; }
-        hit = index.teachersByNorm[model.normStr(v)];
-        if (hit) { parsed.teacher = hit; return; }
-        parsed.unknown.push(v);
-      }
-    });
-    return parsed;
-  }
-
-  // Exact committed query: a teacher matches iff ALL constraints hold by
-  // normalized exact equality (class = subtree membership; a broader node
-  // covers its leaves). Score = hours of sessions satisfying ALL class +
-  // subject constraints (teacher: selects, does not score). Sort desc(score),
-  // tie localeCompare. Unknown token or no constraints -> [].
-  // Deterministic: pure function of (rows, normalized query).
-  function exactQuery(index, parsed) {
-    if (!parsed || (parsed.unknown && parsed.unknown.length)) return [];
-    if (!parsed.teacher && !parsed.classes.length && !parsed.subjects.length) return [];
-    var out = [];
-    index.teachers.forEach(function (n) {
-      if (parsed.teacher && model.normStr(n) !== model.normStr(parsed.teacher)) return;
-      var ss = index.store.sessionsOf(n);
-      var ok = true, i;
-      for (i = 0; i < parsed.classes.length; i++)
-        if (!ss.some(function (s) { return covers(index, parsed.classes[i], s.field); })) { ok = false; break; }
-      if (!ok) return;
-      for (i = 0; i < parsed.subjects.length; i++)
-        if (!ss.some(function (s) { return model.normStr(s.subject) === model.normStr(parsed.subjects[i]); })) { ok = false; break; }
-      if (!ok) return;
-      var rel = 0;
-      ss.forEach(function (s) {
-        var inClass = parsed.classes.every(function (c) { return covers(index, c, s.field); });
-        var inSubj = parsed.subjects.every(function (sb) {
-          return model.normStr(s.subject) === model.normStr(sb);
-        });
-        if (inClass && inSubj) rel++;
-      });
-      out.push({ name: n, relevantSessions: rel, relevantHours: rel * TT.data.HOURS_PER_SESSION });
-    });
-    return out.sort(function (a, b) {
-      return b.relevantSessions - a.relevantSessions || a.name.localeCompare(b.name);
-    });
-  }
 
   return {
     buildIndex: buildIndex, resolveClass: resolveClass,
     mergeRanges: mergeRanges, tokenScore: tokenScore, fuzzyRanges: fuzzyRanges,
     highlightHTML: highlightHTML, liveSearch: liveSearch, suggest: suggest,
-    shadowText: shadowText, parseExactQuery: parseExactQuery, exactQuery: exactQuery,
+    shadowText: shadowText,
     parseQuery: parseQuery, searchSections: searchSections,
     completionContext: completionContext, classSearch: classSearch
   };
