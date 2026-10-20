@@ -909,3 +909,138 @@ test('renderWeek emits day groups, then the WHOLE WEEK label, then the week grid
   assert.ok(/function \w+\(/.test(slice.slice(liveAt, headAt)),
     'session-row helper must be declared between liveDays and the day-head emission');
 });
+
+// ---- live week view from the one clock (issue 051) ---------------------------
+
+function countTok(hay, needle) { return hay.split(needle).length - 1; }
+
+// The slice covers indexByDaySlot, renderWeek, applyCursor and onTick; the
+// declarations that live in the page closure (now, currentWeek) are seeded
+// to satisfy vm read-before-write, and the clock is a swappable FakeDate.
+function classesWeekSlice() {
+  var start = CLASSES_SRC.indexOf('function indexByDaySlot');
+  var end = CLASSES_SRC.indexOf('function showClass', start);
+  assert.ok(start !== -1 && end !== -1 && end > start, 'classes week slice bounds');
+  return CLASSES_SRC.slice(start, end);
+}
+
+function runClassesWeek() {
+  var clockMs = at(14, 10, 30).getTime(); // Wed 2026-10-14 10:30, inside 10h00-11h30
+  function FakeDate() { return new Date(clockMs); }
+  var writes = 0, qsa = 0, layoutRemoves = 0, clears = 0;
+  var lastHtml = '';
+  var detail = {};
+  Object.defineProperty(detail, 'innerHTML', {
+    get: function () { return lastHtml; },
+    set: function (v) { lastHtml = v; writes++; }
+  });
+  detail.querySelectorAll = function () { qsa++; return []; };
+  detail.querySelector = function (sel) {
+    return sel === '.cursor' ? { style: { display: 'none' } } : null;
+  };
+  var sandbox = {
+    console: console,
+    model: model, color: color, C: color.CLASSES, esc: data.esc,
+    store: store,
+    week: model.classWeek(groups, 'GLSI3D1'),
+    detail: detail,
+    layout: { classList: { remove: function () { layoutRemoves++; } } },
+    syncClear: function () { clears++; },
+    now: undefined, currentWeek: undefined,
+    Date: FakeDate
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(classesArrow() + '\n' + classesWeekSlice(), sandbox,
+    { filename: 'classes-week-harness' });
+  return {
+    sandbox: sandbox,
+    select: function () { vm.runInContext('renderWeek(week);', sandbox); },
+    tick: function (clock) {
+      clockMs = clock.getTime();
+      vm.runInContext('onTick(new Date());', sandbox);
+    },
+    counts: function () {
+      return { writes: writes, qsa: qsa, layout: layoutRemoves, clear: clears };
+    },
+    html: function () { return lastHtml; }
+  };
+}
+
+function classRowAt(html, time) {
+  return html.split('<tr').filter(function (r) {
+    return r.indexOf('c-time">' + time + '<') !== -1;
+  }).join('');
+}
+
+test('classes.js drives the week view from one clock and drops the gated ticker (issue 051)', function () {
+  var src = CLASSES_SRC;
+  assert.strictEqual(countTok(src, 'new Date()'), 3,
+    'page capture + renderWeek head + the clock tick — nothing else reads the wall clock');
+  assert.ok(src.indexOf('setInterval(tick, 30000)') !== -1, 'the clock owns the 30 s interval');
+  ['startCursor', 'stopCursor', 'cursorTimer'].forEach(function (tok) {
+    assert.ok(src.indexOf(tok) === -1, tok + ' must be gone');
+  });
+  assert.strictEqual(countTok(src, 'clock.subscribe(onTick);'), 1, 'one subscription per page');
+  assert.ok(src.indexOf('visibilitychange') !== -1 && src.indexOf('document.hidden') !== -1,
+    'the clock wires the tab-return catch-up');
+  assert.strictEqual(countTok(src, 'currentWeek = null;'), 4, 'every clear site drops ownership');
+  assert.ok(src.indexOf('lastWeekHTML') === -1, 'no emitted-string gate state');
+  assert.ok(!/(^|[^a-zA-Z0-9_$])h\s*!==/.test(src), 'no emitted-string comparison gate');
+  var slice = classesWeekSlice();
+  assert.ok(slice.indexOf('now = tickNow || new Date();') !== -1,
+    'renderWeek head takes the tick clock');
+  assert.ok(slice.indexOf('currentWeek = week;') !== -1, 'renderWeek takes ownership');
+  assert.ok(slice.indexOf('if (!tickNow) {') !== -1, 'selection side effects are fenced');
+  assert.ok(slice.indexOf('renderWeek(currentWeek, t)') !== -1, 'onTick re-enters renderWeek');
+  assert.ok(slice.indexOf('h !== ') === -1, 'no string gate inside the week view');
+});
+
+test('selecting a class renders the week once from a fresh clock (issue 051)', function () {
+  var h = runClassesWeek();
+  h.select();
+  var c = h.counts();
+  assert.strictEqual(c.writes, 1, 'one write per selection');
+  var html = h.html();
+  assert.ok(html.indexOf('<span class="nowtag">● NOW</span></td><td class="c-time">10h00-11h30') !== -1,
+    'NOW lands on 10h00-11h30 at Wed 10:30');
+  assert.ok(classRowAt(html, '11h40-13h10').indexOf('nexttag') !== -1,
+    'NEXT marks 11h40-13h10');
+  assert.strictEqual(classHeadingsOf(html)[0], 'mercredi', 'the anchor starts on today');
+  assert.strictEqual(h.sandbox.currentWeek, h.sandbox.week, 'the page owns the rendered week');
+  assert.strictEqual(c.layout, 1, 'the selection dismisses the list pane');
+  assert.strictEqual(c.clear, 1, 'the selection syncs the clear control');
+});
+
+test('a clock tick re-renders the week view from the fresh Date (issue 051)', function () {
+  var h = runClassesWeek();
+  h.select();
+  h.tick(at(14, 12, 0));
+  var c = h.counts();
+  assert.strictEqual(c.writes, 2, 'the tick writes unconditionally (no gate)');
+  var html = h.html();
+  assert.ok(html.indexOf('<span class="nowtag">● NOW</span></td><td class="c-time">11h40-13h10') !== -1,
+    'NOW moves to the fresh slot');
+  assert.ok(html.indexOf('<span class="nowtag">● NOW</span></td><td class="c-time">10h00-11h30') === -1,
+    'the old NOW row is gone');
+  assert.strictEqual(classHeadingsOf(html)[0], 'mercredi', 'the anchor holds within the day');
+  assert.strictEqual(c.layout, 1, 'a tick never flips the pane');
+  assert.strictEqual(c.clear, 1, 'a tick never syncs the clear control');
+  assert.ok(c.qsa >= 4, 'applyCursor still runs on every pass, outside any gate');
+  h.tick(at(14, 12, 20));
+  assert.strictEqual(h.counts().writes, 3,
+    'a same-state tick re-renders on the hit, not on a diff');
+});
+
+test('a tick past day end re-grades the anchor; a cleared view stays cleared (issue 051)', function () {
+  var h = runClassesWeek();
+  h.select();
+  h.tick(at(14, 18, 30));
+  assert.strictEqual(h.counts().writes, 2, 'the day-end tick re-renders unconditionally');
+  var html = h.html();
+  assert.strictEqual(classHeadingsOf(html)[0], 'jeudi',
+    'Wed 18:30: Wednesday ended, the live anchor rolls to Thursday');
+  assert.ok(html.indexOf('nowtag') === -1, 'nothing is NOW after the day');
+  h.sandbox.currentWeek = null; // a clear site dropped ownership
+  h.tick(at(15, 9, 0));
+  assert.strictEqual(h.counts().writes, 2, 'a cleared view is never resurrected by a later tick');
+});

@@ -28,6 +28,32 @@ TT.app = (function () {
   var NEXT_ARROW = '<svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true">' +
     '<path d="M4 12h14M12 6l6 6-6 6"/></svg>';
 
+  // ---- clock (issue 051) ------------------------------------------------
+  // One clock per page: a single 30 s interval that hands a fresh Date to
+  // every subscribed part of the page; a subscriber re-renders its own
+  // region wholesale on every hit — no diffing, no gates (issue 051).
+  // The first subscribe wires the interval and the tab-return catch-up; a
+  // page that never subscribes (the matrix) runs no timer and no listener.
+  var clock = (function () {
+    var subs = [];
+    var wired = false;
+    function tick() {
+      var now = new Date();
+      for (var i = 0; i < subs.length; i++) subs[i](now);
+    }
+    return {
+      subscribe: function (fn) {
+        if (subs.indexOf(fn) === -1) subs.push(fn);
+        if (wired) return;
+        wired = true;
+        setInterval(tick, 30000);
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) tick();
+        });
+      }
+    };
+  })();
+
   // ---- classes page -----------------------------------------------------------
 
   // Student-facing class timetable (issue 032). The class is chosen through a
@@ -69,7 +95,7 @@ TT.app = (function () {
     var searchFocused = false;
     var lastResultCount = -1;
     var activeKey = null;
-    var cursorTimer = null;
+    var currentWeek; // the class view the clock refreshes until cleared (issue 051)
 
     status.textContent = store.size + ' sessions · ' + groups.leaves.length + ' classes';
 
@@ -214,7 +240,9 @@ TT.app = (function () {
       return by;
     }
 
-    function renderWeek(week) {
+    function renderWeek(week, tickNow) {
+      now = tickNow || new Date();   // one fresh clock per render pass (issue 051)
+      currentWeek = week;            // the view the clock refreshes until cleared
       var cursor = model.dayCursor(now, store.slots);
       var by = indexByDaySlot(week);
       var h = '<h2>' + esc(week.name) + '</h2>';
@@ -312,11 +340,12 @@ TT.app = (function () {
         (cursor.visible ? '' : ' style="display:none"') +
         '><div class="cursor-arrow"></div></div>';
       h += '</div>';
-      detail.innerHTML = h;
-      if (layout) layout.classList.remove('is-list');
-      syncClear();
+      detail.innerHTML = h;          // unconditional: no gating (issue 051)
+      if (!tickNow) {
+        if (layout) layout.classList.remove('is-list');
+        syncClear();
+      }
       applyCursor(cursor);
-      startCursor();
     }
 
     // Move the red cursor line and toggle the now/next + today-header marks to
@@ -359,14 +388,11 @@ TT.app = (function () {
       cursorEl.style.width = wrap.scrollWidth + 'px';
     }
 
-    function startCursor() {
-      stopCursor();
-      cursorTimer = setInterval(function () {
-        applyCursor(model.dayCursor(new Date(), store.slots));
-      }, 30000);
-    }
-    function stopCursor() {
-      if (cursorTimer) { clearInterval(cursorTimer); cursorTimer = null; }
+    // The page's subscriber to the one clock (issue 051): the whole week
+    // view re-renders from the clock's Date on every hit; with no owned week
+    // the tick is a no-op, so a cleared view can never be resurrected.
+    function onTick(t) {
+      if (currentWeek) renderWeek(currentWeek, t);
     }
 
     function showClass(ref) {
@@ -376,7 +402,7 @@ TT.app = (function () {
         markActive(null);
         if (layout) layout.classList.remove('is-list');
         syncClear();
-        stopCursor();
+        currentWeek = null;
         return;
       }
       renderWeek(week);
@@ -476,7 +502,7 @@ TT.app = (function () {
       renderList(rows);
       renderSuggest(classSuggestions(q));
       renderGhost();
-      if (!q.trim()) { detail.innerHTML = emptyStateHTML(); markActive(null); }
+      if (!q.trim()) { detail.innerHTML = emptyStateHTML(); markActive(null); currentWeek = null; }
       else if (rows.length === 1) { showClass(rows[0].label); }
       syncList();
     }
@@ -504,6 +530,7 @@ TT.app = (function () {
       if (!q.trim()) {
         detail.innerHTML = emptyStateHTML();
         markActive(null);
+        currentWeek = null;
       } else if (model.classWeek(groups, q).leaves.length === 1) {
         showClass(q);
         picked = true;
@@ -515,6 +542,7 @@ TT.app = (function () {
         picked = true;
       } else if (!rows.length) {
         detail.innerHTML = '<p class="nomatch">No match for "' + esc(q) + '".</p>';
+        currentWeek = null;
       }
       // a selection dismisses the menu; syncList would put it back since
       // the rendered count is not 1
@@ -602,6 +630,8 @@ TT.app = (function () {
     detail.innerHTML = emptyStateHTML();
     syncList();
     syncClear();
+    // the page subscribes once at init; the clock owns the cadence (issue 051)
+    clock.subscribe(onTick);
   }
 
   // ---- boot --------------------------------------------------------------------

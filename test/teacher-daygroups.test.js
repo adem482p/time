@@ -91,6 +91,7 @@ function runShowTeacher(name, clock) {
   return detail.innerHTML;
 }
 
+function wed(hh, mm) { return new RealDate(2026, 9, 14, hh, mm); } // Wednesday
 function fri(hh, mm) { return new RealDate(2026, 9, 16, hh, mm); } // Friday
 function sat(hh, mm) { return new RealDate(2026, 9, 17, hh, mm); } // Saturday
 function sun(hh, mm) { return new RealDate(2026, 9, 11, hh, mm); } // Sunday
@@ -576,4 +577,190 @@ test('nav machine: single selection/empty funnels, harness-safe showTeacher', fu
   assert.ok(ovWiring.indexOf('search.focus()') !== -1, 'overlay tap focuses the box');
   assert.ok(ovWiring.indexOf('stopPropagation') !== -1, 'overlay X does not bubble to the surface');
   assert.ok(ovWiring.indexOf('showEmpty()') !== -1, 'overlay X deselects');
+});
+
+// ---- live detail from the one clock (issue 051) ------------------------------
+
+function countTok(hay, needle) { return hay.split(needle).length - 1; }
+
+// runShowTeacherLive drives the real showTeacher twice in ONE context: a
+// selection (no tickNow) at clockA, then a clock-driven re-render at clockB.
+// The selection-only side effects are counted to prove they stay off the
+// live path.
+function runShowTeacherLive(name, clockA, clockB) {
+  var stampMs = clockA.getTime();
+  function FakeDate() { return new RealDate(stampMs); }
+  var counts = { writes: 0, suggest: 0, ghost: 0, clear: 0, layout: 0 };
+  var lastHtml = '';
+  var detail = {};
+  Object.defineProperty(detail, 'innerHTML', {
+    get: function () { return lastHtml; },
+    set: function (v) { lastHtml = v; counts.writes++; }
+  });
+  var layout = { classList: { remove: function () { counts.layout++; } } };
+  var sandbox = {
+    console: console,
+    model: model, color: color, esc: data.esc,
+    modelObjs: modelObjs, store: store,
+    detail: detail,
+    markActive: function () {},
+    layout: layout,
+    syncClear: function () { counts.clear++; },
+    renderSuggest: function () { counts.suggest++; },
+    renderGhost: function () { counts.ghost++; },
+    Date: FakeDate
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(arrowStmt() + '\n' + teacherSlice(), sandbox, { filename: 'showTeacher-live-harness' });
+  vm.runInContext('showTeacher(' + JSON.stringify(name) + ');', sandbox, { filename: 'showTeacher-select' });
+  var selectHtml = lastHtml;
+  var selectCounts = JSON.parse(JSON.stringify(counts));
+  stampMs = clockB.getTime();
+  vm.runInContext('showTeacher(' + JSON.stringify(name) + ', new Date());', sandbox,
+    { filename: 'showTeacher-tick' });
+  return {
+    sandbox: sandbox,
+    selectHtml: selectHtml, tickHtml: lastHtml,
+    selectCounts: selectCounts, tickCounts: JSON.parse(JSON.stringify(counts))
+  };
+}
+
+function teacherRowAt(html, time) {
+  return html.split('<tr').filter(function (r) {
+    return r.indexOf('c-time">' + time + '<') !== -1;
+  }).join('');
+}
+
+// runTeachersTick drives the real buildAvail + onTick with no selection:
+// the real store/model/match, a counting list renderer and a counting
+// detail renderer (the slice keeps renderList/showTeacher stubbable).
+function runTeachersTick(clockA, clockB) {
+  var stampMs = clockA.getTime();
+  function FakeDate() { return new RealDate(stampMs); }
+  var captured = { sections: null, listCalls: 0, showCalls: 0 };
+  var sandbox = {
+    console: console,
+    model: model, match: match, color: color, esc: data.esc,
+    store: store, index: index,
+    search: { value: '' },
+    status: { textContent: '' },
+    renderList: function (sections) { captured.sections = sections; captured.listCalls++; },
+    showTeacher: function () { captured.showCalls++; },
+    avail: undefined, now: undefined, currentTeacher: undefined,
+    Date: FakeDate
+  };
+  vm.createContext(sandbox);
+  var sliceA = APP_SRC.slice(APP_SRC.indexOf('function buildAvail'), APP_SRC.indexOf('function renderList'));
+  var sliceB = APP_SRC.slice(APP_SRC.indexOf('function onTick'), APP_SRC.indexOf('function breakdownHTML'));
+  assert.ok(sliceA.indexOf('function buildAvail()') !== -1 && sliceA.indexOf('function onTick') === -1,
+    'buildAvail slice bound');
+  assert.ok(sliceB.indexOf('function onTick') !== -1 && sliceB.indexOf('function breakdownHTML') === -1,
+    'onTick slice bound');
+  vm.runInContext(sliceA + '\n' + sliceB, sandbox, { filename: 'teachers-tick-harness' });
+  vm.runInContext('onTick(new Date());', sandbox);
+  var wedOrder = teacherOrderOf(captured.sections);
+  stampMs = clockB.getTime();
+  vm.runInContext('onTick(new Date());', sandbox);
+  return {
+    sandbox: sandbox, captured: captured,
+    wedOrder: wedOrder, sunOrder: teacherOrderOf(captured.sections)
+  };
+}
+
+function teacherOrderOf(sections) {
+  var out = [];
+  (sections || []).forEach(function (sec) {
+    (sec.hits || []).forEach(function (hit) { out.push(hit.teacher); });
+  });
+  return out;
+}
+
+test('teachers.js drives availability and the open detail from one clock (issue 051)', function () {
+  var src = APP_SRC;
+  assert.strictEqual(countTok(src, 'new Date()'), 3,
+    'page capture + the showTeacher fallback + the clock tick');
+  assert.strictEqual(countTok(src, 'clock.subscribe(onTick);'), 1, 'one subscription per page');
+  assert.ok(src.indexOf('setInterval(tick, 30000)') !== -1, 'the clock owns the 30 s interval');
+  assert.ok(src.indexOf('compute once per page load') === -1,
+    'the one-shot availability comment is gone');
+  ['listKeyOf', 'lastListKey', 'lastDetailH'].forEach(function (tok) {
+    assert.ok(src.indexOf(tok) === -1, 'no gate state: ' + tok);
+  });
+  assert.ok(src.indexOf('h !== ') === -1, 'no emitted-string gate');
+  // ownership drops in the one deselect funnel (so every caller — including
+  // the overlay X — is covered) and in the nomatch branch, which never
+  // reaches showEmpty
+  assert.strictEqual(countTok(src, 'currentTeacher = null;'), 2,
+    'the empty funnel and the nomatch branch drop ownership');
+  var showEmptySlice = src.slice(src.indexOf('function showEmpty'),
+    src.indexOf('function selectTeacher'));
+  assert.ok(showEmptySlice.indexOf('currentTeacher = null;') !== -1,
+    'showEmpty drops tick ownership (every deselect path is covered)');
+  assert.ok(src.indexOf('function buildAvail()') !== -1, 'availability moved into a rebuildable');
+  assert.strictEqual(countTok(src, 'model.availability(store.sessionsOf(n), now)'), 1,
+    'one availability computation');
+  var onTickSlice = src.slice(src.indexOf('function onTick'), src.indexOf('function breakdownHTML'));
+  ['now = t;', 'buildAvail();',
+   'renderList(match.searchSections(index, search.value, avail).sections);',
+   'showTeacher(currentTeacher, t)'].forEach(function (tok) {
+    assert.ok(onTickSlice.indexOf(tok) !== -1, 'onTick: ' + tok);
+  });
+  var fn = showTeacherFn();
+  assert.ok(fn.indexOf('function showTeacher(name, tickNow)') !== -1, 'tick payload param');
+  assert.ok(fn.indexOf('var now2 = tickNow || new Date();') !== -1,
+    'the detail grades on the tick clock');
+  assert.ok(fn.indexOf('if (!tickNow)') !== -1, 'selection side effects are fenced');
+  assert.ok(fn.indexOf('lastDetailH') === -1, 'no gate state in showTeacher');
+  assert.ok(teacherSlice().indexOf('function breakdownHTML(t)') === 0,
+    'teacherSlice still starts at breakdownHTML');
+  assert.ok(APP_SRC.indexOf('function markActive(name)') >
+    APP_SRC.indexOf('function breakdownHTML(t)'),
+    'teacherSlice still ends at markActive');
+});
+
+test('selecting a teacher renders once; a live re-render moves the marks (issue 051)', function () {
+  var h = runShowTeacherLive('Bannour', wed(10, 30), wed(12, 0));
+  var sel = h.selectCounts;
+  assert.strictEqual(sel.writes, 1, 'one write per selection');
+  assert.ok(h.selectHtml.indexOf('nowtag') === -1, 'nothing is NOW for Bannour at Wed 10:30');
+  assert.ok(teacherRowAt(h.selectHtml, '11h40-13h10').indexOf('nexttag') !== -1,
+    'NEXT marks her 11h40-13h10 Wednesday slot');
+  assert.strictEqual(sel.suggest, 1, 'the selection dismisses the autocomplete');
+  assert.strictEqual(sel.ghost, 1, 'the selection clears the ghost');
+  assert.strictEqual(sel.layout, 1, 'the selection dismisses the list pane');
+  assert.strictEqual(sel.clear, 1, 'the selection syncs the clear control');
+  var tick = h.tickCounts;
+  assert.strictEqual(tick.writes, 2, 'the live re-render writes unconditionally');
+  assert.ok(teacherRowAt(h.tickHtml, '11h40-13h10').indexOf('<span class="nowtag">● NOW</span>') !== -1,
+    'NOW moves onto the fresh slot');
+  assert.strictEqual(tick.suggest, 1, 'a tick never dismisses the autocomplete');
+  assert.strictEqual(tick.ghost, 1, 'a tick never clears the ghost');
+  assert.strictEqual(tick.layout, 1, 'a tick never flips the pane');
+  assert.strictEqual(tick.clear, 1, 'a tick never syncs the clear control');
+});
+
+test('a live teacher re-render with unchanged time state rewrites anyway and keeps the anchor (issue 051)', function () {
+  var h = runShowTeacherLive('Barboura', fri(12, 0), fri(12, 0));
+  assert.strictEqual(h.selectCounts.writes, 1, 'one write per selection');
+  assert.strictEqual(h.tickCounts.writes, 2, 're-render on the hit, not on a diff');
+  assert.strictEqual(headingsOf(h.selectHtml)[0], 'vendredi', 'the anchor on selection');
+  assert.strictEqual(headingsOf(h.tickHtml)[0], 'vendredi', 'the anchor is stable within a day');
+});
+
+test('a teachers tick with no selection re-renders only the list, from the fresh clock (issue 051)', function () {
+  var h = runTeachersTick(wed(10, 30), sun(10, 0));
+  assert.ok(h.captured.listCalls >= 2, 'the list re-rendered on every hit');
+  assert.strictEqual(h.captured.showCalls, 0, 'no detail is touched without a selection');
+  assert.notDeepStrictEqual(h.sunOrder, h.wedOrder, 'availability re-ranks the list');
+  assert.notStrictEqual(h.wedOrder[1], h.sunOrder[1],
+    'the fresh order differs from position 2 (the Sunday collapse)');
+  var availSun = {};
+  store.teachers.forEach(function (n) {
+    availSun[n] = model.availability(store.sessionsOf(n), new Date(sun(10, 0)));
+  });
+  store.teachers.forEach(function (n) {
+    assert.strictEqual(h.sandbox.avail[n], availSun[n], 'avail rebuilt from the fresh clock: ' + n);
+  });
+  var fresh = teacherOrderOf(match.searchSections(index, '', availSun).sections);
+  assert.deepStrictEqual(h.sunOrder, fresh, 'the fresh Sunday order is the real alphabetical collapse');
 });

@@ -28,6 +28,32 @@ TT.app = (function () {
   var NEXT_ARROW = '<svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true">' +
     '<path d="M4 12h14M12 6l6 6-6 6"/></svg>';
 
+  // ---- clock (issue 051) ------------------------------------------------
+  // One clock per page: a single 30 s interval that hands a fresh Date to
+  // every subscribed part of the page; a subscriber re-renders its own
+  // region wholesale on every hit — no diffing, no gates (issue 051).
+  // The first subscribe wires the interval and the tab-return catch-up; a
+  // page that never subscribes (the matrix) runs no timer and no listener.
+  var clock = (function () {
+    var subs = [];
+    var wired = false;
+    function tick() {
+      var now = new Date();
+      for (var i = 0; i < subs.length; i++) subs[i](now);
+    }
+    return {
+      subscribe: function (fn) {
+        if (subs.indexOf(fn) === -1) subs.push(fn);
+        if (wired) return;
+        wired = true;
+        setInterval(tick, 30000);
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) tick();
+        });
+      }
+    };
+  })();
+
   // ---- time page -------------------------------------------------------------
 
   function initTimePage(store, modelObjs) {
@@ -53,6 +79,7 @@ TT.app = (function () {
       return null;
     }
     var nextSlot = todayNextSlot();
+    var activeSlot;  // the selected day|slot, restored on rebuilds (issue 051)
 
     function marksFor(day, slot) {
       return {
@@ -69,6 +96,7 @@ TT.app = (function () {
       var m = marksFor(day, slot);
       color.slotEntry({ isNow: m.isNow, isNext: m.isNext, dim: dim })
         .forEach(function (c) { li.classList.add(c); });
+      if (activeSlot === day + '|' + slot) li.classList.add(C.active);
       li.innerHTML = esc(slot) +
         (m.isNow ? ' <span class="nowtag">● NOW</span>' : '') +
         (m.isNext ? ' <span class="nexttag">' + NEXT_ARROW + 'NEXT</span>' : '');
@@ -83,30 +111,48 @@ TT.app = (function () {
       return hb;
     }
 
-    if (isSunday) {
-      var info = document.createElement('li');
-      info.className = 'info';
-      info.textContent = 'No sessions on Sunday — showing the full week.';
-      ul.appendChild(info);
-    }
-    var todayBucket = null;
-    store.days.forEach(function (d) {
-      var isToday = !isSunday && d === todayName;
-      var extra = isSunday ? '' : (isToday ? C.today : C.dim);
-      var hb = bucket(d + (isToday ? ' (today) (' : ' (') + countOf(d) + ')', extra);
-      ul.appendChild(hb);
-      if (isToday) todayBucket = hb;
-      store.slots.forEach(function (slot) { ul.appendChild(entry(d, slot)); });
-      if (isToday && nextSlot === null &&
-          !store.slots.some(function (s) { return model.isCurrentSession(todayName, s, now); })) {
-        var ov = document.createElement('li');
-        ov.className = 'info';
-        ov.textContent = 'Day over — no more sessions today.';
-        ul.appendChild(ov);
+    // The slot list's only producer (issue 051): rebuilt wholesale from the
+    // current clock state; the boot auto-scroll lives in the init, not here.
+    function renderSlotList() {
+      ul.innerHTML = '';
+      if (isSunday) {
+        var info = document.createElement('li');
+        info.className = 'info';
+        info.textContent = 'No sessions on Sunday — showing the full week.';
+        ul.appendChild(info);
       }
-    });
+      var todayBucket = null;
+      store.days.forEach(function (d) {
+        var isToday = !isSunday && d === todayName;
+        var extra = isSunday ? '' : (isToday ? C.today : C.dim);
+        var hb = bucket(d + (isToday ? ' (today) (' : ' (') + countOf(d) + ')', extra);
+        ul.appendChild(hb);
+        if (isToday) todayBucket = hb;
+        store.slots.forEach(function (slot) { ul.appendChild(entry(d, slot)); });
+        if (isToday && nextSlot === null &&
+            !store.slots.some(function (s) { return model.isCurrentSession(todayName, s, now); })) {
+          var ov = document.createElement('li');
+          ov.className = 'info';
+          ov.textContent = 'Day over — no more sessions today.';
+          ul.appendChild(ov);
+        }
+      });
+      return todayBucket;
+    }
+
+    // The page's subscriber to the one clock (issue 051): the whole slot
+    // list re-renders from the clock's Date on every hit; the detail pane
+    // is slot-derived and never touched.
+    function onTick(t) {
+      now = t;
+      todayName = model.JS_DAY[now.getDay()];
+      isSunday = model.DAY_IDX[todayName] === undefined;
+      nextSlot = todayNextSlot();
+      renderSlotList();
+    }
 
     function show(day, slot) {
+      activeSlot = day + '|' + slot;
       ul.querySelectorAll('li[data-day]').forEach(function (li) {
         li.classList.toggle(C.active,
           li.dataset.day === day && li.dataset.slot === slot);
@@ -127,9 +173,12 @@ TT.app = (function () {
       detail.innerHTML = h + '</table>';
     }
 
+    var todayBucket = renderSlotList();
     // auto-scroll the pane so today's bucket header lands at the pane top
     if (todayBucket) ul.scrollTop = todayBucket.offsetTop - ul.offsetTop;
     status.textContent = store.size + ' sessions · ' + store.teachers.length + ' teachers';
+    // the page subscribes once at init; the clock owns the cadence (issue 051)
+    clock.subscribe(onTick);
   }
 
   // ---- matrix page -----------------------------------------------------------

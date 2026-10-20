@@ -28,6 +28,32 @@ TT.app = (function () {
   var NEXT_ARROW = '<svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true">' +
     '<path d="M4 12h14M12 6l6 6-6 6"/></svg>';
 
+  // ---- clock (issue 051) ------------------------------------------------
+  // One clock per page: a single 30 s interval that hands a fresh Date to
+  // every subscribed part of the page; a subscriber re-renders its own
+  // region wholesale on every hit — no diffing, no gates (issue 051).
+  // The first subscribe wires the interval and the tab-return catch-up; a
+  // page that never subscribes (the matrix) runs no timer and no listener.
+  var clock = (function () {
+    var subs = [];
+    var wired = false;
+    function tick() {
+      var now = new Date();
+      for (var i = 0; i < subs.length; i++) subs[i](now);
+    }
+    return {
+      subscribe: function (fn) {
+        if (subs.indexOf(fn) === -1) subs.push(fn);
+        if (wired) return;
+        wired = true;
+        setInterval(tick, 30000);
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) tick();
+        });
+      }
+    };
+  })();
+
   // ---- teachers page ---------------------------------------------------------
 
   function initTeachersPage(store, modelObjs, index) {
@@ -133,12 +159,17 @@ TT.app = (function () {
       if (empty) empty.classList.remove('hopping');
     });
 
-    // availability is time-dependent: compute once per page load, reuse for
-    // list ordering only (never a committed-query key, no visual encoding).
-    var avail = {};
-    store.teachers.forEach(function (n) {
-      avail[n] = model.availability(store.sessionsOf(n), now);
-    });
+    // availability is time-dependent: rebuilt on every clock tick (issue 051),
+    // for list ordering only (never a committed-query key, no visual encoding).
+    var avail;
+    var currentTeacher;  // the teacher whose detail this page owns (null = none)
+    function buildAvail() {
+      avail = {};
+      store.teachers.forEach(function (n) {
+        avail[n] = model.availability(store.sessionsOf(n), now);
+      });
+    }
+    buildAvail();
     status.textContent = store.size + ' sessions · ' + store.teachers.length + ' teachers';
 
     // List/detail swap state: `is-list` is present iff the menu is open.
@@ -178,9 +209,12 @@ TT.app = (function () {
       syncOverlay();
     }
 
-    // every deselect funnels through here; the filter text is preserved
+    // every deselect funnels through here; the filter text is preserved.
+    // dropping currentTeacher here (not at each caller) means no deselect
+    // path can leave tick ownership behind and repaint over the empty page
     function showEmpty() {
       selectedTeacher = null;
+      currentTeacher = null;
       detail.innerHTML = emptyStateHTML();
       markActive(null);
       syncOverlay();
@@ -272,6 +306,17 @@ TT.app = (function () {
       return found;
     }
 
+    // The page's subscriber to the one clock (issue 051): the list re-ranks
+    // from the fresh availability and the open detail re-renders; with
+    // nothing open only the list is touched. Never selects, never writes the
+    // filter, never touches the suggest/ghost overlays.
+    function onTick(t) {
+      now = t;
+      buildAvail();
+      renderList(match.searchSections(index, search.value, avail).sections);
+      if (currentTeacher) showTeacher(currentTeacher, t);
+    }
+
     // ---- teacher detail -------------------------------------------------
 
     function breakdownHTML(t) {
@@ -297,17 +342,24 @@ TT.app = (function () {
       return h + '</li>';
     }
 
-    function showTeacher(name) {
+    // The single detail renderer: `function showTeacher(name)` gained the
+    // clock's payload (issue 051) — a selection (no tickNow) grades against
+    // a fresh read, a tick against the clock's Date; the selection-only
+    // side effects stay behind !tickNow.
+    function showTeacher(name, tickNow) {
       var t = modelObjs.teachers[name];
       if (!t) return;
+      currentTeacher = name;      // this page owns the detail from here (issue 051)
       // NB: showTeacher never writes search.value — neither the automatic
       // single-result jump (onInput/commit) nor an explicit list selection
       // may rewrite the user's filter; only an autocomplete accept
       // (acceptSuggest) commits a new filter value.
-      renderSuggest([]);
-      renderGhost();
+      if (!tickNow) {
+        renderSuggest([]);
+        renderGhost();
+      }
       var ss = model.fuseSessions(store.sessionsOf(name), modelObjs.groups);
-      var now2 = new Date();
+      var now2 = tickNow || new Date();
       var h = '<h2>' + esc(name) + '</h2>' +
         '<p class="mostly">Mostly teaches ' +
         esc(t.topSubject ? t.topSubject.name : '—') + '</p>' +
@@ -354,11 +406,14 @@ TT.app = (function () {
         h += '</table></section>';
       });
       h += breakdownHTML(t);
-      detail.innerHTML = h;
+      detail.innerHTML = h;      // unconditional: no gating (issue 051)
       markActive(name);
-      // state transition lives in selectTeacher — this function only renders
-      // the filter is untouched by selection; keep the clear "x" in step
-      syncClear();
+      // state transition lives in selectTeacher — this function only renders;
+      // the selection side effects (pane swap, clear "x") stay off the live path
+      if (!tickNow) {
+        if (layout) layout.classList.remove('is-list');
+        syncClear();
+      }
     }
 
     function markActive(name) {
@@ -476,6 +531,7 @@ TT.app = (function () {
         selectTeacher(exact);
       } else if (!res.total) {
         detail.innerHTML = '<p class="nomatch">No match for "' + esc(q) + '".</p>';
+        currentTeacher = null;
       } else if (res.total === 1) {
         var only = onlyHit(res);
         if (only) selectTeacher(only.teacher);
@@ -573,6 +629,8 @@ TT.app = (function () {
     showEmpty();
     syncList();
     syncClear();
+    // the page subscribes once at init; the clock owns the cadence (issue 051)
+    clock.subscribe(onTick);
   }
 
   // ---- boot --------------------------------------------------------------------
