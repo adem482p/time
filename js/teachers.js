@@ -11,6 +11,8 @@ TT.app = (function () {
   var color = TT.color;
   var C = color.CLASSES;
   var esc = TT.data.esc;
+  var nameHTML = TT.data.nameHTML;
+  var redacted = TT.data.redacted;
 
   // Mobile gate (issue 007): coarse pointers (touch/soft keyboard) have no
   // Escape key to opt out of the pre-focused first suggestion, so Enter must
@@ -193,7 +195,10 @@ TT.app = (function () {
     // teacher is selected AND the menu is closed (issue 056).
     function syncOverlay() {
       searchOverlay.hidden = selectedTeacher === null || menuOpen;
-      if (selectedTeacher !== null) overlayName.textContent = selectedTeacher;
+      if (selectedTeacher !== null) {
+        if (redacted()) overlayName.innerHTML = nameHTML(selectedTeacher);
+        else overlayName.textContent = selectedTeacher;
+      }
     }
 
     // menu edges: the list is open or not — blur writes neither fact
@@ -264,7 +269,7 @@ TT.app = (function () {
       cls.push(r.exact ? C.exact : C.partial);
       li.className = cls.join(' ');
       li.dataset.name = r.teacher;
-      var h = match.highlightHTML(r.teacher, r.nameRanges) +
+      var h = match.nameHTML(r.teacher, r.nameRanges) +
         ' <span class="n">(' + store.sessionsOf(r.teacher).length + ')</span>';
       if (r.relevantSessions > 0)
         h += ' <span class="n">(' + model.hoursLabel(r.relevantSessions) + ' relevant)</span>';
@@ -360,7 +365,7 @@ TT.app = (function () {
       }
       var ss = model.fuseSessions(store.sessionsOf(name), modelObjs.groups);
       var now2 = tickNow || new Date();
-      var h = '<h2>' + esc(name) + '</h2>' +
+      var h = '<h2>' + nameHTML(name) + '</h2>' +
         '<p class="mostly">Mostly teaches ' +
         esc(t.topSubject ? t.topSubject.name : '—') + '</p>' +
         '<p class="mostly">Mostly teaches ' +
@@ -441,7 +446,7 @@ TT.app = (function () {
           body = match.highlightHTML(r.label, r.ranges) +
             (r.detail ? ' <span class="alias">— ' + esc(r.detail) + '</span>' : '');
         } else if (r.kind === 'teacher') {
-          body = match.highlightHTML(r.label, r.ranges) +
+          body = match.nameHTML(r.label, r.ranges) +
             ' <span class="n">(' + store.sessionsOf(r.label).length + ')</span>';
         } else {
           body = match.highlightHTML(r.label, r.ranges);
@@ -464,7 +469,9 @@ TT.app = (function () {
     }
 
     function renderGhost() {
-      var row = suggestRows[suggestIdx];
+      // No ghost under redaction (issue 061): the faint completion would leak
+      // the rest of a teacher name, so the guard funnels into the hidden path.
+      var row = redacted() ? null : suggestRows[suggestIdx];
       var sh = row ? match.shadowText(search.value, row) : null;
       if (sh) {
         ghost.hidden = false;

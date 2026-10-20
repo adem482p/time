@@ -782,3 +782,15 @@ table.week .s-teacher, table.week .s-room { color: var(--md-on-surface-variant, 
   #classList li:last-child { border-bottom: 0; }
 }
 
+
+/* ---- redaction rectangles (issue 061) ----
+   Rendered in place of teacher names when the page is opened with ?redact=1.
+   background: currentColor makes the bar "the text foreground" — it follows
+   every --md-* preset and the light/dark scheme with no per-theme code. */
+.redact {
+  display: inline-block;
+  height: 0.78em;
+  border-radius: 0.18em;
+  vertical-align: -0.08em;
+  background: currentColor;
+}

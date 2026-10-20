@@ -144,6 +144,7 @@ function initTimeAt(clockMs) {
   var sandbox = {
     console: console,
     model: model, color: color, C: color.CLASSES, esc: data.esc,
+    nameHTML: data.nameHTML,
     store: store, modelObjs: modelObjs,
     document: {
       createElement: function () { return makeEl(offsets); },

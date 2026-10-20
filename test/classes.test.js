@@ -691,7 +691,7 @@ function runClassesList(week, now) {
   var cursor = model.dayCursor(now, store.slots);
   var sandbox = {
     console: console,
-    model: model, color: color, esc: data.esc,
+    model: model, color: color, esc: data.esc, nameHTML: data.nameHTML,
     week: week, cursor: cursor, now: now
   };
   vm.createContext(sandbox);
@@ -945,6 +945,7 @@ function runClassesWeek() {
   var sandbox = {
     console: console,
     model: model, color: color, C: color.CLASSES, esc: data.esc,
+    nameHTML: data.nameHTML,
     store: store,
     week: model.classWeek(groups, 'GLSI3D1'),
     detail: detail,

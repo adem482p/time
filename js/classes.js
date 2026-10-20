@@ -11,6 +11,7 @@ TT.app = (function () {
   var color = TT.color;
   var C = color.CLASSES;
   var esc = TT.data.esc;
+  var nameHTML = TT.data.nameHTML;
 
   // Mobile gate (issue 007): coarse pointers (touch/soft keyboard) have no
   // Escape key to opt out of the pre-focused first suggestion, so Enter must
@@ -329,7 +330,7 @@ TT.app = (function () {
           (isNow ? '<span class="nowtag">● NOW</span>' : '') +
           (isNext ? '<span class="nexttag">' + NEXT_ARROW + 'NEXT</span>' : '') +
           '</td><td class="c-time">' + esc(s.time) +
-          '</td><td class="c-teacher">' + esc(s.professor || '—') +
+          '</td><td class="c-teacher">' + nameHTML(s.professor, '—') +
           '</td><td class="c-subject">' + esc(s.subject) +
           '</td><td class="c-room">' + esc(s.room || '—') +
           '</td></tr>';
@@ -380,7 +381,7 @@ TT.app = (function () {
           sessions.forEach(function (s) {
             h += '<div class="sess">' +
               '<span class="s-subject">' + esc(s.subject) + '</span>' +
-              '<span class="s-teacher">' + esc(s.professor || '—') + '</span>' +
+              '<span class="s-teacher">' + nameHTML(s.professor, '—') + '</span>' +
               '<span class="s-room">' + esc(s.room || '—') + '</span>' +
               '</div>';
           });

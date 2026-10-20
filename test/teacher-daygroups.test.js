@@ -74,7 +74,7 @@ function runShowTeacher(name, clock) {
   var detail = { innerHTML: '' };
   var sandbox = {
     console: console,
-    model: model, color: color, esc: data.esc,
+    model: model, color: color, esc: data.esc, nameHTML: data.nameHTML,
     modelObjs: modelObjs, store: store,
     detail: detail,
     markActive: function () {},
@@ -624,7 +624,7 @@ function runShowTeacherLive(name, clockA, clockB) {
   var layout = { classList: { remove: function () { counts.layout++; } } };
   var sandbox = {
     console: console,
-    model: model, color: color, esc: data.esc,
+    model: model, color: color, esc: data.esc, nameHTML: data.nameHTML,
     modelObjs: modelObjs, store: store,
     detail: detail,
     markActive: function () {},

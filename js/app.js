@@ -11,6 +11,7 @@ TT.app = (function () {
   var color = TT.color;
   var C = color.CLASSES;
   var esc = TT.data.esc;
+  var nameHTML = TT.data.nameHTML;
 
   // Mobile gate (issue 007): coarse pointers (touch/soft keyboard) have no
   // Escape key to opt out of the pre-focused first suggestion, so Enter must
@@ -165,7 +166,7 @@ TT.app = (function () {
       var fused = model.fuseSessions(rows, modelObjs.groups);
       var h = '<table><tr><th>Teacher</th><th>Room</th><th>Subject</th><th>Students</th></tr>';
       fused.forEach(function (s) {
-        h += '<tr><td>' + esc(s.professor || '—') + '</td><td>' + esc(s.room || '—') +
+        h += '<tr><td>' + nameHTML(s.professor, '—') + '</td><td>' + esc(s.room || '—') +
           '</td><td>' + esc(s.subject) + '</td><td>' +
           s.pills.map(function (p) { return '<span class="pill">' + esc(p) + '</span>'; }).join(' ') +
           '</td></tr>';
@@ -197,7 +198,7 @@ TT.app = (function () {
         store.slots.map(function (s) { return '<th>' + esc(s) + '</th>'; }).join('') + '</tr>';
       store.teachers.forEach(function (n) {
         if (q && n.toLowerCase().indexOf(q) === -1) return;
-        h += '<tr><td>' + esc(n) + '</td>';
+        h += '<tr><td>' + nameHTML(n) + '</td>';
         store.slots.forEach(function (slot) {
           var ss = store.sessionsOf(n).filter(function (s) {
             return s.time === slot && (!day || s.day === day);

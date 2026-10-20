@@ -91,9 +91,22 @@ TT.data = (function () {
     });
   }
 
+  // Redaction mode (issue 061): `?redact=1` swaps every rendered teacher name
+  // for an empty rectangle filled with `background: currentColor` — the text
+  // foreground — so README captures show the UI without any name in the DOM
+  // while the bar still follows all 15 presets × light/dark. Parsed once at
+  // boot; the `typeof location` guard keeps the mode off in vm test sandboxes
+  // (no `location`) and `setRedact` lets node tests flip it. Pure string work
+  // — no DOM access here.
+  var redactOn = typeof location !== 'undefined' && /(?:\?|&)redact=1(?:&|$)/.test(location.search);
+  function redacted() { return redactOn; }
+  function setRedact(on) { redactOn = !!on; }  // tests/harnesses only
+  function redactHTML(name) { var w = Math.max(3, String(name).length) * 0.56; return '<span class="redact" aria-hidden="true" style="width:' + w.toFixed(2) + 'em"></span>'; }
+  function nameHTML(name, alt) { if (!name) return esc(alt || ''); return redactOn ? redactHTML(name) : esc(name); }
+
   return {
     DAYS: DAYS, SLOTS: SLOTS, HOURS_PER_SESSION: HOURS_PER_SESSION,
     parseCSV: parseCSV, createStore: createStore, loadStore: loadStore,
-    esc: esc
+    esc: esc, redacted: redacted, setRedact: setRedact, nameHTML: nameHTML
   };
 })();

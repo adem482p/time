@@ -177,6 +177,11 @@ TT.match = (function () {
     return h + TT.data.esc(s.slice(pos));
   }
 
+  // The redaction-aware name highlight (issue 061): renders a rectangle instead
+  // of the teacher name when redaction is on; otherwise the regular highlight.
+  // highlightHTML stays the generic label renderer (subjects, classes keep marks).
+  function nameHTML(s, ranges) { if (TT.data.redacted()) return TT.data.nameHTML(s); return highlightHTML(s, ranges); }
+
   // ---- live search ----------------------------------------------------------
 
   // Match one teacher against the query. Every whitespace-separated token
@@ -597,7 +602,7 @@ TT.match = (function () {
   return {
     buildIndex: buildIndex, resolveClass: resolveClass,
     mergeRanges: mergeRanges, tokenScore: tokenScore, fuzzyRanges: fuzzyRanges,
-    highlightHTML: highlightHTML, liveSearch: liveSearch, suggest: suggest,
+    highlightHTML: highlightHTML, nameHTML: nameHTML, liveSearch: liveSearch, suggest: suggest,
     shadowText: shadowText,
     parseQuery: parseQuery, searchSections: searchSections,
     completionContext: completionContext, classSearch: classSearch
