@@ -94,6 +94,39 @@ The main agent coordinates; subagents do the work in parallel.
    appends a `### Fix implemented (YYYY-MM-DD)` entry with the exact diff and
    results. Does not commit — the main agent merges.
 
+## Subagent concurrency
+
+- **One message, separated calls.** Dispatch every independent subagent in a
+  SINGLE assistant message, with a line of plain text between delegation
+  calls ("Delegating to the NNN implementer …"). Without the separators the
+  harness waits for ALL of the batch before delivering any notification —
+  nothing wakes you until the slowest subagent finishes, which stalls the
+  loop. With separators, each completion notifies on its own.
+- **Act on each completion as it arrives.** Merge or audit finished work in
+  the wake-up that reports it; don't sit on completed work waiting for the
+  rest of the batch — later rebases need the freshest main anyway.
+- **Serialize only what is actually dependent.** Git merges are strictly
+  sequential: one rebase → verify → ff-merge at a time on main. Everything
+  with no data dependency — Reporters, Maintainers, Implementers on separate
+  issues — runs concurrently, one worktree each.
+- **No overlapping surfaces.** Concurrent Implementers must not edit the same
+  regions: each issue's criteria carry explicit sibling boundaries and an
+  allowed-file list, and briefs name which sibling owns which surface. When
+  two tasks would touch the same files anyway, fold them into one subagent
+  (see *Folding*) instead of letting two race.
+- **Interrupted runs leave work behind.** Subagents get aborted or
+  rate-limited mid-flight. Before re-dispatching, inspect the worktree
+  (`git status`, grep the issue file for the expected entry): most aborted
+  runs wrote nothing, some left partial uncommitted edits. When partial work
+  exists, say so in the new brief and instruct it to audit the leftovers
+  against the criteria — the criteria win over whatever the dead run did.
+- **Brief hygiene the concurrency depends on**: forbid git in every brief,
+  name the expected test total (so the merged tree's count is checkable at
+  rebase time), state sibling boundaries, and tell the subagent to write its
+  deliverable entry EARLY in the run — "completed without writing anything"
+  is a recurring failure mode, and a silent completion is only detectable
+  when each notification is delivered separately.
+
 ## Verification standards
 
 - Data/logic changes: exercise the real logic in `node` against the real CSV (row
