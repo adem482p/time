@@ -1,6 +1,6 @@
 # 046: Classes page mirrors teachers page chrome and mobile week behavior
 
-- Status: Open
+- Status: Fixed
 - Date: 2026-10-15, Reporter: user
 
 ## Description

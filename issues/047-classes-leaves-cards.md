@@ -1,6 +1,6 @@
 # 047: Classes page selects leaves only and shows cards on mobile
 
-- Status: Open
+- Status: Fixed
 - Date: 2026-10-15, Reporter: user
 
 ## Description
