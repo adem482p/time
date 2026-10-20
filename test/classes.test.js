@@ -1201,16 +1201,32 @@ test('the theme button carries a media-gated data-tip tooltip (issue 059)', func
     'js/theme.js must never write the native title');
 });
 
-// ---- clear/deselect X split (issue 060) --------------------------------------
+// ---- clear-X / deselect back-arrow split (issues 060, 064) ------------------
 
-test('classes mirrors the clear/deselect X split (issue 060)', function () {
-  // markup: the new deselect button sits between the clear X and the overlay
+test('classes mirrors the clear-X / back-arrow deselect split (issues 060, 064)', function () {
+  // markup: the deselect button sits between the clear X and the overlay
   var html = readPage('classes.html');
   var clr = html.indexOf('id="searchClear"');
   var des = html.indexOf('id="searchDeselect"');
   var ov = html.indexOf('id="searchOverlay"');
   assert.ok(clr !== -1 && des !== -1 && ov !== -1, 'markup ids present');
   assert.ok(clr < des && des < ov, '#searchDeselect sits between #searchClear and #searchOverlay');
+  // the deselect glyph is the back arrow (issue 064): the box, the id and the
+  // trigger survived 060→064 verbatim, only the glyph swapped — the erase X
+  // stays with #searchClear, byte for byte (classes mirrors teachers)
+  function btnBlock(id) {
+    var at = html.indexOf('id="' + id + '"');
+    return html.slice(html.lastIndexOf('<button', at), html.indexOf('</button>', at));
+  }
+  var desB = btnBlock('searchDeselect');
+  assert.ok(desB.indexOf('M19 12h-14M12 6l-7 6 7 6') !== -1,
+    'the classes deselect shows the back arrow (arrow-left, issue 064)');
+  assert.ok(desB.indexOf('M6 6l12 12M18 6L6 18') === -1,
+    'the classes deselect no longer shows the X');
+  assert.ok(desB.indexOf('aria-label="Back to the class list"') !== -1,
+    'the deselect button is named for the back action (classes wording)');
+  assert.ok(btnBlock('searchClear').indexOf('M6 6l12 12M18 6L6 18') !== -1,
+    'the erase X is untouched');
   // shared CSS, verified from classes (house style): the engine cancel button
   // is suppressed once, at base; the narrow copy moved, it is not a duplicate
   var css = readPage('styles.css');
@@ -1230,17 +1246,17 @@ test('classes mirrors the clear/deselect X split (issue 060)', function () {
     'the ghost completion clears the X slot as well');
   assert.strictEqual(base.indexOf('#searchClear { display: none; }'), -1,
     'the clear X is no longer armour-plated off desktop');
-  // the deselect X overlays the whole box at base; narrow armours it off
+  // the deselect back arrow overlays the whole box at base; narrow armours it off
   var desAt = base.indexOf('#searchDeselect {');
-  assert.ok(desAt !== -1, 'base deselect-X rule present');
+  assert.ok(desAt !== -1, 'base deselect back-arrow rule present');
   var desRule = base.slice(desAt, base.indexOf('}', desAt));
   assert.ok(desRule.indexOf('position: absolute') !== -1,
-    'the deselect-X covers the whole box (left/top/right/bottom 0)');
+    'the deselect back arrow covers the whole box (left/top/right/bottom 0)');
   assert.ok(base.indexOf('#searchDeselect[hidden] { display: none; }') !== -1,
-    'the deselect-X honours its [hidden] attribute at base');
+    'the deselect back arrow honours its [hidden] attribute at base');
   assert.ok(narrow.split('\n').some(function (line) {
     return line.trim() === '#searchDeselect { display: none; }';
-  }), 'narrow armours the desktop deselect-X off (its chrome is #overlayClear)');
+  }), 'narrow armours the desktop deselect back arrow off (its chrome is #overlayClear)');
   // JS: syncDeselect derives from the two facts only (I2)
   var src = CLASSES_SRC;
   function body(sig) {
@@ -1282,12 +1298,12 @@ test('classes mirrors the clear/deselect X split (issue 060)', function () {
   ['commit()', 'showEmpty()', 'search.focus()'].forEach(function (tok) {
     assert.ok(clrH.indexOf(tok) === -1, 'the X must not contain ' + tok);
   });
-  // the deselect X funnels through the one empty funnel, never focuses
+  // the deselect back arrow funnels through the one empty funnel, never focuses
   var desHAt = src.indexOf("searchDeselect.addEventListener('click'");
-  assert.ok(desHAt !== -1, 'deselect X handler found');
+  assert.ok(desHAt !== -1, 'deselect back-arrow handler found');
   var desH = src.slice(desHAt, src.indexOf('});', desHAt) + 3);
-  assert.ok(desH.indexOf('showEmpty();') !== -1, 'the deselect X runs the empty funnel');
-  assert.ok(desH.indexOf('search.focus()') === -1, 'the deselect X never focuses the box');
+  assert.ok(desH.indexOf('showEmpty();') !== -1, 'the deselect back arrow runs the empty funnel');
+  assert.ok(desH.indexOf('search.focus()') === -1, 'the deselect back arrow never focuses the box');
   // neither press may arm focus through mousedown
   ['searchClear', 'searchDeselect'].forEach(function (id) {
     var at = src.indexOf(id + ".addEventListener('mousedown'");

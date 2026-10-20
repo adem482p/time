@@ -160,11 +160,11 @@ body[data-page="classes"] .author-credit span {
   width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
   stroke-linecap: round; stroke-linejoin: round;
 }
-/* the deselect X (issue 060): while a teacher/class is selected and the
-   filter is empty, the whole box becomes this button — opaque with the wrap's
-   8px radius (issue 057's lesson: the overlay takes the wrap's chrome or it
-   reads as a square patch). Narrow never renders it: its deselect chrome is
-   #overlayClear (armour at the end of the narrow block). */
+/* the deselect back arrow (issues 060, 064): while a teacher/class is
+   selected and the filter is empty, the whole box becomes this button — a
+   mirrored NEXT_ARROW (arrow-left), opaque with the wrap's 8px radius
+   (issue 057's lesson: the overlay takes the wrap's chrome over a square
+   patch). Narrow never renders it: #overlayClear is the narrow chrome. */
 #searchDeselect {
   position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3;
   display: flex; align-items: center; justify-content: center;
@@ -627,8 +627,8 @@ html { background: var(--md-surface, #fff); }
     fill: none; stroke: var(--md-on-surface-variant, #555); stroke-width: 2.4;
     stroke-linecap: round; stroke-linejoin: round;
   }
-  /* the desktop deselect-X (issue 060) never renders on narrow: the deselect
-     chrome here is #overlayClear (state=teacher/class) */
+  /* the desktop deselect back arrow (issues 060, 064) never renders on
+     narrow: the deselect chrome here is #overlayClear (state=teacher/class) */
   #searchDeselect { display: none; }
   #teacherList { max-width: none; max-height: none; border: 0; overflow: visible; }
   /* flattened rows: simple line separators, not self-enclosed cards.

@@ -789,15 +789,32 @@ test('a teachers tick with no selection re-renders only the list, from the fresh
   assert.deepStrictEqual(h.sunOrder, fresh, 'the fresh Sunday order is the real alphabetical collapse');
 });
 
-// ---- clear/deselect X split (issue 060) --------------------------------------
+// ---- clear-X / deselect back-arrow split (issues 060, 064) ------------------
 
-test('the clear X erases only, the deselect X deselects only (issue 060)', function () {
-  // markup: the new deselect button sits between the clear X and the overlay
+test('the clear X erases only, the back arrow deselects only (issues 060, 064)', function () {
+  // markup: the deselect button sits between the clear X and the overlay
   var clr = INDEX_SRC.indexOf('id="searchClear"');
   var des = INDEX_SRC.indexOf('id="searchDeselect"');
   var ov = INDEX_SRC.indexOf('id="searchOverlay"');
   assert.ok(clr !== -1 && des !== -1 && ov !== -1, 'markup ids present');
   assert.ok(clr < des && des < ov, '#searchDeselect sits between #searchClear and #searchOverlay');
+  // the deselect glyph is the back arrow (issue 064): the box, the id and the
+  // trigger survived 060→064 verbatim, only the glyph swapped — the erase X
+  // stays with #searchClear, byte for byte
+  function btnBlock(id) {
+    var at = INDEX_SRC.indexOf('id="' + id + '"');
+    return INDEX_SRC.slice(INDEX_SRC.lastIndexOf('<button', at),
+      INDEX_SRC.indexOf('</button>', at));
+  }
+  var desB = btnBlock('searchDeselect');
+  assert.ok(desB.indexOf('M19 12h-14M12 6l-7 6 7 6') !== -1,
+    'the desktop deselect shows the back arrow (arrow-left, issue 064)');
+  assert.ok(desB.indexOf('M6 6l12 12M18 6L6 18') === -1,
+    'the desktop deselect no longer shows the X');
+  assert.ok(desB.indexOf('aria-label="Back to the teacher list"') !== -1,
+    'the deselect button is named for the back action');
+  assert.ok(btnBlock('searchClear').indexOf('M6 6l12 12M18 6L6 18') !== -1,
+    'the erase X is untouched');
   // CSS: the engine cancel button is suppressed once, at base (I4 — the app
   // owns the only X); the narrow copy moved, it is not a duplicate
   var base = CSS_SRC.slice(0, CSS_SRC.indexOf('@media (max-width: 700px)'));
@@ -816,17 +833,17 @@ test('the clear X erases only, the deselect X deselects only (issue 060)', funct
     'the ghost completion clears the X slot as well');
   assert.strictEqual(base.indexOf('#searchClear { display: none; }'), -1,
     'the clear X is no longer armour-plated off desktop');
-  // CSS: the deselect X overlays the whole box at base; narrow armours it off
+  // CSS: the deselect back arrow overlays the whole box at base; narrow armours it off
   var desAt = base.indexOf('#searchDeselect {');
-  assert.ok(desAt !== -1, 'base deselect-X rule present');
+  assert.ok(desAt !== -1, 'base deselect back-arrow rule present');
   var desRule = base.slice(desAt, base.indexOf('}', desAt));
   assert.ok(desRule.indexOf('position: absolute') !== -1,
-    'the deselect-X covers the whole box (left/top/right/bottom 0)');
+    'the deselect back arrow covers the whole box (left/top/right/bottom 0)');
   assert.ok(base.indexOf('#searchDeselect[hidden] { display: none; }') !== -1,
-    'the deselect-X honours its [hidden] attribute at base');
+    'the deselect back arrow honours its [hidden] attribute at base');
   assert.ok(narrow.split('\n').some(function (line) {
     return line.trim() === '#searchDeselect { display: none; }';
-  }), 'narrow armours the desktop deselect-X off (its chrome is #overlayClear)');
+  }), 'narrow armours the desktop deselect back arrow off (its chrome is #overlayClear)');
   // JS, both pages: syncDeselect derives from the two facts only (I2)
   [APP_SRC, CLASSES_SRC].forEach(function (src, i) {
     var tag = i ? 'classes' : 'teachers';
@@ -873,12 +890,12 @@ test('the clear X erases only, the deselect X deselects only (issue 060)', funct
     ['commit()', 'showEmpty()', 'search.focus()'].forEach(function (tok) {
       assert.ok(clrH.indexOf(tok) === -1, tag + ': the X must not contain ' + tok);
     });
-    // the deselect X funnels through the one empty funnel, never focuses
+    // the deselect back arrow funnels through the one empty funnel, never focuses
     var desHAt = src.indexOf("searchDeselect.addEventListener('click'");
-    assert.ok(desHAt !== -1, tag + ': deselect X handler found');
+    assert.ok(desHAt !== -1, tag + ': deselect back-arrow handler found');
     var desH = src.slice(desHAt, src.indexOf('});', desHAt) + 3);
-    assert.ok(desH.indexOf('showEmpty();') !== -1, tag + ': the deselect X runs the empty funnel');
-    assert.ok(desH.indexOf('search.focus()') === -1, tag + ': the deselect X never focuses the box');
+    assert.ok(desH.indexOf('showEmpty();') !== -1, tag + ': the deselect back arrow runs the empty funnel');
+    assert.ok(desH.indexOf('search.focus()') === -1, tag + ': the deselect back arrow never focuses the box');
     // neither press may arm focus through mousedown
     ['searchClear', 'searchDeselect'].forEach(function (id) {
       var at = src.indexOf(id + ".addEventListener('mousedown'");
