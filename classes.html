@@ -40,12 +40,19 @@
     <div id="searchWrap">
       <div id="ghost" aria-hidden="true"><span id="ghostPre"></span><span id="ghostTyped"></span><span id="ghostRest"></span></div>
       <input id="search" type="search" placeholder="Search class (LCS, GLSI3D1…)" autocomplete="off">
-      <button type="button" id="searchDone" aria-label="Hide the keyboard">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      <button type="button" id="searchBack" aria-label="Back">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
       </button>
       <button type="button" id="searchClear" aria-label="Clear the search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
+      <div id="searchOverlay" hidden>
+        <button type="button" id="overlayClear" aria-label="Clear the selection">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <span id="overlayName"></span>
+        <svg class="overlay-drop" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
       <ul id="suggest" hidden></ul>
     </div>
     <ul id="classList"></ul>

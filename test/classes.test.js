@@ -443,9 +443,11 @@ test('classes.html carries the teachers-page structure and script stack', functi
     'canonical/og:url must use the classes.html URL');
   ['id="searchWrap"', 'id="search"', 'id="suggest"', 'id="classList"',
    'id="detail"', 'id="status"', 'id="themeCycle"',
-   'id="searchDone"', 'id="searchClear"'].forEach(function (id) {
+   'id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"',
+   'id="searchClear"'].forEach(function (id) {
     assert.ok(html.indexOf(id) !== -1, 'missing element ' + id);
   });
+  assert.ok(html.indexOf('id="searchDone"') === -1, 'the V-chevron is gone from the classes page');
   // the theme control is ONE element: no #themeBar wrapper, no .theme-dot span
   assert.ok(html.indexOf('theme-dot') === -1, 'theme square must not use a .theme-dot span');
   assert.ok(html.indexOf('id="themeBar"') === -1, 'theme square must not use a #themeBar wrapper');
@@ -470,9 +472,11 @@ test('styles.css gains a classes section without touching the mobile block', fun
     'c-cell.today must come before c-cell.now');
   // the classes empty state shares the teachers empty-state heading style
   assert.ok(css.indexOf('no-class-selected') !== -1, 'missing no-class-selected style');
-  // the pre-existing mobile search-button block is intact (rule text per
-  // issue 031: the V owns right:0 and the X is the control that steps aside)
-  assert.ok(css.indexOf('#searchWrap:focus-within:has(#searchClear:not([hidden])) #searchClear') !== -1);
+  // the V-stepping rules died with the V (issue 058); the X keeps its slot
+  assert.ok(css.indexOf('#searchWrap:focus-within:has(#searchClear:not([hidden])) #searchClear') === -1,
+    'the V-stepping rules died with the V');
+  assert.ok(css.indexOf('body[data-page="classes"] #searchWrap:focus-within:has(#searchClear:not([hidden])) #search') === -1);
+  assert.ok(css.indexOf('#search { padding-right: 2.7rem; }') !== -1, 'the X slot survives');
 });
 
 // ---- leaf-only selection + session cards (issue 047) -----------------------
@@ -591,7 +595,7 @@ test('classes row click keeps the filter (G1 keep-filter)', function () {
   var at = sec.indexOf('li.onclick = function ()');
   assert.ok(at !== -1, 'row click handler found');
   var handler = sec.slice(at, sec.indexOf('};', at) + 2);
-  assert.ok(handler.indexOf('showClass(r.label)') !== -1, 'row click shows the class directly');
+  assert.ok(handler.indexOf('selectClass(r.label)') !== -1, 'row click selects through the funnel');
   assert.ok(handler.indexOf('search.value =') === -1, 'row click must not rewrite the filter');
   // the sanctioned commit path still writes the filter
   var accept = sec.slice(sec.indexOf('function acceptSuggest(row)'));
@@ -983,7 +987,8 @@ test('classes.js drives the week view from one clock and drops the gated ticker 
   assert.strictEqual(countTok(src, 'clock.subscribe(onTick);'), 1, 'one subscription per page');
   assert.ok(src.indexOf('visibilitychange') !== -1 && src.indexOf('document.hidden') !== -1,
     'the clock wires the tab-return catch-up');
-  assert.strictEqual(countTok(src, 'currentWeek = null;'), 4, 'every clear site drops ownership');
+  assert.strictEqual(countTok(src, 'currentWeek = null;'), 3,
+    'the empty funnel owns the deselect clear; the two nomatch branches (which never reach showEmpty) drop it themselves');
   assert.ok(src.indexOf('lastWeekHTML') === -1, 'no emitted-string gate state');
   assert.ok(!/(^|[^a-zA-Z0-9_$])h\s*!==/.test(src), 'no emitted-string comparison gate');
   var slice = classesWeekSlice();
@@ -1043,4 +1048,118 @@ test('a tick past day end re-grades the anchor; a cleared view stays cleared (is
   h.sandbox.currentWeek = null; // a clear site dropped ownership
   h.tick(at(15, 9, 0));
   assert.strictEqual(h.counts().writes, 2, 'a cleared view is never resurrected by a later tick');
+});
+
+// ---- mobile nav (issue 058) ------------------------------------------------
+
+test('classes nav chrome: state-gated back arrow, class overlay, V gone', function () {
+  var html = readPage('classes.html');
+  ['id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"'].forEach(function (id) {
+    assert.ok(html.indexOf(id) !== -1, 'classes.html missing ' + id);
+  });
+  assert.ok(html.indexOf('id="searchDone"') === -1,
+    'the V-chevron is gone from the classes page');
+  var css = readPage('styles.css');
+  assert.ok(css.indexOf('#searchDone') === -1, 'no #searchDone at all in styles.css');
+  var base = css.slice(0, css.indexOf('@media (max-width: 700px)'));
+  assert.ok(base.indexOf('#searchBack { display: none; }') !== -1,
+    'desktop armour: the back arrow is display:none at base');
+  assert.ok(base.indexOf('#searchOverlay { display: none; }') !== -1,
+    'desktop armour: the class overlay is display:none at base');
+  var narrow = css.slice(css.indexOf('@media (max-width: 700px)'));
+  assert.ok(narrow.indexOf('#layout.is-list #searchBack') !== -1,
+    'back arrow is gated on the list state, not on focus');
+  assert.ok(narrow.indexOf('#searchOverlay:not([hidden])') !== -1,
+    'overlay renders from its attribute on narrow screens');
+  // issue 057's polish is shared CSS, verified live from the classes page:
+  // the overlay takes the wrap's 8px radius and the input goes invisible
+  var ovAt = narrow.indexOf('#searchOverlay:not([hidden])');
+  var ovRule = narrow.slice(ovAt, narrow.indexOf('}', ovAt));
+  assert.ok(ovRule.indexOf('border-radius: 8px') !== -1,
+    'overlay takes the wrap 8px radius (issue 057, verified from classes)');
+  assert.ok(narrow.indexOf('#searchWrap:has(#searchOverlay:not([hidden])) #search') !== -1,
+    'the input hides while the overlay shows (issue 057, verified from classes)');
+  // anti-D4: the back control is never focus-gated, and the V rules stay dead
+  assert.ok(css.indexOf('#searchWrap:focus-within #searchBack') === -1,
+    'the back control must never be focus-gated (anti-D4 regression pin)');
+  assert.ok(css.indexOf('#searchWrap:focus-within #searchDone') === -1,
+    'the dead V rule must stay gone');
+});
+
+test('classes nav machine: single selection/empty funnels, harness-safe week slice', function () {
+  var src = CLASSES_SRC;
+  assert.ok(src.indexOf('var menuOpen = false;') !== -1, 'menuOpen fact declared');
+  assert.ok(src.indexOf('var selectedClass = null;') !== -1, 'selectedClass fact declared');
+  assert.ok(src.indexOf('var lastResultCount') === -1, 'lastResultCount is dead');
+  assert.ok(src.indexOf('searchFocused') === -1, 'searchFocused is dead');
+  assert.ok(src.indexOf('searchDone') === -1, 'the V machinery is dead');
+  // week-harness safety: that sandbox stubs only layout.classList.remove +
+  // syncClear, so the slice between those bounds may carry no nav state
+  var weekSlice = src.slice(src.indexOf('function indexByDaySlot'),
+    src.indexOf('function showClass'));
+  ['menuOpen', 'search.blur', 'syncOverlay', 'selectClass'].forEach(function (tok) {
+    assert.ok(weekSlice.indexOf(tok) === -1, 'week slice must not contain ' + tok + ' (vm harness)');
+  });
+  function fnBody(sig) {
+    var start = src.indexOf(sig);
+    assert.ok(start !== -1, sig + ' found');
+    var end = src.indexOf('\n    }', start);
+    assert.ok(end !== -1, sig + ' bounds');
+    return src.slice(start, end + '\n    }'.length);
+  }
+  var listFn = fnBody('function syncList()');
+  assert.ok(listFn.indexOf("classList.add('is-list')") !== -1, 'syncList adds the flag');
+  assert.ok(listFn.indexOf("classList.remove('is-list')") !== -1, 'syncList removes the flag');
+  assert.ok(listFn.indexOf('toggle(') === -1, 'syncList uses the add/remove form, not toggle');
+  var sel = fnBody('function selectClass(ref)');
+  ['selectedClass = ref', 'showClass(ref)', 'search.blur()', 'menuOpen = false', 'syncOverlay()'].forEach(function (tok) {
+    assert.ok(sel.indexOf(tok) !== -1, 'selectClass: ' + tok);
+  });
+  var emp = fnBody('function showEmpty()');
+  ['selectedClass = null', 'currentWeek = null;', 'emptyStateHTML()', 'markActive(null)'].forEach(function (tok) {
+    assert.ok(emp.indexOf(tok) !== -1, 'showEmpty: ' + tok);
+  });
+  var inputFn = fnBody('function onInput()');
+  assert.ok(inputFn.indexOf('showEmpty();') !== -1, 'onInput: empty filter deselects');
+  assert.ok(inputFn.indexOf('selectClass(rows[0].label)') !== -1, 'onInput: auto-jump selects via the funnel');
+  var rowStart = src.indexOf('function renderList(rows)');
+  var rowWiring = src.slice(rowStart, src.indexOf('function markActive(key)', rowStart));
+  assert.ok(rowWiring.indexOf('selectClass(r.label)') !== -1, 'row tap selects via the funnel');
+  var commitFn = src.slice(src.indexOf('function commit()'), src.indexOf("search.addEventListener('input'"));
+  assert.ok(commitFn.indexOf('selectClass(q)') !== -1, 'commit exact-week selects via the funnel');
+  assert.ok(commitFn.indexOf('selectClass(like)') !== -1, 'commit exact-label selects via the funnel');
+  assert.ok(commitFn.indexOf('selectClass(rows[0].label)') !== -1, 'commit single-hit selects via the funnel');
+  assert.ok(commitFn.indexOf('showClass(') === -1, 'commit must not bypass the selection funnel');
+  var openSlice = fnBody('function openMenu()');
+  assert.ok(openSlice.indexOf('menuOpen = true') !== -1, 'openMenu arms the fact');
+  var closeSlice = fnBody('function closeMenu()');
+  assert.ok(closeSlice.indexOf('menuOpen = false') !== -1, 'closeMenu drops the fact');
+  assert.ok(closeSlice.indexOf('search.blur()') !== -1, 'closeMenu removes focus');
+  assert.ok(closeSlice.indexOf('syncOverlay()') !== -1, 'closeMenu syncs the overlay');
+  function handlerSlice(sig) {
+    var at = src.indexOf(sig);
+    assert.ok(at !== -1, sig + ' handler found');
+    return src.slice(at, src.indexOf('});', at) + 3);
+  }
+  assert.ok(handlerSlice("addEventListener('focus'").indexOf('openMenu()') !== -1,
+    'focus opens the menu');
+  assert.ok(handlerSlice("search.addEventListener('click'").indexOf('openMenu()') !== -1,
+    'a filter-box tap opens the menu');
+  var backStart = src.indexOf("searchBack.addEventListener('click'");
+  assert.ok(backStart !== -1, 'back wiring found');
+  assert.ok(src.slice(backStart, src.indexOf('});', backStart) + 3).indexOf('closeMenu()') !== -1,
+    'back closes the menu');
+  var ovStart = src.indexOf('searchOverlay.addEventListener');
+  assert.ok(ovStart !== -1, 'overlay wiring found');
+  var ovWiring = src.slice(ovStart, src.indexOf('showEmpty();', ovStart) + 'showEmpty();'.length);
+  assert.ok(ovWiring.indexOf('openMenu()') !== -1, 'overlay tap reopens the list');
+  assert.ok(ovWiring.indexOf('search.focus()') !== -1, 'overlay tap focuses the box');
+  assert.ok(ovWiring.indexOf('stopPropagation') !== -1, 'overlay X does not bubble to the surface');
+  assert.ok(ovWiring.indexOf('showEmpty()') !== -1, 'overlay X deselects');
+  assert.ok(handlerSlice("searchClear.addEventListener('click'").indexOf('search.focus()') === -1,
+    'the X no longer re-focuses the box');
+  assert.ok(handlerSlice("addEventListener('keydown'").indexOf('closeMenu();') !== -1,
+    'Escape without an open suggest closes the menu');
+  var bootTail = src.slice(src.indexOf('// initial paint'), src.indexOf('clock.subscribe(onTick);'));
+  assert.ok(bootTail.indexOf('showEmpty();') !== -1, 'boot paints through the empty funnel');
 });

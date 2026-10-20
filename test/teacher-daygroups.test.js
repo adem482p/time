@@ -446,10 +446,11 @@ test('menu visibility is selection-driven, never blur-driven', function () {
   ['menuOpen', 'openMenu', 'closeMenu'].forEach(function (tok) {
     assert.ok(teachersBlur.indexOf(tok) === -1, 'teachers: blur must not touch ' + tok);
   });
-  // classes keeps its old fact name (out of scope for issue 056)
+  // classes: blur writes neither nav fact nor any menu-edge function
   var classesBlur = handlerSlice(classes, "addEventListener('blur'");
-  assert.ok(classesBlur.indexOf('searchFocused') === -1, 'classes: blur must not touch menu state');
-  assert.ok(classes.indexOf('searchFocused = true') !== -1, 'classes: focus arms the menu');
+  ['menuOpen', 'openMenu', 'closeMenu'].forEach(function (tok) {
+    assert.ok(classesBlur.indexOf(tok) === -1, 'classes: blur must not touch ' + tok);
+  });
   function fnSlice(sec, sig) {
     var start = sec.indexOf(sig);
     assert.ok(start !== -1, sig + ' found');
@@ -468,6 +469,16 @@ test('menu visibility is selection-driven, never blur-driven', function () {
     'teachers: focus opens the menu');
   assert.ok(handlerSlice(teachers, "search.addEventListener('click'").indexOf('openMenu()') !== -1,
     'teachers: a filter-box tap opens the menu');
+  // classes runs the same machine (issue 058): menu edges + both box handlers
+  var classesOpen = fnSlice(classes, 'function openMenu()');
+  assert.ok(classesOpen.indexOf('menuOpen = true') !== -1, 'classes: openMenu arms the fact');
+  var classesClose = fnSlice(classes, 'function closeMenu()');
+  assert.ok(classesClose.indexOf('menuOpen = false') !== -1, 'classes: closeMenu drops the fact');
+  assert.ok(classesClose.indexOf('search.blur()') !== -1, 'classes: closeMenu removes focus');
+  assert.ok(handlerSlice(classes, "addEventListener('focus'").indexOf('openMenu()') !== -1,
+    'classes: focus opens the menu');
+  assert.ok(handlerSlice(classes, "search.addEventListener('click'").indexOf('openMenu()') !== -1,
+    'classes: a filter-box tap opens the menu');
   assert.ok(APP_SRC.indexOf('setTimeout') === -1, 'no setTimeout left in the teachers page');
   assert.ok(CLASSES_SRC.indexOf('setTimeout') === -1, 'no setTimeout left in the classes page');
   var clicks = APP_SRC.split("search.addEventListener('click'").length - 1 +
@@ -519,7 +530,7 @@ test('exact name selects even among partial matches (both pages)', function () {
     'commit must not bypass the selection funnel');
   var classes = CLASSES_SRC.slice(CLASSES_SRC.indexOf('function initClassesPage'));
   assert.ok(classes.indexOf('var like = exactClass(rows, q);') !== -1, 'classes commit computes exact');
-  assert.ok(classes.indexOf('showClass(like);') !== -1, 'exact class label selects');
+  assert.ok(classes.indexOf('selectClass(like);') !== -1, 'exact class label selects through the funnel');
 });
 
 test('teachers nav chrome: state-gated back arrow, teacher overlay, V gone', function () {

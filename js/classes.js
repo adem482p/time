@@ -67,7 +67,10 @@ TT.app = (function () {
   // teacher-style session card list (table.c-sessions).
   function initClassesPage(store, modelObjs, index) {
     var search = document.getElementById('search');
-    var searchDone = document.getElementById('searchDone');
+    var searchBack = document.getElementById('searchBack');
+    var searchOverlay = document.getElementById('searchOverlay');
+    var overlayName = document.getElementById('overlayName');
+    var overlayClear = document.getElementById('overlayClear');
     var searchClear = document.getElementById('searchClear');
     var ghost = document.getElementById('ghost');
     var ghostTyped = document.getElementById('ghostTyped');
@@ -92,22 +95,73 @@ TT.app = (function () {
     }
     function leafRows(rows) { return rows.filter(isLeafRow); }
     var suggestRows = [];
-    var searchFocused = false;
-    var lastResultCount = -1;
+    // mobile nav machine (issue 058): two facts, three named states —
+    //   menuOpen                    -> 'list'  (filterable list + back arrow)
+    //   !menuOpen && selectedClass  -> 'class' (week view + name overlay)
+    //   !menuOpen && !selectedClass -> 'empty' (kaomoji; the default)
+    // Blur writes neither fact (a press in flight must never lose its row);
+    // only openMenu/closeMenu (menu edges), selectClass and showEmpty write.
+    var menuOpen = false;
+    var selectedClass = null;
     var activeKey = null;
     var currentWeek; // the class view the clock refreshes until cleared (issue 051)
 
     status.textContent = store.size + ' sessions · ' + groups.leaves.length + ' classes';
 
-    // List/detail swap state: one class `is-list` on #layout, absent = cards.
-    // Only narrow CSS reads it; wider screens keep both panes visible and
-    // this only toggles state.
+    // List/detail swap state: `is-list` is present iff the menu is open.
+    // syncList is the SOLE writer of `is-list`, deriving from the menuOpen
+    // fact (issue 058) — no other code may touch the flag. Only narrow CSS
+    // reads it (one pane at a time); wider screens keep both panes visible
+    // and this only toggles state.
     function syncList() {
       if (!layout) return;
-      layout.classList.toggle('is-list', searchFocused && lastResultCount !== 1);
+      if (menuOpen) layout.classList.add('is-list');
+      else layout.classList.remove('is-list');
     }
     function syncClear() {
       if (searchClear) searchClear.hidden = !search.value;
+    }
+
+    // The name overlay belongs to the 'class' state: hidden unless a
+    // class is selected AND the menu is closed (issue 058).
+    function syncOverlay() {
+      searchOverlay.hidden = selectedClass === null || menuOpen;
+      if (selectedClass !== null) overlayName.textContent = selectedClass;
+    }
+
+    // menu edges: the list is open or not — blur writes neither fact
+    function openMenu() {
+      menuOpen = true;
+      syncList();
+      syncOverlay();
+    }
+    function closeMenu() {
+      menuOpen = false;
+      search.blur();
+      syncList();
+      syncOverlay();
+    }
+
+    // every deselect funnels through here; the filter text is preserved.
+    // dropping currentWeek here (not at each caller) means no deselect path
+    // can leave tick ownership behind and repaint over the empty page
+    function showEmpty() {
+      selectedClass = null;
+      currentWeek = null;
+      detail.innerHTML = emptyStateHTML();
+      markActive(null);
+      syncOverlay();
+    }
+
+    // the single selection funnel: every path that picks a class lands
+    // here; blurs because the overlay owns the box in state=class
+    function selectClass(ref) {
+      selectedClass = ref;
+      showClass(ref);
+      search.blur();
+      menuOpen = false;
+      syncList();
+      syncOverlay();
     }
 
     // A giant, faint emoticon fills the detail area whenever no class is
@@ -189,7 +243,6 @@ TT.app = (function () {
     // ---- class list -----------------------------------------------------
 
     function renderList(rows) {
-      lastResultCount = rows.length;
       var active = String(activeKey).toUpperCase();
       list.innerHTML = '';
       if (!rows.length) {
@@ -212,7 +265,7 @@ TT.app = (function () {
         // The filter is the source of truth for the list: selecting a row must
         // not rewrite it, so the result list stays as-is and the user can move
         // to the next hit.
-        li.onclick = function () { showClass(r.label); };
+        li.onclick = function () { selectClass(r.label); };
         list.appendChild(li);
       });
     }
@@ -502,8 +555,10 @@ TT.app = (function () {
       renderList(rows);
       renderSuggest(classSuggestions(q));
       renderGhost();
-      if (!q.trim()) { detail.innerHTML = emptyStateHTML(); markActive(null); currentWeek = null; }
-      else if (rows.length === 1) { showClass(rows[0].label); }
+      // an empty filter means nothing is selected: back to the empty state
+      if (!q.trim()) showEmpty();
+      // exactly one result left -> auto-jump to the week view
+      else if (rows.length === 1) { selectClass(rows[0].label); }
       syncList();
     }
 
@@ -526,37 +581,34 @@ TT.app = (function () {
       var rows = leafRows(match.classSearch(index, q));
       renderList(rows);
       var like = exactClass(rows, q);
-      var picked = false;
       if (!q.trim()) {
-        detail.innerHTML = emptyStateHTML();
-        markActive(null);
-        currentWeek = null;
-      } else if (model.classWeek(groups, q).leaves.length === 1) {
-        showClass(q);
-        picked = true;
+        showEmpty();
+        syncList();
+        return;
+      }
+      if (model.classWeek(groups, q).leaves.length === 1) {
+        selectClass(q);
       } else if (like) {
-        showClass(like);
-        picked = true;
+        selectClass(like);
       } else if (rows.length === 1) {
-        showClass(rows[0].label);
-        picked = true;
+        selectClass(rows[0].label);
       } else if (!rows.length) {
         detail.innerHTML = '<p class="nomatch">No match for "' + esc(q) + '".</p>';
         currentWeek = null;
       }
-      // a selection dismisses the menu; syncList would put it back since
-      // the rendered count is not 1
-      if (!picked) syncList();
+      // no trailing syncList: a selection closes the menu and syncList
+      // cannot resurrect a closed one
     }
 
     search.addEventListener('input', onInput);
     search.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         // <input type="search"> clears the field on Esc by default; cancel
-        // that so Esc only dismisses the menu and keeps the typed filter.
+        // that so Esc keeps the typed filter: it drops the suggest overlay
+        // if open, else closes the menu — it never deselects.
         e.preventDefault();
-        if (!suggest.hidden) { renderSuggest([]); renderGhost(); }
-        return;
+        if (!suggest.hidden) { renderSuggest([]); renderGhost(); return; }
+        closeMenu();
       }
       if (e.key === 'Tab') {
         // Issue 007: Tab must not accept an implicit (non-explicit)
@@ -588,46 +640,53 @@ TT.app = (function () {
       }
     });
     search.addEventListener('focus', function () {
-      searchFocused = true;
-      syncList();
+      openMenu();
     });
     // tapping the filter box always brings the menu back: focus alone does
     // not refire while the box never lost focus (row taps keep it focused),
     // but click fires on every tap.
     search.addEventListener('click', function () {
-      searchFocused = true;
-      syncList();
+      openMenu();
     });
     // blur only drops the autocomplete overlay: menu visibility is
-    // selection-driven (selecting shows cards, focusing shows the menu),
-    // so losing focus must never hide the row a press is about to land on.
+    // selection/back-driven, never blur-driven, so losing focus must never
+    // hide the row a press is about to land on.
     search.addEventListener('blur', function () {
       renderSuggest([]);
       renderGhost();
     });
 
-    // the mobile V-chevron explicitly leaves list mode for the cards (blur
-    // alone no longer does); it blurs itself too so focus fully clears
-    if (searchDone) searchDone.addEventListener('click', function () {
-      search.blur();
-      searchDone.blur();
-      searchFocused = false;
-      syncList();
+    // back dismisses the open list + focus and hides itself; a selected
+    // class stays selected ("back to the earlier state" by construction)
+    if (searchBack) searchBack.addEventListener('click', function () { closeMenu(); });
+    // in state=class the overlay IS the box: the whole surface (name,
+    // chevron, background) is one click target that reopens the list; its
+    // left X (#overlayClear) is the separate deselect control
+    if (searchOverlay) searchOverlay.addEventListener('click', function () {
+      openMenu();
+      search.focus();
+    });
+    if (overlayClear) overlayClear.addEventListener('click', function (e) {
+      e.stopPropagation();
+      showEmpty();
     });
 
+    // the mobile X erases the filter in the list/empty states (empty query
+    // -> full catalogue + emoticon detail); it no longer arms the menu —
+    // class-state deselect is #overlayClear. mousedown is prevented so
+    // the button never takes focus.
     if (searchClear) {
       searchClear.addEventListener('mousedown', function (e) { e.preventDefault(); });
       searchClear.addEventListener('click', function () {
         search.value = '';
         syncClear();
-        search.focus();
         commit();
       });
     }
 
     // initial paint: full leaf catalogue, empty detail
     renderList(leafRows(match.classSearch(index, '')));
-    detail.innerHTML = emptyStateHTML();
+    showEmpty();
     syncList();
     syncClear();
     // the page subscribes once at init; the clock owns the cadence (issue 051)

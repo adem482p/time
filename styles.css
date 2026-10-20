@@ -124,9 +124,6 @@ body[data-page="classes"] .author-credit span {
 #search, #ghost {
   font-family: "Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
-/* mobile-only: a button beside the search box that drops focus (hides the
-   keyboard / leaves list mode). The V is an inline SVG chevron. */
-#searchDone { display: none; }
 #searchClear { display: none; }
 /* mobile nav chrome (issue 056): desktop never shows it; the narrow block may */
 #searchBack { display: none; }
@@ -521,23 +518,6 @@ html { background: var(--md-surface, #fff); }
      it expands with its content and the document scrolls instead. Desktop
      keeps the base rule for the hanging gutter/Grid overflow. */
   #layout > #detail { overflow: visible; }
-  /* a V-chevron button beside the search box drops focus / hides the keyboard.
-     It appears only while the search box actually holds focus, and it always
-     keeps the rightmost slot: the X is the control that steps aside. */
-  #searchWrap:focus-within #searchDone { display: flex; }
-  #searchDone {
-    align-items: center; justify-content: center;
-    /* rightmost slot, never shifted: the stacking rule below moves the X
-       beside this button, not the other way round */
-    position: absolute; right: 0; top: 0; bottom: 0; width: 2.7rem;
-    border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
-    cursor: pointer; z-index: 2;
-  }
-  #searchDone:active { color: var(--md-primary, #0b4da2); }
-  #searchDone svg {
-    width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
-    stroke-linecap: round; stroke-linejoin: round;
-  }
   /* issue 056: the back arrow replaces the V on the teachers page. It is
      state-gated (#layout.is-list), never focus-gated, so an outside-tap
      blur leaves the list with a visible way back; it hides with the menu. */
@@ -590,10 +570,7 @@ html { background: var(--md-surface, #fff); }
     stroke-linecap: round; stroke-linejoin: round;
   }
   /* the clear "x" is shown only while the filter holds text: JS toggles the
-     [hidden] attribute, and #searchClear[hidden] above beats this id rule.
-     At right: 0 it fills the rightmost slot whenever the focus-gated V is off
-     screen (an unfocused field holding text leaves no hole); the stacking rule
-     below steps it one slot left, immediately beside the V, when both show. */
+     [hidden] attribute, and #searchClear[hidden] above beats this id rule. */
   #searchClear {
     align-items: center; justify-content: center;
     position: absolute; right: 0; top: 0; bottom: 0; width: 2.7rem;
@@ -605,18 +582,7 @@ html { background: var(--md-surface, #fff); }
     width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
     stroke-linecap: round; stroke-linejoin: round;
   }
-  /* stack the two controls on the right edge: the V owns right: 0, so the X
-     yields that slot only while the focus-gated V is actually on screen and
-     sits immediately to the V's left; when the V hides again the X slides back
-     to right: 0 instead of leaving a hole where the V would be. Classes page
-     only (issue 056): the V is dead on teachers, so the stepping rule (and
-     its double gutter) would leave a phantom 2.7rem hole there. */
-  body[data-page="classes"] #searchWrap:focus-within:has(#searchClear:not([hidden])) #searchClear { right: 2.7rem; }
-  /* reserve one control slot by default; only both controls at once (a focused
-     field that also holds text) need the double gutter, so typed text, the ghost
-     completion and its --ghost-pre inset never run underneath a control. */
   #search { padding-right: 2.7rem; }
-  body[data-page="classes"] #searchWrap:focus-within:has(#searchClear:not([hidden])) #search { padding-right: 5.4rem; }
   /* exactly one clear affordance on mobile: suppress the engine native cancel */
   #search::-webkit-search-cancel-button, #search::-webkit-search-decoration {
     -webkit-appearance: none; appearance: none; display: none;
