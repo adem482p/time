@@ -207,12 +207,10 @@ body[data-page="classes"] .author-credit span {
    ordinary block formatting. */
 #detail:has(.empty-state) { display: flex; flex-direction: column; }
 
-/* ---- detail: summary + session table ---- */
+/* ---- detail: mostly/count lines + session table ---- */
 #detail { margin-top: 1rem; }
 #detail .mostly { color: var(--md-on-surface-variant, #666); font-size: .85em; margin: .1rem 0; }
-#detail .summary { color: var(--md-on-surface, #333); font-size: .95em; margin: .4rem 0; }
 #detail .count { color: var(--md-on-surface-variant, #666); font-size: .85em; margin: .5rem 0 .2rem; }
-#detail em { font-style: normal; font-weight: 600; } /* emphasis (color engine) */
 #detail .nomatch, #detail .empty { color: var(--md-on-surface-variant, #555); font-style: italic; }
 
 /* ---- vendored kaomoji webfonts -------------------------------------------
@@ -391,7 +389,7 @@ html { background: var(--md-surface, #fff); }
 /* ---- desktop: pull the now/next gutter outside the detail box ----
    The marker column is the exception: reserve it as --gutter, then shift the
    whole table left by exactly that much (cancelling the reservation) so the
-   table's first *content* column (Day) — and the name/summary/count text above
+   table's first *content* column (Day) — and the name/mostly text above
    it — start at the detail box's left edge, while only the gutter hangs into
    the layout gap. Overflows stay visible so the hanging gutter is not clipped. */
 @media (min-width: 701px) {

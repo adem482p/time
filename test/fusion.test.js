@@ -159,16 +159,10 @@ test('fused output stays sorted by cmpFusedSession across runs', function () {
 
 // ---- clock-driven consumers at Fri 12h00 -------------------------------------------
 
-test('singleton nextSessionIdx and single-capsule teacherSummary at Fri 12:00', function () {
+test('singleton nextSessionIdx marks the earliest next occurrence at Fri 12:00', function () {
   var fused = fusedOf('Dlima');
   var at = fri(12, 0);
   assert.deepStrictEqual(main(Array.from(model.nextSessionIdx(fused, at))), [8]);
-  var summary = model.teacherSummary('Dlima', fused, at);
-  assert.strictEqual(summary,
-    '<em>"Dlima"</em> is not teaching right now. Next class is ' +
-    '<em>"today"</em> at <em>"13h20-14h50"</em> in <em>"FSEG-INFO1"</em> for ' +
-    '<em>"LBC1-A Groupe 2"</em> (<em>"Intro Analyse, Vis données"</em>).');
-  assert.ok(summary.indexOf(' / ') === -1, 'single next capsule, no join');
 });
 
 // ---- week-union rule: synthetic -----------------------------------------------------
@@ -282,7 +276,16 @@ test('joined rooms escape exactly once', function () {
   assert.strictEqual(out[0].room, 'A<b> or B&"');
   assert.strictEqual(data.esc(out[0].room), 'A&lt;b&gt; or B&amp;&quot;');
   assert.ok(data.esc(out[0].room).indexOf('&amp;amp;') === -1, 'no double escape');
-  var summary = model.teacherSummary('P', out, fri(12, 0));
-  assert.ok(summary.indexOf('A&lt;b&gt; or B&amp;&quot;') !== -1, 'summary escapes once');
-  assert.ok(summary.indexOf('&amp;lt;') === -1, 'summary never double-escapes');
+});
+
+// ---- the retired live-summary machinery stays gone ---------------------
+
+test('the summary machinery stays removed from code, color and CSS', function () {
+  assert.strictEqual(typeof model.teacherSummary, 'undefined');
+  assert.strictEqual(model.EN_DAY, undefined);
+  assert.ok(fs.readFileSync(path.join(ROOT, 'js/color.js'), 'utf8').indexOf('emph') === -1,
+    'color.js keeps no emphasis hook or emph class');
+  var css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+  assert.ok(css.indexOf('#detail .summary') === -1, 'dead .summary selector stays gone');
+  assert.ok(css.indexOf('#detail em') === -1, 'dead #detail em rule stays gone');
 });

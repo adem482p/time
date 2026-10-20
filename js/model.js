@@ -1,9 +1,9 @@
 // js/model.js — Layer 2: analysis layer.
 // Domain objects (Teacher / Subject) with their methods, the corpus-wide
 // class Grouping (js/libgroups.js), per-teacher class projections, session
-// fusion + pill reduction, schedule helpers (now/next/availability), and
-// the pure teacher-summary sentence builder. Pure data in, plain values
-// out: everything here is unit-testable in node against the real CSV.
+// fusion + pill reduction, and schedule helpers (now/next/availability).
+// Pure data in, plain values out: everything here is unit-testable in node
+// against the real CSV.
 var TT = TT || {};
 TT.model = (function () {
   var Groups = TT.groups;                 // js/libgroups.js (loaded first)
@@ -404,8 +404,6 @@ TT.model = (function () {
 
   var JS_DAY = ['DIMANCHE', 'LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
   var DAY_IDX = { LUNDI: 1, MARDI: 2, MERCREDI: 3, JEUDI: 4, VENDREDI: 5, SAMEDI: 6 };
-  var EN_DAY = { LUNDI: 'Monday', MARDI: 'Tuesday', MERCREDI: 'Wednesday',
-    JEUDI: 'Thursday', VENDREDI: 'Friday', SAMEDI: 'Saturday', DIMANCHE: 'Sunday' };
 
   // French day names display lowercase (lundi..samedi); data stays uppercase.
   function frDay(d) { return String(d).toLowerCase(); }
@@ -531,70 +529,6 @@ TT.model = (function () {
     return days.slice(i).concat(days.slice(0, i));
   }
 
-  // ---- teacher summary sentence (issues 006/008 semantics) ---------------
-
-  // Wrap an interpolated data value: HTML-escaped inside literal
-  // <em>"…"</em> (tags and quotes unescaped).
-  function em(v) { return '<em>"' + TT.data.esc(v) + '"</em>'; }
-
-  // Room cell: real data is emphasized; the '—' absence marker stays plain.
-  function roomHtml(room) { return room ? em(room) : '—'; }
-
-  // Like joinPills but wraps each pill individually; separators stay outside.
-  function joinPillsEm(pills) {
-    pills = pills || [];
-    var e = pills.map(function (p) { return em(p); });
-    if (e.length <= 1) return e.join('');
-    if (e.length === 2) return e[0] + ' and ' + e[1];
-    return e.slice(0, -1).join(', ') + ' and ' + e[e.length - 1];
-  }
-
-  // Day phrasing for a next occurrence, driven by `ahead` whole days:
-  // 0 -> "today", 1 -> "tomorrow", 2-6 -> "on <Weekday>", 7 -> "next <Weekday>".
-  function nextDayPhrase(s, now) {
-    var ahead = Math.floor(nextKey(s, now) / 1440);
-    if (ahead <= 0) return 'today';
-    if (ahead === 1) return 'tomorrow';
-    if (ahead >= 7) return 'next ' + EN_DAY[s.day];
-    return 'on ' + EN_DAY[s.day];
-  }
-
-  function nowCapsule(s) {
-    return em(s.subject) + ' in ' + roomHtml(s.room) + ' for ' +
-      joinPillsEm(s.pills || s.fields || []);
-  }
-
-  function nextCapsule(s, now) {
-    return em(nextDayPhrase(s, now)) + ' at ' + em(s.time) + ' in ' +
-      roomHtml(s.room) + ' for ' + joinPillsEm(s.pills || s.fields || []) +
-      ' (' + em(s.subject) + ')';
-  }
-
-  // Pure summary sentence for a teacher's fused sessions at `now`.
-  // Returns HTML: each substituted element is wrapped as <em>"esc(value)"</em>;
-  // scaffolding and separators stay plain. The caller inserts the result
-  // without esc(). No gendered pronouns; the teacher name is the subject.
-  function teacherSummary(name, fusedSessions, now) {
-    now = now || new Date();
-    var ss = fusedSessions || [];
-    if (!ss.length) return em(name) + ' is not teaching right now.';
-    var currents = ss.filter(function (s) { return isCurrentSession(s.day, s.time, now); });
-    var upcoming = Array.from(nextSessionIdx(ss, now)).sort(function (a, b) { return a - b; })
-      .map(function (i) { return ss[i]; });
-    var nextPart = 'Next class is ' + upcoming.map(function (s) {
-      return nextCapsule(s, now);
-    }).join(' / ') + '.';
-    if (currents.length) {
-      return 'Right now ' + em(name) + ' is teaching ' +
-        currents.map(nowCapsule).join('; also teaching ') + '. ' + nextPart;
-    }
-    var today = JS_DAY[now.getDay()];
-    if (!ss.some(function (s) { return s.day === today; })) {
-      return 'No class today (' + em(EN_DAY[today]) + '). ' + nextPart;
-    }
-    return em(name) + ' is not teaching right now. ' + nextPart;
-  }
-
   return {
     normStr: normStr, cmpByte: cmpByte, localeCmp: localeCmp, hoursLabel: hoursLabel,
     buildGroups: buildGroups, buildTeacherClasses: buildTeacherClasses,
@@ -603,11 +537,10 @@ TT.model = (function () {
     fusionKey: fusionKey,
     fuseSessions: fuseSessions, cmpSession: cmpSession, cmpFusedSession: cmpFusedSession,
     classWeek: classWeek,
-    JS_DAY: JS_DAY, DAY_IDX: DAY_IDX, EN_DAY: EN_DAY, frDay: frDay,
+    JS_DAY: JS_DAY, DAY_IDX: DAY_IDX, frDay: frDay,
     slotMinutes: slotMinutes, isCurrentSession: isCurrentSession,
     dayCursor: dayCursor,
     nextKey: nextKey, nextSessionIdx: nextSessionIdx, availability: availability,
-    startFromToday: startFromToday,
-    teacherSummary: teacherSummary
+    startFromToday: startFromToday
   };
 })();

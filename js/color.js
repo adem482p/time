@@ -1,6 +1,6 @@
 // js/color.js — Layer 4: color engine.
 // One consistent set of coloring rules for everything in the UI: day
-// groups, now/next, availability, dim, emphasis. Pages never invent
+// groups, now/next, availability, dim. Pages never invent
 // color-ish class names ad hoc — they map state to class lists here, and
 // styles.css is the single visual definition of the vocabulary.
 var TT = TT || {};
@@ -14,7 +14,6 @@ TT.color = (function () {
     today: 'today',             // today's day group
     dayStart: 'daystart',       // first row of a day block (strong separator)
     active: 'active',           // selected list/detail row
-    emph: 'emph',               // emphasis (quoted, highlighted values)
     exact: 'exact',             // exact match (live list)
     partial: 'partial',         // partial match (live list)
     match: 'match'              // highlighted match inside a label
@@ -82,14 +81,10 @@ TT.color = (function () {
     return c;
   }
 
-  // Emphasis hook for interpolated values (paired with the summary's
-  // <em> elements; see styles.css).
-  function emphasis() { return [C.emph]; }
-
   return {
     CLASSES: C,
     sessionRow: sessionRow, dayGroup: dayGroup, slotEntry: slotEntry,
     teacherItem: teacherItem, classItem: classItem, weekCell: weekCell,
-    suggestion: suggestion, emphasis: emphasis
+    suggestion: suggestion
   };
 })();

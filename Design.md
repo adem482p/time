@@ -159,10 +159,8 @@ teacher teaching?" at a glance, and can be filtered by day or teacher.
 A view with teachers as the main object. The teacher list is searchable and
 filterable live; teachers available today are raised to the top. Selecting a
 teacher reveals their week: sessions grouped by day, the current and next session
-highlighted, and days with no live stake dimmed. A generated summary states, in
-one sentence, what the teacher is doing right now and when their next class is.
-The same view adapts to narrow screens: the list and the session table collapse
-into stacked cards.
+highlighted, and days with no live stake dimmed. The same view adapts to narrow
+screens: the list and the session table collapse into stacked cards.
 
 ## Service: Time
 
