@@ -125,14 +125,24 @@ TT.model = (function () {
     this.sessions = sessions;
     this.totalSessions = sessions.length;
     this.totalHours = this.totalSessions * HOURS;
-    var sc = {}, i;
-    for (i = 0; i < sessions.length; i++)
-      sc[sessions[i].subject] = (sc[sessions[i].subject] || 0) + 1;
+    // Issue 053: subject counting is case/whitespace-insensitive —
+    // buckets are keyed by normStr(subject) (this file's header
+    // contract), one row per subject across all case/whitespace
+    // spellings. The displayed label is the byte-smallest spelling this
+    // teacher is scheduled under (cmpByte, the locale-independent
+    // canonical-key comparator); rankings tie-break on that label,
+    // exactly like before.
+    var sc = {}, lab = {}, k, i;
+    for (i = 0; i < sessions.length; i++) {
+      k = normStr(sessions[i].subject);
+      sc[k] = (sc[k] || 0) + 1;
+      if (!(k in lab) || cmpByte(sessions[i].subject, lab[k]) < 0) lab[k] = sessions[i].subject;
+    }
     this.subjectCounts = sc;
     // subjects ranked by hours, ties byte-alphabetical, share of total
     this.subjects = Object.keys(sc).sort(function (a, b) {
-      return (sc[b] - sc[a]) || cmpByte(a, b);
-    }).map(function (s) { return new Subject(s, sc[s], this.totalSessions); }, this);
+      return (sc[b] - sc[a]) || cmpByte(lab[a], lab[b]);
+    }).map(function (s) { return new Subject(lab[s], sc[s], this.totalSessions); }, this);
     this.topSubject = this.subjects.length ? this.subjects[0] : null;
     // class summary (libgroups): per-teacher projected tree + top spec slot
     this.classStats = grouping ? buildTeacherClasses(grouping, sessions) : null;
