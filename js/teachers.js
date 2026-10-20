@@ -194,9 +194,9 @@ TT.app = (function () {
       syncDeselect();
     }
 
-    // deselect "x" (issue 060): while a teacher is selected and the filter is
-    // empty, the whole box becomes this button (desktop CSS only; narrow
-    // armours it off — its deselect chrome is #overlayClear). Facts-only
+    // deselect back arrow (issues 060, 064): while a teacher is selected and
+    // the filter is empty, the whole box becomes this button (desktop CSS only;
+    // narrow armours it off — its deselect chrome is #overlayClear). Facts-only
     // derivation: no menuOpen, no focus, no viewport test — CSS alone picks
     // the rendering. Keyboard emptying still deselects (pinned 056); the
     // clear X does not (pinned 060).
@@ -525,7 +525,7 @@ TT.app = (function () {
     // deselects through onInput (pinned 056 ruling 5) — a deliberate
     // divergence: the keyboard runs the live-search derivation (empty filter
     // derives no selection), the X is an explicit erase-only command whose
-    // landing state (selected + empty) immediately presents the deselect X.
+    // landing state (selected + empty) immediately presents the deselect arrow.
     function eraseFilter() {
       search.value = '';
       syncClear();
@@ -663,9 +663,10 @@ TT.app = (function () {
         eraseFilter();
       });
     }
-    // the deselect X (issue 060): shows while selected ∧ filter empty (state-
-    // gated, never hover-gated), covers the whole box; one press funnels
-    // through the one empty funnel, never focuses the box, never erases
+    // the deselect back arrow (issues 060, 064): shows while selected ∧
+    // filter empty (state-gated, never hover-gated), covers the whole box;
+    // one press funnels through the one empty funnel, never focuses the box,
+    // never erases
     if (searchDeselect) {
       searchDeselect.addEventListener('mousedown', function (e) { e.preventDefault(); });
       searchDeselect.addEventListener('click', function () { showEmpty(); });
