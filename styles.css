@@ -141,13 +141,54 @@ body[data-page="classes"] .author-credit span {
 #search, #ghost {
   font-family: "Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
-#searchClear { display: none; }
+/* the X slot (issue 060): the input text and the ghost completion both clear
+   the clear-button gutter on every viewport. Kept as its own exact lines
+   (the #search one is a pinned literal). */
+#search { padding-right: 2.7rem; }
+#ghost { padding-right: 2.7rem; }
+/* the clear X (issue 060), every viewport: shown only while the filter holds
+   text — JS toggles the [hidden] attribute, and the [hidden] rule below beats
+   this id rule. It erases the filter only (eraseFilter); it never deselects. */
+#searchClear {
+  display: flex; align-items: center; justify-content: center;
+  position: absolute; right: 0; top: 0; bottom: 0; width: 2.7rem;
+  border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
+  cursor: pointer; z-index: 2;
+}
+#searchClear:active { color: var(--md-primary, #0b4da2); }
+#searchClear svg {
+  width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+/* the deselect X (issue 060): while a teacher/class is selected and the
+   filter is empty, the whole box becomes this button — opaque with the wrap's
+   8px radius (issue 057's lesson: the overlay takes the wrap's chrome or it
+   reads as a square patch). Narrow never renders it: its deselect chrome is
+   #overlayClear (armour at the end of the narrow block). */
+#searchDeselect {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--md-surface-container-lowest, #fff); border: 0;
+  border-radius: 8px; color: var(--md-on-surface-variant, #555);
+  cursor: pointer;
+}
+#searchDeselect:active { color: var(--md-primary, #0b4da2); }
+#searchDeselect svg {
+  width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+/* exactly one cancel affordance on every viewport: the app owns the X — the
+   engine's native cancel/decoration is suppressed here, once, at base */
+#search::-webkit-search-cancel-button, #search::-webkit-search-decoration {
+  -webkit-appearance: none; appearance: none; display: none;
+}
 /* mobile nav chrome (issue 056): desktop never shows it; the narrow block may */
 #searchBack { display: none; }
 #searchOverlay { display: none; }
-/* JS sets [hidden] while the filter is empty; the id rules here (and the
-   mobile display:flex below) would otherwise outrank the UA [hidden] default. */
+/* JS sets [hidden] while the filter is empty; the id rules above (flex +
+   absolute geometry) would otherwise outrank the UA [hidden] default. */
 #searchClear[hidden] { display: none; }
+#searchDeselect[hidden] { display: none; }
 #suggest {
   position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
   list-style: none; margin: 0; padding: 0;
@@ -586,24 +627,9 @@ html { background: var(--md-surface, #fff); }
     fill: none; stroke: var(--md-on-surface-variant, #555); stroke-width: 2.4;
     stroke-linecap: round; stroke-linejoin: round;
   }
-  /* the clear "x" is shown only while the filter holds text: JS toggles the
-     [hidden] attribute, and #searchClear[hidden] above beats this id rule. */
-  #searchClear {
-    align-items: center; justify-content: center;
-    position: absolute; right: 0; top: 0; bottom: 0; width: 2.7rem;
-    border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
-    cursor: pointer; z-index: 2; display: flex;
-  }
-  #searchClear:active { color: var(--md-primary, #0b4da2); }
-  #searchClear svg {
-    width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
-    stroke-linecap: round; stroke-linejoin: round;
-  }
-  #search { padding-right: 2.7rem; }
-  /* exactly one clear affordance on mobile: suppress the engine native cancel */
-  #search::-webkit-search-cancel-button, #search::-webkit-search-decoration {
-    -webkit-appearance: none; appearance: none; display: none;
-  }
+  /* the desktop deselect-X (issue 060) never renders on narrow: the deselect
+     chrome here is #overlayClear (state=teacher/class) */
+  #searchDeselect { display: none; }
   #teacherList { max-width: none; max-height: none; border: 0; overflow: visible; }
   /* flattened rows: simple line separators, not self-enclosed cards.
      Negative side margins + matching padding make each separator run

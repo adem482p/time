@@ -73,6 +73,7 @@ TT.app = (function () {
     var overlayName = document.getElementById('overlayName');
     var overlayClear = document.getElementById('overlayClear');
     var searchClear = document.getElementById('searchClear');
+    var searchDeselect = document.getElementById('searchDeselect');
     var ghost = document.getElementById('ghost');
     var ghostTyped = document.getElementById('ghostTyped');
     var ghostPre = document.getElementById('ghostPre');
@@ -119,8 +120,22 @@ TT.app = (function () {
       if (menuOpen) layout.classList.add('is-list');
       else layout.classList.remove('is-list');
     }
+    // clear "x" (issue 060), every viewport: shown only while the filter holds
+    // text. Called wherever search.value can change (typing, commit, selection,
+    // clear, boot). The X only ever erases (eraseFilter) — it never deselects.
     function syncClear() {
       if (searchClear) searchClear.hidden = !search.value;
+      syncDeselect();
+    }
+
+    // deselect "x" (issue 060): while a class is selected and the filter is
+    // empty, the whole box becomes this button (desktop CSS only; narrow
+    // armours it off — its deselect chrome is #overlayClear). Facts-only
+    // derivation: no menuOpen, no focus, no viewport test — CSS alone picks
+    // the rendering. Keyboard emptying still deselects (pinned 058); the
+    // clear X does not (pinned 060).
+    function syncDeselect() {
+      if (searchDeselect) searchDeselect.hidden = !(selectedClass !== null && search.value === '');
     }
 
     // The name overlay belongs to the 'class' state: hidden unless a
@@ -128,6 +143,7 @@ TT.app = (function () {
     function syncOverlay() {
       searchOverlay.hidden = selectedClass === null || menuOpen;
       if (selectedClass !== null) overlayName.textContent = selectedClass;
+      syncDeselect();
     }
 
     // menu edges: the list is open or not — blur writes neither fact
@@ -549,6 +565,25 @@ TT.app = (function () {
       });
     }
 
+    // erase-only funnel (issue 060): the clear X lands here, never in
+    // onInput()/commit() — emptying the box this way must NOT deselect. The
+    // body is commit's empty branch minus showEmpty(): full leaf catalogue
+    // from the empty query, suggest/ghost dropped, pane flag re-synced, no
+    // selection fact written (renderList re-applies the active mark from
+    // activeKey — unlike teachers' renderItem, hence no markActive here).
+    // Keyboard emptying still deselects through onInput (pinned 058 ruling 5)
+    // — a deliberate divergence: the keyboard runs the live-search derivation
+    // (empty filter derives no selection), the X is an explicit erase-only
+    // command whose landing state (selected + empty) presents the deselect X.
+    function eraseFilter() {
+      search.value = '';
+      syncClear();
+      renderSuggest([]);
+      renderGhost();
+      renderList(leafRows(match.classSearch(index, '')));
+      syncList();
+    }
+
     function onInput() {
       var q = search.value;
       syncClear();
@@ -672,17 +707,24 @@ TT.app = (function () {
       showEmpty();
     });
 
-    // the mobile X erases the filter in the list/empty states (empty query
-    // -> full catalogue + emoticon detail); it no longer arms the menu —
-    // class-state deselect is #overlayClear. mousedown is prevented so
-    // the button never takes focus.
+    // the clear X erases the filter only — every viewport, every state
+    // (issue 060): it never deselects and never arms the menu. Deselect is a
+    // dedicated control: #searchDeselect (desktop, selected + empty filter),
+    // #overlayClear (narrow class state); keyboard emptying keeps its
+    // pinned deselect through onInput. mousedown is prevented so the button
+    // never takes focus.
     if (searchClear) {
       searchClear.addEventListener('mousedown', function (e) { e.preventDefault(); });
       searchClear.addEventListener('click', function () {
-        search.value = '';
-        syncClear();
-        commit();
+        eraseFilter();
       });
+    }
+    // the deselect X (issue 060): shows while selected ∧ filter empty (state-
+    // gated, never hover-gated), covers the whole box; one press funnels
+    // through the one empty funnel, never focuses the box, never erases
+    if (searchDeselect) {
+      searchDeselect.addEventListener('mousedown', function (e) { e.preventDefault(); });
+      searchDeselect.addEventListener('click', function () { showEmpty(); });
     }
 
     // initial paint: full leaf catalogue, empty detail

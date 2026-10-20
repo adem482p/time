@@ -1200,3 +1200,102 @@ test('the theme button carries a media-gated data-tip tooltip (issue 059)', func
   assert.ok(src.indexOf("setAttribute('title'") === -1,
     'js/theme.js must never write the native title');
 });
+
+// ---- clear/deselect X split (issue 060) --------------------------------------
+
+test('classes mirrors the clear/deselect X split (issue 060)', function () {
+  // markup: the new deselect button sits between the clear X and the overlay
+  var html = readPage('classes.html');
+  var clr = html.indexOf('id="searchClear"');
+  var des = html.indexOf('id="searchDeselect"');
+  var ov = html.indexOf('id="searchOverlay"');
+  assert.ok(clr !== -1 && des !== -1 && ov !== -1, 'markup ids present');
+  assert.ok(clr < des && des < ov, '#searchDeselect sits between #searchClear and #searchOverlay');
+  // shared CSS, verified from classes (house style): the engine cancel button
+  // is suppressed once, at base; the narrow copy moved, it is not a duplicate
+  var css = readPage('styles.css');
+  var base = css.slice(0, css.indexOf('@media (max-width: 700px)'));
+  var narrow = css.slice(css.indexOf('@media (max-width: 700px)'));
+  assert.ok(base.indexOf('#search::-webkit-search-cancel-button') !== -1,
+    'the native cancel button is suppressed at base (app-wide, verified from classes)');
+  assert.ok(narrow.indexOf('#search::-webkit-search-cancel-button') === -1,
+    'the narrow suppression copy moved to base, it is not a duplicate');
+  // the app X owns the 2.7rem right slot on every viewport (the pinned
+  // single-line gutter now lives at base); the ghost clears the slot too
+  assert.ok(base.indexOf('#search { padding-right: 2.7rem; }') !== -1,
+    'the X slot gutter is base-level (verified from classes)');
+  assert.ok(narrow.indexOf('#search { padding-right: 2.7rem; }') === -1,
+    'the narrow gutter copy moved to base, it is not a duplicate');
+  assert.ok(base.indexOf('#ghost { padding-right: 2.7rem; }') !== -1,
+    'the ghost completion clears the X slot as well');
+  assert.strictEqual(base.indexOf('#searchClear { display: none; }'), -1,
+    'the clear X is no longer armour-plated off desktop');
+  // the deselect X overlays the whole box at base; narrow armours it off
+  var desAt = base.indexOf('#searchDeselect {');
+  assert.ok(desAt !== -1, 'base deselect-X rule present');
+  var desRule = base.slice(desAt, base.indexOf('}', desAt));
+  assert.ok(desRule.indexOf('position: absolute') !== -1,
+    'the deselect-X covers the whole box (left/top/right/bottom 0)');
+  assert.ok(base.indexOf('#searchDeselect[hidden] { display: none; }') !== -1,
+    'the deselect-X honours its [hidden] attribute at base');
+  assert.ok(narrow.split('\n').some(function (line) {
+    return line.trim() === '#searchDeselect { display: none; }';
+  }), 'narrow armours the desktop deselect-X off (its chrome is #overlayClear)');
+  // JS: syncDeselect derives from the two facts only (I2)
+  var src = CLASSES_SRC;
+  function body(sig) {
+    var start = src.indexOf(sig);
+    assert.ok(start !== -1, sig + ' found');
+    var end = src.indexOf('\n    }', start);
+    assert.ok(end !== -1, sig + ' bounds');
+    return src.slice(start, end + '\n    }'.length);
+  }
+  var sd = body('function syncDeselect()');
+  assert.ok(sd.indexOf('searchDeselect.hidden = !(') !== -1,
+    'syncDeselect derives the [hidden] attribute');
+  assert.ok(sd.indexOf('selectedClass !== null') !== -1, 'keyed on the selection fact');
+  assert.ok(sd.indexOf("search.value === ''") !== -1, 'keyed on the empty value');
+  assert.ok(sd.indexOf('menuOpen') === -1, 'never keyed on the menu');
+  // both syncs that sit on every fact/value write compose it (I2 stays live)
+  assert.ok(body('function syncClear()').indexOf('syncDeselect();') !== -1,
+    'syncClear composes syncDeselect');
+  assert.ok(body('function syncOverlay()').indexOf('syncDeselect();') !== -1,
+    'syncOverlay composes syncDeselect');
+  // eraseFilter: commit's empty branch minus showEmpty, no funnel writes (I5)
+  var ef = body('function eraseFilter()');
+  ["search.value = '';", 'syncClear();', 'renderSuggest([])', 'renderGhost();',
+   'syncList();'].forEach(function (tok) {
+    assert.ok(ef.indexOf(tok) !== -1, 'eraseFilter: ' + tok);
+  });
+  assert.ok(ef.indexOf("leafRows(match.classSearch(index, ''))") !== -1,
+    'eraseFilter re-renders the full leaf catalogue from the empty query');
+  assert.ok(ef.indexOf('markActive') === -1,
+    'the re-render re-applies the mark from activeKey itself');
+  ['showEmpty', 'selectTeacher(', 'selectClass(', 'isCoarsePointer', 'matchMedia'].forEach(function (tok) {
+    assert.ok(ef.indexOf(tok) === -1, 'eraseFilter must not touch ' + tok);
+  });
+  // the clear X calls eraseFilter and nothing else — never commit/onInput
+  var clrAt = src.indexOf("searchClear.addEventListener('click'");
+  assert.ok(clrAt !== -1, 'clear X handler found');
+  var clrH = src.slice(clrAt, src.indexOf('});', clrAt) + 3);
+  assert.ok(clrH.indexOf('eraseFilter();') !== -1, 'the X erases only');
+  ['commit()', 'showEmpty()', 'search.focus()'].forEach(function (tok) {
+    assert.ok(clrH.indexOf(tok) === -1, 'the X must not contain ' + tok);
+  });
+  // the deselect X funnels through the one empty funnel, never focuses
+  var desHAt = src.indexOf("searchDeselect.addEventListener('click'");
+  assert.ok(desHAt !== -1, 'deselect X handler found');
+  var desH = src.slice(desHAt, src.indexOf('});', desHAt) + 3);
+  assert.ok(desH.indexOf('showEmpty();') !== -1, 'the deselect X runs the empty funnel');
+  assert.ok(desH.indexOf('search.focus()') === -1, 'the deselect X never focuses the box');
+  // neither press may arm focus through mousedown
+  ['searchClear', 'searchDeselect'].forEach(function (id) {
+    var at = src.indexOf(id + ".addEventListener('mousedown'");
+    assert.ok(at !== -1, id + ' mousedown handler found');
+    assert.ok(src.slice(at, src.indexOf('});', at) + 3).indexOf('preventDefault') !== -1,
+      id + ' press never focuses the box');
+  });
+  // keyboard divergence: onInput's pinned empty branch is untouched (058)
+  assert.ok(body('function onInput()').indexOf('showEmpty();') !== -1,
+    'backspace-to-empty still deselects');
+});
