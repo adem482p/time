@@ -212,7 +212,6 @@ body[data-page="classes"] .author-credit span {
 #suggest .kind-subject { background: var(--md-secondary, #6a3fa0); color: var(--md-on-secondary, #fff); }
 #suggest .kind-teacher { background: var(--md-tertiary, #0b6e2f); color: var(--md-on-tertiary, #fff); }
 #suggest .alias { color: var(--md-on-surface-variant, #555); font-size: .82em; }
-#suggest .n, #teacherList .n { color: var(--md-on-surface-variant, #666); font-size: .85em; }
 
 /* ---- teacher list (single list, identical on all viewports) ---- */
 #teacherList {
@@ -225,6 +224,7 @@ body[data-page="classes"] .author-credit span {
   color: var(--md-on-secondary-container, #1b1b1b);
 }
 #teacherList li.empty { cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }
+#teacherList .relevant { color: var(--md-on-surface-variant, #666); font-size: .85em; }
 /* grouped-list section header rows (inserted by JS between teacher rows):
    non-clickable labels, never matched by the li hover/active rules. */
 #teacherList li.group-head {
@@ -751,7 +751,6 @@ html { background: var(--md-surface, #fff); }
   color: var(--md-on-secondary-container, #1b1b1b);
 }
 #classList li.empty { cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }
-#classList .n { color: var(--md-on-surface-variant, #666); font-size: .85em; }
 #classList .alias { color: var(--md-on-surface-variant, #555); font-size: .82em; }
 
 /* week grid */

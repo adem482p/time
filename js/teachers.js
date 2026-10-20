@@ -283,10 +283,9 @@ TT.app = (function () {
       cls.push(r.exact ? C.exact : C.partial);
       li.className = cls.join(' ');
       li.dataset.name = r.teacher;
-      var h = match.nameHTML(r.teacher, r.nameRanges) +
-        ' <span class="n">(' + store.sessionsOf(r.teacher).length + ')</span>';
+      var h = match.nameHTML(r.teacher, r.nameRanges);
       if (r.relevantSessions > 0)
-        h += ' <span class="n">(' + model.hoursLabel(r.relevantSessions) + ' relevant)</span>';
+        h += ' <span class="relevant">(' + model.hoursLabel(r.relevantSessions) + ' relevant)</span>';
       r.subjectMatches.slice(0, 3).forEach(function (m) {
         h += '<br><span class="fmatch">' + match.highlightHTML(m.label, m.ranges) + '</span>';
       });
@@ -460,8 +459,9 @@ TT.app = (function () {
           body = match.highlightHTML(r.label, r.ranges) +
             (r.detail ? ' <span class="alias">— ' + esc(r.detail) + '</span>' : '');
         } else if (r.kind === 'teacher') {
-          body = match.nameHTML(r.label, r.ranges) +
-            ' <span class="n">(' + store.sessionsOf(r.label).length + ')</span>';
+          // stays its own branch: teacher names redact via nameHTML (issue 061),
+          // subjects stay highlighted — the count badge was removed (issue 062)
+          body = match.nameHTML(r.label, r.ranges);
         } else {
           body = match.highlightHTML(r.label, r.ranges);
         }

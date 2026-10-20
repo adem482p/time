@@ -891,3 +891,28 @@ test('the clear X erases only, the deselect X deselects only (issue 060)', funct
       tag + ': backspace-to-empty still deselects');
   });
 });
+
+// ---- per-name session-count badges (issue 062) ------------------------------
+
+test('teacher rows carry no session-count badge, in the list and in suggest (issue 062)', function () {
+  // mirrors the classes-side negative pin (test/classes.test.js:864): the
+  // teachers page emits no `.n` span anywhere any more.
+  assert.ok(APP_SRC.indexOf('class="n"') === -1, 'no class="n" left in js/teachers.js');
+  assert.ok(APP_SRC.indexOf('store.sessionsOf(r.teacher).length') === -1,
+    'the list row no longer appends the session count');
+  assert.ok(APP_SRC.indexOf('store.sessionsOf(r.label).length') === -1,
+    'the suggest row no longer appends the session count');
+  // the badge styles die with the badges: the shared rule and the dead
+  // classes-page rule are both gone.
+  assert.ok(CSS_SRC.indexOf('#suggest .n') === -1, 'no #suggest .n rule');
+  assert.ok(CSS_SRC.indexOf('#teacherList .n') === -1, 'no #teacherList .n rule');
+  assert.ok(CSS_SRC.indexOf('#classList .n') === -1, 'the unconsumed #classList .n rule is gone');
+  assert.ok(!/[^a-zA-Z-]\.n\s*\{/.test(CSS_SRC), 'styles.css defines no .n rule at all');
+  // out of scope, still there: the exact-query relevant badge keeps its text
+  // and its styling (renamed from .n), and so do the detail counts and the
+  // status totals line.
+  assert.ok(APP_SRC.indexOf('class="relevant"') !== -1, 'the exact-query relevant badge stays');
+  assert.ok(CSS_SRC.indexOf('#teacherList .relevant') !== -1, 'the relevant badge keeps its styling');
+  assert.ok(APP_SRC.indexOf('class="hours"') !== -1, 'detail-page counts stay');
+  assert.ok(APP_SRC.indexOf("store.size + ' sessions · '") !== -1, 'the #status totals line stays');
+});
