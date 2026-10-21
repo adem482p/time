@@ -16,6 +16,7 @@ var test = require('node:test');
 var assert = require('node:assert');
 var fs = require('node:fs');
 var path = require('node:path');
+var zlib = require('node:zlib');
 
 var ROOT = path.join(__dirname, '..');
 var PAGES = ['index.html', 'classes.html', 'time.html', 'timetable.html'];
@@ -190,5 +191,106 @@ test('the manifest is served as JSON by filename — no .webmanifest MIME trap (
   var m = readManifest();
   m.icons.forEach(function (i) {
     assert.ok(/\.png$/.test(i.src), 'icon src must keep a .png extension for MIME safety: ' + i.src);
+  });
+});
+
+// ---- issue 069: the ISIMa logo icon set -----------------------------------
+
+// Decode an 8-bit opaque-RGB PNG down to raw RGB triples, in pure node:
+// walk the chunks, inflate the IDAT stream, then un-scanline the per-row
+// filters (0..4). This lets the safe-zone test below measure the REAL pixels
+// the OS will crop, not the authoring intent.
+function decodePngRgb(rel) {
+  var ihdr = pngIhdr(rel);
+  assert.strictEqual(ihdr.colorType, 2, rel + ' must be opaque RGB (no alpha)');
+  var buf = fs.readFileSync(path.join(ROOT, rel));
+  assert.strictEqual(buf[24], 8, rel + ' must be 8-bit');
+  var off = 8, idat = [], w = ihdr.width, h = ihdr.height;
+  while (off < buf.length) {
+    var len = buf.readUInt32BE(off);
+    var type = buf.toString('latin1', off + 4, off + 8);
+    if (type === 'IDAT') idat.push(buf.subarray(off + 8, off + 8 + len));
+    if (type === 'IEND') break;
+    off += 12 + len;
+  }
+  var raw = zlib.inflateSync(Buffer.concat(idat));
+  var bpp = 3, stride = w * bpp, out = Buffer.alloc(stride * h);
+  for (var y = 0; y < h; y++) {
+    var f = raw[y * (stride + 1)];
+    var src = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1));
+    var cur = out.subarray(y * stride, (y + 1) * stride);
+    var prev = y ? out.subarray((y - 1) * stride, y * stride) : null;
+    for (var x = 0; x < stride; x++) {
+      var a = x >= bpp ? cur[x - bpp] : 0;
+      var b = prev ? prev[x] : 0;
+      var c = (prev && x >= bpp) ? prev[x - bpp] : 0;
+      var v = src[x];
+      if (f === 1) v += a;
+      else if (f === 2) v += b;
+      else if (f === 3) v += (a + b) >> 1;
+      else if (f === 4) {
+        var p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+        v += (pa <= pb && pa <= pc) ? a : (pb <= pc ? b : c);
+      }
+      cur[x] = v & 0xff;
+    }
+  }
+  return out;
+}
+
+test('the maskable icon keeps the ISIMa logo inside the safe zone, full-bleed (issue 069)', function () {
+  // The OS crops a maskable icon to a circle/squircle: every ink pixel must
+  // live in the inner 80% circle (radius 204.8 px at 512) and the background
+  // must reach every edge (an alpha channel or letterboxed gap would show as
+  // junk). Measure that against the committed PNG's real pixels.
+  var m = readManifest();
+  var maskable = m.icons.filter(function (i) {
+    return i.purpose && i.purpose.split(/\s+/).indexOf('maskable') !== -1;
+  });
+  assert.strictEqual(maskable.length, 1, 'exactly one maskable icon');
+  var w = 512, h = 512, px = decodePngRgb(maskable[0].src);
+  // Full-bleed background of assets/icon-maskable.svg: ISIM Blue gradient
+  // #0b4da2 (top) -> #052455 (bottom).
+  var top = [0x0b, 0x4d, 0xa2], bot = [0x05, 0x24, 0x55], tol = 25;
+  var ink = 0, maxDist = 0;
+  function delta(x, y) {
+    var t = (y + 0.5) / h, i = (y * w + x) * 3, d = 0;
+    for (var ch = 0; ch < 3; ch++) {
+      d = Math.max(d, Math.abs(px[i + ch] - (top[ch] + (bot[ch] - top[ch]) * t)));
+    }
+    return d;
+  }
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      if (delta(x, y) > tol) {
+        ink++;
+        var dist = Math.sqrt((x + 0.5 - w / 2) * (x + 0.5 - w / 2) + (y + 0.5 - h / 2) * (y + 0.5 - h / 2));
+        if (dist > maxDist) maxDist = dist;
+      }
+    }
+  }
+  assert.ok(ink > 10000, 'the logo artwork must actually be on the maskable icon (ink px: ' + ink + ')');
+  assert.ok(maxDist <= 204.8,
+    'every ink pixel must stay in the maskable safe zone: ' + maxDist.toFixed(1) + ' px from centre');
+  [[1, 1], [w - 2, 1], [1, h - 2], [w - 2, h - 2]].forEach(function (c) {
+    assert.ok(delta(c[0], c[1]) <= tol,
+      'corner must be full-bleed background, not artwork or a gap: ' + c);
+  });
+});
+
+test('the committed icon art is the official ISIMa logo (issue 069)', function () {
+  // Provenance pin: the verbatim download and both compositions share the
+  // official lockup's viewBox, and every shipped PNG is real art (the file
+  // sizes moved from ~1.4-3.0 KB monogram to ~8-28 KB logo bytes).
+  var logo = readSrc('assets/isima-logo.svg');
+  assert.ok(logo.length > 10000, 'the verbatim official logo must be kept');
+  assert.ok(logo.indexOf('301.26 231.42') !== -1, 'official lockup viewBox');
+  ['assets/icon.svg', 'assets/icon-maskable.svg'].forEach(function (f) {
+    var src = readSrc(f);
+    assert.ok(src.indexOf('301.26 231.42') !== -1, f + ' must embed the official lockup');
+  });
+  ['assets/icon-192.png', 'assets/icon-512.png', 'assets/icon-maskable-512.png',
+    'assets/apple-touch-icon.png'].forEach(function (f) {
+    assert.ok(fs.statSync(path.join(ROOT, f)).size > 4096, f + ' must be real logo art, not a stub');
   });
 });
