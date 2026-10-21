@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Maskable app icon source (issue 068): same mark as assets/icon.svg
+       scaled 0.75 about the canvas centre, so the whole glyph stays inside
+       the Android maskable safe zone (inner 80% circle) when the OS crops it
+       to a circle/squircle. Background stays full-bleed and opaque.
+       Generate with:
+       rsvg-convert -w 512 -h 512 assets/icon-maskable.svg -o assets/icon-maskable-512.png -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b4da2"/>
+      <stop offset="1" stop-color="#052455"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="translate(256 256) scale(0.75) translate(-256 -256)">
+    <g fill="#ffffff">
+      <rect x="156" y="84" width="44" height="284"/>
+      <rect x="156" y="84" width="200" height="44"/>
+      <rect x="156" y="204" width="160" height="44"/>
+      <rect x="156" y="324" width="200" height="44"/>
+    </g>
+    <rect x="156" y="406" width="140" height="22" rx="11" fill="#7fb2ff"/>
+  </g>
+</svg>

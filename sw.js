@@ -6,13 +6,16 @@
 // Dev escape hatch when the worker gets in the way (browser console):
 //   navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
 //   caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
-var CACHE = 'emplois-v1';           // bump the suffix whenever PRECACHE or the
+var CACHE = 'emplois-v2';           // bump the suffix whenever PRECACHE or the
                                     // handler semantics change (forces a full
                                     // rebuild + wipes the old cache on activate)
 var PRECACHE = [
   './',
   'index.html', 'classes.html', 'time.html', 'timetable.html',
   'styles.css',
+  'manifest.json',
+  'assets/icon-192.png', 'assets/icon-512.png',
+  'assets/icon-maskable-512.png', 'assets/apple-touch-icon.png',
   'js/register.js',
   'js/data.js', 'js/libgroups.js', 'js/model.js', 'js/match.js',
   'js/theme.js', 'js/color.js', 'js/teachers.js', 'js/classes.js', 'js/app.js',
@@ -23,7 +26,7 @@ var PRECACHE = [
 ];
 
 // One shared in-flight precache/rebuild promise: install's addAll, a network
-// navigation's rebuild and concurrent tabs await the SAME run, so the 21 URLs
+// navigation's rebuild and concurrent tabs await the SAME run, so the 26 URLs
 // are never fetched twice in parallel (plan invariant d). Cleared when the run
 // settles so the NEXT online navigation rebuilds again.
 var inflight = null;

@@ -44,9 +44,15 @@ test('the service worker ships at the site root with the full lifecycle (issue 0
   var src = readSrc('sw.js');
   ["self.addEventListener('install'", "self.addEventListener('activate'",
    "self.addEventListener('fetch'", 'skipWaiting', 'clients.claim',
-   'addAll', "CACHE = 'emplois-v1'"].forEach(function (tok) {
+   'addAll'].forEach(function (tok) {
     assert.ok(src.indexOf(tok) !== -1, 'sw.js must contain ' + tok);
   });
+  // Pin the invariant, not the generation number: the sw.js header prescribes
+  // bumping the suffix whenever PRECACHE or the handler semantics change, so
+  // hard-coding a generation here would turn every legitimate bump red
+  // (issue 068 bumped emplois-v1 -> emplois-v2 alongside the PRECACHE change).
+  assert.ok(/CACHE = 'emplois-v\d+'/.test(src),
+    'sw.js must declare a versioned cache name');
 });
 
 test('the precache covers every runtime asset and only existing files (issue 063)', function () {

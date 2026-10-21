@@ -1,0 +1,23 @@
+{
+  "name": "Emplois — ISIM Mahdia Timetable",
+  "short_name": "Emplois",
+  "description": "Browse the 2026–2027 timetable of ISIM Mahdia (LBC, LCE, LCS, MPExpRes sections): search a teacher, class or subject and see every session.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0b4da2",
+  "background_color": "#ffffff",
+  "categories": ["education"],
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Classes — class week grid", "short_name": "Classes", "url": "classes.html" },
+    { "name": "Time — who teaches when", "short_name": "Time", "url": "time.html" },
+    { "name": "Timetable matrix", "short_name": "Timetable", "url": "timetable.html" }
+  ]
+}
