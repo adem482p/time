@@ -909,6 +909,45 @@ test('the clear X erases only, the back arrow deselects only (issues 060, 064)',
   });
 });
 
+// ---- clear X absent from the first frame (issue 074) ------------------------
+
+test('the clear X ships hidden in the markup, so an empty filter never paints it (issue 074)', function () {
+  // The filter boots empty, so [hidden] IS the true initial state: the markup
+  // declares it, and syncClear() stays the sole writer of the attribute. Its
+  // first write lands only after the CSV fetch resolves (initTeachersPage /
+  // initClassesPage), so a markup default of "visible" paints the X from the
+  // first frame and yanks it away at boot — the reported flash.
+  var CLASSES_HTML = fs.readFileSync(path.join(ROOT, 'classes/index.html'), 'utf8');
+  var base = CSS_SRC.slice(0, CSS_SRC.indexOf('@media (max-width: 700px)'));
+  [INDEX_SRC, CLASSES_HTML].forEach(function (src, i) {
+    var tag = i ? 'classes' : 'teachers';
+    var clr = /<button[^>]*id="searchClear"[^>]*>/.exec(src);
+    assert.ok(clr, tag + ': #searchClear opening tag found');
+    assert.ok(/\shidden\s*>$/.test(clr[0]),
+      tag + ': the clear X ships hidden at first paint (issue 074), got: ' + clr[0]);
+    // the state the markup declares is real: the input itself ships empty, so
+    // [hidden] can never mask a pre-filled filter at first paint
+    var input = /<input[^>]*id="search"[^>]*>/.exec(src);
+    assert.ok(input, tag + ': #search input found');
+    assert.ok(!/\svalue=/.test(input[0]), tag + ': the filter boots empty');
+    // and the declared state really renders hidden: the id rule (flex +
+    // geometry) outranks the UA [hidden] default, so the base armour must stay
+    assert.ok(base.indexOf('#searchClear[hidden] { display: none; }') !== -1,
+      tag + ': base CSS honours #searchClear[hidden] so the markup default renders');
+    // every sibling chrome node in the wrap ships hidden or base armour too —
+    // no other node in #searchWrap can paint before boot writes its state
+    assert.ok(/<div id="searchOverlay" hidden>/.test(src), tag + ': overlay ships hidden');
+    assert.ok(/<ul id="suggest" hidden>/.test(src), tag + ': suggest ships hidden');
+    assert.ok(/id="searchDeselect"[^>]*\shidden>/.test(src), tag + ': deselect ships hidden');
+  });
+  // JS keeps exactly one visibility writer for the X — no second mechanism
+  [APP_SRC, CLASSES_SRC].forEach(function (src, i) {
+    var tag = i ? 'classes' : 'teachers';
+    assert.strictEqual((src.match(/searchClear\.hidden\s*=/g) || []).length, 1,
+      tag + ': syncClear is the only writer of the clear X visibility');
+  });
+});
+
 // ---- per-name session-count badges (issue 062) ------------------------------
 
 test('teacher rows carry no session-count badge, in the list and in suggest (issue 062)', function () {

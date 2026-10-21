@@ -1328,6 +1328,34 @@ test('classes mirrors the clear-X / back-arrow deselect split (issues 060, 064)'
     'backspace-to-empty still deselects');
 });
 
+// ---- clear X absent from the first frame (issue 074) ------------------------
+
+test('classes ships the clear X hidden in the markup, so an empty filter never paints it (issue 074)', function () {
+  // Mirror of the teachers-side pin (test/teacher-daygroups.test.js): the
+  // filter boots empty, so [hidden] IS the true initial state — the markup
+  // declares it and syncClear() stays the sole writer of the attribute. Its
+  // first write lands only after the CSV fetch resolves, so a markup default
+  // of "visible" paints the X from the first frame and yanks it away at boot.
+  var html = readPage('classes/index.html');
+  var css = readPage('styles.css');
+  var base = css.slice(0, css.indexOf('@media (max-width: 700px)'));
+  var clr = /<button[^>]*id="searchClear"[^>]*>/.exec(html);
+  assert.ok(clr, '#searchClear opening tag found');
+  assert.ok(/\shidden\s*>$/.test(clr[0]),
+    'the clear X ships hidden at first paint (issue 074), got: ' + clr[0]);
+  // the state the markup declares is real: the input itself ships empty
+  var input = /<input[^>]*id="search"[^>]*>/.exec(html);
+  assert.ok(input, '#search input found');
+  assert.ok(!/\svalue=/.test(input[0]), 'the filter boots empty');
+  // the declared state really renders: the id rule outranks the UA [hidden]
+  // default, so the base armour rule must stay (no first-frame show rule)
+  assert.ok(base.indexOf('#searchClear[hidden] { display: none; }') !== -1,
+    'base CSS honours #searchClear[hidden] so the markup default renders');
+  // no second visibility mechanism for the X creeps in alongside [hidden]
+  assert.strictEqual((CLASSES_SRC.match(/searchClear\.hidden\s*=/g) || []).length, 1,
+    'syncClear is the only writer of the clear X visibility');
+});
+
 // ---- last selected class (issue 065) -----------------------------------------
 
 // The persistence block of js/classes.js (CLASS_STORE_KEY + the two guarded
