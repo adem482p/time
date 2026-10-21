@@ -4,9 +4,9 @@
 // fails; files stay listed).
 //
 // The fix has three moving parts, each pinned here:
-//   1. an inline <head> replay snippet — byte-identical on all five pages
-//      (the landing and the four views), immediately before the stylesheet
-//      link — that rewrites the stored
+//   1. an inline <head> replay snippet — byte-identical on all four pages
+//      that paint (the two app pages and the two utility views), immediately
+//      before the stylesheet link — that rewrites the stored
 //      per-scheme output maps before first paint, plus the
 //      <meta name="color-scheme" content="light dark"> next to the viewport
 //      meta that lets the UA paint the right scheme;
@@ -26,14 +26,14 @@ var path = require('node:path');
 var vm = require('node:vm');
 
 var ROOT = path.join(__dirname, '..');
-// Issue 072: five pages carry the snippet — the root landing, the two app
-// pages (whose stylesheet link is ../-relative) and the two utility views.
+// Issues 072 + 073: four pages carry the snippet — the two app pages and the
+// two utility views (moved to at/ and all/, stylesheet link ../-relative).
+// The root landing is a head-only redirect that paints nothing (issue 073).
 var PAGES = [
-  { page: 'index.html', sheet: '<link rel="stylesheet" href="styles.css">' },
   { page: 'teachers/index.html', sheet: '<link rel="stylesheet" href="../styles.css">' },
   { page: 'classes/index.html', sheet: '<link rel="stylesheet" href="../styles.css">' },
-  { page: 'time.html', sheet: '<link rel="stylesheet" href="styles.css">' },
-  { page: 'timetable.html', sheet: '<link rel="stylesheet" href="styles.css">' }
+  { page: 'at/index.html', sheet: '<link rel="stylesheet" href="../styles.css">' },
+  { page: 'all/index.html', sheet: '<link rel="stylesheet" href="../styles.css">' }
 ];
 
 function readSrc(rel) {
@@ -56,7 +56,7 @@ var SNIPPET_JS = replaySnippet(readSrc(PAGES[0].page))
 
 // ---- 1. HTML wiring: byte-identical snippet, positioned before the sheet ---
 
-test('the inline replay snippet is byte-identical on all five pages, immediately before the stylesheet link', function () {
+test('the inline replay snippet is byte-identical on all four pages, immediately before the stylesheet link', function () {
   var first = replaySnippet(readSrc(PAGES[0].page));
   assert.ok(Buffer.byteLength(first, 'utf8') >= 900 && Buffer.byteLength(first, 'utf8') <= 1000,
     'the snippet stays under ~1 KB inline');
@@ -72,7 +72,7 @@ test('the inline replay snippet is byte-identical on all five pages, immediately
   });
 });
 
-test('meta color-scheme "light dark" sits right after the viewport meta on all five pages', function () {
+test('meta color-scheme "light dark" sits right after the viewport meta on all four pages', function () {
   var line = '<meta name="color-scheme" content="light dark">';
   PAGES.forEach(function (entry) {
     var html = readSrc(entry.page);

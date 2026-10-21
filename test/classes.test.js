@@ -453,15 +453,22 @@ test('classes/index.html carries the teachers-page structure and script stack', 
   assert.ok(html.indexOf('id="themeBar"') === -1, 'theme square must not use a #themeBar wrapper');
 });
 
-test('every page with a nav links to the Classes page, and the classes nav pins the four links', function () {
-  // the root landing links the app entry (issue 072); the classes app's own
-  // nav addresses itself via index.html and its siblings via their old URLs
-  assert.ok(readPage('index.html').indexOf('href="classes/"') !== -1,
-    'the landing page has no Classes link');
+test('the classes nav pins the two links, and no page references the unlisted utility views (issue 073)', function () {
+  // the root landing is now a pure redirect to the teachers app (issue 073);
+  // the classes app's own nav addresses itself via index.html and its sibling
+  // app via its directory — the utility views are unlisted, reachable only by
+  // their URL (at/, all/), so their links left the nav.
   var html = readPage('classes/index.html');
-  ['href="../teachers/"', 'href="../timetable.html"', 'href="../time.html"',
-   'href="index.html"'].forEach(function (a) {
+  ['href="../teachers/"', 'href="index.html"'].forEach(function (a) {
     assert.ok(html.indexOf(a) !== -1, 'classes/index.html nav missing ' + a);
+  });
+  var nav = /<nav>[\s\S]*?<\/nav>/.exec(html);
+  assert.ok(nav, 'classes/index.html keeps its nav');
+  assert.strictEqual((nav[0].match(/<a /g) || []).length, 2,
+    'the classes nav pins exactly two links (Teachers + Classes)');
+  [/time\.html/, /timetable\.html/].forEach(function (old) {
+    assert.strictEqual(old.test(html), false,
+      'classes/index.html must not reference the unlisted old URL ' + old + ' (issue 073)');
   });
 });
 

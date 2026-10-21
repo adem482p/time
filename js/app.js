@@ -2,7 +2,7 @@
 // analysis layer and dispatches to the per-page renderers
 // (body[data-page]). The teachers and classes pages moved to js/teachers.js
 // and js/classes.js (same shared head, self-contained per page); this file
-// keeps only what time.html and timetable.html load. All coloring decisions
+// keeps only what at/index.html and all/index.html load. All coloring decisions
 // go through TT.color; all domain data through TT.model. This file owns
 // DOM only.
 var TT = TT || {};

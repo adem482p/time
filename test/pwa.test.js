@@ -33,7 +33,7 @@ var APPS = [
     manifest: 'classes/manifest.json', sw: 'classes/sw.js',
     nameStr: 'Emplois — Classes', shortName: 'Classes' }
 ];
-var NO_MANIFEST = ['index.html', 'time.html', 'timetable.html', 'classes.html'];
+var NO_MANIFEST = ['index.html', 'at/index.html', 'all/index.html', 'classes.html'];
 
 function readSrc(rel) {
   return fs.readFileSync(path.join(ROOT, rel), 'utf8');
@@ -196,10 +196,11 @@ test('manifest URLs are relative and real, and neither manifest declares shortcu
     m.icons.forEach(function (i) {
       assert.ok(fs.existsSync(path.join(ROOT, app.dir, i.src)), 'icon target must exist on disk: ' + i.src);
     });
-    // Issue 072: every former shortcut target (classes.html, time.html,
-    // timetable.html) lies outside this app's './' scope, and out-of-scope
-    // shortcut URLs are not dependable — each app is single-page. If shortcuts
-    // ever return, they must resolve INSIDE the app directory.
+    // Issue 072: every former shortcut target (classes.html, and the utility
+    // views — now at/index.html + all/index.html, formerly the root time and
+    // timetable pages, issue 073) lies outside this app's './' scope, and
+    // out-of-scope shortcut URLs are not dependable — each app is single-page.
+    // If shortcuts ever return, they must resolve INSIDE the app directory.
     assert.strictEqual(m.shortcuts, undefined,
       app.name + ': no shortcuts — every target would sit outside the app scope (issue 072)');
   });
@@ -295,6 +296,30 @@ test('classes.html is a redirect stub to the moved app page (issue 072)', functi
     'the stub links no manifest');
   assert.strictEqual(html.split('register.js').length - 1, 0,
     'the stub registers no service worker');
+});
+
+test('index.html is a head-only redirect to the teachers app page (issue 073)', function () {
+  var html = readSrc('index.html');
+  // The root does nothing but hand over to the teachers app (issue 073):
+  // a head-only document — browsers synthesise the empty <body> — so nothing
+  // ever paints and there is no data-page, nav, stylesheet or theme replay.
+  assert.strictEqual(html.indexOf('<body'), -1, 'the landing has no <body> — it paints nothing');
+  // no-JS path
+  assert.ok(html.indexOf('content="0; url=teachers/"') !== -1,
+    'the meta refresh must target teachers/');
+  // JS path preserves deep links (README captures use ?redact=1) and anchors
+  assert.ok(html.indexOf("location.replace('teachers/' + location.search + location.hash)") !== -1,
+    'the script redirect must forward the query string and the hash');
+  // SEO: the root URL hands its meaning to the page it redirects to
+  assert.ok(html.indexOf('<link rel="canonical" href="https://adem482p.github.io/time/teachers/">') !== -1,
+    'the landing must point its canonical at the teachers app page');
+  // and it must carry no app surface of its own
+  assert.deepStrictEqual(linkHrefs(html, 'manifest'), [], 'the landing links no manifest');
+  assert.strictEqual(html.split('register.js').length - 1, 0,
+    'the landing registers no service worker');
+  ['rel="stylesheet"', '<nav', '/* Issue 066:', 'data-page', 'name="theme-color"'].forEach(function (tok) {
+    assert.strictEqual(html.indexOf(tok), -1, 'the landing must not carry ' + tok);
+  });
 });
 
 // ---- issue 069: the ISIMa logo icon set -----------------------------------

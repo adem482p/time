@@ -38,9 +38,10 @@ var APPS = [
     family: 'emplois-classes-snapshot-', db: 'emplois-classes-status',
     pageScript: '../js/classes.js' }
 ];
-// Pages with NO manifest and NO service worker by design (issue 072): the root
-// landing, the two online-only utility views and the redirect stub.
-var NO_WORKER = ['index.html', 'time.html', 'timetable.html', 'classes.html'];
+// Pages with NO manifest and NO service worker by design (issues 072, 073):
+// the root landing (a pure redirect), the two online-only utility views at
+// their unlisted paths and the redirect stub.
+var NO_WORKER = ['index.html', 'at/index.html', 'all/index.html', 'classes.html'];
 
 function readSrc(rel) {
   return fs.readFileSync(path.join(ROOT, rel), 'utf8');
@@ -364,7 +365,7 @@ test('no snapshot lists pages outside its own app (issue 072)', function () {
     var asRoot = urls.map(function (u) {
       return u === './' ? app.dir + '/' : toRoot(u, app.dir);
     });
-    var forbidden = ['time.html', 'timetable.html', 'classes.html', 'index.html'];
+    var forbidden = ['at/index.html', 'all/index.html', 'classes.html', 'index.html'];
     APPS.forEach(function (other) {
       if (other.dir !== app.dir) forbidden.push(other.dir + '/index.html');
     });

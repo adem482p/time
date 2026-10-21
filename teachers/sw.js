@@ -19,8 +19,9 @@
 // site root and are referenced here relative to this script (../…):
 // subresource requests of a controlled page reach THIS worker whatever their
 // URL (Handle Fetch routes subresources to the client's controller), so the
-// snapshot carries them; navigations to time.html, timetable.html and the
-// site root match no registration and are online-only by design (issue 072).
+// snapshot carries them; navigations to the at/ and all/ utility pages and
+// the site root match no registration and are online-only by design (issues
+// 072, 073).
 // file:// is NOT supported (service workers need http/https; localhost counts).
 // Dev escape hatch when the worker gets in the way (browser console):
 //   navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));

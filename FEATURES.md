@@ -32,11 +32,12 @@ the material the views are drawn from:
 Four views over the same CSV, in the split of issue 072: the teachers app lives
 at `teachers/index.html` and the classes app at `classes/index.html` (each its
 own installable app with its own worker and manifest), the two utility views
-stay at the root (`time.html`, `timetable.html`), and a plain landing page at
-the root links them all. Only the classes app carries the cross-page nav bar
-(Teachers / Timetable matrix / Time / Classes).
+live unlisted at `at/index.html` and `all/index.html` — reachable only by
+their URL, never by navigation (issue 073) — and the root landing page does
+nothing but redirect to `teachers/`. Only the classes app carries the cross-page
+nav bar (Teachers / Classes).
 
-### Matrix — `timetable.html`
+### Matrix — `all/index.html`
 
 The full timetable matrix: teachers crossed with the six time slots of the week.
 Each cell where a teacher is engaged shows where they can be found — the room,
@@ -51,7 +52,7 @@ teacher reveals their week: sessions grouped by day, the current and next sessio
 highlighted, and days with no live stake dimmed. The same view adapts to narrow
 screens: the list and the session table collapse into stacked cards.
 
-### Time — `time.html`
+### Time — `at/index.html`
 
 A view with time slots as the main object. The week is grouped by day; today's
 section is marked and scrolled into view, with the current and next slots
@@ -177,8 +178,8 @@ and `emplois-classes-status`.
   of the own family — plus, in the teachers worker only, the legacy pre-split
   root snapshot `emplois-snapshot-v1` by exact name, which no surviving worker
   would otherwise clean up.
-- **The utility pages and the landing are online-only** (issue 072): navigations
-  to `/`, `time.html`, `timetable.html` and the `classes.html` redirect stub
+- **The utility pages and the landing are online-only** (issues 072, 073): navigations
+  to `/`, `at/`, `all/` and the `classes.html` redirect stub
   match no registration, so no worker ever intercepts them.
 - Registration happens once per load with an immediate `update()` byte-diff
   check (`js/register.js`), loaded by the two app pages only — each page
