@@ -3,8 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>Timetable matrix — Emplois</title>
 <link rel="icon" href="data:,">
+<script>
+/* Issue 066: replay the stored theme before first paint — js/theme.js persists
+   the applied --md- and --pal- custom properties per scheme; write them
+   verbatim so the first frame is already themed. Idempotent: theme.js writes
+   the same values again. (Never write a literal star-slash inside this
+   comment — it would terminate it early.) */
+(function () {
+  try {
+    var s = JSON.parse(localStorage.getItem('emplois-theme') || 'null');
+    if (!s || !s.vars) return;             /* first visit / old shape: CSS defaults */
+    var d = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var v = s.vars[d ? 'dark' : 'light'];
+    if (!v) return;
+    var st = document.documentElement.style;
+    for (var k in v) if (v.hasOwnProperty(k)) st.setProperty(k, v[k]);
+  } catch (e) { /* corrupt/unavailable storage: default theme */ }
+})();
+</script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body data-page="matrix">

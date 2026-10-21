@@ -755,10 +755,51 @@ TT.theme = (function () {
 
   function kebab(role) { return role.replace(/([A-Z])/g, '-$1').toLowerCase(); }
 
-  // Compute the roles and write them as CSS custom properties on <html>.
-  function apply(opts) {
+  // The exact property map apply() writes on <html>: the 37 --md-<kebab-role>
+  // roles + the 3 display-only --pal-* swatches + color-scheme (41 keys).
+  // Pure (no DOM) — the single writer of that vocabulary: apply() applies this
+  // map to the document, and applyState() persists the light and dark maps so
+  // the inline <head> replay script (issue 066) can rewrite them verbatim
+  // before first paint, with drift structurally impossible.
+  function varsFor(opts) {
     opts = opts || {};
     var theme = createTheme(opts);
+    var out = {};
+    for (var i = 0; i < ROLE_ORDER.length; i++) {
+      var role = ROLE_ORDER[i];
+      out['--md-' + kebab(role)] = theme[role];
+    }
+    // Display-only swatch colors for #themeCycle, mirroring AOSP ThemePicker's
+    // quadrant-circle preview: secondary/tertiary at AOSP's bright preview tones
+    // (L*85 light / L*35 dark, L*70), primary as the snapped identity seed.
+    // --md-* above is left untouched.
+    var seedPrimary = opts.primary || PRESETS[0].primary;
+    var pals = buildPalettes({
+      primary: seedPrimary,
+      secondary: opts.secondary,
+      tertiary: opts.tertiary,
+      error: opts.error,
+      variant: opts.variant
+    });
+    var dark = !!opts.dark;
+    out['--pal-secondary'] = pals.S.hex(dark ? 35 : 85);
+    out['--pal-primary'] = snapPalette(seedPrimary, SOLID_PALETTE);
+    out['--pal-tertiary'] = pals.T.hex(70);
+    out['color-scheme'] = dark ? 'dark' : 'light';
+    return out;
+  }
+
+  // Compute the roles and write them as CSS custom properties on <html>.
+  // The same names and values the inline replay script writes, so a replayed
+  // frame and this write are visually identical — double-apply is a no-op.
+  function apply(opts) {
+    opts = opts || {};
+    var vars = varsFor(opts);
+    var theme = {};
+    for (var i = 0; i < ROLE_ORDER.length; i++) {
+      var role = ROLE_ORDER[i];
+      theme[role] = vars['--md-' + kebab(role)];
+    }
     current.primary = opts.primary || null;
     current.secondary = opts.secondary || null;
     current.tertiary = opts.tertiary || null;
@@ -768,27 +809,7 @@ TT.theme = (function () {
     current.variant = opts.variant || null;
     if (typeof document !== 'undefined' && document && document.documentElement) {
       var style = document.documentElement.style;
-      for (var i = 0; i < ROLE_ORDER.length; i++) {
-        var role = ROLE_ORDER[i];
-        style.setProperty('--md-' + kebab(role), theme[role]);
-      }
-      // Display-only swatch colors for #themeCycle, mirroring AOSP ThemePicker's
-      // quadrant-circle preview: secondary/tertiary at AOSP's bright preview tones
-      // (L*85 light / L*35 dark, L*70), primary as the snapped identity seed.
-      // --md-* above is left untouched.
-      var seedPrimary = opts.primary || PRESETS[0].primary;
-      var pals = buildPalettes({
-        primary: seedPrimary,
-        secondary: opts.secondary,
-        tertiary: opts.tertiary,
-        error: opts.error,
-        variant: opts.variant
-      });
-      var palDark = !!opts.dark;
-      style.setProperty('--pal-secondary', pals.S.hex(palDark ? 35 : 85));
-      style.setProperty('--pal-primary', snapPalette(seedPrimary, SOLID_PALETTE));
-      style.setProperty('--pal-tertiary', pals.T.hex(70));
-      style.setProperty('color-scheme', current.dark ? 'dark' : 'light');
+      for (var k in vars) if (vars.hasOwnProperty(k)) style.setProperty(k, vars[k]);
     }
     return theme;
   }
@@ -881,7 +902,10 @@ TT.theme = (function () {
     } catch (e) { /* no head */ }
   }
 
-  // ---- persisted state (only the chosen preset; scheme comes from the system)
+  // ---- persisted state: the chosen preset plus the replay maps (issue 066) --
+  // The scheme itself still comes from the system at apply/replay time; what
+  // is stored next to the preset is the *applied output* per scheme (varsFor),
+  // so the inline <head> script can replay the live scheme before first paint.
 
   function readState() {
     var s = { preset: null };
@@ -936,8 +960,22 @@ TT.theme = (function () {
       btnEl.setAttribute('data-tip', desc);
     }
     syncMeta(theme.surface);
+    // Persist the applied output for BOTH schemes: the inline <head> replay
+    // script (issue 066) rewrites the live one before first paint on the next
+    // load. The opposite-scheme map costs one extra varsFor call (ms-scale,
+    // off the critical path — this runs at DOMContentLoaded or on a click).
+    state.vars = { light: schemeVars(opts, false), dark: schemeVars(opts, true) };
     writeState(state);
     return theme;
+  }
+
+  // The same opts with `dark` overridden — to compute and persist the
+  // opposite scheme's property map alongside the applied one.
+  function schemeVars(opts, dark) {
+    var o = {};
+    for (var k in opts) if (opts.hasOwnProperty(k)) o[k] = opts[k];
+    o.dark = dark;
+    return varsFor(o);
   }
 
   function init() {
