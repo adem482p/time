@@ -5,7 +5,7 @@
 // as JSON (not grepped), the icon PNGs are parsed at the byte level (IHDR:
 // declared sizes must match the real file dimensions, the maskable icon must
 // carry no alpha channel), the four pages are scanned for the manifest/icon
-// links, and the PRECACHE literal in sw.js is re-parsed for derived coverage
+// links, and the SNAPSHOT_URLS literal in sw.js is re-parsed for derived coverage
 // of every manifest- and page-referenced icon. Subpath safety (production
 // deploys under https://adem482p.github.io/time/, issue 067) is a first-class
 // assertion: no manifest URL may be root-absolute.
@@ -31,11 +31,12 @@ function readManifest() {
   return JSON.parse(readSrc('manifest.json'));
 }
 
-// Parse the PRECACHE array literal out of sw.js (hand-written, no build step).
-function precacheUrls() {
+// Parse the SNAPSHOT_URLS array literal out of sw.js (hand-written, no build
+// step). Renamed from PRECACHE by issue 070 (the "last snapshot" model).
+function snapshotUrls() {
   var src = readSrc('sw.js');
-  var block = src.match(/var PRECACHE = \[([\s\S]*?)\];/);
-  assert.ok(block, 'sw.js must declare the hand-written PRECACHE literal');
+  var block = src.match(/var SNAPSHOT_URLS = \[([\s\S]*?)\];/);
+  assert.ok(block, 'sw.js must declare the hand-written SNAPSHOT_URLS literal');
   var urls = [], m, re = /'([^']+)'/g;
   while ((m = re.exec(block[1]))) urls.push(m[1]);
   return urls;
@@ -154,8 +155,8 @@ test('manifest and shortcut URLs are relative and point at real pages (issue 068
   });
 });
 
-test('the precache covers the manifest and every icon, and the v1 generation is gone (issue 068)', function () {
-  var urls = precacheUrls();
+test('the snapshot covers the manifest and every icon, and the old generations are gone (issues 068, 070)', function () {
+  var urls = snapshotUrls();
   var m = readManifest();
   var required = ['manifest.json', 'assets/apple-touch-icon.png'];
   m.icons.forEach(function (i) { required.push(i.src); });
@@ -165,15 +166,18 @@ test('the precache covers the manifest and every icon, and the v1 generation is 
       .forEach(function (href) { if (required.indexOf(href) === -1) required.push(href); });
   });
   required.forEach(function (u) {
-    assert.ok(urls.indexOf(u) !== -1, 'PRECACHE misses the install-surface asset: ' + u);
-    assert.ok(fs.existsSync(path.join(ROOT, u)), 'precache icon/manifest missing on disk: ' + u);
+    assert.ok(urls.indexOf(u) !== -1, 'SNAPSHOT_URLS misses the install-surface asset: ' + u);
+    assert.ok(fs.existsSync(path.join(ROOT, u)), 'snapshot icon/manifest missing on disk: ' + u);
   });
-  // The PRECACHE change above MUST come with a cache-generation bump so the
-  // old snapshot is destroyed on activate (sw.js header invariant, issue 063).
+  // The SNAPSHOT_URLS change above MUST come with a generation bump so the
+  // old snapshot is destroyed on activate (sw.js header invariant, issue 063;
+  // issue 070 renamed cache -> snapshot and v1/v2 -> snapshot-v1).
   var src = readSrc('sw.js');
   assert.strictEqual(src.indexOf("'emplois-v1'"), -1,
-    "the superseded 'emplois-v1' generation must not survive a PRECACHE change");
-  assert.ok(/CACHE = 'emplois-v\d+'/.test(src), 'sw.js must declare a versioned cache name');
+    "the superseded 'emplois-v1' generation must not survive a SNAPSHOT_URLS change");
+  assert.strictEqual(src.indexOf("'emplois-v2'"), -1,
+    "the superseded 'emplois-v2' generation must not survive a SNAPSHOT_URLS change");
+  assert.ok(/SNAPSHOT = 'emplois-snapshot-v\d+'/.test(src), 'sw.js must declare a versioned snapshot name');
 });
 
 test('the manifest is served as JSON by filename — no .webmanifest MIME trap (issue 068)', function () {
