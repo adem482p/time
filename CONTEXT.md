@@ -1,6 +1,12 @@
-# Design
+# Context
 
-## Context
+The context around the app, mainly the data model of the world: what a session,
+a subject, a teacher and a class are, how classes are grouped and named, and how
+the published PDFs become the CSV every page reads. The behavior the website
+ships on top of that world — the views, search, the snapshot model, the theme —
+is catalogued separately in [FEATURES.md](FEATURES.md).
+
+## The world
 
 The university organizes teaching around **classes**: student populations that
 follow a timetable. A class is a node of the hierarchy defined in
@@ -123,8 +129,9 @@ The project opens the PDFs through three stages:
    carries the background fill of the timetable cell the session was parsed
    from (lowercase `#rrggbb`; empty when no fill contains it). This file is the
    single source of truth; every page reads it and nothing else.
-3. **Web pages** — static pages that load the CSV and provide services on top of it
-   (below). No backend, no build step: re-running the parser updates the site.
+3. **Web pages** — static pages that load the CSV and provide services on top of
+   it; those services are catalogued in [FEATURES.md](FEATURES.md). No backend,
+   no build step: re-running the parser updates the site.
 
 The purpose is not to add information but to remove friction: the same data,
 queryable.
@@ -146,41 +153,3 @@ later lines by the teacher's name and the room. A session may carry the semestre
 never preserved in `week`); when a slot alternates weekly, its two alternatives
 carry the week tags `SA` and `SB`. Text may spill across column boundaries, and a cell may stack two
 sessions.
-
-## Service: Matrix
-
-The full timetable matrix: teachers crossed with the six time slots of the week.
-Each cell where a teacher is engaged shows where they can be found — the room,
-plus the day and subject of the session. It answers "when and where is this
-teacher teaching?" at a glance, and can be filtered by day or teacher.
-
-## Service: Teachers
-
-A view with teachers as the main object. The teacher list is searchable and
-filterable live; teachers available today are raised to the top. Selecting a
-teacher reveals their week: sessions grouped by day, the current and next session
-highlighted, and days with no live stake dimmed. The same view adapts to narrow
-screens: the list and the session table collapse into stacked cards.
-
-## Service: Time
-
-A view with time slots as the main object. The week is grouped by day; today's
-section is marked and scrolled into view, with the current and next slots
-highlighted. Selecting a slot lists the teachers teaching then, where each can be
-found, and which classes they teach. It answers "who is teaching right now, and
-where?"
-
-## Service: Classes
-A view with classes as the main object — the student-facing counterpart to the
-teacher and time views. The class is chosen through a live search over the
-catalogue: only leaves — fully specified classes that own a timetable of their
-own — are listed, offered by autocomplete and selectable, and a reference to a
-broader class reports no match. Selecting a class draws its
-week as a grid with the days as columns and the six slots as rows; each cell lists
-the sessions held then, every line giving the subject, the teacher and the room. A
-semi-transparent red cursor crosses the grid at the current time, its arrowhead
-resting in a small gutter beside the time column, and the current and next slots
-are highlighted — the next only while it is still today, with nothing marked at
-all on Sunday, before the day begins, or once it has ended. On narrow screens the
-week collapses into stacked session cards, as the teachers view does. It answers
-"what does this class have right now, and where?"
