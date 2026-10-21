@@ -120,6 +120,20 @@ The main agent coordinates; subagents do the work in parallel.
   runs wrote nothing, some left partial uncommitted edits. When partial work
   exists, say so in the new brief and instruct it to audit the leftovers
   against the criteria — the criteria win over whatever the dead run did.
+- **Resume an interrupted subagent whenever possible instead of restarting
+  it.** Pass the aborted run's `sessionID` (it is in the failure/abort
+  notification) to the same agent type with a short continuation brief; the
+  resumed session keeps its full context — research already done, plan
+  already written, decisions already justified — so nothing has to be
+  re-explained and the plan cannot drift from what was approved. A resume
+  brief says what happened ("interrupted at step X, no code written yet"),
+  points the agent at its own entry to reload context, and repeats the
+  ground rules (no git, allowed files, expected test total). Only fall back
+  to a fresh session when the resume conditions are gone: the task or
+  governing criteria changed, `main` moved in a way that invalidates its
+  plan, the session no longer exists, or the leftover inspection above shows
+  work that conflicts with a newer direction — then restart with a brief
+  that names the leftovers, as described above.
 - **Brief hygiene the concurrency depends on**: forbid git in every brief,
   name the expected test total (so the merged tree's count is checkable at
   rebase time), state sibling boundaries, and tell the subagent to write its
