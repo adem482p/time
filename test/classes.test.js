@@ -1315,3 +1315,144 @@ test('classes mirrors the clear-X / back-arrow deselect split (issues 060, 064)'
   assert.ok(body('function onInput()').indexOf('showEmpty();') !== -1,
     'backspace-to-empty still deselects');
 });
+
+// ---- last selected class (issue 065) -----------------------------------------
+
+// The persistence block of js/classes.js (CLASS_STORE_KEY + the two guarded
+// accessors + the boot validation gate), sliced straight from source and run
+// in a vm with an injected localStorage — the real logic against real
+// storage stand-ins, mirroring the week/list harnesses above.
+function persistenceBlock() {
+  var start = CLASSES_SRC.indexOf('var CLASS_STORE_KEY');
+  var end = CLASSES_SRC.indexOf('// ---- classes page', start);
+  assert.ok(start !== -1 && end !== -1 && end > start, 'persistence block bounds');
+  return CLASSES_SRC.slice(start, end);
+}
+
+function runPersistence(localStorage) {
+  var sandbox = { console: console, model: model };
+  if (localStorage !== undefined) sandbox.localStorage = localStorage;
+  vm.createContext(sandbox);
+  vm.runInContext(persistenceBlock(), sandbox, { filename: 'classes-persistence-harness' });
+  return sandbox;
+}
+
+function memoryStorage() {
+  var map = {};
+  return {
+    map: map,
+    getItem: function (k) { return Object.prototype.hasOwnProperty.call(map, k) ? map[k] : null; },
+    setItem: function (k, v) { map[k] = String(v); },
+    removeItem: function (k) { delete map[k]; }
+  };
+}
+
+test('the selection funnels are the only storage write sites (issue 065)', function () {
+  var src = CLASSES_SRC;
+  // (a) definition + selectClass + showEmpty — exactly three, no other site
+  assert.strictEqual(countTok(src, 'writeStoredClass('), 3,
+    'one definition, one write in selectClass, one clear in showEmpty');
+  assert.strictEqual(countTok(src, 'readStoredClass('), 2,
+    'one definition, one read at boot');
+  function body(sig) {
+    var start = src.indexOf(sig);
+    assert.ok(start !== -1, sig + ' found');
+    var end = src.indexOf('\n    }', start);
+    assert.ok(end !== -1, sig + ' bounds');
+    return src.slice(start, end + '\n    }'.length);
+  }
+  // write on selection commit, at the same statement group as the fact
+  var sel = body('function selectClass(ref)');
+  assert.ok(sel.indexOf('selectedClass = ref') !== -1, 'the fact write stays');
+  assert.ok(sel.indexOf('writeStoredClass(ref)') !== -1, 'selectClass persists the ref');
+  assert.ok(sel.indexOf('selectedClass = ref') < sel.indexOf('writeStoredClass(ref)'),
+    'storage mirrors the fact, in order');
+  // (c) clear on explicit deselect, next to the fact clear
+  var emp = body('function showEmpty()');
+  assert.ok(emp.indexOf('selectedClass = null') !== -1, 'the fact clear stays');
+  assert.ok(emp.indexOf('writeStoredClass(null)') !== -1, 'showEmpty forgets the class');
+  // the 060 erase-only funnel stays pure: no selection fact, no storage
+  var ef = body('function eraseFilter()');
+  assert.ok(ef.indexOf('StoredClass') === -1 && ef.indexOf('localStorage') === -1,
+    'eraseFilter never touches persistence');
+});
+
+test('boot reads, validates and restores around the empty funnel (issue 065)', function () {
+  var src = CLASSES_SRC;
+  var bootAt = src.indexOf('// initial paint');
+  var subAt = src.indexOf('clock.subscribe(onTick);');
+  assert.ok(bootAt !== -1 && subAt > bootAt, 'boot tail bounds');
+  var boot = src.slice(bootAt, subAt);
+  // (b) read BEFORE the funnel — showEmpty clears storage, so the local wins
+  assert.ok(boot.indexOf('var stored = readStoredClass();') !== -1, 'boot reads the stored key');
+  assert.ok(boot.indexOf('var stored = readStoredClass();') < boot.indexOf('showEmpty();'),
+    'the read precedes the clearing funnel');
+  // (b) live validation gate, then re-entry through the one selection funnel;
+  // the slice ends at clock.subscribe(onTick);, so the restore is one-shot at
+  // boot, before the page ever subscribes
+  assert.ok(boot.indexOf('if (stored && restorable(groups, stored)) selectClass(stored);') !== -1,
+    'validated restore re-enters selectClass');
+  assert.strictEqual(countTok(src, 'selectClass(stored)'), 1, 'exactly one restore call');
+  // (d) the no-stored-state fallback keeps the pinned shape verbatim — the
+  // existing bootTail pin (test/classes.test.js, issue 058) asserts it
+  assert.ok(boot.indexOf('showEmpty();') !== -1,
+    'boot still paints through the empty funnel');
+});
+
+test('the stored class round-trips and clears through the guarded accessors (issue 065)', function () {
+  var store = memoryStorage();
+  var sb = runPersistence(store);
+  // write + read round-trip of the exact ref selectClass hands over
+  sb.writeStoredClass('GLSI3D1');
+  assert.strictEqual(store.map['emplois-class'], 'GLSI3D1', 'written under the house key');
+  assert.strictEqual(sb.readStoredClass(), 'GLSI3D1', 'read back the same ref');
+  // another spelling selectClass accepts (full name) survives verbatim
+  sb.writeStoredClass('LCS2-GLSI_C Groupe 2');
+  assert.strictEqual(sb.readStoredClass(), 'LCS2-GLSI_C Groupe 2');
+  // (c) a falsy write clears the key — the showEmpty path
+  sb.writeStoredClass(null);
+  assert.strictEqual('emplois-class' in store.map, false, 'deselect removes the key');
+  assert.strictEqual(sb.readStoredClass(), null, 'nothing left to restore');
+  // the empty string reads as nothing, never as a class
+  sb.writeStoredClass('GLSI3D1');
+  sb.writeStoredClass('');
+  assert.strictEqual(sb.readStoredClass(), null, 'the empty string is not a class');
+});
+
+test('storage failures degrade to no-memory behavior (issue 065)', function () {
+  // no localStorage at all (node/test context): both accessors no-op
+  var bare = runPersistence(undefined);
+  assert.strictEqual(bare.readStoredClass(), null, 'read yields null without storage');
+  assert.doesNotThrow(function () { bare.writeStoredClass('GLSI3D1'); },
+    'write never throws without storage');
+  assert.doesNotThrow(function () { bare.writeStoredClass(null); },
+    'clear never throws without storage');
+  // private mode / quota: every method throws — both accessors swallow it
+  var broken = {
+    getItem: function () { throw new Error('SecurityError'); },
+    setItem: function () { throw new Error('QuotaExceededError'); },
+    removeItem: function () { throw new Error('SecurityError'); }
+  };
+  var sb = runPersistence(broken);
+  assert.strictEqual(sb.readStoredClass(), null, 'a throwing read yields null');
+  assert.doesNotThrow(function () { sb.writeStoredClass('GLSI3D1'); },
+    'a throwing write never escapes');
+  assert.doesNotThrow(function () { sb.writeStoredClass(null); },
+    'a throwing clear never escapes');
+});
+
+test('restorable validates the stored ref against the live catalogue (issue 065)', function () {
+  var sb = runPersistence(memoryStorage());
+  // a real leaf restores
+  assert.strictEqual(sb.restorable(groups, 'GLSI3D1'), true);
+  // an interior node unions >1 leaves and was never selectable: falls through
+  assert.strictEqual(sb.restorable(groups, 'LCS'), false);
+  // unknown / removed class (the CSV is the single source of truth): falls through
+  assert.strictEqual(sb.restorable(groups, 'ZZZZ'), false);
+  // tampered prototype-key value: classWeek's plain-byKey quirk must not escape
+  assert.strictEqual(sb.restorable(groups, 'constructor'), false);
+  // non-strings never pass
+  [null, undefined, 42, {}].forEach(function (v) {
+    assert.strictEqual(sb.restorable(groups, v), false, 'rejects ' + String(v));
+  });
+});

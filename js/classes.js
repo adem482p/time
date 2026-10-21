@@ -55,6 +55,51 @@ TT.app = (function () {
     };
   })();
 
+  // ---- last selected class (issue 065) --------------------------------------
+  // classes.html remembers the selection across loads. House persistence
+  // precedent: js/theme.js stores its scheme under the `emplois-*`
+  // localStorage key ('emplois-theme'); this page mirrors its selection fact
+  // (selectedClass) under 'emplois-class'. localStorage, not sessionStorage:
+  // "remember the last class" spans browser sessions, like the theme does.
+  // The value is the raw ref selectClass received — the ref the one funnel
+  // already renders from, so a restore re-runs the exact selection path. One
+  // write site per funnel (writeStoredClass in selectClass and showEmpty)
+  // and nowhere else, so fact and storage can never diverge; every access is
+  // wrapped like theme.js's readState/writeState — private mode, quota
+  // exceptions, or a context without localStorage degrade to today's
+  // no-memory behavior and never break boot.
+  var CLASS_STORE_KEY = 'emplois-class';
+
+  function readStoredClass() {
+    try {
+      if (typeof localStorage === 'undefined' || !localStorage) return null;
+      var v = localStorage.getItem(CLASS_STORE_KEY);
+      return typeof v === 'string' && v ? v : null;
+    } catch (e) { return null; }
+  }
+
+  // one writer: a ref persists it, a falsy ref clears it (the deselect
+  // funnel and the stale-key clear at boot both land here)
+  function writeStoredClass(ref) {
+    try {
+      if (typeof localStorage === 'undefined' || !localStorage) return;
+      if (ref) localStorage.setItem(CLASS_STORE_KEY, ref);
+      else localStorage.removeItem(CLASS_STORE_KEY);
+    } catch (e) { /* storage unavailable (private mode) */ }
+  }
+
+  // Boot validation gate: the CSV is the single source of truth, so a stored
+  // ref must still resolve to exactly one live leaf or it is stale (class
+  // removed/renamed since it was selected) and the empty funnel stands. The
+  // check runs inside try/catch because groups.byKey is a plain object
+  // (libgroups.js): prototype keys ('constructor'…) throw instead of
+  // missing, and a tampered stored value must never break boot.
+  function restorable(groups, ref) {
+    if (!ref || typeof ref !== 'string') return false;
+    try { return model.classWeek(groups, ref).leaves.length === 1; }
+    catch (e) { return false; }
+  }
+
   // ---- classes page -----------------------------------------------------------
 
   // Student-facing class timetable (issue 032). The class is chosen through a
@@ -164,6 +209,7 @@ TT.app = (function () {
     // can leave tick ownership behind and repaint over the empty page
     function showEmpty() {
       selectedClass = null;
+      writeStoredClass(null); // explicit deselect forgets the class (issue 065)
       currentWeek = null;
       detail.innerHTML = emptyStateHTML();
       markActive(null);
@@ -174,6 +220,7 @@ TT.app = (function () {
     // here; blurs because the overlay owns the box in state=class
     function selectClass(ref) {
       selectedClass = ref;
+      writeStoredClass(ref); // persist the committed selection (issue 065)
       showClass(ref);
       search.blur();
       menuOpen = false;
@@ -728,11 +775,20 @@ TT.app = (function () {
       searchDeselect.addEventListener('click', function () { showEmpty(); });
     }
 
-    // initial paint: full leaf catalogue, empty detail
+    // initial paint: full leaf catalogue, empty detail. The last selected
+    // class is read BEFORE the funnel below — showEmpty clears storage —
+    // and restored after it (issue 065).
+    var stored = readStoredClass();
     renderList(leafRows(match.classSearch(index, '')));
     showEmpty();
     syncList();
     syncClear();
+    // restore (issue 065): a stored ref that still resolves against the live
+    // catalogue re-enters the one selection funnel, so the page boots into
+    // the exact state a fresh row click produces (detail, marked row, name
+    // overlay, closed menu, empty filter). Anything stale/unknown falls
+    // through to the empty state above — which already cleared its key.
+    if (stored && restorable(groups, stored)) selectClass(stored);
     // the page subscribes once at init; the clock owns the cadence (issue 051)
     clock.subscribe(onTick);
   }
