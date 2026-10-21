@@ -38,7 +38,7 @@ function main(arr) { return Array.prototype.slice.call(arr); }
 
 var APP_SRC = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
 var CLASSES_SRC = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
-var INDEX_SRC = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+var INDEX_SRC = fs.readFileSync(path.join(ROOT, 'teachers/index.html'), 'utf8');
 var CSS_SRC = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
 
 // ---- source slices -------------------------------------------------------
@@ -535,7 +535,7 @@ test('exact name selects even among partial matches (both pages)', function () {
 
 test('teachers nav chrome: state-gated back arrow, teacher overlay, V gone', function () {
   ['id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"'].forEach(function (id) {
-    assert.ok(INDEX_SRC.indexOf(id) !== -1, 'index.html missing ' + id);
+    assert.ok(INDEX_SRC.indexOf(id) !== -1, 'teachers/index.html missing ' + id);
   });
   assert.ok(INDEX_SRC.indexOf('id="searchDone"') === -1,
     'the V-chevron is gone from the teachers page');

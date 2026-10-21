@@ -4,8 +4,9 @@
 // fails; files stay listed).
 //
 // The fix has three moving parts, each pinned here:
-//   1. an inline <head> replay snippet — byte-identical on all four pages,
-//      immediately before the stylesheet link — that rewrites the stored
+//   1. an inline <head> replay snippet — byte-identical on all five pages
+//      (the landing and the four views), immediately before the stylesheet
+//      link — that rewrites the stored
 //      per-scheme output maps before first paint, plus the
 //      <meta name="color-scheme" content="light dark"> next to the viewport
 //      meta that lets the UA paint the right scheme;
@@ -25,8 +26,15 @@ var path = require('node:path');
 var vm = require('node:vm');
 
 var ROOT = path.join(__dirname, '..');
-var PAGES = ['index.html', 'classes.html', 'time.html', 'timetable.html'];
-var STYLESHEET = '<link rel="stylesheet" href="styles.css">';
+// Issue 072: five pages carry the snippet — the root landing, the two app
+// pages (whose stylesheet link is ../-relative) and the two utility views.
+var PAGES = [
+  { page: 'index.html', sheet: '<link rel="stylesheet" href="styles.css">' },
+  { page: 'teachers/index.html', sheet: '<link rel="stylesheet" href="../styles.css">' },
+  { page: 'classes/index.html', sheet: '<link rel="stylesheet" href="../styles.css">' },
+  { page: 'time.html', sheet: '<link rel="stylesheet" href="styles.css">' },
+  { page: 'timetable.html', sheet: '<link rel="stylesheet" href="styles.css">' }
+];
 
 function readSrc(rel) {
   return fs.readFileSync(path.join(ROOT, rel), 'utf8');
@@ -42,37 +50,37 @@ function replaySnippet(html) {
   return html.slice(open, close + '</script>'.length);
 }
 
-var SNIPPET_JS = replaySnippet(readSrc(PAGES[0]))
+var SNIPPET_JS = replaySnippet(readSrc(PAGES[0].page))
   .replace(/^<script>\n?/, '')
   .replace(/\n?<\/script>$/, '');
 
 // ---- 1. HTML wiring: byte-identical snippet, positioned before the sheet ---
 
-test('the inline replay snippet is byte-identical on all four pages, immediately before the stylesheet link', function () {
-  var first = replaySnippet(readSrc(PAGES[0]));
+test('the inline replay snippet is byte-identical on all five pages, immediately before the stylesheet link', function () {
+  var first = replaySnippet(readSrc(PAGES[0].page));
   assert.ok(Buffer.byteLength(first, 'utf8') >= 900 && Buffer.byteLength(first, 'utf8') <= 1000,
     'the snippet stays under ~1 KB inline');
-  PAGES.forEach(function (page) {
-    var html = readSrc(page);
+  PAGES.forEach(function (entry) {
+    var html = readSrc(entry.page);
     var snip = replaySnippet(html);
-    assert.strictEqual(snip, first, page + ': the snippet must be byte-identical to ' + PAGES[0]);
+    assert.strictEqual(snip, first, entry.page + ': the snippet must be byte-identical to ' + PAGES[0].page);
     var end = html.indexOf('</script>', html.indexOf('/* Issue 066:')) + '</script>'.length;
-    var link = html.indexOf(STYLESHEET);
-    assert.ok(link !== -1, page + ': the stylesheet link must exist');
+    var link = html.indexOf(entry.sheet);
+    assert.ok(link !== -1, entry.page + ': the stylesheet link must exist');
     assert.ok(html.slice(end, link).trim() === '',
-      page + ': the snippet must sit immediately before the stylesheet link');
+      entry.page + ': the snippet must sit immediately before the stylesheet link');
   });
 });
 
-test('meta color-scheme "light dark" sits right after the viewport meta on all four pages', function () {
+test('meta color-scheme "light dark" sits right after the viewport meta on all five pages', function () {
   var line = '<meta name="color-scheme" content="light dark">';
-  PAGES.forEach(function (page) {
-    var html = readSrc(page);
+  PAGES.forEach(function (entry) {
+    var html = readSrc(entry.page);
     var vp = html.indexOf('<meta name="viewport"');
-    assert.ok(vp !== -1, page + ': the viewport meta must exist');
+    assert.ok(vp !== -1, entry.page + ': the viewport meta must exist');
     var after = html.indexOf('>', vp) + 1;
     assert.strictEqual(html.slice(after + 1, after + 1 + line.length), line,
-      page + ': the color-scheme meta sits on the next line after the viewport meta');
+      entry.page + ': the color-scheme meta sits on the next line after the viewport meta');
   });
 });
 

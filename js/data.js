@@ -75,9 +75,24 @@ TT.data = (function () {
     };
   }
 
+  // The CSV lives at the site root while js/data.js is loaded FROM js/ by pages
+  // in any directory — the app pages under teachers/ and classes/ pull it too
+  // (issue 072), where a document-relative 'emplois.csv' would 404. Capture
+  // THIS script's URL at parse time (classic sync scripts have
+  // document.currentScript) and resolve '../emplois.csv' against it: from js/
+  // that always lands on the site root, whatever page pulled the script in —
+  // one rule, no per-page config, no CSV duplication, no <base>. The fallback
+  // keeps the old document-relative path where no script URL exists (vm test
+  // sandboxes, async/module loading).
+  var SCRIPT_URL = (typeof document !== 'undefined' && document.currentScript &&
+                    document.currentScript.src) || null;
+  function csvURL() {
+    return SCRIPT_URL ? new URL('../emplois.csv', SCRIPT_URL).href : 'emplois.csv';
+  }
+
   // Browser helper: fetch emplois.csv and build the store.
   function loadStore() {
-    return fetch('emplois.csv').then(function (res) {
+    return fetch(csvURL()).then(function (res) {
       if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
       return res.text();
     }).then(createStore);

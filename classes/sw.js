@@ -1,39 +1,64 @@
-// sw.js — network-first service worker, "last snapshot" model (issues 063 + 070).
-// The stored copy is a SNAPSHOT of the site, never a cache we trust: online,
-// every response comes from THIS load's network fetch and the snapshot is only
-// ever built WHOLESALE (install's all-or-nothing addAll, every network-served
-// navigation's full take, and the erase-everything-then-retake when the
-// recorded status goes offline -> online). Offline, the snapshot is the
-// fallback. The last online status (online vs offline) is persisted in
-// IndexedDB — a worker has no localStorage — so the offline -> online
-// transition is detected even after this worker has been terminated and
-// relaunched, logged, and the snapshot is erased + retaken on every reconnect.
+// classes/sw.js — network-first service worker of the classes app, "last
+// snapshot" model (issues 063 + 070; the two-app split is issue 072). This
+// worker owns the scope ./ = the classes/ directory only: the sibling
+// teachers app runs its own worker (teachers/sw.js) with its own cache
+// family and own status database, because Cache Storage and IndexedDB are
+// per-ORIGIN — shared between the two workers — so every teardown here is
+// filtered to THIS app's family and one app's reconnect can never erase the
+// other app's snapshot. The stored copy is a SNAPSHOT of this app, never a
+// cache we trust: online, every response comes from THIS load's network fetch
+// and the snapshot is only ever built WHOLESALE (install's all-or-nothing
+// addAll, every network-served navigation's full take, and the
+// erase-then-retake when the recorded status goes offline -> online).
+// Offline, the snapshot is the fallback. The last online status (online vs
+// offline) is persisted per app in IndexedDB — a worker has no localStorage
+// — so the offline -> online transition is detected even after this worker
+// has been terminated and relaunched, logged, and the snapshot is erased +
+// retaken on every reconnect.
+// Shared assets (styles.css, js/, vendor/, assets/, emplois.csv) live at the
+// site root and are referenced here relative to this script (../…):
+// subresource requests of a controlled page reach THIS worker whatever their
+// URL (Handle Fetch routes subresources to the client's controller), so the
+// snapshot carries them; navigations to time.html, timetable.html and the
+// site root match no registration and are online-only by design (issue 072).
 // file:// is NOT supported (service workers need http/https; localhost counts).
 // Dev escape hatch when the worker gets in the way (browser console):
 //   navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
 //   caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
-var SNAPSHOT = 'emplois-snapshot-v1'; // bump the suffix whenever SNAPSHOT_URLS or the
-                                    // handler semantics change (forces a full
-                                    // retake + wipes the old snapshot on activate)
+// This app's cache family (issue 072): every cache this worker owns starts
+// with SNAPSHOT_PREFIX; erase and activation filter on it, so the sibling
+// app's snapshot can never be touched. Bump the suffix whenever
+// SNAPSHOT_URLS or the handler semantics change (forces a full retake +
+// wipes the old generation of THIS family on activate).
+var SNAPSHOT_PREFIX = 'emplois-classes-snapshot-';
+var SNAPSHOT = SNAPSHOT_PREFIX + 'v1';
 var SNAPSHOT_URLS = [
   './',
-  'index.html', 'classes.html', 'time.html', 'timetable.html',
-  'styles.css',
+  'index.html',
   'manifest.json',
-  'assets/icon-192.png', 'assets/icon-512.png',
-  'assets/icon-maskable-512.png', 'assets/apple-touch-icon.png',
-  'js/register.js',
-  'js/data.js', 'js/libgroups.js', 'js/model.js', 'js/match.js',
-  'js/theme.js', 'js/color.js', 'js/teachers.js', 'js/classes.js', 'js/app.js',
-  'vendor/kaomoji.js',
-  'vendor/dejavu-sans.woff2', 'vendor/noto-sans-kannada.woff2',
-  'vendor/noto-sans-symbols.woff2',
-  'emplois.csv'
+  '../styles.css',
+  '../assets/icon-192.png',
+  '../assets/icon-512.png',
+  '../assets/icon-maskable-512.png',
+  '../assets/apple-touch-icon.png',
+  '../js/register.js',
+  '../js/data.js',
+  '../js/libgroups.js',
+  '../js/model.js',
+  '../js/match.js',
+  '../js/theme.js',
+  '../js/color.js',
+  '../js/classes.js',
+  '../vendor/kaomoji.js',
+  '../vendor/dejavu-sans.woff2',
+  '../vendor/noto-sans-kannada.woff2',
+  '../vendor/noto-sans-symbols.woff2',
+  '../emplois.csv'
 ];
 
 // One shared in-flight take: install's addAll, the offline -> online retake,
 // a network navigation's take and concurrent tabs await the SAME run, so the
-// 26 URLs are never fetched twice in parallel (063 plan invariant d). Cleared
+// whole URL list is never fetched twice in parallel (063 inv d). Cleared
 // when the run settles so the NEXT online navigation takes it again.
 var inflight = null;
 function share(p) {
@@ -59,16 +84,19 @@ function takeSnapshot() {
 // half-written. It heals: the load being served chains the retake; if that
 // fails, the next network-served navigation takes the whole snapshot anyway
 // (063 inv c), and the next offline -> online cycle re-runs erase+retake.
-// Every cache is snapshot territory — the status record lives in IndexedDB,
-// outside Cache Storage, so this teardown can never erase it.
+// Only THIS app's family is snapshot territory (issue 072: the sibling app
+// shares this origin's Cache Storage and its caches are never ours to delete)
+// — the status record lives in IndexedDB, outside Cache Storage, so this
+// teardown can never erase it either.
 function eraseSnapshot() {
   return caches.keys().then(function (ks) {
-    return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+    return Promise.all(ks.filter(function (k) { return k.indexOf(SNAPSHOT_PREFIX) === 0; })
+      .map(function (k) { return caches.delete(k); }));
   });
 }
 
 // --- last online status (issue 070): persisted in IndexedDB, NOT in a cache.
-// db 'emplois-status', store 'kv', key 'last-online' -> 'online' | 'offline'.
+// db 'emplois-classes-status', store 'kv', key 'last-online' -> 'online' | 'offline'.
 // Storage errors resolve (best-effort) so the chain never wedges: opens and
 // transaction use are guarded, and the connection is closed on every path.
 // Version 2: onupgradeneeded also runs on an upgrade, so a store-less older
@@ -76,7 +104,7 @@ function eraseSnapshot() {
 function readStatus() {
   return new Promise(function (resolve) {
     try {
-      var req = indexedDB.open('emplois-status', 2);
+      var req = indexedDB.open('emplois-classes-status', 2);
       req.onupgradeneeded = function () {
         if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv');
       };
@@ -98,7 +126,7 @@ function readStatus() {
 function writeStatus(value) {
   return new Promise(function (resolve) {
     try {
-      var req = indexedDB.open('emplois-status', 2);
+      var req = indexedDB.open('emplois-classes-status', 2);
       req.onupgradeneeded = function () {
         if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv');
       };
@@ -123,8 +151,9 @@ var status = readStatus();
 
 // A successful network fetch: record 'online'. On the offline -> online
 // transition (persisted record says offline — warm worker OR freshly
-// relaunched worker) log it, persist it, tear down EVERYTHING and retake the
-// snapshot wholesale; a navigation's take is covered by that same run.
+// relaunched worker) log it, persist it, tear down this app's snapshot
+// family and retake the snapshot wholesale; a navigation's take is
+// covered by that same run.
 function noteOnline(nav) {
   var run = status.then(function (prev) {
     if (prev === 'offline') {
@@ -169,13 +198,17 @@ self.addEventListener('install', function (event) {
 });
 
 self.addEventListener('activate', function (event) {
-  // Every non-current cache is destroyed here. The snapshot NAME changes with
-  // each SNAPSHOT_URLS/semantics bump, so an entry removed from the list cannot
-  // survive a generation — without ever opening an empty-snapshot window.
+  // Only THIS app's non-current caches are destroyed (a key must carry
+  // SNAPSHOT_PREFIX): the sibling app's snapshot lives in the same origin's
+  // Cache Storage and is never ours to delete (issue 072). The snapshot NAME
+  // changes with each SNAPSHOT_URLS/semantics bump, so an entry removed from
+  // the list cannot survive a generation — without ever opening an
+  // empty-snapshot window.
   event.waitUntil(
     caches.keys().then(function (ks) {
-      return Promise.all(ks.filter(function (k) { return k !== SNAPSHOT; })
-        .map(function (k) { return caches.delete(k); }));
+      return Promise.all(ks.filter(function (k) {
+        return k.indexOf(SNAPSHOT_PREFIX) === 0 && k !== SNAPSHOT;
+      }).map(function (k) { return caches.delete(k); }));
     }).then(function () { return self.clients.claim(); })
   );
 });
@@ -193,7 +226,7 @@ self.addEventListener('fetch', function (event) {
   // validators still let the origin answer 304 when nothing changed.
   var reply = fetch(req, { cache: 'no-cache' }).then(function (res) {  // 1) NETWORK FIRST
     if (!res.ok) return res;                                         // 404/500: never a status input, never snapshot material
-    save = noteOnline(nav);                                          // 2) record online; transition => erase ALL + retake
+    save = noteOnline(nav);                                          // 2) record online; transition => erase + retake (family-scoped)
     return res;                                                      //    wholesale inside noteOnline (inv. c)
   }).catch(function () {
     save = noteOffline();                                            // 3) record offline (logged + persisted)

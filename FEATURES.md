@@ -29,7 +29,11 @@ the material the views are drawn from:
 
 ## The views
 
-Four pages over the same CSV; only `classes.html` carries the cross-page nav bar
+Four views over the same CSV, in the split of issue 072: the teachers app lives
+at `teachers/index.html` and the classes app at `classes/index.html` (each its
+own installable app with its own worker and manifest), the two utility views
+stay at the root (`time.html`, `timetable.html`), and a plain landing page at
+the root links them all. Only the classes app carries the cross-page nav bar
 (Teachers / Timetable matrix / Time / Classes).
 
 ### Matrix — `timetable.html`
@@ -39,7 +43,7 @@ Each cell where a teacher is engaged shows where they can be found — the room,
 plus the day and subject of the session. It answers "when and where is this
 teacher teaching?" at a glance, and can be filtered by day or teacher.
 
-### Teachers — `index.html`
+### Teachers — `teachers/index.html`
 
 A view with teachers as the main object. The teacher list is searchable and
 filterable live; teachers available today are raised to the top. Selecting a
@@ -55,7 +59,7 @@ highlighted. Selecting a slot lists the teachers teaching then, where each can b
 found, and which classes they teach. It answers "who is teaching right now, and
 where?"
 
-### Classes — `classes.html`
+### Classes — `classes/index.html`
 
 A view with classes as the main object — the student-facing counterpart to the
 teacher and time views. The class is chosen through a live search over the
@@ -145,25 +149,41 @@ the README's captures are taken in this mode.
 
 ## Offline: the snapshot model
 
-A network-first service worker (issues 063 + 070) with a "last snapshot" model —
-the stored copy is a snapshot of the site, never a cache the app trusts:
+Two network-first service workers (issues 063 + 070 + 072), one per app —
+`teachers/sw.js` owns the `teachers/` scope, `classes/sw.js` the `classes/`
+scope — each with a "last snapshot" model: the stored copy is a snapshot of
+that app, never a cache the app trusts. Cache Storage and IndexedDB are
+per-origin, shared between the two workers, so every name is namespaced per
+app: the cache families `emplois-teachers-snapshot-*` and
+`emplois-classes-snapshot-*` and the status databases `emplois-teachers-status`
+and `emplois-classes-status`.
 
 - **Online, the network wins.** Every request is fetched with `cache: 'no-cache'`
   so an HTTP-cache hit can never fake connectivity; the snapshot is only ever
   *built*, wholesale.
 - **Offline, the snapshot answers** (navigations ignoring the query string); a
   miss is an honest failure, never fabricated content.
-- **Wholesale takes only.** Install precaches the 26 URLs all-or-nothing (a
-  failing install writes nothing and retries), every network-served navigation
+- **Wholesale takes only.** Install precaches each app's 21 URLs all-or-nothing
+  (a failing install writes nothing and retries), every network-served navigation
   retakes the whole snapshot, and concurrent takes share one in-flight run.
 - **Erase + retake on reconnect** (issue 070): the last online/offline status is
-  logged and persisted in IndexedDB — outside Cache Storage, so teardown can never
-  erase it — and the transition offline → online tears down every cache and
-  retakes the snapshot from scratch. Storage errors are best-effort and never
-  wedge the chain; the snapshot name carries a version suffix so a semantics
-  change forces a clean retake, and activation destroys every non-current cache.
+  logged and persisted per app in its own IndexedDB database — outside Cache
+  Storage, so teardown can never erase it — and the transition offline → online
+  tears down only that app's own cache family and retakes the snapshot from
+  scratch (never "delete all": the sibling app shares the origin's Cache
+  Storage). Storage errors are best-effort and never wedge the chain; the
+  snapshot name carries a version suffix under the family prefix so a semantics
+  change forces a clean retake, and activation destroys every non-current cache
+  of the own family — plus, in the teachers worker only, the legacy pre-split
+  root snapshot `emplois-snapshot-v1` by exact name, which no surviving worker
+  would otherwise clean up.
+- **The utility pages and the landing are online-only** (issue 072): navigations
+  to `/`, `time.html`, `timetable.html` and the `classes.html` redirect stub
+  match no registration, so no worker ever intercepts them.
 - Registration happens once per load with an immediate `update()` byte-diff
-  check (`js/register.js`); `file://` and other non-http(s) origins are a silent
+  check (`js/register.js`), loaded by the two app pages only — each page
+  registers the worker of its own directory, the relative `'sw.js'` resolving
+  document-relative. `file://` and other non-http(s) origins are a silent
   no-op. When the worker gets in the way in development, the console escape
   hatch unregisters it and deletes every cache.
 
@@ -172,20 +192,28 @@ reload report (issue 067).
 
 ## Installable app
 
-Every page links `manifest.json`: a standalone-window app named "Emplois — ISIM
-Mahdia Timetable" with theme/background colors, and shortcuts straight to the
-Classes, Time and Matrix pages (issue 068). The icon set is the official ISIM
-Mahdia logo — 192, 512 and maskable 512 PNGs plus the apple-touch icon, also
-serving as the favicon (issue 069). Chrome's own install affordance does the
-rest: there is deliberately no in-page install button and no
-`beforeinstallprompt` capture.
+Two independently installable apps (issue 072), each linking the manifest of its
+own directory: "Emplois — Enseignants" (launcher label "Enseignants") at
+`teachers/` and "Emplois — Classes" (launcher label "Classes") at `classes/`,
+each a standalone-window app with theme/background colors and a distinct `id`
+resolving to its own directory. Neither declares shortcuts: every former
+shortcut target (Classes, Time, Matrix) lies outside both `./` scopes (issues
+068, 072). The icon set is the official ISIM Mahdia logo — 192, 512 and
+maskable 512 PNGs plus the apple-touch icon, also serving as the favicon —
+shared by both manifests (issue 069). The root landing, the utility pages and
+the `classes.html` redirect stub link no manifest. Chrome's own install
+affordance does the rest: there is deliberately no in-page install button and
+no `beforeinstallprompt` capture. (A pre-split installed entry is an honest
+orphan — its id and manifest URL no longer exist — so the two apps are
+installed afresh.)
 
 ## Remembering the last class
 
-`classes.html` remembers the last selected class across loads: the committed
-selection is mirrored under the `emplois-class` `localStorage` key, and a reload
-lands on the same detail a fresh selection produces. An explicit deselect forgets
-it, so a deliberately cleared page still boots empty (issue 065).
+The classes app (`classes/index.html`) remembers the last selected class across
+loads: the committed selection is mirrored under the `emplois-class`
+`localStorage` key, and a reload lands on the same detail a fresh selection
+produces. An explicit deselect forgets it, so a deliberately cleared page still
+boots empty (issue 065).
 
 ## Mobile layouts
 

@@ -17,7 +17,7 @@ var CSV_PATH = path.join(__dirname, '..', 'emplois.csv');
 var ROOT = path.join(__dirname, '..');
 
 // Load the browser script stack (data, libgroups, model, match) into one shared
-// TT context, exactly like classes.html's <script> tags do in the browser.
+// TT context, exactly like classes/index.html's <script> tags do in the browser.
 // model.js / match.js have no UMD wrapper, so they are eval'd in a vm context
 // whose global carries the shared TT object.
 function loadStack() {
@@ -423,15 +423,15 @@ test('suggest still ranks own-key matches above aliases (issue 029)', function (
 
 function readPage(name) { return fs.readFileSync(path.join(ROOT, name), 'utf8'); }
 
-test('classes.html carries the teachers-page structure and script stack', function () {
-  var html = readPage('classes.html');
+test('classes/index.html carries the teachers-page structure and script stack', function () {
+  var html = readPage('classes/index.html');
   assert.ok(html.indexOf('data-page="classes"') !== -1);
-  ['js/data.js', 'js/libgroups.js', 'js/model.js', 'js/match.js',
-   'js/theme.js', 'js/color.js', 'js/classes.js'].forEach(function (s) {
+  ['../js/data.js', '../js/libgroups.js', '../js/model.js', '../js/match.js',
+   '../js/theme.js', '../js/color.js', '../js/classes.js'].forEach(function (s) {
     assert.ok(html.indexOf('src="' + s + '"') !== -1, 'missing script ' + s);
   });
   // the kaomoji empty state mirrors the teachers page, so the vendor is loaded
-  assert.ok(html.indexOf('src="vendor/kaomoji.js"') !== -1, 'kaomoji vendor must be loaded');
+  assert.ok(html.indexOf('src="../vendor/kaomoji.js"') !== -1, 'kaomoji vendor must be loaded');
   // the author credit mirrors the teachers page, right after the status line
   assert.ok(html.indexOf('class="author-credit"') !== -1, 'missing author-credit');
   assert.ok(html.indexOf('https://github.com/adem482p') !== -1, 'missing author link');
@@ -439,8 +439,8 @@ test('classes.html carries the teachers-page structure and script stack', functi
   assert.ok(html.indexOf('name="description"') !== -1, 'missing meta description');
   assert.ok(html.indexOf('name="theme-color"') !== -1, 'missing theme-color');
   assert.ok(html.indexOf('rel="canonical"') !== -1, 'missing canonical');
-  assert.ok(html.indexOf('https://adem482p.github.io/time/classes.html') !== -1,
-    'canonical/og:url must use the classes.html URL');
+  assert.ok(html.indexOf('https://adem482p.github.io/time/classes/') !== -1,
+    'canonical/og:url must use the classes app URL (issue 072: the page moved to classes/)');
   ['id="searchWrap"', 'id="search"', 'id="suggest"', 'id="classList"',
    'id="detail"', 'id="status"', 'id="themeCycle"',
    'id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"',
@@ -453,10 +453,15 @@ test('classes.html carries the teachers-page structure and script stack', functi
   assert.ok(html.indexOf('id="themeBar"') === -1, 'theme square must not use a #themeBar wrapper');
 });
 
-test('every page links to the Classes page in its nav', function () {
-  ['classes.html'].forEach(function (p) {
-    var html = readPage(p);
-    assert.ok(html.indexOf('href="classes.html"') !== -1, p + ' has no Classes link');
+test('every page with a nav links to the Classes page, and the classes nav pins the four links', function () {
+  // the root landing links the app entry (issue 072); the classes app's own
+  // nav addresses itself via index.html and its siblings via their old URLs
+  assert.ok(readPage('index.html').indexOf('href="classes/"') !== -1,
+    'the landing page has no Classes link');
+  var html = readPage('classes/index.html');
+  ['href="../teachers/"', 'href="../timetable.html"', 'href="../time.html"',
+   'href="index.html"'].forEach(function (a) {
+    assert.ok(html.indexOf(a) !== -1, 'classes/index.html nav missing ' + a);
   });
 });
 
@@ -1054,9 +1059,9 @@ test('a tick past day end re-grades the anchor; a cleared view stays cleared (is
 // ---- mobile nav (issue 058) ------------------------------------------------
 
 test('classes nav chrome: state-gated back arrow, class overlay, V gone', function () {
-  var html = readPage('classes.html');
+  var html = readPage('classes/index.html');
   ['id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"'].forEach(function (id) {
-    assert.ok(html.indexOf(id) !== -1, 'classes.html missing ' + id);
+    assert.ok(html.indexOf(id) !== -1, 'classes/index.html missing ' + id);
   });
   assert.ok(html.indexOf('id="searchDone"') === -1,
     'the V-chevron is gone from the classes page');
@@ -1168,7 +1173,7 @@ test('classes nav machine: single selection/empty funnels, harness-safe week sli
 // ---- theme button tooltip (issue 059) --------------------------------------
 
 test('the theme button carries a media-gated data-tip tooltip (issue 059)', function () {
-  var html = readPage('classes.html');
+  var html = readPage('classes/index.html');
   var css = readPage('styles.css');
   var src = readPage('js/theme.js');
   // markup: the static title stays as the honest no-JS fallback, no #themeName
@@ -1205,7 +1210,7 @@ test('the theme button carries a media-gated data-tip tooltip (issue 059)', func
 
 test('classes mirrors the clear-X / back-arrow deselect split (issues 060, 064)', function () {
   // markup: the deselect button sits between the clear X and the overlay
-  var html = readPage('classes.html');
+  var html = readPage('classes/index.html');
   var clr = html.indexOf('id="searchClear"');
   var des = html.indexOf('id="searchDeselect"');
   var ov = html.indexOf('id="searchOverlay"');
