@@ -586,16 +586,16 @@ function classFactsHarness() {
   };
 }
 
-test('classFactsHTML lists a fully specified class’s five hierarchy levels (issue 078)', function () {
+test('classFactsHTML lists a fully specified class’s four display facts (issue 078)', function () {
   var facts = classFactsHarness();
   var html = facts(groups.byKey['GLSI3D2']);
   // GLSI3D2 = track LCS, year 3, spec GLSI, section D, cohort 2
   var pairs = [];
-  var re = /<dt>([^<]*)<\/dt><dd>([^<]*)<\/dd>/g, m;
+  var re = /<dt class="fact-name">([^<]*)<\/dt><dd class="fact-value">([\s\S]*?)<\/dd>/g, m;
   while ((m = re.exec(html))) pairs.push([m[1], m[2]]);
   assert.deepStrictEqual(pairs, [
-    ['Track', 'LCS'], ['Year', '3'], ['Specialization', 'GLSI'],
-    ['Section', 'D'], ['Groupe', '2']
+    ['Track', 'LCS'], ['Year', '3'], ['Specialty', 'GLSI'],
+    ['Groupe', 'D<sub>2</sub>']
   ], 'a full class lists every level, in hierarchy order');
   assert.ok(html.indexOf('<dl class="class-facts">') === 0, 'facts render as one <dl class="class-facts">');
   assert.ok(/<\/dl>$/.test(html), 'the <dl> is closed');
@@ -606,20 +606,20 @@ test('classFactsHTML omits absent levels instead of rendering them empty (issue 
   // MP1-EXR (byKey EXR1): MP track, year 1, spec EXR — no section, no cohort
   var html = facts(groups.byKey['EXR1']);
   var labels = [];
-  var re = /<dt>([^<]*)<\/dt>/g, m;
+  var re = /<dt class="fact-name">([^<]*)<\/dt>/g, m;
   while ((m = re.exec(html))) labels.push(m[1]);
-  assert.deepStrictEqual(labels, ['Track', 'Year', 'Specialization'],
-    'a section-less class omits Section and Groupe entirely');
+  assert.deepStrictEqual(labels, ['Track', 'Year', 'Specialty'],
+    'a section-less class omits Groupe entirely');
   assert.strictEqual(html.indexOf('<dd>undefined</dd>'), -1, 'no undefined leaks');
   assert.strictEqual(html.indexOf('<dd></dd>'), -1, 'no empty <dd>');
 });
 
-test('classFactsHTML shows a common branch’s track+year as its specialization (issue 078)', function () {
+test('classFactsHTML shows a common branch’s track+year as its specialty (issue 078)', function () {
   var facts = classFactsHarness();
-  // LBC1A2 sits under the LBC1 common branch: Specialization = track+year = LBC1
+  // LBC1A2 sits under the LBC1 common branch: Specialty = track+year = LBC1
   var html = facts(groups.byKey['LBC1A2']);
-  assert.ok(/<dt>Specialization<\/dt><dd>LBC1<\/dd>/.test(html),
-    'the common branch keeps its track+year name as the specialization (LBC1)');
+  assert.ok(/<dt class="fact-name">Specialty<\/dt><dd class="fact-value">LBC1<\/dd>/.test(html),
+    'the common branch keeps its track+year name as the specialty (LBC1)');
   // and the node really is a common branch in the model
   assert.ok(groups.byKey['LBC1'].commonBranch, 'LBC1 is the common branch in the data');
 });
@@ -665,8 +665,8 @@ test('classes.js derives the count line’s absence from ONE syncClear writer (i
   var src = CLASSES_SRC;
   assert.strictEqual(countTok(src, "classList.toggle('count-away'"), 1,
     'exactly one count-away writer — inside syncClear');
-  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away'/.test(src),
-    'the toggle rides the same derivation and call sites as the clear X — now also hides on selection');
+  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!search\.value\);/.test(src),
+    'the toggle rides the same derivation and call sites as the clear X');
   assert.strictEqual(src.indexOf('setTimeout'), -1, 'no timer drives the count line');
   assert.strictEqual(src.indexOf('requestAnimationFrame'), -1, 'no rAF drives the count line');
 });
@@ -675,9 +675,9 @@ test('the teachers page derives the count line’s absence from ONE syncClear wr
   var src = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
   assert.strictEqual(countTok(src, "classList.toggle('count-away'"), 1,
     'exactly one count-away writer — inside syncClear');
-  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away'/i.test(src),
-    'the toggle rides the same derivation and call sites as the clear X, now also depends on selection');
-  assert.ok(src.indexOf('selectedTeacher') !== -1, 'selectedTeacher variable present in syncClear');
+  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!\(search\.value \|\| selectedTeacher\)\);/.test(src),
+    'the toggle rides the same derivation and call sites as the clear X, including selection');
+  assert.ok(src.indexOf('selectedTeacher') !== -1, 'selectedTeacher participates in the count derivation');
   assert.strictEqual(src.indexOf('setTimeout'), -1, 'no timer drives the count line');
   assert.strictEqual(src.indexOf('requestAnimationFrame'), -1, 'no rAF drives the count line');
 });

@@ -13,9 +13,7 @@ TT.app = (function () {
   var esc = TT.data.esc;
   var nameHTML = TT.data.nameHTML;
   // Field-string labels live in js/libgroups.js (the field-string authority);
-  // the classes page asks it for the heading shortcut (issue 075) and for the
-  // list rows (issue 079): everywhere a class name is printed, the shortcut
-  // renders first, with the full escaped name as fallback.
+  // the classes page only asks it for the heading shortcut (issue 075).
   var shortcutOf = TT.groups.shortcutOf;
 
   // Manual right-arrow for the "Next" marker. Drawn as SVG (not the Unicode
@@ -29,9 +27,9 @@ TT.app = (function () {
   // number is a real subscript. Both parts are escaped BEFORE the markup is
   // appended, so a malformed field can never inject HTML; a shape
   // shortcutOf() does not know falls back to the full escaped name, so the
-  // heading is never blank. The list rows shorten the same way (issue 079);
-  // the filter, the no-match echo and the stored selection (issue 065) keep
-  // the raw full name as their identity.
+  // heading is never blank. This is the only surface that shortens: the list
+  // rows, the filter, the no-match echo and the stored selection (issue 065)
+  // keep the raw full name as their identity.
   function headingHTML(name) {
     var sc = shortcutOf(name);
     if (!sc) return esc(name);
@@ -40,28 +38,29 @@ TT.app = (function () {
 
   // ---- class hierarchy facts (issue 078) ---------------------------------
   // Under the shortcut heading the detail lists the class's hierarchy levels
-  // (CONTEXT.md's grouping table): track, year, specialization, section,
-  // cohort. Values are read from the resolved ClassNode the week already
-  // carries — never re-parsed from the display string. A level a class does
-  // not have (section, cohort) is omitted, not rendered empty; a common
-  // branch keeps its track+year name as the specialization (LBC1), exactly
-  // what the node keys and fullName print. Like the heading, every value is
-  // escaped before the markup is appended.
+  // (CONTEXT.md's grouping table). Values are read from the resolved ClassNode
+  // the week already carries — never re-parsed from the display string. A
+  // level a class does not have is omitted, not rendered empty; section and
+  // cohort are presented together as one Groupe value with a real subscript.
+  // Like the heading, every value is escaped before the markup is appended.
   function classFactsHTML(node) {
     if (!node) return '';
+    function valueHTML(value) { return value ? esc(value) : null; }
     var facts = [
-      ['Track', node.track],
-      ['Year', node.year],
-      ['Specialization', node.commonBranch
-        ? String(node.track) + String(node.year)
-        : node.specialization],
-      ['Section', node.section],
-      ['Groupe', node.cohort]
+      ['Track', valueHTML(node.track)],
+      ['Year', valueHTML(node.year)],
+      ['Specialty', node.commonBranch
+        ? valueHTML(String(node.track) + String(node.year))
+        : valueHTML(node.specialization)],
+      ['Groupe', node.section
+        ? esc(node.section) + (node.cohort ? '<sub>' + esc(node.cohort) + '</sub>' : '')
+        : valueHTML(node.cohort)]
     ];
     var h = '<dl class="class-facts">';
     facts.forEach(function (f) {
       if (!f[1]) return;
-      h += '<dt>' + esc(f[0]) + '</dt><dd>' + esc(f[1]) + '</dd>';
+      h += '<div class="fact-card"><dt class="fact-name">' + esc(f[0]) +
+        '</dt><dd class="fact-value">' + f[1] + '</dd></div>';
     });
     return h + '</dl>';
   }
@@ -214,12 +213,11 @@ TT.app = (function () {
     // text. Called wherever search.value can change (typing, commit, selection,
     // clear, boot). The X only ever erases (eraseFilter) — it never deselects.
     // Issue 078: this same derivation (and its same call sites) also drives the
-    // count line's .count-away class; issue 079 adds the selection fact to it:
-    // the numbers show only while the box is empty AND no class is selected —
-    // one derivation, one writer, no timers and no flags.
+    // count line's .count-away class — the numbers show only while the box is
+    // empty, one derivation, one writer, no timers and no flags.
     function syncClear() {
       if (searchClear) searchClear.hidden = !search.value;
-      status.classList.toggle('count-away', !!(search.value || selectedClass));
+      status.classList.toggle('count-away', !!search.value);
       syncDeselect();
     }
 
@@ -268,9 +266,6 @@ TT.app = (function () {
       detail.innerHTML = emptyStateHTML();
       markActive(null);
       syncOverlay();
-      // deselecting reveals the count line again (issue 079): with an empty
-      // filter and no selection the numbers are shown once more.
-      syncClear();
     }
 
     // the single selection funnel: every path that picks a class lands
@@ -283,9 +278,6 @@ TT.app = (function () {
       menuOpen = false;
       syncList();
       syncOverlay();
-      // selecting hides the count line too (issue 079): syncClear re-derives
-      // from both facts, so the numbers stay hidden while a selection exists.
-      syncClear();
     }
 
     // A giant, faint emoticon fills the detail area whenever no class is
@@ -382,10 +374,10 @@ TT.app = (function () {
           active: String(r.label).toUpperCase() === active
         }).join(' ');
         li.dataset.key = r.label;
-        // the row prints the class name — shortcut default (issue 079),
-        // rendered the same way the detail heading does; the raw key stays
-        // the row's identity in data-key, never shortened or escaped here.
-        li.innerHTML = headingHTML(r.label);
+        var h = match.highlightHTML(r.label, r.ranges);
+        if (r.node && r.node.fullName() !== r.label)
+          h += ' <span class="alias">— ' + esc(r.node.fullName()) + '</span>';
+        li.innerHTML = h;
         // The filter is the source of truth for the list: selecting a row must
         // not rewrite it, so the result list stays as-is and the user can move
         // to the next hit.
