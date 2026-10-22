@@ -594,6 +594,28 @@
     return (slot || '') + (sem || '') + (levels.section || '') + (levels.cohort || '');
   }
 
+  // Shortcut heading form (issue 075): the compact name the classes page
+  // shows in place of a full class name, with the cohort split out so the
+  // caller can render it as a real <sub> (HTML markup stays out of this
+  // platform-agnostic file; the caller escapes both parts first):
+  //   LBC1-H Groupe 2   -> { head: 'H1',    sub: '2' }   -> H1<sub>2</sub>
+  //   LCS3-GLSI_D Groupe 2 -> { head: 'GLSI3 D', sub: '2' } -> GLSI3 D<sub>2</sub>
+  //   LBC3-EB_A         -> { head: 'EB3 A', sub: ''  }   -> EB3 A
+  //   MP1-EXR / MP2-SD  -> { head: 'EXR1' / 'SD2', sub: '' }
+  //   MP2-SD_A          -> { head: 'SD2 A', sub: ''  }
+  // Strict whole-string match on the full-name shape (track from the known
+  // TRACKS vocabulary); anything else — a malformed field from raw CSV
+  // quoting, a compact key, an interior node name, an unknown future shape —
+  // returns null so the caller falls back to the full name. A heading is
+  // never blanked. Pure, no DOM.
+  var SHORTCUT_RE = new RegExp(
+    '^(' + TRACKS.join('|') + ')(\\d{1,2})-([A-Za-z0-9]+?)(?:_([A-Z]))?(?: Groupe (\\d+))?$');
+  function shortcutOf(name) {
+    var m = SHORTCUT_RE.exec(name == null ? '' : String(name));
+    if (!m) return null;
+    return { head: m[3] + m[2] + (m[4] ? ' ' + m[4] : ''), sub: m[5] || '' };
+  }
+
   /* ------------------------------------------------------------------ *
    * ClassNode
    * ------------------------------------------------------------------ */
@@ -1250,6 +1272,7 @@
     parseFullName: parseFullName,
     formatFull: formatFull,
     formatCompact: formatCompact,
+    shortcutOf: shortcutOf,
 
     // builders
     build: build,

@@ -441,34 +441,165 @@ test('classes/index.html carries the teachers-page structure and script stack', 
   assert.ok(html.indexOf('rel="canonical"') !== -1, 'missing canonical');
   assert.ok(html.indexOf('https://adem482p.github.io/time/classes/') !== -1,
     'canonical/og:url must use the classes app URL (issue 072: the page moved to classes/)');
-  ['id="searchWrap"', 'id="search"', 'id="suggest"', 'id="classList"',
+  ['id="searchWrap"', 'id="search"', 'id="classList"',
    'id="detail"', 'id="status"', 'id="themeCycle"',
    'id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"',
    'id="searchClear"'].forEach(function (id) {
     assert.ok(html.indexOf(id) !== -1, 'missing element ' + id);
   });
   assert.ok(html.indexOf('id="searchDone"') === -1, 'the V-chevron is gone from the classes page');
+  // issue 075: the suggestion list and the ghost line left the classes page
+  // (their absence is pinned positively in the "no autocomplete" test below)
+  ['id="suggest"', 'id="ghost"'].forEach(function (id) {
+    assert.ok(html.indexOf(id) === -1, 'element must stay gone from classes: ' + id);
+  });
   // the theme control is ONE element: no #themeBar wrapper, no .theme-dot span
   assert.ok(html.indexOf('theme-dot') === -1, 'theme square must not use a .theme-dot span');
   assert.ok(html.indexOf('id="themeBar"') === -1, 'theme square must not use a #themeBar wrapper');
 });
 
-test('the classes nav pins the two links, and no page references the unlisted utility views (issue 073)', function () {
-  // the root landing is now a pure redirect to the teachers app (issue 073);
-  // the classes app's own nav addresses itself via index.html and its sibling
-  // app via its directory — the utility views are unlisted, reachable only by
-  // their URL (at/, all/), so their links left the nav.
+test('the classes page carries no navigation links, and still references no unlisted utility view (issues 075, 073)', function () {
+  // Issue 075 removed the nav bar outright — the classes app is now a
+  // dead-end reachable only by URL (the root classes.html stub remains the
+  // other way in). That is the reporter's call; what must stay true is
+  // issue 073's: no page references the unlisted utility views.
   var html = readPage('classes/index.html');
+  assert.strictEqual(html.indexOf('<nav'), -1,
+    'classes/index.html ships no nav element at all (issue 075)');
+  assert.strictEqual(html.indexOf('</nav>'), -1, 'no closing tag without an opener');
   ['href="../teachers/"', 'href="index.html"'].forEach(function (a) {
-    assert.ok(html.indexOf(a) !== -1, 'classes/index.html nav missing ' + a);
+    assert.strictEqual(html.indexOf(a), -1,
+      'classes/index.html must carry no nav link ' + a + ' (issue 075)');
   });
-  var nav = /<nav>[\s\S]*?<\/nav>/.exec(html);
-  assert.ok(nav, 'classes/index.html keeps its nav');
-  assert.strictEqual((nav[0].match(/<a /g) || []).length, 2,
-    'the classes nav pins exactly two links (Teachers + Classes)');
   [/time\.html/, /timetable\.html/].forEach(function (old) {
     assert.strictEqual(old.test(html), false,
       'classes/index.html must not reference the unlisted old URL ' + old + ' (issue 073)');
+  });
+});
+
+// ---- issue 075: nav out, autocomplete out, shortcut heading in --------------
+
+// The real heading renderer, sliced from js/classes.js and driven with the
+// real shortcutOf + esc, exactly as the page runs it.
+function classesHeadingHarness() {
+  var sandbox = { console: console, esc: data.esc, shortcutOf: TT.groups.shortcutOf };
+  vm.createContext(sandbox);
+  vm.runInContext(classesHeadingFn(), sandbox, { filename: 'classes-heading-harness' });
+  return function (name) {
+    return vm.runInContext('headingHTML(' + JSON.stringify(name) + ');', sandbox,
+      { filename: 'classes-heading-call' });
+  };
+}
+
+test('the class heading renders the shortcut with a real <sub> (issue 075)', function () {
+  var heading = classesHeadingHarness();
+  // the reporter's exact example, byte for byte
+  assert.strictEqual(heading('LCS3-GLSI_D Groupe 2'), 'GLSI3 D<sub>2</sub>');
+  assert.strictEqual(heading('LCS3-GLSI_D Groupe 1'), 'GLSI3 D<sub>1</sub>');
+  // the documented shapes
+  assert.strictEqual(heading('LBC1-H Groupe 2'), 'H1<sub>2</sub>');
+  assert.strictEqual(heading('LCS1-A Groupe 1'), 'A1<sub>1</sub>');
+  assert.strictEqual(heading('LBC2-BI_A Groupe 1'), 'BI2 A<sub>1</sub>');
+  assert.strictEqual(heading('LCE2-IoT_A Groupe 1'), 'IoT2 A<sub>1</sub>');
+  assert.strictEqual(heading('LBC3-EB_A'), 'EB3 A');
+  assert.strictEqual(heading('MP1-EXR'), 'EXR1');
+  assert.strictEqual(heading('MP2-SD'), 'SD2');
+  assert.strictEqual(heading('MP2-SD_A'), 'SD2 A');
+  // fallbacks: an unrecognized shape keeps the full name, never a blank
+  assert.strictEqual(heading('LCS1'), 'LCS1');
+  assert.strictEqual(heading('GLSI3D1'), 'GLSI3D1');
+  assert.strictEqual(heading(''), '');
+  assert.strictEqual(heading('LCS3-GLSI_D Groupe X'), 'LCS3-GLSI_D Groupe X');
+  // markup safety: input HTML in a name is escaped, and the only literal
+  // tags the renderer can emit are the <sub>/</sub> pair
+  assert.strictEqual(heading('LCS3-GLSI_D Groupe <b>2</b>'),
+    'LCS3-GLSI_D Groupe &lt;b&gt;2&lt;/b&gt;');
+  var src = classesHeadingFn();
+  assert.ok(src.indexOf('esc(sc.head)') !== -1 && src.indexOf('esc(sc.sub)') !== -1,
+    'both shortcut parts are escaped before the <sub> is appended');
+  assert.ok(src.indexOf('esc(name)') !== -1, 'the fallback escapes the full name');
+});
+
+test('the narrow overlay resolves the stored key before shortcutting it (issue 075)', function () {
+  // overlayHeading + headingHTML, sliced from js/classes.js and driven with
+  // the real model/libgroups, exactly as syncOverlay runs them.
+  var sandbox = {
+    console: console, esc: data.esc, shortcutOf: TT.groups.shortcutOf,
+    model: model, groups: groups
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(classesHeadingFn() + classesOverlayFn(), sandbox,
+    { filename: 'classes-overlay-harness' });
+  function overlay(ref) {
+    return vm.runInContext('headingHTML(overlayHeading(groups, ' +
+      JSON.stringify(ref) + '));', sandbox, { filename: 'classes-overlay-call' });
+  }
+  // the stored ref (issue 065 writes the compact key) resolves to the
+  // canonical name and then shortens, byte-identical to the detail <h2>
+  assert.strictEqual(overlay('GLSI3D2'), 'GLSI3 D<sub>2</sub>');
+  assert.strictEqual(overlay('GLSI3D1'), 'GLSI3 D<sub>1</sub>');
+  assert.strictEqual(overlay('EB1A'), 'EB3 A');
+  // an unresolvable ref (removed data, tampered storage) falls back to the
+  // raw ref — escaped by headingHTML, never blank
+  assert.strictEqual(overlay('no-such-class'), 'no-such-class');
+  assert.strictEqual(overlay('LCS1'), 'LCS1');
+  assert.ok(!/undefined|null/.test(overlay('GLSI3D2')), 'no leak of undefined/null');
+});
+
+test('the shortcut heads every class-name heading surface of the page (issue 075)', function () {
+  var src = CLASSES_SRC;
+  // the detail heading (same element on desktop and narrow)…
+  assert.ok(src.indexOf("<h2>' + headingHTML(week.name) + '</h2>'") !== -1,
+    'renderWeek heads the detail with the shortcut');
+  assert.ok(src.indexOf('esc(week.name)') === -1,
+    'the detail heading no longer renders the raw field name');
+  // …and the narrow selected-class overlay (issues 056/058 mobile chrome).
+  // The stored selection is a compact key, so the overlay resolves it back to
+  // the canonical class name before shortcutting it.
+  assert.ok(src.indexOf('overlayName.innerHTML = headingHTML(overlayHeading(groups, selectedClass))') !== -1,
+    'the overlay heads the narrow view with the shortcut of the resolved name');
+  assert.ok(src.indexOf('model.classWeek(groups, ref)') !== -1,
+    'overlayHeading resolves the compact selection key to its canonical name');
+  assert.ok(src.indexOf('overlayName.textContent') === -1,
+    'the overlay no longer paints the raw name as text');
+  // the raw name stays where correctness needs it: list identity, the
+  // leaf-set mark, the no-match echo, and the issue-065 stored ref
+  ['li.dataset.key = r.label', 'markActive', 'No match for "', 'writeStoredClass(ref)']
+    .forEach(function (tok) {
+      assert.ok(src.indexOf(tok) !== -1, 'the full name stays at: ' + tok);
+    });
+});
+
+test('the classes page ships no autocomplete machinery; the teachers page keeps its own (issue 075)', function () {
+  // classes markup: no suggestion list, no inline ghost completion
+  var html = readPage('classes/index.html');
+  ['id="suggest"', 'id="ghost"', 'id="ghostPre"', 'id="ghostTyped"', 'id="ghostRest"']
+    .forEach(function (tok) {
+      assert.ok(html.indexOf(tok) === -1, 'classes markup must not carry ' + tok + ' (issue 075)');
+    });
+  // classes source: every piece of suggest machinery is gone
+  var src = CLASSES_SRC;
+  ['renderSuggest', 'paintActive', 'classGhost', 'renderGhost', 'acceptSuggest',
+   'classSuggestions', 'suggestIdx', 'suggestRows', 'isCoarsePointer',
+   'match.suggest', 'color.suggestion', "getElementById('suggest'",
+   "getElementById('ghost'", '--ghost-pre'].forEach(function (tok) {
+    assert.ok(src.indexOf(tok) === -1, 'js/classes.js must not carry ' + tok + ' (issue 075)');
+  });
+  // the input keeps every non-suggest behavior: live filtering (060), the
+  // erase-only X (060/064/074), deselection, redaction and the 065 restore
+  ['function eraseFilter()', 'function syncDeselect()', 'match.classSearch',
+   'nameHTML(', 'readStoredClass', 'function restorable', "addEventListener('input'"]
+    .forEach(function (tok) {
+      assert.ok(src.indexOf(tok) !== -1, 'classes keeps ' + tok);
+    });
+  // teachers: markup ships its suggest hidden, JS renders it — untouched
+  var thtml = readPage('teachers/index.html');
+  assert.ok(/<ul id="suggest" hidden>/.test(thtml), 'teachers keeps its suggest element');
+  assert.ok(/<div id="ghost"/.test(thtml), 'teachers keeps its ghost line');
+  var tsrc = readPage('js/teachers.js');
+  ['function renderSuggest', 'function renderGhost', 'function acceptSuggest',
+   'match.suggest', "addEventListener('blur'"].forEach(function (tok) {
+    assert.ok(tsrc.indexOf(tok) !== -1, 'teachers keeps ' + tok);
   });
 });
 
@@ -520,10 +651,14 @@ test('the leaf-filtered catalogue is exactly the leaf set', function () {
   kept.forEach(function (r) {
     assert.ok(groups.byKey[r.label].isLeaf(), r.label + ' must be a leaf');
   });
-  // class autocomplete entries resolve through the same leaf set
+  // the shared suggest layer still offers interior classes; the classes page
+  // no longer consumes it at all (issue 075: it never calls match.suggest —
+  // asserted in "classes.js selects leaves only" below), so the leaf-set
+  // filter here is the layer contract itself, not the page's.
   var sug = match.suggest(index, 'lcs1').filter(function (r) { return r.kind === 'class'; });
   var sugKept = sug.filter(function (r) { return set[r.label]; });
-  assert.ok(sug.length > sugKept.length, 'suggest still offers interior classes (classes.js filters them)');
+  assert.ok(sug.length > sugKept.length,
+    'match.suggest still offers interior classes (only the leaf set keeps them)');
   sugKept.forEach(function (r) {
     assert.ok(groups.byKey[r.label].isLeaf(), r.label + ' must be a leaf');
   });
@@ -568,8 +703,8 @@ test('classes.js selects leaves only (no broader classes)', function () {
     'onInput/commit must leaf-filter classSearch rows');
   assert.ok(sec.indexOf('leafRows(match.classSearch(index, \'\'))') !== -1,
     'initial paint must leaf-filter the catalogue');
-  assert.ok(sec.indexOf('leafSet[r.label]') !== -1,
-    'classSuggestions must leaf-filter suggest rows');
+  assert.ok(sec.indexOf('match.suggest') === -1,
+    'classes.js never calls the suggest layer (issue 075: no autocomplete)');
   // single-leaf gates: exact refs and showClass take the nomatch path otherwise
   assert.ok(sec.indexOf('leaves.length === 1') !== -1, 'missing single-leaf commit gate');
   assert.ok(sec.indexOf('week.leaves.length !== 1') !== -1, 'missing single-leaf showClass gate');
@@ -609,10 +744,15 @@ test('classes row click keeps the filter (G1 keep-filter)', function () {
   var handler = sec.slice(at, sec.indexOf('};', at) + 2);
   assert.ok(handler.indexOf('selectClass(r.label)') !== -1, 'row click selects through the funnel');
   assert.ok(handler.indexOf('search.value =') === -1, 'row click must not rewrite the filter');
-  // the sanctioned commit path still writes the filter
-  var accept = sec.slice(sec.indexOf('function acceptSuggest(row)'));
-  assert.ok(accept.indexOf('search.value = row.label') !== -1,
-    'acceptSuggest keeps the commit write');
+  // with the autocomplete gone (issue 075) nothing rewrites the box except
+  // the one erase-only funnel — the old acceptSuggest commit write left with it
+  var writes = sec.match(/search\.value = /g) || [];
+  assert.strictEqual(writes.length, 1,
+    'exactly one programmatic filter write is left (eraseFilter), got ' + writes.length);
+  assert.ok(sec.indexOf("search.value = '';") !== -1,
+    'that one write is the erase funnel emptying the box');
+  assert.ok(sec.indexOf('function acceptSuggest') === -1,
+    'the suggest commit writer stays removed (issue 075)');
 });
 
 test('classes card list groups by day with no Day column (G2)', function () {
@@ -697,6 +837,24 @@ function classesArrow() {
   var end = CLASSES_SRC.indexOf('</svg>\';', start);
   assert.ok(start !== -1 && end !== -1, 'NEXT_ARROW bounds');
   return CLASSES_SRC.slice(start, end + '</svg>\';'.length);
+}
+
+// The real heading shortcut renderer (issue 075), sliced from source: it sits
+// at module scope between NEXT_ARROW and the clock section.
+function classesHeadingFn() {
+  var start = CLASSES_SRC.indexOf('function headingHTML(name)');
+  var end = CLASSES_SRC.indexOf('// ---- clock (issue 051)', start);
+  assert.ok(start !== -1 && end !== -1 && end > start, 'headingHTML bounds');
+  return CLASSES_SRC.slice(start, end);
+}
+
+// The real ref→name resolver the narrow overlay heads with (issue 075), sliced
+// from source: it sits at module scope right after restorable().
+function classesOverlayFn() {
+  var start = CLASSES_SRC.indexOf('function overlayHeading(groups, ref)');
+  var end = CLASSES_SRC.indexOf('// ---- classes page', start);
+  assert.ok(start !== -1 && end !== -1 && end > start, 'overlayHeading bounds');
+  return CLASSES_SRC.slice(start, end);
 }
 
 function runClassesList(week, now) {
@@ -958,6 +1116,7 @@ function runClassesWeek() {
     console: console,
     model: model, color: color, C: color.CLASSES, esc: data.esc,
     nameHTML: data.nameHTML,
+    shortcutOf: TT.groups.shortcutOf,   // real heading shortcut (issue 075)
     store: store,
     week: model.classWeek(groups, 'GLSI3D1'),
     detail: detail,
@@ -967,7 +1126,7 @@ function runClassesWeek() {
     Date: FakeDate
   };
   vm.createContext(sandbox);
-  vm.runInContext(classesArrow() + '\n' + classesWeekSlice(), sandbox,
+  vm.runInContext(classesHeadingFn() + '\n' + classesArrow() + '\n' + classesWeekSlice(), sandbox,
     { filename: 'classes-week-harness' });
   return {
     sandbox: sandbox,
@@ -1172,7 +1331,15 @@ test('classes nav machine: single selection/empty funnels, harness-safe week sli
   assert.ok(handlerSlice("searchClear.addEventListener('click'").indexOf('search.focus()') === -1,
     'the X no longer re-focuses the box');
   assert.ok(handlerSlice("addEventListener('keydown'").indexOf('closeMenu();') !== -1,
-    'Escape without an open suggest closes the menu');
+    'Escape closes the menu (issue 075: no suggest overlay to drop first)');
+  // issue 075: the suggestion-key navigation is gone with the autocomplete —
+  // Tab and the arrows fall back to their native input behavior
+  ['e.key === \'Tab\'', '\'ArrowDown\'', '\'ArrowUp\''].forEach(function (tok) {
+    assert.ok(CLASSES_SRC.indexOf(tok) === -1,
+      'classes keydown must not handle ' + tok + ' (issue 075)');
+  });
+  assert.ok(CLASSES_SRC.indexOf("addEventListener('blur'") === -1,
+    'classes has no blur handler left (issue 075: it only dropped the overlay)');
   var bootTail = src.slice(src.indexOf('// initial paint'), src.indexOf('clock.subscribe(onTick);'));
   assert.ok(bootTail.indexOf('showEmpty();') !== -1, 'boot paints through the empty funnel');
 });
@@ -1291,9 +1458,14 @@ test('classes mirrors the clear-X / back-arrow deselect split (issues 060, 064)'
     'syncOverlay composes syncDeselect');
   // eraseFilter: commit's empty branch minus showEmpty, no funnel writes (I5)
   var ef = body('function eraseFilter()');
-  ["search.value = '';", 'syncClear();', 'renderSuggest([])', 'renderGhost();',
+  ["search.value = '';", 'syncClear();',
    'syncList();'].forEach(function (tok) {
     assert.ok(ef.indexOf(tok) !== -1, 'eraseFilter: ' + tok);
+  });
+  // issue 075: the erase funnel dropped the suggest/ghost clears with the
+  // autocomplete itself — nothing suggest-shaped may survive in it
+  ['renderSuggest', 'renderGhost', 'classGhost'].forEach(function (tok) {
+    assert.ok(ef.indexOf(tok) === -1, 'eraseFilter must not touch ' + tok + ' (issue 075)');
   });
   assert.ok(ef.indexOf("leafRows(match.classSearch(index, ''))") !== -1,
     'eraseFilter re-renders the full leaf catalogue from the empty query');

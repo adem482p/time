@@ -1,6 +1,6 @@
 // js/classes.js — classes page wiring. Self-contained per page: the shared
-// head (TT.app IIFE + model/match/color aliases + coarse-pointer gate +
-// NEXT_ARROW) is duplicated from js/app.js by design, not imported — zero
+// head (TT.app IIFE + model/match/color aliases + NEXT_ARROW) is duplicated
+// from js/app.js by design, not imported — zero
 // coupling, no load-order constraints. All coloring decisions go through
 // TT.color; all matching through TT.match; all domain data through TT.model.
 // This file owns DOM only.
@@ -12,22 +12,29 @@ TT.app = (function () {
   var C = color.CLASSES;
   var esc = TT.data.esc;
   var nameHTML = TT.data.nameHTML;
-
-  // Mobile gate (issue 007): coarse pointers (touch/soft keyboard) have no
-  // Escape key to opt out of the pre-focused first suggestion, so Enter must
-  // commit the typed query until the user explicitly picks a row. Guarded
-  // like the prefers-reduced-motion query below; defaults to false (desktop)
-  // when window/matchMedia is absent (e.g. node tests).
-  function isCoarsePointer() {
-    if (typeof window === 'undefined' || !window.matchMedia) return false;
-    try { return !!window.matchMedia('(pointer: coarse)').matches; }
-    catch (e) { return false; }
-  }
+  // Field-string labels live in js/libgroups.js (the field-string authority);
+  // the classes page only asks it for the heading shortcut (issue 075).
+  var shortcutOf = TT.groups.shortcutOf;
 
   // Manual right-arrow for the "Next" marker. Drawn as SVG (not the Unicode
   // glyph) so it renders identically across platforms and inherits the tag color.
   var NEXT_ARROW = '<svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true">' +
     '<path d="M4 12h14M12 6l6 6-6 6"/></svg>';
+
+  // ---- detail heading shortcut (issue 075) ---------------------------------
+  // The class heading shows the compact shortcut instead of the full field
+  // name: `LCS3-GLSI_D Groupe 2` renders as `GLSI3 D<sub>2</sub>` — the group
+  // number is a real subscript. Both parts are escaped BEFORE the markup is
+  // appended, so a malformed field can never inject HTML; a shape
+  // shortcutOf() does not know falls back to the full escaped name, so the
+  // heading is never blank. This is the only surface that shortens: the list
+  // rows, the filter, the no-match echo and the stored selection (issue 065)
+  // keep the raw full name as their identity.
+  function headingHTML(name) {
+    var sc = shortcutOf(name);
+    if (!sc) return esc(name);
+    return esc(sc.head) + (sc.sub ? '<sub>' + esc(sc.sub) + '</sub>' : '');
+  }
 
   // ---- clock (issue 051) ------------------------------------------------
   // One clock per page: a single 30 s interval that hands a fresh Date to
@@ -100,17 +107,32 @@ TT.app = (function () {
     catch (e) { return false; }
   }
 
+  // The narrow-screen overlay (#overlayName) heads the selected class, but the
+  // selection itself is a compact key (`GLSI3D2`), not a field name —
+  // shortcutOf only understands field shapes, so the key has to be resolved
+  // back to the canonical class name first (model.classWeek → the week's
+  // fullName, same source the detail <h2> heads). An unresolvable ref (removed
+  // data, tampered storage) falls back to the raw ref, which headingHTML then
+  // escapes verbatim — never a blank heading.
+  function overlayHeading(groups, ref) {
+    try {
+      var week = model.classWeek(groups, ref);
+      if (week && week.name) return week.name;
+    } catch (e) { /* fall through to the raw ref */ }
+    return ref;
+  }
+
   // ---- classes page -----------------------------------------------------------
 
   // Student-facing class timetable (issue 032). The class is chosen through a
-  // live search over the leaf classes only (match.classSearch + the class
-  // entries of match.suggest, both filtered to groups.leaves); selecting one
-  // draws its week as a grid — days as columns, the six slots as rows — with
-  // a semi-transparent red cursor at the current time and the current/next
-  // slot cells highlighted. Broader classes (interior nodes) are not
-  // selectable: they never appear in the catalogue and exact references to
-  // them take the no-match path. On narrow screens the grid is replaced by a
-  // teacher-style session card list (table.c-sessions).
+  // live search over the leaf classes only (match.classSearch filtered to
+  // groups.leaves; issue 075: no autocomplete — typing filters the list, it
+  // never opens suggestions); selecting one draws its week as a grid — days as
+  // columns, the six slots as rows — with a semi-transparent red cursor at the
+  // current time and the current/next slot cells highlighted. Broader classes
+  // (interior nodes) are not selectable: they never appear in the catalogue and
+  // exact references to them take the no-match path. On narrow screens the grid
+  // is replaced by a teacher-style session card list (table.c-sessions).
   function initClassesPage(store, modelObjs, index) {
     var search = document.getElementById('search');
     var searchBack = document.getElementById('searchBack');
@@ -119,21 +141,15 @@ TT.app = (function () {
     var overlayClear = document.getElementById('overlayClear');
     var searchClear = document.getElementById('searchClear');
     var searchDeselect = document.getElementById('searchDeselect');
-    var ghost = document.getElementById('ghost');
-    var ghostTyped = document.getElementById('ghostTyped');
-    var ghostPre = document.getElementById('ghostPre');
-    var ghostRest = document.getElementById('ghostRest');
-    var suggest = document.getElementById('suggest');
     var list = document.getElementById('classList');
     var detail = document.getElementById('detail');
     var status = document.getElementById('status');
     var layout = document.getElementById('layout');
     var groups = modelObjs.groups;
     var now = new Date();
-    var suggestIdx = -1;
-    // Leaf-only selection: the catalogue, the autocomplete and the commit
-    // gate only ever offer the leaf classes (one timetable each). Interior
-    // nodes (broader classes) are excluded everywhere below.
+    // Leaf-only selection: the catalogue and the commit gate only ever offer
+    // the leaf classes (one timetable each). Interior nodes (broader classes)
+    // are excluded everywhere below.
     var leafSet = {};
     groups.leaves.forEach(function (n) { leafSet[n.key] = true; });
     function isLeafRow(r) {
@@ -141,7 +157,6 @@ TT.app = (function () {
       return !!leafSet[k];
     }
     function leafRows(rows) { return rows.filter(isLeafRow); }
-    var suggestRows = [];
     // mobile nav machine (issue 058): two facts, three named states —
     //   menuOpen                    -> 'list'  (filterable list + back arrow)
     //   !menuOpen && selectedClass  -> 'class' (week view + name overlay)
@@ -184,10 +199,14 @@ TT.app = (function () {
     }
 
     // The name overlay belongs to the 'class' state: hidden unless a
-    // class is selected AND the menu is closed (issue 058).
+    // class is selected AND the menu is closed (issue 058). It carries the
+    // same heading the detail pane does — the issue-075 shortcut, rendered as
+    // markup (headingHTML escapes both parts) instead of raw text. The stored
+    // selection is a compact key, so overlayHeading resolves it back to the
+    // canonical class name before shortening it.
     function syncOverlay() {
       searchOverlay.hidden = selectedClass === null || menuOpen;
-      if (selectedClass !== null) overlayName.textContent = selectedClass;
+      if (selectedClass !== null) overlayName.innerHTML = headingHTML(overlayHeading(groups, selectedClass));
       syncDeselect();
     }
 
@@ -362,7 +381,10 @@ TT.app = (function () {
       currentWeek = week;            // the view the clock refreshes until cleared
       var cursor = model.dayCursor(now, store.slots);
       var by = indexByDaySlot(week);
-      var h = '<h2>' + esc(week.name) + '</h2>';
+      // the detail heading: the issue-075 shortcut for a full field name
+      // (`LCS3-GLSI_D Groupe 2` -> `GLSI3 D<sub>2</sub>`), anything else
+      // (an interior node name) falls back inside headingHTML
+      var h = '<h2>' + headingHTML(week.name) + '</h2>';
       // Per-day session groups, rendered on every viewport: desktop shows the
       // sections above the week grid, narrow screens shape them into cards
       // (teacher-style, via the generic mobile table rules; the whole-week
@@ -526,96 +548,12 @@ TT.app = (function () {
       markActive(ref);
     }
 
-    // ---- autocomplete overlay + shadow text ----------------------------
-
-    function renderSuggest(rows) {
-      suggestRows = rows;
-      suggest.innerHTML = '';
-      suggest.hidden = !rows.length;
-      // Mobile (coarse pointer): no pre-focus, so Enter commits the typed
-      // query until the user explicitly arrows/taps (issue 007). Desktop
-      // keeps the pre-focused first row. Ghost derives from suggestIdx,
-      // so -1 also means no ghost.
-      suggestIdx = rows.length ? (isCoarsePointer() ? -1 : 0) : -1; // desktop pre-focuses row 0; mobile starts unselected
-      rows.forEach(function (r, i) {
-        var li = document.createElement('li');
-        li.className = color.suggestion({ kind: r.kind, active: i === suggestIdx }).join(' ');
-        var node = index.nodes[r.label];
-        var body = match.highlightHTML(r.label, r.ranges) +
-          (node ? ' <span class="alias">— ' + esc(node.fullName()) + '</span>' : '');
-        li.innerHTML = '<span class="kind kind-' + r.kind + '">' + r.kind + '</span>' + body;
-        li.addEventListener('mousedown', function (e) {
-          e.preventDefault();
-          acceptSuggest(r);
-        });
-        suggest.appendChild(li);
-      });
-      paintActive();
-    }
-
-    function paintActive() {
-      suggest.querySelectorAll('li').forEach(function (li, i) {
-        li.classList.toggle(C.active, i === suggestIdx);
-      });
-    }
-
-    // Class-scoped ghost completion: completes to the bare class key with no
-    // "class:" prefix hint (the whole page is class-scoped). Adapts the
-    // shadowText prefix rule without forking match.js.
-    function classGhost(q, row) {
-      // Same strict rule as match.shadowText (issue #2): raw typed string,
-      // case-insensitive, space like any other character.
-      var raw = String(q == null ? '' : q);
-      if (!raw || !raw.trim() || !row) return null;
-      var rl = raw.toLowerCase();
-      if (row.label && row.label.toLowerCase().indexOf(rl) === 0)
-        return { pre: '', rest: row.label.slice(raw.length) };
-      return null;
-    }
-
-    function renderGhost() {
-      var row = suggestRows[suggestIdx];
-      var sh = row ? classGhost(search.value, row) : null;
-      if (sh) {
-        ghost.hidden = false;
-        ghostPre.textContent = sh.pre;
-        ghostTyped.textContent = search.value;
-        ghostRest.textContent = sh.rest;
-        var preW = sh.pre ? ghostPre.getBoundingClientRect().width : 0;
-        if (preW) search.style.setProperty('--ghost-pre', preW + 'px');
-        else search.style.removeProperty('--ghost-pre');
-      } else {
-        ghost.hidden = true;
-        ghostPre.textContent = '';
-        ghostTyped.textContent = '';
-        ghostRest.textContent = '';
-        search.style.removeProperty('--ghost-pre');
-      }
-    }
-
-    function acceptSuggest(row) {
-      search.value = row.label;
-      syncClear();
-      renderSuggest([]);
-      renderGhost();
-      commit();
-    }
-
     // ---- grouped live search ---------------------------------------------
-
-    function classSuggestions(q) {
-      // the page is class-scoped: keep only the class entries of the shared
-      // autocomplete, so teachers/subjects never appear here — and leaf-only,
-      // so broader classes are never offered.
-      return match.suggest(index, q).filter(function (r) {
-        return r.kind === 'class' && leafSet[r.label];
-      });
-    }
 
     // erase-only funnel (issue 060): the clear X lands here, never in
     // onInput()/commit() — emptying the box this way must NOT deselect. The
     // body is commit's empty branch minus showEmpty(): full leaf catalogue
-    // from the empty query, suggest/ghost dropped, pane flag re-synced, no
+    // from the empty query, pane flag re-synced, no
     // selection fact written (renderList re-applies the active mark from
     // activeKey — unlike teachers' renderItem, hence no markActive here).
     // Keyboard emptying still deselects through onInput (pinned 058 ruling 5)
@@ -625,8 +563,6 @@ TT.app = (function () {
     function eraseFilter() {
       search.value = '';
       syncClear();
-      renderSuggest([]);
-      renderGhost();
       renderList(leafRows(match.classSearch(index, '')));
       syncList();
     }
@@ -636,8 +572,6 @@ TT.app = (function () {
       syncClear();
       var rows = leafRows(match.classSearch(index, q));
       renderList(rows);
-      renderSuggest(classSuggestions(q));
-      renderGhost();
       // an empty filter means nothing is selected: back to the empty state
       if (!q.trim()) showEmpty();
       // exactly one result left -> auto-jump to the week view
@@ -646,8 +580,8 @@ TT.app = (function () {
     }
 
     // An exact class label selects even among partial matches (mirror of
-    // exactTeacher): tapping a suggest row commits its text, which may
-    // still match others — the exact leaf wins.
+    // exactTeacher): the committed text may still match others — the exact
+    // leaf wins.
     function exactClass(rows, q) {
       var want = model.normStr(q.trim());
       for (var i = 0; i < rows.length; i++) {
@@ -659,8 +593,6 @@ TT.app = (function () {
     function commit() {
       var q = search.value;
       syncClear();
-      renderSuggest([]);
-      renderGhost();
       var rows = leafRows(match.classSearch(index, q));
       renderList(rows);
       var like = exactClass(rows, q);
@@ -684,42 +616,22 @@ TT.app = (function () {
     }
 
     search.addEventListener('input', onInput);
+    // Only Escape and Enter are handled. Tab and the arrow keys were pure
+    // suggestion-row navigation (issue 075 removed the autocomplete), so they
+    // fall back to their native input behavior.
     search.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         // <input type="search"> clears the field on Esc by default; cancel
-        // that so Esc keeps the typed filter: it drops the suggest overlay
-        // if open, else closes the menu — it never deselects.
+        // that so Esc keeps the typed filter: it closes the menu — it never
+        // deselects. (Issue 075: no suggest overlay to drop any more.)
         e.preventDefault();
-        if (!suggest.hidden) { renderSuggest([]); renderGhost(); return; }
         closeMenu();
       }
-      if (e.key === 'Tab') {
-        // Issue 007: Tab must not accept an implicit (non-explicit)
-        // selection on mobile (suggestIdx -1) — same gate as Enter.
-        // Desktop is unchanged (fresh idx is 0, still accepts).
-        if (!suggest.hidden && suggestRows.length && suggestIdx >= 0) {
-          e.preventDefault();
-          acceptSuggest(suggestRows[suggestIdx]);
-        }
-        return;
-      }
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        if (suggest.hidden) return;
-        e.preventDefault();
-        var items = suggest.querySelectorAll('li');
-        if (!items.length) return;
-        suggestIdx = e.key === 'ArrowDown'
-          ? (suggestIdx + 1) % items.length
-          : (suggestIdx - 1 + items.length) % items.length;
-        paintActive();
-        renderGhost();
-        return;
-      }
       if (e.key === 'Enter') {
+        // Enter commits the typed query (issue 007's rule, kept after the
+        // autocomplete left in issue 075): nothing pre-selects on this page.
         e.preventDefault();
-        if (!suggest.hidden && suggestRows.length && suggestIdx >= 0)
-          acceptSuggest(suggestRows[suggestIdx]);
-        else commit();
+        commit();
       }
     });
     search.addEventListener('focus', function () {
@@ -731,13 +643,9 @@ TT.app = (function () {
     search.addEventListener('click', function () {
       openMenu();
     });
-    // blur only drops the autocomplete overlay: menu visibility is
-    // selection/back-driven, never blur-driven, so losing focus must never
-    // hide the row a press is about to land on.
-    search.addEventListener('blur', function () {
-      renderSuggest([]);
-      renderGhost();
-    });
+    // No blur handler (issue 075): its only job was dropping the suggest
+    // overlay. Menu visibility stays selection/back-driven, never
+    // blur-driven, by construction — losing focus writes nothing.
 
     // back dismisses the open list + focus and hides itself; a selected
     // class stays selected ("back to the earlier state" by construction)

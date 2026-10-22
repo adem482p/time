@@ -60,6 +60,7 @@ function candidateKeys(result) {
 test('exports the documented surface', function () {
   ['TRACKS', 'SECTIONS', 'COHORTS', 'GroupsError', 'Grouping', 'ClassNode',
    'normalize', 'parseLevels', 'parseFullName', 'formatFull', 'formatCompact',
+   'shortcutOf',
    'build', 'fromFieldValues', 'fromRows'].forEach(function (name) {
     assert.ok(name in Groups, 'missing export: ' + name);
   });
@@ -80,6 +81,94 @@ test('every raw field round-trips through its leaf', function () {
     assert.ok(leaf, 'no leaf for ' + f);
     assert.strictEqual(leaf.fullName(), f);
     assert.strictEqual(leaf.compactName(), leaf.key);
+  });
+});
+
+// ---- shortcut heading form (issue 075) --------------------------------------
+//
+// `shortcutOf(fullName)` is the pure mapping behind the classes detail
+// heading: it splits a full field name into the plain head and the cohort
+// (rendered by the page as a real <sub> — `LCS3-GLSI_D Groupe 2` displays as
+// `GLSI3 D<sub>2</sub>`). Table over the documented shapes, a sweep over
+// every distinct field actually in emplois.csv, then the null fallbacks.
+
+test('shortcutOf maps the documented shapes (issue 075)', function () {
+  var table = [
+    // [field, head, sub] — the first row is the reporter's exact example
+    ['LCS3-GLSI_D Groupe 2', 'GLSI3 D', '2'],
+    ['LCS3-GLSI_D Groupe 1', 'GLSI3 D', '1'],
+    ['LBC1-H Groupe 2', 'H1', '2'],            // single-letter section, no _X
+    ['LCS1-A Groupe 1', 'A1', '1'],            // common branch, same rule
+    ['LBC2-BI_A Groupe 1', 'BI2 A', '1'],
+    ['LCE2-IoT_A Groupe 1', 'IoT2 A', '1'],    // canonical case kept verbatim
+    ['LCE3-IRS_B Groupe 2', 'IRS3 B', '2'],
+    ['LBC3-EB_A', 'EB3 A', ''],                // no "Groupe": no subscript
+    ['MP2-SD_A', 'SD2 A', ''],
+    ['MP1-EXR', 'EXR1', ''],
+    ['MP1-SD', 'SD1', ''],
+    ['MP2-EXR', 'EXR2', ''],
+    ['MP2-SD', 'SD2', '']                      // brief's shape, absent from this CSV
+  ];
+  table.forEach(function (row) {
+    assert.deepStrictEqual(Groups.shortcutOf(row[0]), { head: row[1], sub: row[2] },
+      'shortcut of ' + row[0]);
+  });
+  // the plain text the reporter asked for, sub digits included
+  var ex = Groups.shortcutOf('LCS3-GLSI_D Groupe 2');
+  assert.strictEqual(ex.head + ex.sub, 'GLSI3 D2');
+});
+
+test('shortcutOf maps every distinct field in the real CSV (issue 075)', function () {
+  var distinct = {};
+  rows.forEach(function (r) { distinct[r.field] = true; });
+  var fields = Object.keys(distinct);
+  assert.strictEqual(fields.length, 94);
+  var fams = {};
+  fields.forEach(function (f) {
+    var leaf = grouping.leafFor(f);
+    assert.ok(leaf, 'no leaf for ' + f);
+    var sc = Groups.shortcutOf(f);
+    assert.ok(sc, 'shortcutOf must map the real field ' + f);
+    // the subscript is exactly the real cohort — nothing else can ever land
+    // under the <sub>; cohort-less fields carry no subscript
+    assert.strictEqual(sc.sub, leaf.cohort || '', f + ': subscript is the real cohort');
+    // the head is the identity of the same leaf: section + year for a common
+    // branch, specialization + year [+ " " + section] otherwise
+    var want = leaf.commonBranch
+      ? leaf.section + leaf.year
+      : leaf.specialization + leaf.year + (leaf.section ? ' ' + leaf.section : '');
+    assert.strictEqual(sc.head, want, f + ': head is the leaf identity');
+    // plain text by construction (alnum + the one section space), so the
+    // page's escaping before <sub> is belt-and-braces — never load-bearing
+    assert.ok(/^[A-Za-z0-9]+(?: [A-Za-z0-9]+)?$/.test(sc.head), f + ': plain head ' + sc.head);
+    assert.ok(!sc.sub || /^\d+$/.test(sc.sub), f + ': digit subscript ' + sc.sub);
+    var fam = (leaf.commonBranch ? 'common' : 'spec') +
+      (leaf.section ? '+section' : '') + (leaf.cohort ? '+cohort' : '');
+    fams[fam] = (fams[fam] || 0) + 1;
+  });
+  // every documented family is really present in the data
+  assert.deepStrictEqual(fams, {
+    'common+section+cohort': 38,
+    'spec': 3,
+    'spec+section': 3,
+    'spec+section+cohort': 50
+  });
+});
+
+test('shortcutOf returns null for anything it does not recognize (issue 075)', function () {
+  [
+    null, undefined, '',
+    'LCS1', 'LCS', 'GLSI',       // interior node names (unions keep their name)
+    'GLSI3D1',                    // compact key, not a full name
+    'LCS3-GLSI_D Groupe',         // malformed cohort wording
+    'LCS3-GLSI_D Groupe X',       // non-digit cohort
+    'LCS3_GLSI_D Groupe 2',       // no year/track separator
+    'LBC1-A Groupe 1 ', ' LCS1-A Groupe 1',  // strict: whitespace is not trimmed
+    'X9-YY_Z Groupe 1',           // unknown track
+    'no track at all', 'LCS3-GLSI_D Groupe <b>2</b>'
+  ].forEach(function (name) {
+    assert.strictEqual(Groups.shortcutOf(name), null,
+      'must fall back to the full name for ' + JSON.stringify(name));
   });
 });
 

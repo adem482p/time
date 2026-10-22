@@ -430,27 +430,24 @@ test('menu visibility is selection-driven, never blur-driven', function () {
     assert.ok(at !== -1, sig + ' handler found');
     return sec.slice(at, sec.indexOf('});', at) + 3);
   }
-  // blur stays pure on both pages: it drops the suggest overlay and nothing
-  // else (3909bd9 — a press in flight must never lose its row)
-  [teachers, classes].forEach(function (sec, i) {
-    var tag = i ? 'classes' : 'teachers';
-    var blur = handlerSlice(sec, "addEventListener('blur'");
-    assert.ok(blur.indexOf('renderSuggest([])') !== -1, tag + ': blur drops the overlay');
-    assert.ok(blur.indexOf('syncList()') === -1, tag + ': blur must not toggle panes');
-    assert.ok(blur.indexOf('setTimeout') === -1, tag + ': no deferred blur');
-    assert.ok(sec.indexOf("layout.classList.remove('is-list')") !== -1,
-      tag + ': selection dismisses the menu');
-  });
-  // teachers: blur writes neither nav fact nor any menu-edge function
+  // blur stays pure: it drops the suggest overlay and nothing else
+  // (3909bd9 — a press in flight must never lose its row). Issue 075 removed
+  // the classes autocomplete, and with it the classes blur handler itself —
+  // dropping the overlay was its only job — so the classes side is pinned by
+  // absence: no handler can ever write anything.
+  assert.ok(teachers.indexOf("layout.classList.remove('is-list')") !== -1,
+    'teachers: selection dismisses the menu');
+  assert.ok(classes.indexOf("layout.classList.remove('is-list')") !== -1,
+    'classes: selection dismisses the menu');
   var teachersBlur = handlerSlice(teachers, "addEventListener('blur'");
+  assert.ok(teachersBlur.indexOf('renderSuggest([])') !== -1, 'teachers: blur drops the overlay');
+  assert.ok(teachersBlur.indexOf('syncList()') === -1, 'teachers: blur must not toggle panes');
+  assert.ok(teachersBlur.indexOf('setTimeout') === -1, 'teachers: no deferred blur');
   ['menuOpen', 'openMenu', 'closeMenu'].forEach(function (tok) {
     assert.ok(teachersBlur.indexOf(tok) === -1, 'teachers: blur must not touch ' + tok);
   });
-  // classes: blur writes neither nav fact nor any menu-edge function
-  var classesBlur = handlerSlice(classes, "addEventListener('blur'");
-  ['menuOpen', 'openMenu', 'closeMenu'].forEach(function (tok) {
-    assert.ok(classesBlur.indexOf(tok) === -1, 'classes: blur must not touch ' + tok);
-  });
+  assert.ok(CLASSES_SRC.indexOf("addEventListener('blur'") === -1,
+    'classes: no blur handler at all (issue 075 — it only ever dropped the overlay)');
   function fnSlice(sec, sig) {
     var start = sec.indexOf(sig);
     assert.ok(start !== -1, sig + ' found');
@@ -868,10 +865,22 @@ test('the clear X erases only, the back arrow deselects only (issues 060, 064)',
       tag + ': syncOverlay composes syncDeselect');
     // eraseFilter: commit's empty branch minus showEmpty, no funnel writes (I5)
     var ef = body('function eraseFilter()');
-    ["search.value = '';", 'syncClear();', 'renderSuggest([])', 'renderGhost();',
+    ["search.value = '';", 'syncClear();',
      'syncList();'].forEach(function (tok) {
       assert.ok(ef.indexOf(tok) !== -1, tag + ': eraseFilter: ' + tok);
     });
+    if (i) {
+      // issue 075: the classes erase funnel dropped the suggest/ghost clears
+      // along with the autocomplete itself
+      ['renderSuggest', 'renderGhost'].forEach(function (tok) {
+        assert.ok(ef.indexOf(tok) === -1,
+          tag + ': eraseFilter must not touch ' + tok + ' (issue 075)');
+      });
+    } else {
+      ['renderSuggest([])', 'renderGhost();'].forEach(function (tok) {
+        assert.ok(ef.indexOf(tok) !== -1, tag + ': eraseFilter: ' + tok);
+      });
+    }
     assert.ok(ef.indexOf(i ? "leafRows(match.classSearch(index, ''))"
       : "match.searchSections(index, '', avail).sections") !== -1,
       tag + ': eraseFilter re-renders the full list from the empty query');
@@ -934,11 +943,15 @@ test('the clear X ships hidden in the markup, so an empty filter never paints it
     // geometry) outranks the UA [hidden] default, so the base armour must stay
     assert.ok(base.indexOf('#searchClear[hidden] { display: none; }') !== -1,
       tag + ': base CSS honours #searchClear[hidden] so the markup default renders');
-    // every sibling chrome node in the wrap ships hidden or base armour too —
+    // every other chrome node in the wrap ships hidden or base armour too —
     // no other node in #searchWrap can paint before boot writes its state
     assert.ok(/<div id="searchOverlay" hidden>/.test(src), tag + ': overlay ships hidden');
-    assert.ok(/<ul id="suggest" hidden>/.test(src), tag + ': suggest ships hidden');
     assert.ok(/id="searchDeselect"[^>]*\shidden>/.test(src), tag + ': deselect ships hidden');
+    // issue 075: the classes page lost its suggest element entirely; the
+    // teachers one still ships hidden (its autocomplete is untouched)
+    if (i) assert.ok(!/<ul id="suggest"/.test(src),
+      'classes: no suggest element at all (issue 075)');
+    else assert.ok(/<ul id="suggest" hidden>/.test(src), 'teachers: suggest ships hidden');
   });
   // JS keeps exactly one visibility writer for the X — no second mechanism
   [APP_SRC, CLASSES_SRC].forEach(function (src, i) {
