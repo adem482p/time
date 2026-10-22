@@ -87,13 +87,16 @@ body[data-page="classes"] .author-credit {
     text-align: center; 
     margin: 2px 0 20pt; 
 }
-/* the author NAME (the link) at 14pt; the "By" label stays at the inherited
-   body size — it is a label, not the name (issue 076) */
+/* the author NAME (the link) back at its old 1.3em (issue 078): Tiny5 is a
+   5px-grid pixel font — a non-integer size such as 14pt's 18.67px puts every
+   glyph edge off the grid and blurs it; 1.3em keeps the pixels crisp. The "By"
+   label stays at the inherited body size — it is a label, not the name
+   (issue 076); the 076 margins above are kept. */
 body[data-page="teachers"] .author-credit a,
 body[data-page="classes"] .author-credit a { 
     color: var(--md-primary); 
     font-family: "Tiny5", "DejaVu Sans", sans-serif; 
-    font-size: 14pt; 
+    font-size: 1.3em; 
     font-style: normal; 
     text-decoration: underline;
 }
@@ -311,6 +314,16 @@ body[data-page="classes"] .author-credit span {
 #detail .mostly { color: var(--md-on-surface-variant, #666); font-size: .85em; margin: .1rem 0; }
 #detail .count { color: var(--md-on-surface-variant, #666); font-size: .85em; margin: .5rem 0 .2rem; }
 #detail .nomatch, #detail .empty { color: var(--md-on-surface-variant, #555); font-style: italic; }
+/* the class hierarchy facts under the shortcut heading (issue 078): the
+   levels the class actually has (CONTEXT.md's grouping table) run inline as a
+   definition list — `Track LCS · Year 3 · Specialization GLSI · Section D ·
+   Groupe 2` — in the same muted small voice as the .mostly lines; absent
+   levels are omitted by the renderer, never rendered empty. */
+#detail .class-facts { margin: .1rem 0 .5rem; font-size: .85em; color: var(--md-on-surface-variant, #666); }
+#detail .class-facts dt { display: inline; font-weight: 600; }
+#detail .class-facts dt::after { content: "\00a0"; }
+#detail .class-facts dd { display: inline; margin: 0; }
+#detail .class-facts dd:not(:last-of-type)::after { content: " \00b7\00a0\00a0"; }
 
 /* ---- vendored kaomoji webfonts -------------------------------------------
    The empty-state face is assembled from box-drawing, geometric and technical
@@ -471,10 +484,21 @@ body[data-page="classes"] .author-credit span {
    uppercase label, never the DynaPuff/Tiny5 display faces) so it sits below
    the h2 teacher name. Between groups is spacing (margin), never a rule element. */
 #detail .day-group { margin: 0 0 1rem; }
+/* The day heading sticks to the top of the viewport while its day scrolls
+   past (issue 078), on every viewport and in both schemes: an opaque
+   theme-respecting surface (the page canvas it normally sits on) plus a
+   z-index so table rows never show through as it slides — later headings
+   paint over earlier stuck ones (the h3/section sibling order pinned by
+   issues 046/048 is kept: no wrapper, no JS). Measured in Chromium, the
+   sticky offset pins the BORDER box (top: 0 holds the label flush at the
+   scrollport top; top: -1rem would hang the whole 17px label off-screen —
+   verified before pinning 0, issue 078). The 1rem margins stay in flow. */
 #detail .day-head {
   color: var(--md-on-surface-variant, #666);
   font-size: .78em; text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
-  margin: .8rem 0 .2rem;
+  margin: 1rem 0;
+  position: sticky; top: 0; z-index: 2;
+  background: var(--md-surface, #fff);
 }
 /* dim the whole group (not just the rows) so its border dims with the content */
 #detail .day-group.dim { opacity: .58; }
@@ -527,6 +551,41 @@ html { background: var(--md-surface, #fff); }
   }
   #layout > #listPane #teacherList,
   #layout > #listPane #classList { flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; }
+  /* Sticky day headings (issue 078) need #detail to be as tall as its
+     content: the document (not #detail) is the scroll container here, but
+     stretch caps #detail's box at the viewport line — and a sticky child may
+     never move outside its containing block (its parent box), so the day
+     headings could only stick inside the first viewport of a longer detail.
+     align-self: flex-start lets #detail grow with its content (the document
+     keeps scrolling overflows exactly as before), while min-height keeps the
+     definite viewport-tall column the empty state fills. at/ and all/ keep
+     the stretch — they carry no sticky children. */
+  body[data-page="teachers"] #layout > #detail,
+  body[data-page="classes"] #layout > #detail {
+    align-self: flex-start;
+    min-height: calc(100vh - 2rem);
+    min-height: calc(100dvh - 2rem);
+  }
+  /* The count line shows only while the filter box is empty (issue 078): the
+     pages' syncClear — the same single derivation, and the same call sites,
+     as the clear X's [hidden] — toggles .count-away on it. On desktop the
+     list pane is a flex column, so the freed space flows down into the
+     results list; the fold is a plain height/margin/opacity transition on the
+     collapsing element (auto height cannot transition, hence the pinned
+     one-line box; overflow hides the text while it folds) — no JS
+     measurement, no timers, no flags. The suggest dropdown is unaffected: it
+     stays absolute inside #searchWrap and simply overlays the gap. */
+  body[data-page="teachers"] #status, body[data-page="classes"] #status {
+    height: 1.4em; overflow: hidden;
+    /* the pane is a flex column; the list (flex:1) must absorb the freed
+       space, never the pinned one-line box (flex-shrink would eat it) */
+    flex: none;
+    transition: height .18s ease, margin .18s ease, opacity .18s ease;
+  }
+  body[data-page="teachers"] #status.count-away,
+  body[data-page="classes"] #status.count-away {
+    height: 0; margin: 0; opacity: 0;
+  }
   /* gap is wider than the gutter the table hangs into, so the hanging now/next
      column never touches the teacher list. */
   #layout { gap: calc(var(--gutter) + 1.25rem); }
@@ -614,6 +673,10 @@ html { background: var(--md-surface, #fff); }
      the autocomplete overlay), so a press in flight can never lose its row. */
   #layout:not(.is-list) #teacherList, #layout:not(.is-list) #classList { display: none; }
   #layout.is-list #detail { display: none; }
+  /* the count line leaves with the filter on narrow too (issue 078); the
+     narrow pane is not a fill-flex column, so it simply goes — no animation */
+  body[data-page="teachers"] #status.count-away,
+  body[data-page="classes"] #status.count-away { display: none; }
   /* the whole page scrolls: #detail must not become an inner scroll
      container. The base rule's overflow-x:auto would compute overflow-y to
      auto and trap the scroll inside #detail (heading + search stuck); here
@@ -740,7 +803,7 @@ html { background: var(--md-surface, #fff); }
     /* clip full-bleed tinted rows to the rounded corners */
     overflow: clip;
   }
-  #detail .day-head { margin: .8rem 0 .2rem; }
+  #detail .day-head { margin: 1rem 0; }
   #detail .day-group table, #detail .day-group tbody { display: block; }
   /* the base #detail table rule carries margin-top:.5rem for standalone
      tables; inside the card it would collapse with a tinted first row's

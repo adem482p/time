@@ -36,6 +36,34 @@ TT.app = (function () {
     return esc(sc.head) + (sc.sub ? '<sub>' + esc(sc.sub) + '</sub>' : '');
   }
 
+  // ---- class hierarchy facts (issue 078) ---------------------------------
+  // Under the shortcut heading the detail lists the class's hierarchy levels
+  // (CONTEXT.md's grouping table): track, year, specialization, section,
+  // cohort. Values are read from the resolved ClassNode the week already
+  // carries — never re-parsed from the display string. A level a class does
+  // not have (section, cohort) is omitted, not rendered empty; a common
+  // branch keeps its track+year name as the specialization (LBC1), exactly
+  // what the node keys and fullName print. Like the heading, every value is
+  // escaped before the markup is appended.
+  function classFactsHTML(node) {
+    if (!node) return '';
+    var facts = [
+      ['Track', node.track],
+      ['Year', node.year],
+      ['Specialization', node.commonBranch
+        ? String(node.track) + String(node.year)
+        : node.specialization],
+      ['Section', node.section],
+      ['Groupe', node.cohort]
+    ];
+    var h = '<dl class="class-facts">';
+    facts.forEach(function (f) {
+      if (!f[1]) return;
+      h += '<dt>' + esc(f[0]) + '</dt><dd>' + esc(f[1]) + '</dd>';
+    });
+    return h + '</dl>';
+  }
+
   // ---- clock (issue 051) ------------------------------------------------
   // One clock per page: a single 30 s interval that hands a fresh Date to
   // every subscribed part of the page; a subscriber re-renders its own
@@ -183,8 +211,12 @@ TT.app = (function () {
     // clear "x" (issue 060), every viewport: shown only while the filter holds
     // text. Called wherever search.value can change (typing, commit, selection,
     // clear, boot). The X only ever erases (eraseFilter) — it never deselects.
+    // Issue 078: this same derivation (and its same call sites) also drives the
+    // count line's .count-away class — the numbers show only while the box is
+    // empty, one derivation, one writer, no timers and no flags.
     function syncClear() {
       if (searchClear) searchClear.hidden = !search.value;
+      status.classList.toggle('count-away', !!search.value);
       syncDeselect();
     }
 
@@ -383,8 +415,10 @@ TT.app = (function () {
       var by = indexByDaySlot(week);
       // the detail heading: the issue-075 shortcut for a full field name
       // (`LCS3-GLSI_D Groupe 2` -> `GLSI3 D<sub>2</sub>`), anything else
-      // (an interior node name) falls back inside headingHTML
-      var h = '<h2>' + headingHTML(week.name) + '</h2>';
+      // (an interior node name) falls back inside headingHTML; the class's
+      // hierarchy levels follow it (issue 078), read from the week's leaf
+      var h = '<h2>' + headingHTML(week.name) + '</h2>' +
+        classFactsHTML(week.leaves[0]);
       // Per-day session groups, rendered on every viewport: desktop shows the
       // sections above the week grid, narrow screens shape them into cards
       // (teacher-style, via the generic mobile table rules; the whole-week

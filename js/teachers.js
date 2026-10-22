@@ -189,8 +189,12 @@ TT.app = (function () {
     // clear "x" (issue 060), every viewport: shown only while the filter holds
     // text. Called wherever search.value can change (typing, commit, selection,
     // clear, boot). The X only ever erases (eraseFilter) — it never deselects.
+    // Issue 078: this same derivation (and its same call sites) also drives the
+    // count line's .count-away class — the numbers show only while the box is
+    // empty, one derivation, one writer, no timers and no flags.
     function syncClear() {
       if (searchClear) searchClear.hidden = !search.value;
+      status.classList.toggle('count-away', !!search.value);
       syncDeselect();
     }
 

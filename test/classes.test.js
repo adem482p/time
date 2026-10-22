@@ -571,6 +571,114 @@ test('the shortcut heads every class-name heading surface of the page (issue 075
     });
 });
 
+// ---- class hierarchy facts under the heading (issue 078) --------------------
+
+// The real facts renderer, sliced from js/classes.js by the same bounds as the
+// heading harness (it sits between headingHTML and the clock section) and
+// driven with the REAL model nodes, exactly as renderWeek runs it.
+function classFactsHarness() {
+  var sandbox = { console: console, esc: data.esc, shortcutOf: TT.groups.shortcutOf };
+  vm.createContext(sandbox);
+  vm.runInContext(classesHeadingFn(), sandbox, { filename: 'classes-facts-harness' });
+  return function (node) {
+    sandbox.__node__ = node;
+    return vm.runInContext('classFactsHTML(__node__)', sandbox, { filename: 'classes-facts-call' });
+  };
+}
+
+test('classFactsHTML lists a fully specified class’s five hierarchy levels (issue 078)', function () {
+  var facts = classFactsHarness();
+  var html = facts(groups.byKey['GLSI3D2']);
+  // GLSI3D2 = track LCS, year 3, spec GLSI, section D, cohort 2
+  var pairs = [];
+  var re = /<dt>([^<]*)<\/dt><dd>([^<]*)<\/dd>/g, m;
+  while ((m = re.exec(html))) pairs.push([m[1], m[2]]);
+  assert.deepStrictEqual(pairs, [
+    ['Track', 'LCS'], ['Year', '3'], ['Specialization', 'GLSI'],
+    ['Section', 'D'], ['Groupe', '2']
+  ], 'a full class lists every level, in hierarchy order');
+  assert.ok(html.indexOf('<dl class="class-facts">') === 0, 'facts render as one <dl class="class-facts">');
+  assert.ok(/<\/dl>$/.test(html), 'the <dl> is closed');
+});
+
+test('classFactsHTML omits absent levels instead of rendering them empty (issue 078)', function () {
+  var facts = classFactsHarness();
+  // MP1-EXR (byKey EXR1): MP track, year 1, spec EXR — no section, no cohort
+  var html = facts(groups.byKey['EXR1']);
+  var labels = [];
+  var re = /<dt>([^<]*)<\/dt>/g, m;
+  while ((m = re.exec(html))) labels.push(m[1]);
+  assert.deepStrictEqual(labels, ['Track', 'Year', 'Specialization'],
+    'a section-less class omits Section and Groupe entirely');
+  assert.strictEqual(html.indexOf('<dd>undefined</dd>'), -1, 'no undefined leaks');
+  assert.strictEqual(html.indexOf('<dd></dd>'), -1, 'no empty <dd>');
+});
+
+test('classFactsHTML shows a common branch’s track+year as its specialization (issue 078)', function () {
+  var facts = classFactsHarness();
+  // LBC1A2 sits under the LBC1 common branch: Specialization = track+year = LBC1
+  var html = facts(groups.byKey['LBC1A2']);
+  assert.ok(/<dt>Specialization<\/dt><dd>LBC1<\/dd>/.test(html),
+    'the common branch keeps its track+year name as the specialization (LBC1)');
+  // and the node really is a common branch in the model
+  assert.ok(groups.byKey['LBC1'].commonBranch, 'LBC1 is the common branch in the data');
+});
+
+test('classFactsHTML escapes every value and survives a missing node (issue 078)', function () {
+  var facts = classFactsHarness();
+  assert.strictEqual(facts(null), '', 'no node (no selection) renders nothing');
+  assert.strictEqual(facts(undefined), '', 'undefined renders nothing');
+  // markup in a data value can never inject: same esc() as the heading
+  var injected = { track: '<b>T</b>', year: '1&2', specialization: 'S',
+                   section: '"Q"', cohort: '<i>3</i>' };
+  var html = facts(injected);
+  assert.ok(html.indexOf('<b>') === -1 && html.indexOf('<i>') === -1,
+    'no raw markup from data values');
+  assert.ok(html.indexOf('&lt;b&gt;T&lt;/b&gt;') !== -1, 'track is escaped');
+  assert.ok(html.indexOf('1&amp;2') !== -1, 'year ampersand is escaped');
+  assert.ok(html.indexOf('&quot;Q&quot;') !== -1, 'section quotes are escaped');
+});
+
+test('renderWeek emits the facts dl between the h2 and the first day-head (issue 078)', function () {
+  var src = CLASSES_SRC;
+  // the emission site: facts follow the heading, same detail element
+  assert.ok(src.indexOf("'<h2>' + headingHTML(week.name) + '</h2>' +") !== -1 &&
+           /'<h2>' \+ headingHTML\(week\.name\) \+ '<\/h2>' \+\s*\n?\s*classFactsHTML\(week\.leaves\[0\]\)/.test(src),
+    'renderWeek appends classFactsHTML of the week’s leaf right after the h2');
+  // order inside renderWeek: h2+facts, then the first day-head section
+  var start = src.indexOf('function renderWeek');
+  var end = src.indexOf('function applyCursor');
+  var slice = src.slice(start, end);
+  var factsAt = slice.indexOf('classFactsHTML(week.leaves[0])');
+  var headAt = slice.indexOf('<h3 class="day-head">');
+  assert.ok(factsAt !== -1 && headAt > factsAt, 'facts precede the first day-head');
+  // the facts renderer lives at module scope inside the heading slice, and
+  // renderWeek's detail still writes through innerHTML in one piece
+  assert.ok(slice.indexOf('detail.innerHTML = h;') !== -1, 'one innerHTML write keeps the facts');
+  // the mirror (narrow overlay) stays heading-only: the one-line ellipsis
+  // chrome cannot carry a dl — pinned so the divergence is a decision
+  assert.ok(src.indexOf('overlayName.innerHTML = headingHTML(overlayHeading(groups, selectedClass))') !== -1,
+    'the narrow overlay mirrors the heading only, no facts dl');
+});
+
+test('classes.js derives the count line’s absence from ONE syncClear writer (issue 078)', function () {
+  var src = CLASSES_SRC;
+  assert.strictEqual(countTok(src, "classList.toggle('count-away'"), 1,
+    'exactly one count-away writer — inside syncClear');
+  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!search\.value\);/.test(src),
+    'the toggle rides the same derivation and call sites as the clear X');
+  assert.strictEqual(src.indexOf('setTimeout'), -1, 'no timer drives the count line');
+  assert.strictEqual(src.indexOf('requestAnimationFrame'), -1, 'no rAF drives the count line');
+});
+
+test('the teachers page derives the count line’s absence from ONE syncClear writer (issue 078)', function () {
+  var src = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
+  assert.strictEqual(countTok(src, "classList.toggle('count-away'"), 1,
+    'exactly one count-away writer — inside syncClear');
+  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!search\.value\);/.test(src),
+    'the toggle rides the same derivation and call sites as the clear X');
+});
+
 test('the classes page ships no autocomplete machinery; the teachers page keeps its own (issue 075)', function () {
   // classes markup: no suggestion list, no inline ghost completion
   var html = readPage('classes/index.html');

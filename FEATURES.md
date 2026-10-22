@@ -30,7 +30,8 @@ the material the views are drawn from:
 
 Four views over the same CSV, in the split of issue 072: the teachers app lives
 at `teachers/index.html` and the classes app at `classes/index.html` (each its
-own installable app with its own worker and manifest), the two utility views
+own worker and manifest; the classes app is installable by default, the
+teachers app only under `?install=1` — issue 078), the two utility views
 live unlisted at `at/index.html` and `all/index.html` — reachable only by
 their URL, never by navigation (issue 073) — and the root landing page does
 nothing but redirect to `teachers/`. No page carries a cross-page nav bar: the
@@ -47,7 +48,12 @@ teacher teaching?" at a glance, and can be filtered by day or teacher.
 ### Teachers — `teachers/index.html`
 
 A view with teachers as the main object. The teacher list is searchable and
-filterable live; teachers available today are raised to the top. Selecting a
+filterable live; teachers available today are raised to the top. The session/
+teacher count line under the filter box shows only while the filter is empty —
+typing folds it away with a plain CSS height/margin/opacity transition (one
+derivation shared with the clear X, no timers or flags; issue 078), and it
+returns the moment the box is emptied; the classes page behaves the same way.
+Selecting a
 teacher reveals their week: sessions grouped by day, the current and next session
 highlighted, and days with no live stake dimmed. The same view adapts to narrow
 screens: the list and the session table collapse into stacked cards.
@@ -71,7 +77,11 @@ match. Selecting a class draws its
 week as a grid with the days as columns and the six slots as rows; the detail
 heads with the class's shortcut form — `LCS3-GLSI_D Groupe 2` renders as
 `GLSI3 D<sub>2</sub>`, the cohort as a real subscript, any shape the shortcut
-rule does not know falling back to the full name (issue 075). Each cell lists
+rule does not know falling back to the full name (issue 075) — and directly
+below it the class's hierarchy facts list as a `<dl>` (issue 078): track, year,
+specialization, section and groupe (cohort), read from the resolved class node
+rather than re-parsed from the display string, absent levels omitted, a common
+branch showing its track+year as the specialization (`LBC1`). Each cell lists
 the sessions held then, every line giving the subject, the teacher and the room. A
 semi-transparent red cursor crosses the grid at the current time, its arrowhead
 resting in a small gutter beside the time column, and the current and next slots
@@ -99,7 +109,10 @@ The matrix page runs no timer at all. What it drives:
 - the classes page's detail: per-day tables with desktop day headings restored
   (issue 048), the first of them starting at today, and exactly one week
   rendering below — the whole-week grid, the flat full-session list that used to
-  follow it being gone (issue 049).
+  follow it being gone (issue 049). Since issue 078 each day heading sticks to
+  the top of the viewport while its day scrolls past — an opaque
+  theme-respecting surface with a z-index so rows never show through — on every
+  viewport and in both schemes.
 
 ## Search and matching
 
@@ -197,11 +210,14 @@ reload report (issue 067).
 
 ## Installable app
 
-Two independently installable apps (issue 072), each linking the manifest of its
-own directory: "Emplois — Enseignants" (launcher label "Enseignants") at
-`teachers/` and "Emplois — Classes" (launcher label "Classes") at `classes/`,
-each a standalone-window app with theme/background colors and a distinct `id`
-resolving to its own directory. Neither declares shortcuts: every former
+Two apps, each owning the manifest of its own directory (issue 072), but only
+one of them installable by default: "Emplois — Classes" (launcher label
+"Classes") at `classes/` links its manifest statically, while "Emplois —
+Enseignants" ("Enseignants") at `teachers/` links none — its manifest link is
+injected only under an explicit `?install=1` opt-in (issue 078), so the
+teachers page no longer offers itself for installation during a visit. Both are
+standalone-window apps with theme/background colors and a distinct `id`
+resolving to their own directory. Neither declares shortcuts: every former
 shortcut target (Classes, Time, Matrix) lies outside both `./` scopes (issues
 068, 072). The icon set is the official ISIM Mahdia logo — 192, 512 and
 maskable 512 PNGs plus the apple-touch icon, also serving as the favicon —

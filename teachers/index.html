@@ -27,9 +27,22 @@
 <meta name="twitter:image:alt" content="Emplois — the ISIM Mahdia timetable, searchable by teacher, class or subject.">
 
 <link rel="canonical" href="https://adem482p.github.io/time/teachers/">
-<link rel="manifest" href="manifest.json">
 <link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<script>
+/* Issue 078: this page is NOT installable by default — the manifest link ships
+   only on explicit opt-in via ?install=1 (the classes page keeps its prompt).
+   The link is injected at parse time, so an opted-in load links the manifest as
+   early as a static tag would; without the query this block writes nothing.
+   No UI, no persisted state, no module. */
+(function () {
+  if (!/[?&]install=1(&|$)/.test(location.search)) return;
+  var l = document.createElement('link');
+  l.rel = 'manifest';
+  l.href = 'manifest.json';
+  document.head.appendChild(l);
+})();
+</script>
 <script>
 /* Issue 066: replay the stored theme before first paint — js/theme.js persists
    the applied --md- and --pal- custom properties per scheme; write them

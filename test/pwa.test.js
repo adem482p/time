@@ -5,9 +5,11 @@
 // parsed as JSON (not grepped), the icon PNGs are parsed at the byte level
 // (IHDR: declared sizes must match the real file dimensions, the maskable icon
 // must carry no alpha channel), every page is scanned for its manifest/icon
-// links with hrefs RESOLVED against the page's own directory (the two app pages
-// link their in-directory manifest; the root landing, the online-only utility
-// views and the redirect stub link none — issue 072), and each worker's
+// links with hrefs RESOLVED against the page's own directory (the classes app
+// links its in-directory manifest statically; the teachers app links it only
+// via its ?install=1 opt-in script — issue 078, executed for real in a vm; the
+// root landing, the online-only utility views and the redirect stub link none
+// — issue 072), and each worker's
 // SNAPSHOT_URLS literal is re-parsed for derived coverage of every manifest-
 // and page-referenced icon. Subpath safety (production deploys under
 // https://adem482p.github.io/time/, issue 067) is a first-class assertion: no
@@ -19,19 +21,25 @@ var test = require('node:test');
 var assert = require('node:assert');
 var fs = require('node:fs');
 var path = require('node:path');
+var vm = require('node:vm');
 var zlib = require('node:zlib');
 
 var ROOT = path.join(__dirname, '..');
 
 // The two independently installable apps (issue 072), with the exact names the
-// user chose, and the pages that carry NO manifest by design.
+// user chose, and the pages that carry NO manifest by design. Issue 078 flips
+// the TEACHERS page to opt-in installability: no static manifest link ships —
+// the link is injected by the page's own inline script only under ?install=1
+// (classes keeps its static link and its install prompt).
 var APPS = [
   { name: 'teachers', dir: 'teachers', page: 'teachers/index.html',
     manifest: 'teachers/manifest.json', sw: 'teachers/sw.js',
-    nameStr: 'Emplois — Enseignants', shortName: 'Enseignants' },
+    nameStr: 'Emplois — Enseignants', shortName: 'Enseignants',
+    manifestMode: 'opt-in' },
   { name: 'classes', dir: 'classes', page: 'classes/index.html',
     manifest: 'classes/manifest.json', sw: 'classes/sw.js',
-    nameStr: 'Emplois — Classes', shortName: 'Classes' }
+    nameStr: 'Emplois — Classes', shortName: 'Classes',
+    manifestMode: 'static' }
 ];
 var NO_MANIFEST = ['index.html', 'at/index.html', 'all/index.html', 'classes.html'];
 
@@ -82,6 +90,29 @@ function linkHrefs(html, rel) {
   return out;
 }
 
+// Issue 078: run the page's own inline ?install=1 opt-in script in a sandbox
+// that mimics just enough DOM (createElement + head.appendChild), against the
+// given location.search. Returns the [{rel, href}] links the script appended —
+// empty when the query does not opt in. The script is extracted from the real
+// page, never duplicated here.
+function runInstallOptIn(html, search) {
+  var scripts = [], m, re = /<script>([\s\S]*?)<\/script>/g;
+  while ((m = re.exec(html))) if (m[1].indexOf('install=1') !== -1) scripts.push(m[1]);
+  assert.strictEqual(scripts.length, 1,
+    'the page must carry exactly one ?install=1 opt-in script');
+  var appended = [];
+  var sandbox = {
+    location: { search: search },
+    document: {
+      createElement: function (tag) { return { tagName: tag }; },
+      head: { appendChild: function (l) { appended.push({ rel: l.rel, href: l.href }); } }
+    }
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(scripts[0], sandbox, { filename: 'install-optin' });
+  return appended;
+}
+
 function isRelative(url) {
   // Root-absolute ("/…"), protocol-relative ("//…") and absolute URLs break
   // under the production subpath /time/ (issue 067's lesson).
@@ -121,20 +152,39 @@ test('each app manifest ships in its own directory with the installability field
   });
 });
 
-test('every page resolves the right manifest (or none) and real icons (issues 068, 072)', function () {
+test('every page resolves the right manifest (or none) and real icons (issues 068, 072, 078)', function () {
   APPS.forEach(function (app) {
     var html = readSrc(app.page);
     // hrefs as written must stay the portable literals...
-    assert.deepStrictEqual(linkHrefs(html, 'manifest'), ['manifest.json'],
-      app.page + ' must carry exactly one in-directory manifest link');
+    if (app.manifestMode === 'static') {
+      assert.deepStrictEqual(linkHrefs(html, 'manifest'), ['manifest.json'],
+        app.page + ' must carry exactly one in-directory manifest link');
+      // ...and RESOLVED against the page's directory they must land on this app's
+      // own manifest (never the sibling's manifest).
+      assert.strictEqual(toRoot(linkHrefs(html, 'manifest')[0], path.posix.dirname(app.page)), app.manifest,
+        app.page + ': the manifest link must resolve to its OWN directory manifest');
+    } else {
+      // issue 078: the teachers page is NOT installable by default — no static
+      // manifest link ships at all; the page's own ?install=1 opt-in script
+      // injects the link (executed above against the real page source).
+      assert.deepStrictEqual(linkHrefs(html, 'manifest'), [],
+        app.page + ' must carry NO static manifest link (issue 078: opt-in only)');
+      var links = runInstallOptIn(html, '?install=1');
+      assert.deepStrictEqual(links.map(function (l) { return [l.rel, l.href]; }),
+        [['manifest', 'manifest.json']],
+        app.page + ': ?install=1 must inject exactly one in-directory manifest link');
+      assert.strictEqual(toRoot(links[0].href, path.posix.dirname(app.page)), app.manifest,
+        app.page + ': the opt-in manifest link must resolve to its OWN directory manifest');
+      // without the query nothing is written — the page stays non-installable
+      ['', '?foo=1', '?install=0', '?install=10'].forEach(function (q) {
+        assert.deepStrictEqual(runInstallOptIn(html, q), [],
+          app.page + ': search ' + JSON.stringify(q) + ' must not inject a manifest');
+      });
+    }
     assert.deepStrictEqual(linkHrefs(html, 'icon'), ['../assets/icon-192.png'],
       app.page + ' must carry exactly one favicon link to the 192px app icon');
     assert.deepStrictEqual(linkHrefs(html, 'apple-touch-icon'), ['../assets/apple-touch-icon.png'],
       app.page + ' must carry exactly one apple-touch-icon link');
-    // ...and RESOLVED against the page's directory they must land on this app's
-    // own manifest and the shared root icons (never the sibling's manifest).
-    assert.strictEqual(toRoot(linkHrefs(html, 'manifest')[0], path.posix.dirname(app.page)), app.manifest,
-      app.page + ': the manifest link must resolve to its OWN directory manifest');
     [linkHrefs(html, 'icon')[0], linkHrefs(html, 'apple-touch-icon')[0]].forEach(function (href) {
       assert.ok(fs.existsSync(path.join(ROOT, path.posix.dirname(app.page), href)),
         app.page + ': icon target missing on disk: ' + href);
@@ -245,9 +295,13 @@ test('the manifest is served as JSON by filename — no .webmanifest MIME trap (
   // application/json, while *.webmanifest can fall through to
   // application/octet-stream on minimal hosts. The filename IS the fix: no
   // server config exists in this repo (no build step, no backend), so keep the
-  // one naming choice that works everywhere.
+  // one naming choice that works everywhere. The teachers page links its
+  // manifest only via the ?install=1 opt-in (issue 078) — that injected href
+  // must carry the same .json safety.
   APPS.forEach(function (app) {
-    var hrefs = linkHrefs(readSrc(app.page), 'manifest');
+    var hrefs = app.manifestMode === 'static'
+      ? linkHrefs(readSrc(app.page), 'manifest')
+      : runInstallOptIn(readSrc(app.page), '?install=1').map(function (l) { return l.href; });
     assert.strictEqual(hrefs.length, 1);
     assert.ok(/\.json$/.test(hrefs[0]), app.page + ': the manifest link must end in .json');
     var m = readManifest(app);

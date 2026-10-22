@@ -5,7 +5,9 @@
 // Issue 076: (1) ONE unified h1 rule — `h1 { font-size: 17pt }` — replacing the
 // old two-tier split (generic 1.3rem vs the teachers/classes 2em display
 // override); (2) the `.author-credit` at `margin: 2px 0 20pt` with the author
-// NAME (the link) at 14pt; (3) on the two filter pages the session/teacher
+// NAME (the link) at 14pt — issue 078 reverted the name to its old 1.3em
+// (Tiny5 is a 5px-grid font; 14pt's fractional px blurred it), the 076
+// margins stand; (3) on the two filter pages the session/teacher
 // count line `#status` sits UNDER the filter box (`#searchWrap`) and ABOVE the
 // results list, in normal flow so it scrolls away with the page — while the
 // utility views at/ and all/ keep `#status` under their title (no filter box
@@ -62,15 +64,20 @@ test('issue 076: ONE unified 17pt h1 rule, the two-tier split gone', function ()
 
 // ---- (2) author credit: margin + name size ---------------------------------
 
-test('issue 076: .author-credit is margin 2px 0 20pt with a 14pt name link', function () {
+test('issue 076+078: .author-credit is margin 2px 0 20pt with the name link back at 1.3em', function () {
   var credit = rule(CSS, 'body[data-page="teachers"] .author-credit,\nbody[data-page="classes"] .author-credit');
-  assert.ok(/margin: 2px 0 20pt;/.test(credit), 'credit margin pinned by the user');
+  assert.ok(/margin: 2px 0 20pt;/.test(credit), 'credit margin pinned by the user (076, kept)');
   assert.ok(/text-align: center;/.test(credit), 'the credit stays centred');
   assert.strictEqual(CSS.indexOf('margin: 1.2rem 0'), -1, 'the old 1.2rem credit margin is gone');
 
+  // issue 078: the user restored the old 1.3em name — Tiny5 is a 5px-grid
+  // pixel font, and 14pt's 18.67px put every glyph edge off the grid (blur);
+  // the 076 margins stay, the size reverts.
   var name = rule(CSS, 'body[data-page="teachers"] .author-credit a,\nbody[data-page="classes"] .author-credit a');
-  assert.ok(/font-size: 14pt;/.test(name), 'the author NAME (the link) is 14pt');
-  assert.strictEqual(name.indexOf('1.3em'), -1, 'the old 1.3em name size is gone');
+  assert.ok(/font-size: 1\.3em;/.test(name), 'the author NAME (the link) is back at 1.3em (issue 078)');
+  assert.strictEqual(name.indexOf('14pt'), -1, 'the 076 14pt name size is gone (issue 078)');
+  assert.ok(/font-family/.test(name), 'the name link still carries the Tiny5 family');
+  assert.ok(/Tiny5/.test(name), 'the name stays on the Tiny5 web font (only the size reverted)');
   // the "By" label keeps the inherited body size: no font-size on the span
   var label = rule(CSS, 'body[data-page="teachers"] .author-credit span,\nbody[data-page="classes"] .author-credit span');
   assert.strictEqual(label.indexOf('font-size'), -1,
@@ -145,4 +152,80 @@ test('issue 076: no JS writer re-parents #status — textContent only', function
     assert.strictEqual(/status\.insert|status\.append|status\.remove|status\.parentNode|st\.parentNode/.test(src), false,
       file + ' must never re-parent the count line');
   });
+});
+
+// ---- issue 078: sticky day headings, the folding count line, class facts ---
+
+test('issue 078: #detail .day-head sticks with an opaque surface and 1rem margins', function () {
+  // the base rule (first occurrence) carries the sticky declaration itself —
+  // no second sticky rule may exist to fight it
+  var head = rule(CSS, '#detail .day-head');
+  assert.ok(/position: sticky/.test(head), 'the day head is sticky');
+  assert.ok(/top: 0;/.test(head),
+    'the sticky offset pins the label flush at the scrollport top (measured in Chromium: top:-1rem hangs the whole 17px label off-screen)');
+  assert.ok(/z-index: 2/.test(head), 'a stuck head paints over the rows beneath it');
+  assert.ok(/background: var\(--md-surface, #fff\)/.test(head),
+    'the stuck head is opaque — rows must never show through');
+  assert.ok(/margin: 1rem 0/.test(head), 'the day head keeps 1rem in-flow margins');
+  // every #detail .day-head rule in the sheet keeps the margin (issue pins it
+  // on every viewport branch, not just the base)
+  var re = /#detail \.day-head[^{}]*\{[^}]*\}/g, m;
+  var seen = 0;
+  while ((m = re.exec(CSS))) {
+    seen++;
+    assert.ok(/margin: 1rem 0/.test(m[0]), 'every day-head rule keeps margin: 1rem 0 — #' + seen);
+  }
+  assert.ok(seen >= 2, 'the base rule plus at least one media branch carry .day-head');
+});
+
+test('issue 078: #status folds away on desktop via a plain CSS transition', function () {
+  // the pinned desktop box: a fixed one-line height (auto cannot transition)
+  var box = rule(CSS, 'body[data-page="teachers"] #status, body[data-page="classes"] #status');
+  assert.ok(/height: 1\.4em/.test(box), 'the count line keeps a pinned one-line height (covers the natural 19px line box — 1.35em clipped descenders)');
+  assert.ok(/flex: none/.test(box),
+    'the pinned box must not shrink: the pane is a flex column and the list absorbs the space');
+  assert.ok(/overflow: hidden/.test(box), 'overflow hides the text while it folds');
+  assert.ok(/transition: height \.18s ease, margin \.18s ease, opacity \.18s ease/.test(box),
+    'the fold is a plain CSS transition — no JS measurement');
+  // the collapsed state
+  var away = rule(CSS, 'body[data-page="teachers"] #status.count-away');
+  assert.ok(/height: 0/.test(away) && /margin: 0/.test(away) && /opacity: 0/.test(away),
+    'count-away collapses the box to nothing');
+  // narrow (the max-width: 700px branch) hides it outright — no animation there
+  assert.ok(/body\[data-page="teachers"\] #status\.count-away,\s*\n?\s*body\[data-page="classes"\] #status\.count-away \{ display: none; \}/.test(CSS),
+    'narrow hides the count line outright (no animation)');
+  // the base #status rule is still unpositioned — the fold never turns it
+  // into a positioning context
+  assert.strictEqual(rule(CSS, '#status').indexOf('position'), -1,
+    'the base #status rule stays unpositioned');
+  // the utility views are untouched: every #status.count-away selector line
+  // stays scoped to the two filter pages, never at/ or all/
+  assert.strictEqual((CSS.match(/#status\.count-away/g) || []).length, 4,
+    'two two-page rules: the desktop collapse and the narrow hide');
+  CSS.split('#status.count-away').slice(0, -1).forEach(function (before) {
+    var sel = before.slice(Math.max(before.lastIndexOf(';'), before.lastIndexOf('}')) + 1);
+    assert.ok(/data-page="teachers"|data-page="classes"/.test(sel),
+      'every #status.count-away selector stays scoped to the filter pages');
+  });
+});
+
+test('issue 078: the class-facts dl is styled once, for both filter pages', function () {
+  var facts = rule(CSS, '.class-facts');
+  assert.ok(/display: grid/.test(facts) || /display: table/.test(facts) ||
+           /margin/.test(facts), 'the facts dl carries its own rule');
+  assert.strictEqual(CSS.split('.class-facts').length - 1 >= 2, true,
+    'the .class-facts selector appears (base rule, possibly with a scoped branch)');
+});
+
+test('issue 078: desktop #detail may grow past the viewport so sticky heads can travel', function () {
+  // stretch caps #detail's box at the viewport line, which would also cap a
+  // sticky child's travel; the teachers/classes branches release it while
+  // min-height keeps the definite column the empty state fills
+  var fix = rule(CSS, 'body[data-page="teachers"] #layout > #detail,\n  body[data-page="classes"] #layout > #detail');
+  assert.ok(/align-self: flex-start/.test(fix), '#detail stretches to its content on the filter pages');
+  assert.ok(/min-height: calc\(100vh - 2rem\)/.test(fix), 'min-height keeps the viewport-tall column');
+  assert.ok(/min-height: calc\(100dvh - 2rem\)/.test(fix), 'the dvh variant follows');
+  // the fix lives in the desktop branch — narrow keeps the document scroll
+  var at = CSS.indexOf('body[data-page="teachers"] #layout > #detail');
+  assert.ok(at > CSS.indexOf('@media (min-width: 701px)'), 'the release is desktop-only');
 });
