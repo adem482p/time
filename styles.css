@@ -69,27 +69,31 @@ body {
 nav a { margin-right: 1rem; color: var(--md-primary, #0b4da2); }
 /* keep the top-right theme square clear of the nav links */
 nav { padding-right: 2.4rem; }
-h1 { font-size: 1.3rem; margin: .6rem 0 .2rem; }
+/* the one h1 rule for every page (issue 076): 17pt display headings, unified —
+   the former two-tier split (generic 1.3rem vs the teachers/classes 2em
+   display override) is gone, and so are the override's larger margins, which
+   existed only to balance the 32px title. */
+h1 { font-size: 17pt; margin: .6rem 0 .2rem; }
 #status { color: var(--md-on-surface-variant, #555); font-size: .85em; margin: .2rem 0 .6rem; }
-/* teachers + classes pages: centre the title and the session/teacher count line under it */
+/* teachers + classes pages: centre the title and the session/teacher count line */
 body[data-page="teachers"] h1,
 body[data-page="teachers"] #status,
 body[data-page="classes"] h1,
 body[data-page="classes"] #status { text-align: center; }
-/* the teachers + classes titles read as display text: bigger than the generic h1 chrome
-   (2em = twice the 16px body size) and given room above the credit line */
-body[data-page="teachers"] h1,
-body[data-page="classes"] h1 { font-size: 2em; margin: .8rem 0 .6rem; }
+/* the author credit (teachers + classes only) hugs the title above it (2px) and
+   leaves room before the filter box below (20pt); issue 076 pins both margins */
 body[data-page="teachers"] .author-credit,
 body[data-page="classes"] .author-credit { 
     text-align: center; 
-    margin: 1.2rem 0; 
+    margin: 2px 0 20pt; 
 }
+/* the author NAME (the link) at 14pt; the "By" label stays at the inherited
+   body size — it is a label, not the name (issue 076) */
 body[data-page="teachers"] .author-credit a,
 body[data-page="classes"] .author-credit a { 
     color: var(--md-primary); 
     font-family: "Tiny5", "DejaVu Sans", sans-serif; 
-    font-size: 1.3em; 
+    font-size: 14pt; 
     font-style: normal; 
     text-decoration: underline;
 }

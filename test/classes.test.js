@@ -432,8 +432,9 @@ test('classes/index.html carries the teachers-page structure and script stack', 
   });
   // the kaomoji empty state mirrors the teachers page, so the vendor is loaded
   assert.ok(html.indexOf('src="../vendor/kaomoji.js"') !== -1, 'kaomoji vendor must be loaded');
-  // the author credit mirrors the teachers page, right after the status line
-  assert.ok(html.indexOf('class="author-credit"') !== -1, 'missing author-credit');
+  // the author credit mirrors the teachers page, under the title (issue 076
+  // moved the count line under the filter box, so the credit follows the h1)
+  assert.ok(html.indexOf('</h1>\n    <p class="author-credit">') !== -1, 'author-credit must sit right under the h1 (issue 076)');
   assert.ok(html.indexOf('https://github.com/adem482p') !== -1, 'missing author link');
   // SEO head mirrors the teachers page with classes-specific URLs/descriptions
   assert.ok(html.indexOf('name="description"') !== -1, 'missing meta description');
