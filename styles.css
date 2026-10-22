@@ -314,18 +314,11 @@ body[data-page="classes"] .author-credit span {
 #detail .mostly { color: var(--md-on-surface-variant, #666); font-size: .85em; margin: .1rem 0; }
 #detail .count { color: var(--md-on-surface-variant, #666); font-size: .85em; margin: .5rem 0 .2rem; }
 #detail .nomatch, #detail .empty { color: var(--md-on-surface-variant, #555); font-style: italic; }
-/* the class hierarchy facts under the shortcut heading (issue 078): the
-   levels the class actually has (CONTEXT.md's grouping table) run inline as a
-   definition list — `Track LCS · Year 3 · Specialization GLSI · Section D ·
-   Groupe 2` — in the same muted small voice as the .mostly lines; absent
-   levels are omitted by the renderer, never rendered empty. */
-#detail .class-facts { margin: .1rem 0 .5rem; font-size: .85em; color: var(--md-on-surface-variant, #666); }
-#detail .class-facts dt { display: inline; font-weight: 600; }
-#detail .class-facts dt::after { content: "\00a0"; }
-#detail .class-facts dd { display: inline; margin: 0; }
-#detail .class-facts dd:not(:last-of-type)::after { content: " \00b7\00a0\00a0"; }
-
-/* ---- vendored kaomoji webfonts -------------------------------------------
+/* the class hierarchy facts under the shortcut heading (issue 078): one
+   card per level the class actually has (CONTEXT.md's grouping table) — the
+   value in big print, the attribute name below it in smaller print; absent
+   levels are omitted by the renderer, never rendered empty. Desktop keeps
+   the cards inline in the muted small voice; narrow screens lay them out as
    The empty-state face is assembled from box-drawing, geometric and technical
    symbols, plus the odd Indic letter (e.g. ಠ). No single system font covers
    that set, and the local-only names in the .empty-face stack are absent on
@@ -646,6 +639,42 @@ html { background: var(--md-surface, #fff); }
 /* ---- narrow screens: the session table becomes cards, the list flattens ---- */
 @media (max-width: 700px) {
   body { padding: .8rem; --mpad: .8rem; }
+  /* the day headings and the details heading read as centered labels on
+     narrow screens (issue 079) */
+  #detail .day-head { text-align: center; margin: 1rem 0; }
+  #detail > h2 { text-align: center; }
+  /* the facts panel becomes one row of borderless tinted cards — value big
+     above the attribute name, smaller below. auto-fit columns adapt to how
+     many levels the class has, so the row stays one row (issue 079). The
+     slight ISIM-blue hint cards them off without a border, in both schemes. */
+  #detail .class-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+  }
+  #detail .class-facts .fact-card {
+    margin: 0;
+    background: rgba(11, 77, 162, .07);
+    border-radius: .5rem;
+    padding: .5rem .6rem .4rem;
+  }
+  #detail .class-facts .fact-card .fact-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--md-on-surface, #1b1b1b);
+  }
+  #detail .class-facts .fact-card .fact-name {
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-top: .1rem;
+    color: var(--md-on-surface-variant, #666);
+  }
   #themeCycle { top: .8rem; right: .8rem; }
   /* one column; the list is temporary (search UI) and cards are the default.
      Flex column keeps the full-height chain alive instead of breaking it at
@@ -894,6 +923,38 @@ table.week .s-teacher, table.week .s-room { color: var(--md-on-surface-variant, 
   border-bottom: 5px solid transparent;
   border-left: 8px solid rgba(220, 38, 38, .75);
 }
+  #detail .class-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+    gap: .5rem;
+    margin: .1rem 0 .5rem;
+    padding: 0;
+    border: none;
+    background: none;
+  }
+  #detail .class-facts dt,
+  #detail .class-facts dd {
+    margin: 0;
+    padding: .2rem .3rem;
+    border-radius: .5rem;
+    background: rgba(11, 77, 162, .07);
+    vertical-align: bottom;
+  }
+  #detail .class-facts dt {
+    font-weight: 600;
+    font-size: .85rem;
+  }
+  #detail .class-facts dd {
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-top: .1rem;
+    color: var(--md-on-surface-variant, #666);
+  }
+/* the class hierarchy facts become one row of borderless tinted cards on mobile (issue 079):
+  value big above name small; columns auto-fit to stay on one row.
+  The ISIM-blue hint bg reads in both schemes.
+  Desktop keeps the inline dl voice (no rule added there). */
 
 /* ---- classes page on narrow screens ---- */
 @media (max-width: 700px) {

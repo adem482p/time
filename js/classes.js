@@ -13,7 +13,9 @@ TT.app = (function () {
   var esc = TT.data.esc;
   var nameHTML = TT.data.nameHTML;
   // Field-string labels live in js/libgroups.js (the field-string authority);
-  // the classes page only asks it for the heading shortcut (issue 075).
+  // the classes page asks it for the heading shortcut (issue 075) and for the
+  // list rows (issue 079): everywhere a class name is printed, the shortcut
+  // renders first, with the full escaped name as fallback.
   var shortcutOf = TT.groups.shortcutOf;
 
   // Manual right-arrow for the "Next" marker. Drawn as SVG (not the Unicode
@@ -27,9 +29,9 @@ TT.app = (function () {
   // number is a real subscript. Both parts are escaped BEFORE the markup is
   // appended, so a malformed field can never inject HTML; a shape
   // shortcutOf() does not know falls back to the full escaped name, so the
-  // heading is never blank. This is the only surface that shortens: the list
-  // rows, the filter, the no-match echo and the stored selection (issue 065)
-  // keep the raw full name as their identity.
+  // heading is never blank. The list rows shorten the same way (issue 079);
+  // the filter, the no-match echo and the stored selection (issue 065) keep
+  // the raw full name as their identity.
   function headingHTML(name) {
     var sc = shortcutOf(name);
     if (!sc) return esc(name);
@@ -212,11 +214,12 @@ TT.app = (function () {
     // text. Called wherever search.value can change (typing, commit, selection,
     // clear, boot). The X only ever erases (eraseFilter) — it never deselects.
     // Issue 078: this same derivation (and its same call sites) also drives the
-    // count line's .count-away class — the numbers show only while the box is
-    // empty, one derivation, one writer, no timers and no flags.
+    // count line's .count-away class; issue 079 adds the selection fact to it:
+    // the numbers show only while the box is empty AND no class is selected —
+    // one derivation, one writer, no timers and no flags.
     function syncClear() {
       if (searchClear) searchClear.hidden = !search.value;
-      status.classList.toggle('count-away', !!search.value);
+      status.classList.toggle('count-away', !!(search.value || selectedClass));
       syncDeselect();
     }
 
@@ -265,6 +268,9 @@ TT.app = (function () {
       detail.innerHTML = emptyStateHTML();
       markActive(null);
       syncOverlay();
+      // deselecting reveals the count line again (issue 079): with an empty
+      // filter and no selection the numbers are shown once more.
+      syncClear();
     }
 
     // the single selection funnel: every path that picks a class lands
@@ -277,6 +283,9 @@ TT.app = (function () {
       menuOpen = false;
       syncList();
       syncOverlay();
+      // selecting hides the count line too (issue 079): syncClear re-derives
+      // from both facts, so the numbers stay hidden while a selection exists.
+      syncClear();
     }
 
     // A giant, faint emoticon fills the detail area whenever no class is
@@ -373,10 +382,10 @@ TT.app = (function () {
           active: String(r.label).toUpperCase() === active
         }).join(' ');
         li.dataset.key = r.label;
-        var h = match.highlightHTML(r.label, r.ranges);
-        if (r.node && r.node.fullName() !== r.label)
-          h += ' <span class="alias">— ' + esc(r.node.fullName()) + '</span>';
-        li.innerHTML = h;
+        // the row prints the class name — shortcut default (issue 079),
+        // rendered the same way the detail heading does; the raw key stays
+        // the row's identity in data-key, never shortened or escaped here.
+        li.innerHTML = headingHTML(r.label);
         // The filter is the source of truth for the list: selecting a row must
         // not rewrite it, so the result list stays as-is and the user can move
         // to the next hit.

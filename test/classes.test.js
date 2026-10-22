@@ -665,8 +665,8 @@ test('classes.js derives the count line’s absence from ONE syncClear writer (i
   var src = CLASSES_SRC;
   assert.strictEqual(countTok(src, "classList.toggle('count-away'"), 1,
     'exactly one count-away writer — inside syncClear');
-  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!search\.value\);/.test(src),
-    'the toggle rides the same derivation and call sites as the clear X');
+  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away'/.test(src),
+    'the toggle rides the same derivation and call sites as the clear X — now also hides on selection');
   assert.strictEqual(src.indexOf('setTimeout'), -1, 'no timer drives the count line');
   assert.strictEqual(src.indexOf('requestAnimationFrame'), -1, 'no rAF drives the count line');
 });
@@ -675,8 +675,11 @@ test('the teachers page derives the count line’s absence from ONE syncClear wr
   var src = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
   assert.strictEqual(countTok(src, "classList.toggle('count-away'"), 1,
     'exactly one count-away writer — inside syncClear');
-  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!search\.value\);/.test(src),
-    'the toggle rides the same derivation and call sites as the clear X');
+  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away'/i.test(src),
+    'the toggle rides the same derivation and call sites as the clear X, now also depends on selection');
+  assert.ok(src.indexOf('selectedTeacher') !== -1, 'selectedTeacher variable present in syncClear');
+  assert.strictEqual(src.indexOf('setTimeout'), -1, 'no timer drives the count line');
+  assert.strictEqual(src.indexOf('requestAnimationFrame'), -1, 'no rAF drives the count line');
 });
 
 test('the classes page ships no autocomplete machinery; the teachers page keeps its own (issue 075)', function () {

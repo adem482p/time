@@ -190,11 +190,12 @@ TT.app = (function () {
     // text. Called wherever search.value can change (typing, commit, selection,
     // clear, boot). The X only ever erases (eraseFilter) — it never deselects.
     // Issue 078: this same derivation (and its same call sites) also drives the
-    // count line's .count-away class — the numbers show only while the box is
-    // empty, one derivation, one writer, no timers and no flags.
+    // count line's .count-away class; issue 079 adds the selection fact to it:
+    // the numbers show only while the box is empty AND no teacher is selected —
+    // one derivation, one writer, no timers and no flags.
     function syncClear() {
       if (searchClear) searchClear.hidden = !search.value;
-      status.classList.toggle('count-away', !!search.value);
+      status.classList.toggle('count-away', !!(search.value || selectedTeacher));
       syncDeselect();
     }
 
@@ -241,6 +242,8 @@ TT.app = (function () {
       detail.innerHTML = emptyStateHTML();
       markActive(null);
       syncOverlay();
+      // deselecting reveals the count line again (issue 079).
+      syncClear();
     }
 
     // the single selection funnel: every path that picks a teacher lands
@@ -252,6 +255,8 @@ TT.app = (function () {
       menuOpen = false;
       syncList();
       syncOverlay();
+      // selecting hides the count line too (issue 079).
+      syncClear();
     }
 
     // ---- list rendering (sections, identical on all viewports) ----
