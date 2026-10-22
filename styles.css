@@ -266,6 +266,7 @@ body[data-page="classes"] .author-credit span {
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
 }
 #teacherList li { padding: .4rem .6rem; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }
+#teacherList li:last-child { border-bottom: 0; }
 #teacherList li:not(.group-head):hover, #teacherList li:not(.group-head).active {
   background: var(--md-secondary-container, #eef4ff);
   color: var(--md-on-secondary-container, #1b1b1b);
@@ -319,11 +320,12 @@ body[data-page="classes"] .author-credit span {
    definition pair into a compact value-over-label card. Absent levels are
    omitted by the renderer, never rendered empty. */
 #detail .class-facts { margin: .1rem 0 .5rem; font-size: .85em; color: var(--md-on-surface-variant, #666); }
-#detail .class-facts .fact-card { display: contents; }
-#detail .class-facts dt { display: inline; font-weight: 600; }
-#detail .class-facts dt::after { content: "\00a0"; }
+#detail .class-facts .fact-card { display: block; margin: .1rem 0; }
+#detail .class-facts dt {
+  display: inline; color: var(--md-on-surface-variant, #666); font-weight: 600;
+}
+#detail .class-facts dt::after { content: ": "; }
 #detail .class-facts dd { display: inline; margin: 0; }
-#detail .class-facts dd:not(:last-of-type)::after { content: " \00b7\00a0\00a0"; }
 
 /* ---- vendored kaomoji webfonts -------------------------------------------
    The empty-state face is assembled from box-drawing, geometric and technical
@@ -496,7 +498,8 @@ body[data-page="classes"] .author-credit span {
 #detail .day-head {
   color: var(--md-on-surface-variant, #666);
   font-size: .78em; text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
-  margin: 1rem 0;
+  margin: 0;
+  padding: 1rem 0;
   position: sticky; top: 0; z-index: 2;
   background: var(--md-surface, #fff);
 }
@@ -516,6 +519,9 @@ html { background: var(--md-surface, #fff); }
    it — start at the detail box's left edge, while only the gutter hangs into
    the layout gap. Overflows stay visible so the hanging gutter is not clipped. */
 @media (min-width: 701px) {
+  #detail td:has(> .nowtag),
+  #detail td:has(> .nexttag) { padding-right: .75rem; }
+
   /* The page itself is a column flexbox exactly one viewport tall
      (border-box keeps body padding inside the height): the nav, if any,
      takes its natural height and #layout shrinks to exactly the rest, so
@@ -605,6 +611,10 @@ html { background: var(--md-surface, #fff); }
   #layout > #detail .day-group table .nexttag {
     font-size: .78em; vertical-align: middle;
   }
+  #layout > #detail .day-group table td:first-child:has(> .nowtag),
+  #layout > #detail .day-group table td:first-child:has(> .nexttag) {
+    padding-left: .75rem;
+  }
 }
 
 /* ---- time page ---- */
@@ -646,8 +656,8 @@ html { background: var(--md-surface, #fff); }
 /* ---- narrow screens: the session table becomes cards, the list flattens ---- */
 @media (max-width: 700px) {
   body { padding: .8rem; --mpad: .8rem; }
-  #detail .day-head { text-align: center; margin: 1rem 0; }
-  #detail > h2 { text-align: center; }
+  #detail .day-head { text-align: center; margin: 0; padding: 1rem 0; }
+  #detail > h2 { display: none; }
   #detail .class-facts {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
@@ -683,6 +693,29 @@ html { background: var(--md-surface, #fff); }
     font-size: .65rem;
     letter-spacing: .05em;
     text-transform: uppercase;
+  }
+  #detail .class-facts .fact-name::after { content: ""; }
+  #detail .teacher-facts {
+    grid-template-columns: 1fr;
+  }
+  #detail .teacher-facts .fact-card:first-child {
+    grid-column: 1 / -1;
+    order: 2;
+  }
+  /* Four facts need a little more room than the narrowest phones provide.
+     Keep the three more specific cards together on the first row and move
+     Track below them as a full-width card. Fewer-fact classes keep one row. */
+  @media (max-width: 400px) {
+    #detail .class-facts {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    #detail .class-facts:has(.fact-card:nth-child(4)) .fact-card:first-child {
+      grid-column: 1 / -1;
+      order: 4;
+    }
+    #detail .teacher-facts {
+      grid-template-columns: 1fr;
+    }
   }
   #themeCycle { top: .8rem; right: .8rem; }
   /* one column; the list is temporary (search UI) and cards are the default.
@@ -841,7 +874,7 @@ html { background: var(--md-surface, #fff); }
     /* clip full-bleed tinted rows to the rounded corners */
     overflow: clip;
   }
-  #detail .day-head { margin: 1rem 0; }
+  #detail .day-head { margin: 0; padding: 1rem 0; }
   #detail .day-group table, #detail .day-group tbody { display: block; }
   /* the base #detail table rule carries margin-top:.5rem for standalone
      tables; inside the card it would collapse with a tinted first row's
@@ -891,12 +924,28 @@ html { background: var(--md-surface, #fff); }
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
 }
 #classList li { padding: .4rem .6rem; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }
+#classList li:last-child { border-bottom: 0; }
 #classList li:hover, #classList li.active {
   background: var(--md-secondary-container, #eef4ff);
   color: var(--md-on-secondary-container, #1b1b1b);
 }
 #classList li.empty { cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }
 #classList .alias { color: var(--md-on-surface-variant, #555); font-size: .82em; }
+#classList .class-track {
+  display: block;
+  color: var(--md-on-surface-variant, #555);
+  font-size: .82em;
+}
+#classList .class-attribute {
+  display: block;
+  color: var(--md-on-surface-variant, #555);
+  font-size: .82em;
+}
+#classList .class-attribute b,
+#teacherList .fmatch b,
+#teacherList .cmatch b {
+  font-weight: 600;
+}
 
 /* week grid */
 .weekwrap { position: relative; margin-top: .5rem; }

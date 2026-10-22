@@ -12,6 +12,15 @@ TT.app = (function () {
   var C = color.CLASSES;
   var esc = TT.data.esc;
   var nameHTML = TT.data.nameHTML;
+  var shortcutOf = TT.groups.shortcutOf;
+
+  // Timetable class labels are raw model values; shorten them only at the
+  // display boundary, leaving matching and data identity untouched.
+  function headingHTML(name) {
+    var sc = shortcutOf(name);
+    if (!sc) return esc(name);
+    return esc(sc.head) + (sc.sub ? '<sub>' + esc(sc.sub) + '</sub>' : '');
+  }
 
   // Mobile gate (issue 007): coarse pointers (touch/soft keyboard) have no
   // Escape key to opt out of the pre-focused first suggestion, so Enter must
@@ -168,7 +177,7 @@ TT.app = (function () {
       fused.forEach(function (s) {
         h += '<tr><td>' + nameHTML(s.professor, '—') + '</td><td>' + esc(s.room || '—') +
           '</td><td>' + esc(s.subject) + '</td><td>' +
-          s.pills.map(function (p) { return '<span class="pill">' + esc(p) + '</span>'; }).join(' ') +
+          s.pills.map(function (p) { return '<span class="pill">' + headingHTML(p) + '</span>'; }).join(' ') +
           '</td></tr>';
       });
       detail.innerHTML = h + '</table>';

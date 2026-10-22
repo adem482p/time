@@ -557,15 +557,54 @@ TT.match = (function () {
     var entries = index.entries.filter(function (e) { return e.kind === 'class'; });
     if (!q) {
       return entries.map(function (e) {
-        return { label: e.label, node: index.nodes[e.label], score: 0, ranges: null };
+        return { label: e.label, node: index.nodes[e.label], score: 0,
+                 ranges: null, trackRanges: null, attributeMatches: [] };
       }).sort(function (a, b) { return model.cmpByte(a.label, b.label); });
     }
+    var tokens = q.split(/\s+/).filter(Boolean);
     var out = [];
     entries.forEach(function (e) {
-      var sc = scoreEntry(index, e, q);
-      if (!sc) return;
-      out.push({ label: e.label, node: index.nodes[e.label], score: sc.score,
-                 ranges: fuzzyRanges(e.label, q) });
+      var node = index.nodes[e.label];
+      var score = 0, nameRanges = [], trackRanges = [], attributeMatches = {};
+      var attrs = [
+        ['Track', node && node.track],
+        ['Year', node && node.year],
+        ['Specialty', node && (node.commonBranch
+          ? String(node.track) + String(node.year) : node.specialization)],
+        ['Groupe', node && (node.section
+          ? String(node.section) + (node.cohort || '') : node.cohort)]
+      ];
+      for (var i = 0; i < tokens.length; i++) {
+        var sc = scoreEntry(index, e, tokens[i]);
+        if (!sc) return;
+        score += sc.score;
+        var nr = fuzzyRanges(e.label, tokens[i]);
+        if (nr) nameRanges = nameRanges.concat(nr);
+        if (node && node.track) {
+          var tr = fuzzyRanges(node.track, tokens[i]);
+          if (tr) trackRanges = trackRanges.concat(tr);
+        }
+        attrs.forEach(function (a) {
+          if (!a[1]) return;
+          var ar = fuzzyRanges(String(a[1]), tokens[i]);
+          if (!ar) return;
+          if (!attributeMatches[a[0]])
+            attributeMatches[a[0]] = { name: a[0], value: String(a[1]), ranges: [] };
+          attributeMatches[a[0]].ranges =
+            attributeMatches[a[0]].ranges.concat(ar);
+        });
+      }
+      // Keep an exact canonical full-name query ahead of entries that only
+      // satisfy the same independent tokens through aliases.
+      if (node && node.fullName().toLowerCase() === q.toLowerCase()) score += 1000000;
+      out.push({ label: e.label, node: node, score: score,
+                 ranges: nameRanges.length ? mergeRanges(nameRanges) : null,
+                 trackRanges: trackRanges.length ? mergeRanges(trackRanges) : null,
+                 attributeMatches: Object.keys(attributeMatches).map(function (k) {
+                   var a = attributeMatches[k];
+                   a.ranges = mergeRanges(a.ranges);
+                   return a;
+                 }) });
     });
     return out.sort(function (a, b) {
       return b.score - a.score || model.cmpByte(a.label, b.label);

@@ -410,6 +410,37 @@ test('classSearch is deterministic', function () {
   assert.strictEqual(a, b);
 });
 
+test('classSearch exposes track highlight ranges for track queries', function () {
+  var rows = match.classSearch(index, 'LCS');
+  var leaf = rows.filter(function (r) { return r.label === 'GLSI3D1'; })[0];
+  assert.ok(leaf, 'expected GLSI3D1 in the LCS results');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(leaf.trackRanges)), [[0, 3]]);
+  assert.strictEqual(match.highlightHTML(leaf.node.track, leaf.trackRanges),
+    '<mark>LCS</mark>');
+});
+
+test('classSearch requires every space-separated token to match', function () {
+  var rows = match.classSearch(index, 'LCS GLSI');
+  var leaves = rows.filter(function (r) { return r.node.leaves().length === 1; });
+  assert.ok(leaves.length > 0, 'expected combined track and specialty results');
+  assert.ok(leaves.every(function (r) {
+    return r.node.track === 'LCS' && r.label.indexOf('GLSI') === 0;
+  }), 'every result must match both LCS and GLSI');
+  assert.ok(leaves.some(function (r) { return r.label === 'GLSI3D1'; }),
+    'expected GLSI3D1 in the combined results');
+  assert.strictEqual(leaves.filter(function (r) { return r.node.track !== 'LCS'; }).length, 0,
+    'classes from another track must be excluded');
+});
+
+test('classSearch exposes class-name highlight ranges for name tokens', function () {
+  var rows = match.classSearch(index, 'LCS GLSI');
+  var leaf = rows.filter(function (r) { return r.label === 'GLSI3D1'; })[0];
+  assert.ok(leaf, 'expected GLSI3D1 in the combined results');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(leaf.ranges)), [[0, 4]]);
+  assert.strictEqual(match.highlightHTML(leaf.label, leaf.ranges),
+    '<mark>GLSI</mark>3D1');
+});
+
 // ---- suggest() regression (issue 029 must stay fixed) -----------------------
 
 test('suggest still ranks own-key matches above aliases (issue 029)', function () {
@@ -661,12 +692,13 @@ test('renderWeek emits the facts dl between the h2 and the first day-head (issue
     'the narrow overlay mirrors the heading only, no facts dl');
 });
 
-test('classes.js derives the count line’s absence from ONE syncClear writer (issue 078)', function () {
+test('classes.js derives the count line’s absence from ONE syncClear writer (issues 078/079)', function () {
   var src = CLASSES_SRC;
   assert.strictEqual(countTok(src, "classList.toggle('count-away'"), 1,
     'exactly one count-away writer — inside syncClear');
-  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!search\.value\);/.test(src),
-    'the toggle rides the same derivation and call sites as the clear X');
+  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!\(search\.value \|\| selectedClass\)\);/.test(src),
+    'the toggle rides the same derivation and call sites as the clear X, including selection');
+  assert.ok(src.indexOf('selectedClass') !== -1, 'selectedClass participates in the count derivation');
   assert.strictEqual(src.indexOf('setTimeout'), -1, 'no timer drives the count line');
   assert.strictEqual(src.indexOf('requestAnimationFrame'), -1, 'no rAF drives the count line');
 });
@@ -680,6 +712,38 @@ test('the teachers page derives the count line’s absence from ONE syncClear wr
   assert.ok(src.indexOf('selectedTeacher') !== -1, 'selectedTeacher participates in the count derivation');
   assert.strictEqual(src.indexOf('setTimeout'), -1, 'no timer drives the count line');
   assert.strictEqual(src.indexOf('requestAnimationFrame'), -1, 'no rAF drives the count line');
+});
+
+test('class-name display surfaces shorten aliases without changing raw identity (issue 079)', function () {
+  var classes = CLASSES_SRC;
+  var teachers = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
+  var app = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
+  assert.ok(classes.indexOf('li.dataset.key = r.label') !== -1,
+    'classes list keeps the raw key in data-* identity');
+  assert.ok(classes.indexOf("highlightedHeadingHTML(r.node ? r.node.fullName() : r.label, r.ranges)") !== -1,
+    'classes list uses the shortcut renderer as its primary label');
+  assert.ok(classes.indexOf('class-track') !== -1,
+    'classes list can show structured track metadata');
+  assert.ok(classes.indexOf('class-attribute') !== -1,
+    'classes list can show every matched attribute');
+  assert.strictEqual(classes.indexOf('headingHTML(r.node.fullName())</span>'), -1,
+    'classes list does not append a redundant full-name alias');
+  assert.ok(classes.indexOf('No match for "') !== -1,
+    'classes no-match keeps the raw query echo');
+  assert.ok(teachers.indexOf("headingHTML(r.detail)") !== -1,
+    'teacher search class aliases use the shortcut renderer');
+  assert.ok(teachers.indexOf("headingHTML(m.label)") !== -1,
+    'teacher result class matches use the shortcut renderer');
+  assert.ok(teachers.indexOf("body = headingHTML(r.label)") !== -1,
+    'teacher class suggestions use the shortcut renderer');
+  assert.ok(teachers.indexOf("headingHTML(p)") !== -1,
+    'teacher detail class cells use the shortcut renderer');
+  assert.ok(teachers.indexOf("headingHTML(nd.key)") !== -1,
+    'teacher class breakdown uses the display renderer');
+  assert.ok(app.indexOf("headingHTML(p)") !== -1,
+    'time-page class pills use the shortcut renderer');
+  assert.ok(classes.indexOf('writeStoredClass(ref)') !== -1,
+    'classes selection storage remains raw');
 });
 
 test('the classes page ships no autocomplete machinery; the teachers page keeps its own (issue 075)', function () {
@@ -732,6 +796,10 @@ test('styles.css gains a classes section without touching the mobile block', fun
     'the V-stepping rules died with the V');
   assert.ok(css.indexOf('body[data-page="classes"] #searchWrap:focus-within:has(#searchClear:not([hidden])) #search') === -1);
   assert.ok(css.indexOf('#search { padding-right: 2.7rem; }') !== -1, 'the X slot survives');
+  assert.ok(css.indexOf('#detail td:has(> .nowtag)') !== -1,
+    'desktop NOW gutter keeps right-side padding');
+  assert.ok(css.indexOf('#detail td:has(> .nexttag)') !== -1,
+    'desktop NEXT gutter keeps right-side padding');
 });
 
 // ---- leaf-only selection + session cards (issue 047) -----------------------

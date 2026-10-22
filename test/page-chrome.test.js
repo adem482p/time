@@ -156,7 +156,7 @@ test('issue 076: no JS writer re-parents #status — textContent only', function
 
 // ---- issue 078: sticky day headings, the folding count line, class facts ---
 
-test('issue 078: #detail .day-head sticks with an opaque surface and 1rem margins', function () {
+test('issue 078: #detail .day-head sticks with an opaque surface and a padded hit area', function () {
   // the base rule (first occurrence) carries the sticky declaration itself —
   // no second sticky rule may exist to fight it
   var head = rule(CSS, '#detail .day-head');
@@ -166,16 +166,33 @@ test('issue 078: #detail .day-head sticks with an opaque surface and 1rem margin
   assert.ok(/z-index: 2/.test(head), 'a stuck head paints over the rows beneath it');
   assert.ok(/background: var\(--md-surface, #fff\)/.test(head),
     'the stuck head is opaque — rows must never show through');
-  assert.ok(/margin: 1rem 0/.test(head), 'the day head keeps 1rem in-flow margins');
-  // every #detail .day-head rule in the sheet keeps the margin (issue pins it
-  // on every viewport branch, not just the base)
+  assert.ok(/margin: 0;/.test(head), 'the day head has no outer margin');
+  assert.ok(/padding: 1rem 0;/.test(head), 'the day head uses vertical padding for its sticky height');
+  // every #detail .day-head rule keeps the padded hit area on every viewport
+  // branch, not just the base.
   var re = /#detail \.day-head[^{}]*\{[^}]*\}/g, m;
   var seen = 0;
   while ((m = re.exec(CSS))) {
     seen++;
-    assert.ok(/margin: 1rem 0/.test(m[0]), 'every day-head rule keeps margin: 1rem 0 — #' + seen);
+    assert.ok(/padding: 1rem 0/.test(m[0]), 'every day-head rule keeps padding: 1rem 0 — #' + seen);
   }
   assert.ok(seen >= 2, 'the base rule plus at least one media branch carry .day-head');
+});
+
+test('mobile detail h2 is hidden because overlayName supplies the heading', function () {
+  var narrow = CSS.slice(CSS.indexOf('@media (max-width: 700px)'));
+  assert.ok(/#detail > h2 \{\s*display: none;\s*\}/.test(narrow),
+    'mobile hides the duplicated detail heading');
+  assert.strictEqual(CSS.slice(0, CSS.indexOf('@media (max-width: 700px)'))
+    .indexOf('#detail > h2'), -1,
+    'desktop keeps the detail heading available');
+});
+
+test('teacher and class lists omit the final item border on every viewport', function () {
+  assert.ok(CSS.indexOf('#teacherList li:last-child { border-bottom: 0; }') !== -1,
+    'teacher list final item has no bottom border');
+  assert.ok(CSS.indexOf('#classList li:last-child { border-bottom: 0; }') !== -1,
+    'class list final item has no bottom border');
 });
 
 test('issue 078: #status folds away on desktop via a plain CSS transition', function () {
@@ -213,8 +230,31 @@ test('issue 078: the class-facts dl is styled once, for both filter pages', func
   var facts = rule(CSS, '.class-facts');
   assert.ok(/display: grid/.test(facts) || /display: table/.test(facts) ||
            /margin/.test(facts), 'the facts dl carries its own rule');
+  assert.ok(CSS.indexOf('.class-facts .fact-card { display: block;') !== -1,
+    'desktop facts follow the teachers page mostly-item layout');
+  assert.ok(CSS.indexOf('#detail .class-facts dt {') !== -1 &&
+    CSS.indexOf('font-weight: 600') !== -1,
+    'fact keys are bold secondary information');
+  assert.strictEqual(CSS.indexOf('dd:not(:last-of-type)::after'), -1,
+    'desktop facts do not use inline separators');
   assert.strictEqual(CSS.split('.class-facts').length - 1 >= 2, true,
     'the .class-facts selector appears (base rule, possibly with a scoped branch)');
+});
+
+test('issue 079: four mobile facts put Track below three equal cards on narrow phones', function () {
+  var narrow = CSS.slice(CSS.indexOf('@media (max-width: 700px)'));
+  assert.ok(narrow.indexOf('@media (max-width: 400px)') !== -1,
+    'the three-card fallback has a narrow-phone breakpoint');
+  assert.ok(/grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(narrow),
+    'narrow phones use three fact columns');
+  assert.ok(/\.class-facts:has\(\.fact-card:nth-child\(4\)\) \.fact-card:first-child \{[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?order: 4;/.test(narrow),
+    'the four-fact layout moves Track below and spans all three columns');
+  assert.ok(/\.teacher-facts \{\s*grid-template-columns: 1fr;\s*\}/.test(narrow),
+    'mobile teacher facts use one full-width column');
+  assert.ok(/\.teacher-facts \.fact-card:first-child \{[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?order: 2;/.test(narrow),
+    'mobile teacher facts move Subject below and span the full width');
+  assert.ok(narrow.indexOf('.class-facts .fact-name::after { content: ""; }') !== -1,
+    'mobile fact cards omit the desktop key colon');
 });
 
 test('issue 078: desktop #detail may grow past the viewport so sticky heads can travel', function () {

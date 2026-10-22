@@ -145,6 +145,11 @@ function initTimeAt(clockMs) {
     console: console,
     model: model, color: color, C: color.CLASSES, esc: data.esc,
     nameHTML: data.nameHTML,
+    headingHTML: function (name) {
+      var sc = TT.groups.shortcutOf(name);
+      if (!sc) return data.esc(name);
+      return data.esc(sc.head) + (sc.sub ? '<sub>' + data.esc(sc.sub) + '</sub>' : '');
+    },
     store: store, modelObjs: modelObjs,
     document: {
       createElement: function () { return makeEl(offsets); },

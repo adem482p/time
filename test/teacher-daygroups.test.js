@@ -75,6 +75,11 @@ function runShowTeacher(name, clock) {
   var sandbox = {
     console: console,
     model: model, color: color, esc: data.esc, nameHTML: data.nameHTML,
+    headingHTML: function (name) {
+      var sc = TT.groups.shortcutOf(name);
+      if (!sc) return data.esc(name);
+      return data.esc(sc.head) + (sc.sub ? '<sub>' + data.esc(sc.sub) + '</sub>' : '');
+    },
     modelObjs: modelObjs, store: store,
     detail: detail,
     markActive: function () {},
@@ -125,6 +130,12 @@ test('showTeacher emits one heading + section per day with no Day column', funct
   assert.ok(fn.indexOf('<section class="day-group') !== -1, 'missing day-group section');
   assert.ok(fn.indexOf('<h3 class="day-head">') !== -1, 'missing day-head h3');
   assert.ok(fn.indexOf('<table class="t-sessions">') !== -1, 'missing t-sessions table');
+  assert.ok(fn.indexOf('<dl class="class-facts teacher-facts">') !== -1,
+    'teacher details must render key/value facts');
+  assert.ok(fn.indexOf('Subject</dt>') !== -1 && fn.indexOf('Class</dt>') !== -1,
+    'teacher facts must expose Subject and Class keys');
+  assert.ok(fn.indexOf('<dd class="fact-value">~ ') !== -1,
+    'teacher facts must prefix values with a tilde');
   assert.ok(fn.indexOf('<th>Time</th><th>Room</th><th>Subject</th><th>Class</th>') !== -1,
     'header must be Time/Room/Subject/Class with no Day column');
   assert.ok(fn.indexOf('<th>Day') === -1, 'no Day header in teacher output');
@@ -136,6 +147,16 @@ test('showTeacher emits one heading + section per day with no Day column', funct
   // breakdown unchanged
   assert.strictEqual(fn.split('p class="count"').length - 1, 0, 'no session count captions');
   assert.ok(fn.indexOf('breakdownHTML(t)') !== -1, 'breakdown block must be kept');
+});
+
+test('teacher search results label matched subject and class attributes', function () {
+  var src = APP_SRC.slice(APP_SRC.indexOf('function renderItem(r)'));
+  assert.ok(src.indexOf('<b>Subject:</b>') !== -1, 'subject matches need a key label');
+  assert.ok(src.indexOf('<b>Class:</b>') !== -1, 'class matches need a key label');
+  assert.strictEqual(src.indexOf("'<br><span class=\"fmatch\""), -1,
+    'subject matches must not add a redundant break before block rows');
+  assert.strictEqual(src.indexOf("'<br><span class=\"cmatch\""), -1,
+    'class matches must not add a redundant break before block rows');
 });
 
 test('showTeacher tracks no prevDay/dayStart; dim lives on the section', function () {
@@ -317,6 +338,10 @@ test('styles.css re-scopes the desktop gutter hang to per-group tables', functio
     'gutter hang must apply per .day-group table');
   assert.ok(CSS_SRC.indexOf('#detail table.t-sessions') === -1,
     'unscoped teacher gutter rule must be gone');
+  assert.ok(CSS_SRC.indexOf('td:first-child:has(> .nowtag)') !== -1,
+    'desktop NOW gutter restores left-side padding');
+  assert.ok(CSS_SRC.indexOf('td:first-child:has(> .nexttag)') !== -1,
+    'desktop NEXT gutter restores left-side padding');
 });
 
 test('day headings show on every viewport', function () {
@@ -622,6 +647,11 @@ function runShowTeacherLive(name, clockA, clockB) {
   var sandbox = {
     console: console,
     model: model, color: color, esc: data.esc, nameHTML: data.nameHTML,
+    headingHTML: function (name) {
+      var sc = TT.groups.shortcutOf(name);
+      if (!sc) return data.esc(name);
+      return data.esc(sc.head) + (sc.sub ? '<sub>' + data.esc(sc.sub) + '</sub>' : '');
+    },
     modelObjs: modelObjs, store: store,
     detail: detail,
     markActive: function () {},

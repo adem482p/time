@@ -1,6 +1,6 @@
 # 079: Mobile details polish — centered headings, fact cards, shortcut everywhere, count hidden on selection
 
-Status: Open
+Status: Fixed
 Date: 2026-10-22 · Reporter: user
 
 ## Description
@@ -63,3 +63,40 @@ Prerequisites: `node --test test/*.test.js` (glob form — the `test/` directory
 ### Coordinator note — status (2026-10-22)
 
 No code exists yet: the prior subagent attempt was interrupted before writing anything; the worktree is pristine. This issue file is the complete reference — a fresh agent should read the whole thread above (Planner decision this section), then execute: write its own Planner decision entry early, implement, verify, append a `### Fix implemented` entry with exact diff and results, then `Status: Fixed` for the main agent to merge.
+
+### Fix implemented (2026-10-22)
+
+Implemented the remaining issue-079 behavior in `js/classes.js`, `js/teachers.js`,
+`js/app.js`, and the directly related tests.
+
+* **Count visibility:** `classes.js` now has the same single `syncClear` writer
+  as teachers: `#status.count-away` is derived from
+  `search.value || selectedClass`. This covers normal selection, explicit
+  deselection, erase-only filtering, and the issue-065 restore path without
+  changing the teacher behavior or adding a second writer.
+* **Class-name display inventory:**
+  * `classes/index.html` / `js/classes.js` list rows: the raw compact key
+    remains the row `data-key` and matching identity; the printed full-name
+    alias now goes through `headingHTML()` (`shortcutOf()` plus escaped
+    fallback).
+  * Classes detail `<h2>` and narrow `#overlayName`: already used
+    `headingHTML()`; unchanged. The overlay still resolves the raw stored key
+    through `classWeek()` first.
+  * Classes no-match echo: intentionally raw escaped query, because it
+    reports exactly what was searched rather than a class identity.
+  * `teachers/index.html` / `js/teachers.js` class search aliases, teacher
+    detail class cells, and the ranked class breakdown now use the same
+    escaped shortcut renderer. Teacher names remain on their existing
+    redaction renderer.
+  * `at/index.html` / `js/app.js` timetable “Students” pills now use the
+    shortcut renderer. `all/index.html` / matrix output prints no class
+    names (its cells contain room/day/subject only), so no change was needed.
+  * Raw class values intentionally remain in matching, `data-*` attributes,
+    model `classKey`/`classLabel`, localStorage selection values, hrefs, and
+    filter/no-match semantics.
+* Tests were strengthened for the selection-aware single-writer rule and the
+  class-name surface inventory; VM harnesses were extended with the display
+  helper. `node --test test/*.test.js` passes **206/206**.
+
+Browser verification was not available in this worktree (no Playwright/browser
+runtime); HTTP/curl checks were therefore not run.

@@ -13,6 +13,15 @@ TT.app = (function () {
   var esc = TT.data.esc;
   var nameHTML = TT.data.nameHTML;
   var redacted = TT.data.redacted;
+  var shortcutOf = TT.groups.shortcutOf;
+
+  // Class names are shortened only for display. Search labels, data
+  // attributes, and model keys remain raw identities.
+  function headingHTML(name) {
+    var sc = shortcutOf(name);
+    if (!sc) return esc(name);
+    return esc(sc.head) + (sc.sub ? '<sub>' + esc(sc.sub) + '</sub>' : '');
+  }
 
   // Mobile gate (issue 007): coarse pointers (touch/soft keyboard) have no
   // Escape key to opt out of the pre-focused first suggestion, so Enter must
@@ -296,10 +305,11 @@ TT.app = (function () {
       if (r.relevantSessions > 0)
         h += ' <span class="relevant">(' + model.hoursLabel(r.relevantSessions) + ' relevant)</span>';
       r.subjectMatches.slice(0, 3).forEach(function (m) {
-        h += '<br><span class="fmatch">' + match.highlightHTML(m.label, m.ranges) + '</span>';
+        h += '<span class="fmatch"><b>Subject:</b> ' +
+          match.highlightHTML(m.label, m.ranges) + '</span>';
       });
       r.classMatches.slice(0, 3).forEach(function (m) {
-        h += '<br><span class="cmatch">' + match.highlightHTML(m.label, m.ranges) + '</span>';
+        h += '<span class="cmatch"><b>Class:</b> ' + headingHTML(m.label) + '</span>';
       });
       li.innerHTML = h;
       // The filter is the source of truth for the list: selecting a row must
@@ -358,7 +368,7 @@ TT.app = (function () {
     }
 
     function treeHTML(nd) {
-      var h = '<li>' + esc(nd.key) + ' <span class="hours">' +
+      var h = '<li>' + headingHTML(nd.key) + ' <span class="hours">' +
         model.hoursLabel(nd.sessions) + ' (' +
         (nd.shareOfParent * 100).toFixed(1) + '%)</span>';
       if (nd.children.length) {
@@ -387,11 +397,15 @@ TT.app = (function () {
       }
       var ss = model.fuseSessions(store.sessionsOf(name), modelObjs.groups);
       var now2 = tickNow || new Date();
+      var topSubject = t.topSubject ? t.topSubject.name : '—';
+      var topClass = t.topClass ? t.topClass.compactName() : '—';
       var h = '<h2>' + nameHTML(name) + '</h2>' +
-        '<p class="mostly">Mostly teaches ' +
-        esc(t.topSubject ? t.topSubject.name : '—') + '</p>' +
-        '<p class="mostly">Mostly teaches ' +
-        esc(t.topClass ? t.topClass.compactName() : '—') + '</p>';
+        '<dl class="class-facts teacher-facts">' +
+        '<div class="fact-card"><dt class="fact-name">Subject</dt>' +
+        '<dd class="fact-value">~ ' + esc(topSubject) + '</dd></div>' +
+        '<div class="fact-card"><dt class="fact-name">Class</dt>' +
+        '<dd class="fact-value">~ ' + headingHTML(topClass) + '</dd></div>' +
+        '</dl>';
       var upcoming = model.nextSessionIdx(ss, now2);
       // days with no live stake (no now/next session) render dimmed
       var liveDays = {};
@@ -427,7 +441,7 @@ TT.app = (function () {
             '</td><td class="c-room">' + esc(s.room || '—') +
             '</td><td class="c-subject">' + esc(s.subject) +
             '</td><td class="c-class">' +
-            s.pills.map(function (p) { return '<span class="pill">' + esc(p) + '</span>'; }).join(' ') +
+            s.pills.map(function (p) { return '<span class="pill">' + headingHTML(p) + '</span>'; }).join(' ') +
             '</td></tr>';
         });
         h += '</table></section>';
@@ -465,8 +479,8 @@ TT.app = (function () {
         li.className = color.suggestion({ kind: r.kind, active: i === suggestIdx }).join(' ');
         var body;
         if (r.kind === 'class') {
-          body = match.highlightHTML(r.label, r.ranges) +
-            (r.detail ? ' <span class="alias">— ' + esc(r.detail) + '</span>' : '');
+          body = headingHTML(r.label) +
+            (r.detail ? ' <span class="alias">— ' + headingHTML(r.detail) + '</span>' : '');
         } else if (r.kind === 'teacher') {
           // stays its own branch: teacher names redact via nameHTML (issue 061),
           // subjects stay highlighted — the count badge was removed (issue 062)

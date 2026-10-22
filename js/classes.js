@@ -27,13 +27,30 @@ TT.app = (function () {
   // number is a real subscript. Both parts are escaped BEFORE the markup is
   // appended, so a malformed field can never inject HTML; a shape
   // shortcutOf() does not know falls back to the full escaped name, so the
-  // heading is never blank. This is the only surface that shortens: the list
-  // rows, the filter, the no-match echo and the stored selection (issue 065)
-  // keep the raw full name as their identity.
+  // heading is never blank. Raw names remain the identity for matching,
+  // storage and no-match messages; display aliases use this renderer too.
   function headingHTML(name) {
     var sc = shortcutOf(name);
     if (!sc) return esc(name);
     return esc(sc.head) + (sc.sub ? '<sub>' + esc(sc.sub) + '</sub>' : '');
+  }
+
+  function highlightedHeadingHTML(name, ranges) {
+    var sc = shortcutOf(name);
+    if (!sc || !ranges || !ranges.length) return headingHTML(name);
+    var headRanges = [], subRanges = [];
+    ranges.forEach(function (r) {
+      var headEnd = Math.min(r[1], sc.head.length);
+      if (r[0] < headEnd) headRanges.push([r[0], headEnd]);
+      if (sc.sub && r[1] > sc.head.length) {
+        subRanges.push([
+          Math.max(0, r[0] - sc.head.length),
+          Math.min(sc.sub.length, r[1] - sc.head.length)
+        ]);
+      }
+    });
+    return match.highlightHTML(sc.head, headRanges) +
+      (sc.sub ? '<sub>' + match.highlightHTML(sc.sub, subRanges) + '</sub>' : '');
   }
 
   // ---- class hierarchy facts (issue 078) ---------------------------------
@@ -217,7 +234,7 @@ TT.app = (function () {
     // empty, one derivation, one writer, no timers and no flags.
     function syncClear() {
       if (searchClear) searchClear.hidden = !search.value;
-      status.classList.toggle('count-away', !!search.value);
+      status.classList.toggle('count-away', !!(search.value || selectedClass));
       syncDeselect();
     }
 
@@ -370,13 +387,17 @@ TT.app = (function () {
       }
       rows.forEach(function (r) {
         var li = document.createElement('li');
+        var query = search.value.trim();
         li.className = color.classItem({
           active: String(r.label).toUpperCase() === active
         }).join(' ');
         li.dataset.key = r.label;
-        var h = match.highlightHTML(r.label, r.ranges);
-        if (r.node && r.node.fullName() !== r.label)
-          h += ' <span class="alias">— ' + esc(r.node.fullName()) + '</span>';
+        var h = highlightedHeadingHTML(r.node ? r.node.fullName() : r.label, r.ranges);
+        if (query && r.attributeMatches) r.attributeMatches.forEach(function (a) {
+          h += '<span class="class-attribute' + (a.name === 'Track' ? ' class-track' : '') +
+            '"><b>' + esc(a.name) + ':</b> ' +
+            match.highlightHTML(a.value, a.ranges) + '</span>';
+        });
         li.innerHTML = h;
         // The filter is the source of truth for the list: selecting a row must
         // not rewrite it, so the result list stays as-is and the user can move
