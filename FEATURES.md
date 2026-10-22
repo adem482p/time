@@ -6,13 +6,12 @@ theme system, redaction, the installable-app surface, and the small navigation
 behaviors. Every claim here is read off the code and the issue tracker — issue
 numbers appear as parenthetical provenance, not as a changelog. What the world
 *is* (sessions, subjects, teachers, the class hierarchy, the PDF→CSV pipeline)
-is documented in [CONTEXT.md](CONTEXT.md); this file only says what the app does
+is outside this file's scope; this file only says what the app does
 with it.
 
 ## Material: what the site models
 
-All four pages read `emplois.csv` and nothing else ([CONTEXT.md](CONTEXT.md)
-describes how it is produced). On top of the raw rows, the model layer builds
+All four pages read `emplois.csv` and nothing else. On top of the raw rows, the model layer builds
 the material the views are drawn from:
 
 - **Session fusion** — the same teacher, day and slot in different rooms (or the
@@ -34,8 +33,9 @@ at `teachers/index.html` and the classes app at `classes/index.html` (each its
 own installable app with its own worker and manifest), the two utility views
 live unlisted at `at/index.html` and `all/index.html` — reachable only by
 their URL, never by navigation (issue 073) — and the root landing page does
-nothing but redirect to `teachers/`. Only the classes app carries the cross-page
-nav bar (Teachers / Classes).
+nothing but redirect to `teachers/`. No page carries a cross-page nav bar: the
+classes app's own one was removed (issue 075), leaving that app a dead-end
+reachable only by its URL and the root `classes.html` redirect stub.
 
 ### Matrix — `all/index.html`
 
@@ -65,9 +65,13 @@ where?"
 A view with classes as the main object — the student-facing counterpart to the
 teacher and time views. The class is chosen through a live search over the
 catalogue: only leaves — fully specified classes that own a timetable of their
-own — are listed, offered by autocomplete and selectable, and a reference to a
-broader class reports no match. Selecting a class draws its
-week as a grid with the days as columns and the six slots as rows; each cell lists
+own — are listed and selectable, typing only filters the list (the page ships
+no autocomplete, issue 075), and a reference to a broader class reports no
+match. Selecting a class draws its
+week as a grid with the days as columns and the six slots as rows; the detail
+heads with the class's shortcut form — `LCS3-GLSI_D Groupe 2` renders as
+`GLSI3 D<sub>2</sub>`, the cohort as a real subscript, any shape the shortcut
+rule does not know falling back to the full name (issue 075). Each cell lists
 the sessions held then, every line giving the subject, the teacher and the room. A
 semi-transparent red cursor crosses the grid at the current time, its arrowhead
 resting in a small gutter beside the time column, and the current and next slots
@@ -115,7 +119,7 @@ alias vocabulary, issues 010 and 029).
 - The teacher detail ranks a teacher's subjects and classes by hours with their
   share percentages; subject counting is case- and whitespace-insensitive so
   `GLSI` and `gl si` add up (issue 053).
-- On the classes page the catalogue, the autocomplete and the commit gate are
+- On the classes page the catalogue and the commit gate are
   restricted to leaf classes (issue 047); empty results say so ("No teachers
   match." / "No classes match."), an exact reference to a broader class reports
   `No match for "…"`, and an exact name still wins over longer partial matches
@@ -146,7 +150,7 @@ hidden from assistive technology — lists, tables, detail headings, the selecte
 name overlay and the search suggestions all redact through the same helper, and
 the autocomplete ghost is suppressed so a completion cannot leak a name (issue
 061). It exists so the UI can be screenshotted and shared without any name in it;
-the README's captures are taken in this mode.
+the screenshots shipped with the project are taken in this mode.
 
 ## Offline: the snapshot model
 

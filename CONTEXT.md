@@ -4,7 +4,7 @@ The context around the app, mainly the data model of the world: what a session,
 a subject, a teacher and a class are, how classes are grouped and named, and how
 the published PDFs become the CSV every page reads. The behavior the website
 ships on top of that world — the views, search, the snapshot model, the theme —
-is catalogued separately in [FEATURES.md](FEATURES.md).
+is outside this file's scope.
 
 ## The world
 
@@ -130,8 +130,7 @@ The project opens the PDFs through three stages:
    from (lowercase `#rrggbb`; empty when no fill contains it). This file is the
    single source of truth; every page reads it and nothing else.
 3. **Web pages** — static pages that load the CSV and provide services on top of
-   it; those services are catalogued in [FEATURES.md](FEATURES.md). No backend,
-   no build step: re-running the parser updates the site.
+   it. No backend, no build step: re-running the parser updates the site.
 
 The purpose is not to add information but to remove friction: the same data,
 queryable.

@@ -3,11 +3,6 @@
 See the complete timetable of any teacher, find teachers by name, subjects they teach and their classes of students.
 Data is scraped from student timetables on the official university website.
 
-# Documentation
-
-`CONTEXT.md` documents the context around the app, mainly the data model of the world.
-`FEATURES.md` documents the features that make up the website: the snapshot model, the views, search, the theme system and the rest.
-
 # Screenshots
 
 Opening any page with `?redact=1` renders every teacher name as a rectangle filled with the text foreground, so the UI can be shown without any name in it; the captures below use that mode across pages, viewports and color schemes.
