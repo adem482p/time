@@ -10,11 +10,19 @@
   time, never a week), `source` identifies the exact PDF page, and `color`
   carries the background fill color of the timetable cell the session was
   parsed from (lowercase `#rrggbb`, empty when no fill contains it).
-- That CSV is the single source of truth for the site: every page reads it and
-  nothing else. Re-running the parser updates the site; there is no build step and
-  no backend.
-- Serve over HTTP for local work (`python3 -m http.server`); browsers block `fetch`
-  on `file://`.
+- That CSV is the single source of truth for the site: every page reads it
+  and nothing else. The site itself is a SvelteKit static build in `app/`
+  (JavaScript only, no TypeScript; JSDoc restricted to the simple types
+  `number`, `boolean`, `string`, `null`, `Array<T>`): `npm run build` in
+  `app/` prerenders every route to one index.html per directory
+  (adapter-static, the legacy directory-per-app shape) and stamps the two
+  service workers out of the built tree (postbuild `app/scripts/gen-sw.mjs`).
+  `npm run dev` in `app/` serves the dev copy; re-running the parser then a
+  build updates the site; there is no backend.
+- Serve the built tree over HTTP for local checks (`python3 -m http.server`
+  from `app/build/`); browsers block `fetch` on `file://`, and `vite preview`
+  does not serve the adapter's `build/` directory (the workers 404 there) —
+  verify the real tree with a plain static server.
 - Git: commit signing is disabled locally (`commit.gpgsign=false`, `tag.gpgsign=false`).
 
 ## Issue tracker (`issues/`)

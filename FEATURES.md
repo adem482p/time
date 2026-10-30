@@ -28,24 +28,26 @@ the material the views are drawn from:
 
 ## The views
 
-Four views over the same CSV, in the split of issue 072: the teachers app lives
-at `teachers/index.html` and the classes app at `classes/index.html` (each its
-own worker and manifest; the classes app is installable by default, the
-teachers app only under `?install=1` — issue 078), the two utility views
-live unlisted at `at/index.html` and `all/index.html` — reachable only by
-their URL, never by navigation (issue 073) — and the root landing page does
-nothing but redirect to `teachers/`. No page carries a cross-page nav bar: the
-classes app's own one was removed (issue 075), leaving that app a dead-end
-reachable only by its URL and the root `classes.html` redirect stub.
+Four views over the same CSV, in the split of issue 072, as a SvelteKit static
+site (the `app/` directory; every route prerenders to one `index.html` per
+directory): the teachers app lives at `/teachers/` and the classes app at
+`/classes/` (each its own worker and manifest; the classes app is installable
+by default, the teachers app only under `?install=1` — issue 078), the two
+utility views live unlisted at `/at/` and `/all/` — reachable only by their
+URL, never by navigation (issue 073) — and the root landing page does nothing
+but redirect to `teachers/`. No page carries a cross-page nav bar: the classes
+app's own one was removed (issue 075), leaving that app a dead-end reachable
+only by its URL and the root `classes.html` redirect stub carried for
+pre-split bookmarks.
 
-### Matrix — `all/index.html`
+### Matrix — `/all/`
 
 The full timetable matrix: teachers crossed with the six time slots of the week.
 Each cell where a teacher is engaged shows where they can be found — the room,
 plus the day and subject of the session. It answers "when and where is this
 teacher teaching?" at a glance, and can be filtered by day or teacher.
 
-### Teachers — `teachers/index.html`
+### Teachers — `/teachers/`
 
 A view with teachers as the main object. The teacher list is searchable and
 filterable live; teachers available today are raised to the top. The session/
@@ -58,7 +60,7 @@ teacher reveals their week: sessions grouped by day, the current and next sessio
 highlighted, and days with no live stake dimmed. The same view adapts to narrow
 screens: the list and the session table collapse into stacked cards.
 
-### Time — `at/index.html`
+### Time — `/at/`
 
 A view with time slots as the main object. The week is grouped by day; today's
 section is marked and scrolled into view, with the current and next slots
@@ -66,7 +68,7 @@ highlighted. Selecting a slot lists the teachers teaching then, where each can b
 found, and which classes they teach. It answers "who is teaching right now, and
 where?"
 
-### Classes — `classes/index.html`
+### Classes — `/classes/`
 
 A view with classes as the main object — the student-facing counterpart to the
 teacher and time views. The class is chosen through a live search over the
@@ -104,8 +106,7 @@ The matrix page runs no timer at all. What it drives:
   sessions today.");
 - day-group listings that start from today and cycle forward (issue 050), with
   today's bucket auto-scrolled to the top of the slot list;
-- the red cursor on the classes week grid, moved in place on every tick without a
-  full re-render;
+- the red cursor on the classes week grid, repositioned in place on every tick;
 - the classes page's detail: per-day tables with desktop day headings restored
   (issue 048), the first of them starting at today, and exactly one week
   rendering below — the whole-week grid, the flat full-session list that used to
@@ -144,8 +145,8 @@ One button cycles the color presets: 15 named presets — Monochrome first in th
 cycle, a fresh visitor landing on the default ISIM Blue — plus a leading
 "System" preset when the platform exposes an accent color. The light/dark scheme
 follows `prefers-color-scheme` and re-applies live when it changes;
-`js/theme.js` derives every Material-3 role from the preset's seed and writes it
-as CSS custom properties on `<html>`.
+`app/src/lib/theme.js` derives every Material-3 role from the preset's seed
+and writes it as CSS custom properties on `<html>`.
 
 - The button's styled tooltip names the active scheme — `Theme: <name> — click
   to change` — as its accessible label too; the native `title` survives only in
@@ -168,8 +169,10 @@ the screenshots shipped with the project are taken in this mode.
 ## Offline: the snapshot model
 
 Two network-first service workers (issues 063 + 070 + 072), one per app —
-`teachers/sw.js` owns the `teachers/` scope, `classes/sw.js` the `classes/`
-scope — each with a "last snapshot" model: the stored copy is a snapshot of
+the teacher worker owns the `teachers/` scope, the classes worker the
+`classes/` scope — stamped out at build time by `app/scripts/sw-template.js` +
+`app/scripts/gen-sw.mjs` into `build/teachers/sw.js` and `build/classes/sw.js`
+— each with a "last snapshot" model: the stored copy is a snapshot of
 that app, never a cache the app trusts. Cache Storage and IndexedDB are
 per-origin, shared between the two workers, so every name is namespaced per
 app: the cache families `emplois-teachers-snapshot-*` and
@@ -181,9 +184,14 @@ and `emplois-classes-status`.
   *built*, wholesale.
 - **Offline, the snapshot answers** (navigations ignoring the query string); a
   miss is an honest failure, never fabricated content.
-- **Wholesale takes only.** Install precaches each app's 21 URLs all-or-nothing
-  (a failing install writes nothing and retries), every network-served navigation
-  retakes the whole snapshot, and concurrent takes share one in-flight run.
+- **Wholesale takes only.** Install precaches the app's snapshot URL list
+  all-or-nothing (a failing install writes nothing and retries), every
+  network-served navigation retakes the whole snapshot, and concurrent takes
+  share one in-flight run. The list is generated at build time from the built
+  tree: the app's own directory plus the shared root assets (the stylesheet,
+  the bundle, the icons and fonts, `emplois.csv`), minus the sibling app dir,
+  the at/all utility pages, the root landing and the redirect stub — exactly
+  the geometry the legacy hand-written lists encoded.
 - **Erase + retake on reconnect** (issue 070): the last online/offline status is
   logged and persisted per app in its own IndexedDB database — outside Cache
   Storage, so teardown can never erase it — and the transition offline → online
@@ -196,10 +204,10 @@ and `emplois-classes-status`.
   root snapshot `emplois-snapshot-v1` by exact name, which no surviving worker
   would otherwise clean up.
 - **The utility pages and the landing are online-only** (issues 072, 073): navigations
-  to `/`, `at/`, `all/` and the `classes.html` redirect stub
+  to `/`, `/at/`, `/all/` and the `classes.html` redirect stub
   match no registration, so no worker ever intercepts them.
 - Registration happens once per load with an immediate `update()` byte-diff
-  check (`js/register.js`), loaded by the two app pages only — each page
+  check (`app/src/lib/register.js`, shared by the two app pages) — each page
   registers the worker of its own directory, the relative `'sw.js'` resolving
   document-relative. `file://` and other non-http(s) origins are a silent
   no-op. When the worker gets in the way in development, the console escape
@@ -212,8 +220,8 @@ reload report (issue 067).
 
 Two apps, each owning the manifest of its own directory (issue 072), but only
 one of them installable by default: "Emplois — Classes" (launcher label
-"Classes") at `classes/` links its manifest statically, while "Emplois —
-Enseignants" ("Enseignants") at `teachers/` links none — its manifest link is
+"Classes") at `/classes/` links its manifest statically, while "Emplois —
+Enseignants" ("Enseignants") at `/teachers/` links none — its manifest link is
 injected only under an explicit `?install=1` opt-in (issue 078), so the
 teachers page no longer offers itself for installation during a visit. Both are
 standalone-window apps with theme/background colors and a distinct `id`
@@ -230,7 +238,7 @@ installed afresh.)
 
 ## Remembering the last class
 
-The classes app (`classes/index.html`) remembers the last selected class across
+The classes app (`/classes/`) remembers the last selected class across
 loads: the committed selection is mirrored under the `emplois-class`
 `localStorage` key, and a reload lands on the same detail a fresh selection
 produces. An explicit deselect forgets it, so a deliberately cleared page still
@@ -266,7 +274,8 @@ over the empty page, and on the classes page forgets the remembered class
 ## Empty states
 
 Nothing selected is a state, not a blank pane: both search pages draw a kaomoji
-face from the vendored `vendor/kaomoji.js` (CC BY 4.0) above the prompt, and
+face bundled from the vendored `vendor/kaomoji.js` (CC BY 4.0) above the
+prompt, and
 pressing the empty area swaps in another face that hops in — a reduced-motion
 setting swaps it without the hop. The classes page gained the same empty state
 when it mirrored the teachers page's chrome (issue 046).

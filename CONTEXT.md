@@ -129,8 +129,11 @@ The project opens the PDFs through three stages:
    carries the background fill of the timetable cell the session was parsed
    from (lowercase `#rrggbb`; empty when no fill contains it). This file is the
    single source of truth; every page reads it and nothing else.
-3. **Web pages** — static pages that load the CSV and provide services on top of
-   it. No backend, no build step: re-running the parser updates the site.
+3. **Web app** — a SvelteKit static site (the `app/` directory) built only:
+   every route prerenders to one `index.html` per directory (adapter-static),
+   and the pages load the CSV and provide services on top of it client-side.
+   No backend; `npm run build` in `app/` (or `npm run dev` for development)
+   is the only step from the CSV to the deployable tree.
 
 The purpose is not to add information but to remove friction: the same data,
 queryable.

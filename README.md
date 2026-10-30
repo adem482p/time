@@ -3,6 +3,16 @@
 See the complete timetable of any teacher, find teachers by name, subjects they teach and their classes of students.
 Data is scraped from student timetables on the official university website.
 
+# Running
+
+The site is a SvelteKit static build in `app/` (JavaScript only): `npm install`
+then `npm run build` in `app/` prerenders every route to one `index.html` per
+directory and stamps the two service workers from the built tree; serve the
+result with any static file server (`python3 -m http.server` from `app/build/`).
+`npm run dev` in `app/` serves a development copy. The CSV the pages read lives
+at the repository root; `app/scripts/sync-static.mjs` copies it (plus the
+vendored assets) into the bundle at build time.
+
 # Screenshots
 
 Opening any page with `?redact=1` renders every teacher name as a rectangle filled with the text foreground, so the UI can be shown without any name in it; the captures below use that mode across pages, viewports and color schemes.
