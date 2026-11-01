@@ -49,8 +49,8 @@ var PAGE_SRC = readSrc('app', 'src', 'routes', 'classes', '+page.svelte');
 var TEACHERS_SRC = readSrc('app', 'src', 'routes', 'teachers', '+page.svelte');
 var AT_SRC = readSrc('app', 'src', 'routes', 'at', '+page.svelte');
 // The day-group cards and week grid are now separate components (issue 032 refactor)
-var DAYGROUP_SRC = readSrc('app', 'src', 'lib', 'DayGroupCards.svelte');
-var WEEKGRID_SRC = readSrc('app', 'src', 'lib', 'WeekGrid.svelte');
+var DAYGROUP_SRC = readSrc('app', 'src', 'lib', 'components', 'DayGroupCards.svelte');
+var WEEKGRID_SRC = readSrc('app', 'src', 'lib', 'components', 'WeekGrid.svelte');
 var CSS = readSrc('app', 'static', 'app.css');
 var DISPLAY_SRC = readSrc('app', 'src', 'lib', 'display.js');
 var COLOR_SRC = readSrc('app', 'src', 'lib', 'color.js');

@@ -143,7 +143,7 @@ test('site inventory: no raw-esc name sites left; every page wires nameHTML(', f
     'the detail heading must go through nameHTML, not raw esc');
   // positive: each page renders names through the data-layer helper
   // classes page uses nameHTML in the DayGroupCards component
-  ['app/src/routes/teachers/+page.svelte', 'app/src/lib/DayGroupCards.svelte',
+  ['app/src/routes/teachers/+page.svelte', 'app/src/lib/components/DayGroupCards.svelte',
    'app/src/routes/at/+page.svelte', 'app/src/routes/all/+page.svelte'].forEach(function (f) {
     assert.ok(readSrc(f).indexOf('nameHTML(') !== -1, f + ' must call nameHTML(');
   });

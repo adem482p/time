@@ -33,8 +33,8 @@
 	import { clock } from '$lib/clock.js';
 	import * as kaomoji from '$lib/kaomoji.js';
 	import { registerApp } from '$lib/register.js';
-	import WeekGrid from '$lib/WeekGrid.svelte';
-	import DayGroupCards from '$lib/DayGroupCards.svelte';
+	import WeekGrid from '$lib/components/WeekGrid.svelte';
+	import DayGroupCards from '$lib/components/DayGroupCards.svelte';
 
 	let store = $state(null);
 	let modelObjs = $state(null);
