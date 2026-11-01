@@ -1,30 +1,37 @@
-// Tests for js/libgroups.js — run with `node --test test/`.
+// Tests for the grouping library (app/src/lib/libgroups.js) — run with
+// `node --test test/libgroups.test.js` (or the multi-file form used by the
+// other suites).
+//
+// Ported off the legacy js/libgroups.js suite: plain ESM imports replace the
+// require shim; every behavior pin is unchanged.
 //
 // The grouping library is exercised against the real emplois.csv (the single
 // source of truth), so these tests double as a data contract: if the parser
 // emits a class we cannot model, something here fails.
 
-'use strict';
+import test from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-var test = require('node:test');
-var assert = require('node:assert');
-var fs = require('node:fs');
-var path = require('node:path');
+import * as Groups from '../app/src/lib/libgroups.js';
 
-var Groups = require('../js/libgroups.js');
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.join(HERE, '..');
 
-var CSV_PATH = path.join(__dirname, '..', 'emplois.csv');
-var SOURCE_PATH = path.join(__dirname, '..', 'js', 'libgroups.js');
+const CSV_PATH = path.join(ROOT, 'emplois.csv');
+const SOURCE_PATH = path.join(ROOT, 'app', 'src', 'lib', 'libgroups.js');
 
 // Minimal RFC 4180 reader: the CSV has quoted fields that contain commas
 // (e.g. "Intro Analyse, Vis données"), so a naive split is not enough.
 function parseCSV(text) {
-  var rows = [];
-  var row = [];
-  var cur = '';
-  var quoted = false;
-  for (var i = 0; i < text.length; i++) {
-    var c = text.charAt(i);
+  const rows = [];
+  let row = [];
+  let cur = '';
+  let quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charAt(i);
     if (quoted) {
       if (c === '"') {
         if (text.charAt(i + 1) === '"') { cur += '"'; i++; }
@@ -46,11 +53,11 @@ function parseCSV(text) {
   return rows;
 }
 
-var table = parseCSV(fs.readFileSync(CSV_PATH, 'utf8'));
-var header = table.shift();
-var fieldCol = header.indexOf('field');
-var rows = table.map(function (r) { return { field: r[fieldCol] }; });
-var grouping = Groups.fromRows(rows);
+const table = parseCSV(fs.readFileSync(CSV_PATH, 'utf8'));
+const header = table.shift();
+const fieldCol = header.indexOf('field');
+const rows = table.map(function (r) { return { field: r[fieldCol] }; });
+const grouping = Groups.fromRows(rows);
 
 function keys(nodes) { return nodes.map(function (n) { return n.key; }).join(','); }
 function candidateKeys(result) {
@@ -72,12 +79,12 @@ test('reads the whole dataset: 94 fully specified classes', function () {
 });
 
 test('every raw field round-trips through its leaf', function () {
-  var seen = {};
+  const seen = {};
   rows.forEach(function (r) { seen[r.field] = true; });
-  var fields = Object.keys(seen);
+  const fields = Object.keys(seen);
   assert.strictEqual(fields.length, 94);
   fields.forEach(function (f) {
-    var leaf = grouping.leafFor(f);
+    const leaf = grouping.leafFor(f);
     assert.ok(leaf, 'no leaf for ' + f);
     assert.strictEqual(leaf.fullName(), f);
     assert.strictEqual(leaf.compactName(), leaf.key);
@@ -93,7 +100,7 @@ test('every raw field round-trips through its leaf', function () {
 // every distinct field actually in emplois.csv, then the null fallbacks.
 
 test('shortcutOf maps the documented shapes (issue 075)', function () {
-  var table = [
+  const t = [
     // [field, head, sub] — the first row is the reporter's exact example
     ['LCS3-GLSI_D Groupe 2', 'GLSI3 D', '2'],
     ['LCS3-GLSI_D Groupe 1', 'GLSI3 D', '1'],
@@ -109,32 +116,32 @@ test('shortcutOf maps the documented shapes (issue 075)', function () {
     ['MP2-EXR', 'EXR2', ''],
     ['MP2-SD', 'SD2', '']                      // brief's shape, absent from this CSV
   ];
-  table.forEach(function (row) {
+  t.forEach(function (row) {
     assert.deepStrictEqual(Groups.shortcutOf(row[0]), { head: row[1], sub: row[2] },
       'shortcut of ' + row[0]);
   });
   // the plain text the reporter asked for, sub digits included
-  var ex = Groups.shortcutOf('LCS3-GLSI_D Groupe 2');
+  const ex = Groups.shortcutOf('LCS3-GLSI_D Groupe 2');
   assert.strictEqual(ex.head + ex.sub, 'GLSI3 D2');
 });
 
 test('shortcutOf maps every distinct field in the real CSV (issue 075)', function () {
-  var distinct = {};
+  const distinct = {};
   rows.forEach(function (r) { distinct[r.field] = true; });
-  var fields = Object.keys(distinct);
+  const fields = Object.keys(distinct);
   assert.strictEqual(fields.length, 94);
-  var fams = {};
+  const fams = {};
   fields.forEach(function (f) {
-    var leaf = grouping.leafFor(f);
+    const leaf = grouping.leafFor(f);
     assert.ok(leaf, 'no leaf for ' + f);
-    var sc = Groups.shortcutOf(f);
+    const sc = Groups.shortcutOf(f);
     assert.ok(sc, 'shortcutOf must map the real field ' + f);
     // the subscript is exactly the real cohort — nothing else can ever land
     // under the <sub>; cohort-less fields carry no subscript
     assert.strictEqual(sc.sub, leaf.cohort || '', f + ': subscript is the real cohort');
     // the head is the identity of the same leaf: section + year for a common
     // branch, specialization + year [+ " " + section] otherwise
-    var want = leaf.commonBranch
+    const want = leaf.commonBranch
       ? leaf.section + leaf.year
       : leaf.specialization + leaf.year + (leaf.section ? ' ' + leaf.section : '');
     assert.strictEqual(sc.head, want, f + ': head is the leaf identity');
@@ -142,7 +149,7 @@ test('shortcutOf maps every distinct field in the real CSV (issue 075)', functio
     // page's escaping before <sub> is belt-and-braces — never load-bearing
     assert.ok(/^[A-Za-z0-9]+(?: [A-Za-z0-9]+)?$/.test(sc.head), f + ': plain head ' + sc.head);
     assert.ok(!sc.sub || /^\d+$/.test(sc.sub), f + ': digit subscript ' + sc.sub);
-    var fam = (leaf.commonBranch ? 'common' : 'spec') +
+    const fam = (leaf.commonBranch ? 'common' : 'spec') +
       (leaf.section ? '+section' : '') + (leaf.cohort ? '+cohort' : '');
     fams[fam] = (fams[fam] || 0) + 1;
   });
@@ -186,7 +193,7 @@ test('LBC3-EB has a section but no cohorts', function () {
 });
 
 test('MP1-SD is a fully specified class with no section or cohort', function () {
-  var n = grouping.resolveOne('MP1-SD');
+  const n = grouping.resolveOne('MP1-SD');
   assert.strictEqual(n.section, null);
   assert.strictEqual(n.cohort, null);
   assert.ok(n.isLeaf());
@@ -196,7 +203,7 @@ test('MP1-SD is a fully specified class with no section or cohort', function () 
 });
 
 test('broad references are valid and ambiguous', function () {
-  var cases = [
+  const cases = [
     ['GLSI', ['GLSI1', 'GLSI3']],
     ['LBC3', ['BI3', 'EB1']],
     ['MP1', ['EXR1', 'SD1']],
@@ -204,7 +211,7 @@ test('broad references are valid and ambiguous', function () {
     ['MP', ['EXR1', 'SD1', 'EXR3', 'SD3']]
   ];
   cases.forEach(function (c) {
-    var r = grouping.resolve(c[0]);
+    const r = grouping.resolve(c[0]);
     assert.strictEqual(r.status, 'ambiguous', c[0]);
     assert.ok(r.ambiguous);
     assert.deepStrictEqual(candidateKeys(r).sort(), c[1].sort());
@@ -213,7 +220,7 @@ test('broad references are valid and ambiguous', function () {
 });
 
 test('interior and leaf references resolve as expected', function () {
-  var g3 = grouping.resolveOne('GLSI3');
+  const g3 = grouping.resolveOne('GLSI3');
   assert.strictEqual(g3.key, 'GLSI3');
   assert.strictEqual(g3.leaves().length, 8);
 
@@ -225,7 +232,7 @@ test('interior and leaf references resolve as expected', function () {
 });
 
 test('invalid references are reported, never silently mapped', function () {
-  var reasons = {
+  const reasons = {
     '': 'EMPTY',
     'GLSI2': 'UNKNOWN_YEAR',
     'GLSI4': 'UNKNOWN_YEAR',
@@ -245,7 +252,7 @@ test('invalid references are reported, never silently mapped', function () {
     'LBC3-EB_A Groupe 1': 'UNKNOWN_COHORT'
   };
   Object.keys(reasons).forEach(function (ref) {
-    var r = grouping.resolve(ref);
+    const r = grouping.resolve(ref);
     assert.strictEqual(r.status, 'invalid', ref);
     assert.strictEqual(r.ok, false);
     assert.strictEqual(r.node, null);
@@ -290,13 +297,13 @@ test('common-branch compact form is accepted', function () {
 });
 
 test('a runtime catalogue can forward-declare offerings', function () {
-  var g = Groups.build({ rows: rows, catalogue: { LCS2: ['GLSI', 'SD'] } });
-  var lcs2 = g.resolve('LCS2');
+  const g = Groups.build({ rows: rows, catalogue: { LCS2: ['GLSI', 'SD'] } });
+  const lcs2 = g.resolve('LCS2');
   assert.strictEqual(lcs2.status, 'ambiguous');
   assert.deepStrictEqual(candidateKeys(lcs2).sort(), ['GLSI1', 'SD3']);
 
   // SD3 has no rows yet but is known to the catalogue, so it resolves.
-  var sd3 = g.resolve('SD3');
+  const sd3 = g.resolve('SD3');
   assert.strictEqual(sd3.status, 'ok');
   assert.strictEqual(sd3.node.key, 'SD3');
 });
@@ -311,7 +318,7 @@ test('short names use the program semester, not the track year', function () {
   assert.strictEqual(grouping.resolveOne('EB1').key, 'EB1');
   assert.strictEqual(grouping.resolve('GLSI2').status, 'invalid');
   assert.strictEqual(grouping.resolve('GLSI2').reason, 'UNKNOWN_YEAR');
-  var amb = grouping.resolve('GLSI');
+  const amb = grouping.resolve('GLSI');
   assert.strictEqual(amb.status, 'ambiguous');
   assert.deepStrictEqual(candidateKeys(amb).sort(), ['GLSI1', 'GLSI3']);
   // No semester-2/4 GLSI keys exist anywhere in the catalogue.
@@ -351,19 +358,19 @@ test('canonical full and compact formatting', function () {
 });
 
 test('the library has no time, DOM, Node or network dependencies', function () {
-  var src = fs.readFileSync(SOURCE_PATH, 'utf8');
+  const src = fs.readFileSync(SOURCE_PATH, 'utf8');
   ['require(', 'process.', 'document.', 'window.', 'new Date', 'Date.now', 'XMLHttpRequest', 'fetch('].forEach(function (needle) {
     assert.strictEqual(src.indexOf(needle), -1, 'source contains ' + needle);
   });
 });
 
 test('the library does not read the clock', function () {
-  var RealDate = Date;
-  var broken = function () { throw new Error('Date used'); };
+  const RealDate = Date;
+  const broken = function () { throw new Error('Date used'); };
   broken.now = function () { throw new Error('Date.now used'); };
   global.Date = broken;
   try {
-    var g = Groups.fromRows(rows);
+    const g = Groups.fromRows(rows);
     assert.strictEqual(g.resolveOne('GLSI3D1').key, 'GLSI3D1');
   } finally {
     global.Date = RealDate;
