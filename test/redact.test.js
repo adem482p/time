@@ -18,15 +18,10 @@ import { fileURLToPath } from 'node:url';
 
 import * as data from '../app/src/lib/data.js';
 import * as match from '../app/src/lib/match.js';
+import { CSV_PATH, readSrc } from './helpers.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
-
-const CSV_PATH = path.join(ROOT, 'emplois.csv');
-
-function readSrc(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), 'utf8');
-}
 
 const store = data.createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 

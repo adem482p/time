@@ -24,9 +24,9 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import path from 'node:path';
 import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+
+import { CSV_PATH, countTok, readSrc } from './helpers.js';
 
 import { createStore, esc } from '../app/src/lib/data.js';
 import { shortcutOf, fromRows } from '../app/src/lib/libgroups.js';
@@ -35,16 +35,9 @@ import * as match from '../app/src/lib/match.js';
 import * as color from '../app/src/lib/color.js';
 import * as display from '../app/src/lib/display.js';
 
-var HERE = path.dirname(fileURLToPath(import.meta.url));
-var ROOT = path.join(HERE, '..');
-var CSV_PATH = path.join(ROOT, 'app', 'static', 'emplois.csv');
-
 // The ported surfaces the structural pins re-target: the classes page, its
 // stylesheet, the sibling pages some pins share machinery with, the display
 // boundary, and the color engine.
-function readSrc() {
-  return fs.readFileSync(path.join.apply(path, [ROOT].concat(Array.prototype.slice.call(arguments))), 'utf8');
-}
 var PAGE_SRC = readSrc('app', 'src', 'routes', 'classes', '+page.svelte');
 var TEACHERS_SRC = readSrc('app', 'src', 'routes', 'teachers', '+page.svelte');
 var AT_SRC = readSrc('app', 'src', 'routes', 'at', '+page.svelte');
@@ -60,8 +53,6 @@ var store = createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 var modelObjs = model.buildAll(store);
 var index = match.buildIndex(store, modelObjs);
 var groups = modelObjs.groups;
-
-function countTok(hay, needle) { return hay.split(needle).length - 1; }
 
 // Slices the page component source between two exact byte markers — the vm
 // harness seams. The bounds are asserted so a refactor that moves a marker

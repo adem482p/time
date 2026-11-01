@@ -16,17 +16,15 @@ import { fileURLToPath } from 'node:url';
 import { createStore } from '../app/src/lib/data.js';
 import * as model from '../app/src/lib/model.js';
 import * as color from '../app/src/lib/color.js';
-
-const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CSV_PATH = path.join(ROOT, 'app', 'static', 'emplois.csv');
+import { CSV_PATH, readSrc, countTok } from './helpers.js';
 
 var store = createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 var modelObjs = model.buildAll(store);
 
-var TIME = fs.readFileSync(path.join(ROOT, 'app/src/routes/at/+page.svelte'), 'utf8');
-var ALL = fs.readFileSync(path.join(ROOT, 'app/src/routes/all/+page.svelte'), 'utf8');
-var TEACHERS = fs.readFileSync(path.join(ROOT, 'app/src/routes/teachers/+page.svelte'), 'utf8');
-var CLOCK = fs.readFileSync(path.join(ROOT, 'app/src/lib/clock.js'), 'utf8');
+var TIME = readSrc('app', 'src', 'routes', 'at', '+page.svelte');
+var ALL = readSrc('app', 'src', 'routes', 'all', '+page.svelte');
+var TEACHERS = readSrc('app', 'src', 'routes', 'teachers', '+page.svelte');
+var CLOCK = readSrc('app', 'src', 'lib', 'clock.js');
 
 function at(monthDay, hh, mm) { return new Date(2026, 9, monthDay, hh, mm); }
 

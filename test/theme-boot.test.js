@@ -24,21 +24,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { readSrc } from './helpers.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.join(HERE, '..', 'app');
 
 // Issues 072 + 073: four painted pages — the two app pages and the two
 // utility views — all prerender through app.html; the root landing is a redirect.
-const PAGES = ['src/routes/teachers/+page.svelte', 'src/routes/classes/+page.svelte',
-	'src/routes/at/+page.svelte', 'src/routes/all/+page.svelte'];
+const PAGES = ['app/src/routes/teachers/+page.svelte', 'app/src/routes/classes/+page.svelte',
+	'app/src/routes/at/+page.svelte', 'app/src/routes/all/+page.svelte'];
 
-function readSrc(rel) {
-	return fs.readFileSync(path.join(APP, rel), 'utf8');
-}
-
-const APPHTML = readSrc('src/app.html');
-const THEME_SRC = readSrc('src/lib/theme.js');
+const APPHTML = readSrc('app', 'src', 'app.html');
+const THEME_SRC = readSrc('app', 'src', 'lib', 'theme.js');
 
 // The raw <script>…</script> block of the issue-066 replay snippet.
 function replaySnippet(html) {
@@ -293,7 +290,7 @@ test('readState stays backward compatible: the old shape restores and upgrades, 
 // ---- 4. the CSS dark fallback ----------------------------------------------
 
 test('the app.css dark-fallback block is additive, singular, top-positioned and drift-free against the engine', () => {
-	const css = readSrc('static/app.css');
+	const css = readSrc('app', 'static', 'app.css');
 	const marker = '@media (prefers-color-scheme: dark)';
 	const start = css.indexOf(marker);
 	assert.ok(start !== -1, 'the dark-fallback block must exist');

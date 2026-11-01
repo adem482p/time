@@ -23,84 +23,25 @@ import vm from 'node:vm';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
+import { APPS, isRelative, linkHrefs, readSrc, toRoot, pngIhdr } from './helpers.js';
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
 
-// The two independently installable apps (issue 072), with the exact names the
-// user chose, and the pages that carry NO manifest by design. Issue 078 flips
-// the TEACHERS page to opt-in installability: no static manifest link ships —
-// the link is injected only under ?install=1, as early as mount (the static tag
-// was parse-time; same semantics for the install prompt itself). Issue 072:
-// this page registers its own worker (teachers/sw.js).
-const APPS = [
-  {
-    name: 'teachers',
-    dir: 'teachers',
-    page: 'app/src/routes/teachers/+page.svelte',
-    manifest: 'app/static/teachers/manifest.json',
-    nameStr: 'Emplois — Enseignants',
-    shortName: 'Enseignants',
-    manifestMode: 'opt-in'
-  },
-  {
-    name: 'classes',
-    dir: 'classes',
-    page: 'app/src/routes/classes/+page.svelte',
-    manifest: 'app/static/classes/manifest.json',
-    nameStr: 'Emplois — Classes',
-    shortName: 'Classes',
-    manifestMode: 'static'
-  }
-];
+// The two independently installable app descriptors are shared with the
+// offline suite (test/helpers.js APPS); the issue-078 teachers opt-in and the
+// classes static link are encoded there as manifestMode. The pages that carry
+// NO manifest by design stay local to this suite.
 const NO_MANIFEST = [
   'app/src/routes/+page.svelte',
   'app/src/routes/at/+page.svelte',
   'app/src/routes/all/+page.svelte'
 ];
 
-function readSrc(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), 'utf8');
-}
-
 function readManifest(app) {
   // A real JSON.parse: trailing commas, comments or a BOM must go red here,
   // not in the browser.
   return JSON.parse(readSrc(app.manifest));
-}
-
-// Resolve a manifest- or page-relative URL to a site-root-relative path.
-function toRoot(rel, fromDir) {
-  return path.posix.normalize(path.posix.join(fromDir, rel));
-}
-
-// Read a PNG's IHDR: {width, height, colorType} from the real bytes.
-// offset 16..19 width (BE), 20..23 height (BE), 24 bit depth, 25 color type
-// (2 = truecolour RGB — no alpha; 6 = RGBA).
-function pngIhdr(rel) {
-  var buf = fs.readFileSync(path.join(ROOT, rel));
-  assert.ok(buf.length > 26, rel + ' must be longer than a PNG header');
-  assert.strictEqual(buf.readUInt32BE(0), 0x89504e47, rel + ' must start with the PNG signature');
-  assert.strictEqual(buf.toString('latin1', 12, 16), 'IHDR', rel + ' first chunk must be IHDR');
-  return {
-    width: buf.readUInt32BE(16),
-    height: buf.readUInt32BE(20),
-    colorType: buf.readUInt32BE(25) === 2 ? 2 : buf[25]
-  };
-}
-
-function linkHrefs(html, rel) {
-  var out = [], m;
-  // Match both double-quoted and backtick-quoted href attributes.
-  // In Svelte, attributes can be: href="..." or href={`...`} (with expression wrapper)
-  var re = new RegExp('<link\\b[^>]*\\brel="' + rel + '"[^>]*\\bhref=\{?([`"])([^`"]+)\\1\}?', 'g');
-  while ((m = re.exec(html))) out.push(m[2]);
-  return out;
-}
-
-function isRelative(url) {
-  // Root-absolute ("/..."), protocol-relative ("//...") and absolute URLs break
-  // under the production subpath /time/ (issue 067's lesson).
-  return !/^(https?:)?\/\//.test(url) && !/^\/(?!\/)/.test(url) && !/^[a-z][a-z0-9+.-]*:/i.test(url);
 }
 
 // Issue 078: the teachers page's onMount injects the manifest link under ?install=1.
