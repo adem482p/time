@@ -20,13 +20,3 @@ export function headingHTML(name) {
 	if (!sc) return esc(name);
 	return esc(sc.head) + (sc.sub ? '<sub>' + esc(sc.sub) + '</sub>' : '');
 }
-
-/**
- * Manual right-arrow for the "Next" marker, drawn as an SVG so it renders
- * identically across platforms and inherits the tag color.
- *
- * @returns {string} safe HTML
- */
-export function nextArrowHTML() {
-	return '<svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 6l6 6-6 6"/></svg>';
-}

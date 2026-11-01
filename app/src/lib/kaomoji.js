@@ -61,12 +61,8 @@ const DATA = {
 const NAMES = Object.keys(DATA);
 let FLAT = null;
 
-/** The category names, in the dataset's own order.
- * @returns {Array<string>} */
-export function categories() { return NAMES.slice(); }
-
 /** @param {string} name — a category name; unknown names yield []. */
-export function byCategory(name) {
+function byCategory(name) {
   return Object.prototype.hasOwnProperty.call(DATA, name) ? DATA[name].slice() : [];
 }
 
