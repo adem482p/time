@@ -636,7 +636,7 @@ test('the shortcut heads every class-name display surface of the page (issue 075
 var classFactsSandbox = (function () {
   var sb = { console: console, esc: esc };
   vm.createContext(sb);
-  vm.runInContext(pageSlice('function classFactsHTML(node)', '/** today-only next mark'),
+  vm.runInContext(pageSlice('function classFactsHTML(node)', 'function rowHTML(r)'),
     sb, { filename: 'classes-facts-harness' });
   return sb;
 })();
@@ -936,7 +936,8 @@ test('the classes page emits a teacher-style day-grouped session list with today
   // …and the NEXT helper reuses the cursor, never the wrapping nextSessionIdx
   assert.ok(sec.indexOf('s.time === c.next') !== -1, 'next must reuse the cursor');
   assert.ok(sec.indexOf('nextSessionIdx(') === -1, 'must not use the wrapping nextSessionIdx');
-  assert.ok(sec.indexOf('color.sessionRow(') !== -1, 'list rows must use color.sessionRow');
+  // color.sessionRow lives in the component's sessionRowClasses helper now
+  assert.ok(DAYGROUP_SRC.indexOf('color.sessionRow(') !== -1, 'list rows must use color.sessionRow');
   assert.ok(list.indexOf('class="nexttag"') !== -1 && list.indexOf('nextarrow') !== -1,
     'list gutter must reuse the next arrow');
   // the desktop grid is untouched in structure: Monday-first store.days loops

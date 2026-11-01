@@ -7,7 +7,7 @@
 	import { esc } from '$lib/data.js';
 	import { nameHTML } from '$lib/data.js';
 
-	let { store, week, cursor, now, weekWrapEl, cursorLineEl } = $props();
+	let { store, week, cursor, weekWrapEl, cursorLineEl } = $props();
 
 	function indexByDaySlot(week) {
 		const by = {};
