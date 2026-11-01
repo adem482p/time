@@ -159,9 +159,6 @@ export function mergeRanges(rs) {
   return out;
 }
 
-// Match quality of token against s: contiguous substring scores ~1000
-// (earlier is better), scattered subsequence fallback scores <500
-// (tighter span is better), no match is -1. Contiguous always wins.
 /**
  * Match quality of `token` against `s`: a contiguous substring scores
  * 1000 - offset (earlier is better), a scattered subsequence fallback
@@ -187,8 +184,6 @@ export function tokenScore(s, token) {
   return 500 - (last - first);
 }
 
-// Ranges of s (original indices) matching token: exact substring first,
-// else subsequence (fuzzy) fallback. Returns null on no match.
 /**
  * Ranges of `s` (original indices) matching `token`: exact substring
  * first, else the subsequence (fuzzy) fallback. Returns the matched
@@ -229,14 +224,12 @@ export function highlightHTML(s, ranges) {
   return h + esc(s.slice(pos));
 }
 
-// The redaction-aware name highlight (issue 061): renders a rectangle instead
-// of the teacher name when redaction is on; otherwise the regular highlight.
-// highlightHTML stays the generic label renderer (subjects, classes keep marks).
 /**
  * The redaction-aware name highlight (issue 061): renders a rectangle
  * instead of the teacher name when redaction mode is on (data.redacted),
  * otherwise the regular `<mark>` highlight of `s` around `ranges` (null or
- * an Array<Array<number>>). Returns the HTML string.
+ * an Array<Array<number>>). highlightHTML stays the generic label renderer
+ * (subjects, classes keep marks). Returns the HTML string.
  */
 export function nameHTML(s, ranges) { if (redacted()) return dataNameHTML(s); return highlightHTML(s, ranges); }
 
@@ -329,12 +322,6 @@ function matchTeacher(index, t, q) {
   return res;
 }
 
-// Live filtering: one heterogeneous but sorted list. The default
-// (empty-query) list raises available-today teachers; filtered lists are
-// exact matches first (by subject, name, or class), then partial matches
-// ranked by match quality, then relevant hours, then name.
-// `avail` is an optional precomputed name -> availability map (the only
-// time-dependent input; committed queries never use it).
 /**
  * Live filtering: one heterogeneous but sorted hit list. The empty query
  * returns blank result stubs for every teacher, raised by availability
@@ -404,10 +391,6 @@ function resolveAttr(index, kind, value) {
   return null;
 }
 
-// Parse a query into {attrs:[...], text, textTokens}. A constraint's value is
-// the longest run of following tokens that resolves in the index; leftover
-// tokens fall through to the free text. `+` is an explicit separator (ends
-// the current value), and bare tokens resolve class -> subject -> teacher.
 /**
  * Parse a query into its typed constraints and free text. A constraint is
  * the longest run of tokens after a teacher:/class:/subject: prefix that
@@ -480,11 +463,6 @@ function attrMatches(index, attr, ctx) {
 
 function attrLabel(attr) { return attr.kind + ' ' + (attr.label || attr.value); }
 
-// Grouped live search. With no typed constraints this is the plain live
-// list (one unlabelled section). With constraints the teachers are split
-// into ordered sections: matches-all, then each constraint in order, then
-// the free-text-only tail. Every teacher lands in exactly one section;
-// free text always filters (when present) and ranks within each section.
 /**
  * Grouped live search. With no typed constraints this is the plain live
  * list (one unlabelled section). With constraints the teachers are split
@@ -567,12 +545,6 @@ export function searchSections(index, query, avail) {
 
 // ---- autocomplete -----------------------------------------------------------
 
-// The slice of the query the completion replaces. For an open constraint
-// (e.g. "class:GLSI3 subject:mach", or a partial multi-word value) it is
-// that constraint's value; otherwise it is the whole trailing free-text run
-// (so "machine lear" completes to "subject:Machine Learning"). Returns
-// {head, kind, value}: head is the untouched prefix the completion appends
-// to, kind fixes the candidate kind when inside a constraint.
 /**
  * The slice of the query the completion replaces. For an open constraint
  * (e.g. "class:GLSI3 subject:mach", or a partial multi-word value) it is
@@ -656,9 +628,6 @@ function scoreEntry(index, e, value) {
   return { score: bestOwn >= 0 ? bestOwn + 10000 : bestAlias };
 }
 
-// Typed suggestions for the current completion slot: prefix > substring >
-// subsequence. Kind is fixed when the slot sits inside a typed constraint,
-// otherwise any kind may complete the bare term. Score desc, cap 8.
 /**
  * Typed suggestions for the current completion slot: prefix > substring >
  * subsequence tiers (issue-029 own/alias scoring applies underneath). Kind
@@ -688,10 +657,6 @@ export function suggest(index, query) {
 
 // ---- class-only live list (classes page, issue 032) -------------------
 
-// Every class node the query touches, ranked with the same own/alias tiers
-// as suggest() (via scoreEntry) so the autocomplete and the list never
-// diverge. Empty query: the whole catalogue, byte-sorted by key. Ties
-// break byte-alphabetically for determinism.
 /**
  * Every class node the query touches, ranked with the same own/alias tiers
  * as suggest (via scoreEntry) so the autocomplete and the list never
@@ -764,13 +729,6 @@ export function classSearch(index, query) {
   });
 }
 
-// Shadow text: what Enter/Tab will complete. Returns {pre, rest} where
-// pre is an optional prefix hint (e.g. "subject:") shown before the
-// remainder, or null when nothing can be completed inline.
-//   typed "hass"        -> commit "Hassairi"                  -> rest "airi"
-//   typed "glsi"        -> commit "class:GLSI3D1"            -> pre "class:", rest "3D1"
-//   typed "algo"        -> commit "subject:Algo Struct…"     -> pre "subject:", rest "o Struct…"
-//   typed "subject:al"  -> commit "subject:Algo Struct…"     -> rest "go Struct…"
 /**
  * Shadow text: what Enter/Tab will complete. The raw typed string (case
  * insensitive, no trim/collapse) must be a proper prefix of the target
@@ -778,7 +736,11 @@ export function classSearch(index, query) {
  * completed inline ("machine  " diverges and returns null instead of a
  * normalized match, issue #2). Returns a record with pre and rest — pre an
  * optional prefix hint ("subject:") shown before the remainder, or null
- * when nothing can be completed inline.
+ * when nothing can be completed inline. Worked examples:
+ *   typed "hass"        -> commit "Hassairi"                  -> rest "airi"
+ *   typed "glsi"        -> commit "class:GLSI3D1"            -> pre "class:", rest "3D1"
+ *   typed "algo"        -> commit "subject:Algo Struct…"     -> pre "subject:", rest "o Struct…"
+ *   typed "subject:al"  -> commit "subject:Algo Struct…"     -> rest "go Struct…"
  */
 export function shadowText(query, row) {
   // Space is an ordinary character: the raw typed string (case-insensitive,

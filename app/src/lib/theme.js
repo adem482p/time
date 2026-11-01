@@ -14,7 +14,7 @@
  * `init()` after mount. `init()` keeps its `inited` gate and stays idempotent.
  *
  * Exports (mirroring the legacy `TT.theme` return object):
- *   PRESETS, PALETTES (legacy alias), VARIANTS, ROLE_ORDER,
+ *   PRESETS, VARIANTS, ROLE_ORDER,
  *   createTheme, apply, SOLID_PALETTE, snapPalette, init, current,
  *   hexToArgb, argbToHex, hctFromArgb, argbFromHct, ratioOfTones,
  *   foregroundTone, tonalPalette, buildPalettes, normalizeHex,
@@ -43,13 +43,6 @@ const matrixMultiply = (row, m) => ([
   row[0] * m[1][0] + row[1] * m[1][1] + row[2] * m[1][2],
   row[0] * m[2][0] + row[1] * m[2][1] + row[2] * m[2][2]
 ]);
-
-// Math.cbrt is ES2015; polyfill it for old engines.
-if (typeof Math.cbrt !== 'function') {
-  Math.cbrt = function (x) {
-    return signum(x) * Math.pow(Math.abs(x), 1 / 3);
-  };
-}
 
 const SRGB_TO_XYZ = [
   [0.41233895, 0.35762064, 0.18051042],
@@ -1029,12 +1022,6 @@ const init = () => {
 // above.) Re-exported from the internal table so the legacy `TT.theme.PRESETS`
 // surface is preserved.
 export { PRESETS };
-
-/**
- * Legacy alias for PRESETS, kept so existing callers read `PALETTES` the way
- * the old global `TT.theme.PALETTES` did. Same array object, same contents.
- */
-export const PALETTES = PRESETS;
 
 // The rest of the legacy public surface, exported from the internal
 // definitions above — same names, same behavior.

@@ -38,14 +38,6 @@ export function sessionRow(st) {
 }
 
 /**
- * Day-group header (time page). Sunday: no today marker, no dimming.
- */
-export function dayGroup(st) {
-  if (st.isSunday) return [];
-  return st.isToday ? [CLASSES.today] : [CLASSES.dim];
-}
-
-/**
  * Slot entry (time page). now/next only occur inside today's section.
  */
 export function slotEntry(st) {

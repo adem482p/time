@@ -2,7 +2,7 @@
 // in-memory store. In the old static tree each page resolved '../emplois.csv'
 // off its script URL; the Svelte pages resolve it against the build base
 // (svelte.config.js paths.base) so a subdirectory deployment keeps working.
-import { createStore, DAYS, SLOTS } from './data.js';
+import { createStore } from './data.js';
 
 /**
  * Fetch emplois.csv and build the in-memory store from its text.
@@ -16,6 +16,3 @@ export async function loadStore(base) {
 	if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 	return createStore(await res.text());
 }
-
-/** The six timetable days and six slots, from the data layer. */
-export { DAYS, SLOTS };
