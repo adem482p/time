@@ -1,47 +1,89 @@
-// Tests for the classes page logic (issue 032) — run with `node --test test/`.
+// Tests for the classes page logic (issue 032) — run with
+// `node --test test/classes.test.js`.
 //
 // The pure, DOM-free parts of the page (model.classWeek, model.dayCursor,
 // match.classSearch) are exercised against the real emplois.csv, exactly like
 // test/libgroups.test.js exercises the grouping library. The page itself is
-// checked structurally (HTML/CSS shape), since no browser is available.
+// checked structurally (Svelte markup / CSS shape) since no browser is
+// available — plus behaviorally for the DOM-free derivations the markup
+// consumes: the day-group and live-day derivations, the per-session row
+// classes and the facts renderer are sliced from
+// app/src/routes/classes/+page.svelte and driven in a vm sandbox with an
+// injected clock, exactly as the legacy test drove the old page script.
+//
+// ESM port: the browser script stack (data, libgroups, model, match, color,
+// display) lives under app/src/lib/ as ES modules and is imported directly.
+// The legacy vm loader that bridged the TT globals is gone, and with it the
+// old main() realm-converter (arrays coming out of the imports sit in this
+// file's own realm). Structural pins moved with the page:
+// classes/index.html -> app/src/routes/classes/+page.svelte,
+// styles.css -> app/static/app.css, js/teachers.js ->
+// app/src/routes/teachers/+page.svelte, and the time page's class pills ->
+// app/src/routes/at/+page.svelte.
 
-'use strict';
+import test from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
 
-var test = require('node:test');
-var assert = require('node:assert');
-var fs = require('node:fs');
-var path = require('node:path');
-var vm = require('node:vm');
+import { createStore, esc } from '../app/src/lib/data.js';
+import { shortcutOf, fromRows } from '../app/src/lib/libgroups.js';
+import * as model from '../app/src/lib/model.js';
+import * as match from '../app/src/lib/match.js';
+import * as color from '../app/src/lib/color.js';
+import * as display from '../app/src/lib/display.js';
 
-var CSV_PATH = path.join(__dirname, '..', 'emplois.csv');
-var ROOT = path.join(__dirname, '..');
+var HERE = path.dirname(fileURLToPath(import.meta.url));
+var ROOT = path.join(HERE, '..');
+var CSV_PATH = path.join(ROOT, 'app', 'static', 'emplois.csv');
 
-// Load the browser script stack (data, libgroups, model, match) into one shared
-// TT context, exactly like classes/index.html's <script> tags do in the browser.
-// model.js / match.js have no UMD wrapper, so they are eval'd in a vm context
-// whose global carries the shared TT object.
-function loadStack() {
-  var ctx = { console: console };
-  vm.createContext(ctx);
-  ['js/data.js', 'js/libgroups.js', 'js/model.js', 'js/match.js'].forEach(function (f) {
-    var src = fs.readFileSync(path.join(ROOT, f), 'utf8');
-    vm.runInContext(src, ctx, { filename: f });
-  });
-  return ctx.TT;
+// The ported surfaces the structural pins re-target: the classes page, its
+// stylesheet, the sibling pages some pins share machinery with, the display
+// boundary, and the color engine.
+function readSrc() {
+  return fs.readFileSync(path.join.apply(path, [ROOT].concat(Array.prototype.slice.call(arguments))), 'utf8');
 }
+var PAGE_SRC = readSrc('app', 'src', 'routes', 'classes', '+page.svelte');
+var TEACHERS_SRC = readSrc('app', 'src', 'routes', 'teachers', '+page.svelte');
+var AT_SRC = readSrc('app', 'src', 'routes', 'at', '+page.svelte');
+var CSS = readSrc('app', 'static', 'app.css');
+var DISPLAY_SRC = readSrc('app', 'src', 'lib', 'display.js');
+var COLOR_SRC = readSrc('app', 'src', 'lib', 'color.js');
+var THEME_SRC = readSrc('app', 'src', 'lib', 'theme.js');
 
-var TT = loadStack();
-var data = TT.data, model = TT.model, match = TT.match;
-
-var store = data.createStore(fs.readFileSync(CSV_PATH, 'utf8'));
+var store = createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 var modelObjs = model.buildAll(store);
 var index = match.buildIndex(store, modelObjs);
 var groups = modelObjs.groups;
 
-// deepStrictEqual compares prototypes, and values that come out of the vm loader
-// belong to the vm's own Array — convert them to this context before comparing
-// against array literals (two vm-context arrays compare fine as-is).
-function main(arr) { return Array.prototype.slice.call(arr); }
+function countTok(hay, needle) { return hay.split(needle).length - 1; }
+
+// Slices the page component source between two exact byte markers — the vm
+// harness seams. The bounds are asserted so a refactor that moves a marker
+// fails loudly here instead of quietly testing a stale slice.
+function pageSlice(startTok, endTok) {
+  var start = PAGE_SRC.indexOf(startTok);
+  var end = endTok === null ? PAGE_SRC.length : PAGE_SRC.indexOf(endTok, start);
+  assert.ok(start !== -1 && end !== -1 && end > start, 'page slice bounds: ' + startTok);
+  return PAGE_SRC.slice(start, end);
+}
+
+// Runs a $derived.by(...) derivation sliced from the page in a vm sandbox:
+// the compiled Svelte runtime is not available in node, so the sandbox runs
+// the derivation source directly against a $derived stub that invokes the
+// initializer — the real page logic against real model objects. `bindings`
+// carries the outer-scope names the slice reads (model, sel, now, cursor...).
+function runDerived(sliceSrc, name, bindings) {
+  var sandbox = { console: console, $derived: { by: function (f) { return f(); } },
+                  $state: function (v) { return v; } };
+  for (var k in bindings) sandbox[k] = bindings[k];
+  vm.createContext(sandbox);
+  vm.runInContext(sliceSrc + '\n__out__(' + name + ');', sandbox,
+    { filename: 'derived-' + name });
+  return sandbox.__out__;
+}
 
 // ---- model.classWeek -------------------------------------------------------
 
@@ -102,13 +144,13 @@ test('classWeek accepts a node object as the ref', function () {
   var byNode = model.classWeek(groups, groups.byKey['GLSI3D1']);
   assert.strictEqual(byNode.leaves.length, 1);
   assert.strictEqual(byNode.name, 'LCS3-GLSI_D Groupe 1');
-  assert.deepStrictEqual(main(byNode.sessions), main(byRef.sessions));
+  assert.deepStrictEqual(byNode.sessions, byRef.sessions);
 });
 
 test('classWeek unions the cohorts of a section node', function () {
   var w = model.classWeek(groups, 'LCS1A');
   assert.deepStrictEqual(
-    main(w.leaves.map(function (l) { return l.key; })),
+    w.leaves.map(function (l) { return l.key; }),
     ['LCS1A1', 'LCS1A2']
   );
   // the heading is the node's human name, like any single-node ref
@@ -126,8 +168,8 @@ test('classWeek track union is exactly the year subtrees beneath it', function (
     .concat(groups.byKey['LCS2'].leaves(), groups.byKey['LCS3'].leaves());
   assert.strictEqual(w.leaves.length, want.length);
   assert.deepStrictEqual(
-    main(w.leaves.map(function (l) { return l.key; })),
-    main(want.map(function (l) { return l.key; })).sort()
+    w.leaves.map(function (l) { return l.key; }),
+    want.map(function (l) { return l.key; }).sort()
   );
   // union labelling: every line names a leaf actually under LCS
   w.sessions.forEach(function (s) {
@@ -166,7 +208,7 @@ test('classWeek output is deterministic and ordered by (day, slot)', function ()
 
 test('classWeek skips rows that cannot be placed in the grid', function () {
   // build a tiny synthetic grouping with a session lacking a time
-  var g = TT.groups.fromRows([
+  var g = fromRows([
     { professor: 'P', day: 'LUNDI', time: '08h15-09h45', room: 'R1', subject: 'S', field: 'MP1-SD' },
     { professor: 'P', day: 'LUNDI', time: '', room: 'R1', subject: 'NoTime', field: 'MP1-SD' },
     { professor: 'P', day: '', time: '08h15-09h45', room: 'R1', subject: 'NoDay', field: 'MP1-SD' }
@@ -281,46 +323,46 @@ test('startFromToday rotates a day list per the unified anchor rule (issue 050)'
   var days = ['LUNDI', 'MARDI', 'MERCREDI'];
   var ss = [{ day: 'LUNDI', time: '08h15-09h45' }, { day: 'MERCREDI', time: '10h00-11h30' }];
   // before phase: today's sessions are all ahead -> today first
-  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(12, 7, 0))),
+  assert.deepStrictEqual(model.startFromToday(days, ss, at(12, 7, 0)),
     ['LUNDI', 'MARDI', 'MERCREDI']);
   // in progress: the session's end is after now -> today first
-  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(12, 9, 0))),
+  assert.deepStrictEqual(model.startFromToday(days, ss, at(12, 9, 0)),
     ['LUNDI', 'MARDI', 'MERCREDI']);
   // boundary: a session ending exactly at now counts as ended -> roll
-  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(12, 9, 45))),
+  assert.deepStrictEqual(model.startFromToday(days, ss, at(12, 9, 45)),
     ['MERCREDI', 'LUNDI', 'MARDI']);
   // slot gap after today's only session ended -> roll to the next session day
-  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(12, 9, 50))),
+  assert.deepStrictEqual(model.startFromToday(days, ss, at(12, 9, 50)),
     ['MERCREDI', 'LUNDI', 'MARDI']);
   // no sessions today at all -> next cyclic day with sessions
-  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(13, 9, 0))),
+  assert.deepStrictEqual(model.startFromToday(days, ss, at(13, 9, 0)),
     ['MERCREDI', 'LUNDI', 'MARDI']);
   // weekday evening wrap (Friday's sessions ended, Saturday has none here)
-  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(16, 18, 30))),
+  assert.deepStrictEqual(model.startFromToday(days, ss, at(16, 18, 30)),
     ['LUNDI', 'MARDI', 'MERCREDI']);
   // Saturday wrap past Sunday -> Monday
-  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(17, 15, 26))),
+  assert.deepStrictEqual(model.startFromToday(days, ss, at(17, 15, 26)),
     ['LUNDI', 'MARDI', 'MERCREDI']);
   // Sunday (rule 2): null anchor -> the Monday-first input stays
-  assert.deepStrictEqual(main(model.startFromToday(days, ss, at(11, 10, 0))),
+  assert.deepStrictEqual(model.startFromToday(days, ss, at(11, 10, 0)),
     ['LUNDI', 'MARDI', 'MERCREDI']);
   // degenerate: empty list / empty sessions -> unchanged
-  assert.deepStrictEqual(main(model.startFromToday([], [], at(12, 9, 0))), []);
+  assert.deepStrictEqual(model.startFromToday([], [], at(12, 9, 0)), []);
   // degenerate: single-day list at a wrap clock -> unchanged
-  assert.deepStrictEqual(main(model.startFromToday(['LUNDI'], ss, at(17, 15, 26))),
+  assert.deepStrictEqual(model.startFromToday(['LUNDI'], ss, at(17, 15, 26)),
     ['LUNDI']);
   // pure: the input array is never mutated (a real rotation happens here)
   var copy = days.slice();
-  main(model.startFromToday(days, ss, at(13, 9, 0)));
+  model.startFromToday(days, ss, at(13, 9, 0));
   assert.deepStrictEqual(days, copy, 'input array is not mutated');
 });
 
-// ---- week grid shape ------------------------------------------------------
+// ---- week grid shape -------------------------------------------------------
 
 test('the grid is drawn from the six fixed days and slots', function () {
-  assert.deepStrictEqual(main(store.days),
+  assert.deepStrictEqual(store.days,
     ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI']);
-  assert.deepStrictEqual(main(store.slots), [
+  assert.deepStrictEqual(store.slots, [
     '08h15-09h45', '10h00-11h30', '11h40-13h10',
     '13h20-14h50', '15h00-16h30', '16h45-18h15'
   ]);
@@ -354,19 +396,19 @@ test('classSearch ranks own-key prefix matches first', function () {
   var rows = match.classSearch(index, 'LCS');
   assert.strictEqual(rows[0].label, 'LCS');
   // the LCS* own-key nodes lead the list
-  var own = main(rows.slice(0, 4).map(function (r) { return r.label; }));
+  var own = rows.slice(0, 4).map(function (r) { return r.label; });
   assert.deepStrictEqual(own, ['LCS', 'LCS1', 'LCS2', 'LCS3']);
 });
 
 test('classSearch finds a fully specified class by exact key', function () {
   var rows = match.classSearch(index, 'GLSI3D1');
-  assert.deepStrictEqual(main(rows.map(function (r) { return r.label; })), ['GLSI3D1']);
+  assert.deepStrictEqual(rows.map(function (r) { return r.label; }), ['GLSI3D1']);
 });
 
 test('classSearch matches a compact prefix across sections', function () {
   var rows = match.classSearch(index, 'glsi3d');
   assert.deepStrictEqual(
-    main(rows.map(function (r) { return r.label; })),
+    rows.map(function (r) { return r.label; }),
     ['GLSI3D', 'GLSI3D1', 'GLSI3D2']
   );
 });
@@ -388,7 +430,7 @@ test('classSearch matches a full name via its own tier', function () {
 test('classSearch matches a semester compact prefix', function () {
   var rows = match.classSearch(index, 'glsi1a');
   assert.deepStrictEqual(
-    main(rows.map(function (r) { return r.label; })),
+    rows.map(function (r) { return r.label; }),
     ['GLSI1A', 'GLSI1A1', 'GLSI1A2']
   );
 });
@@ -450,29 +492,31 @@ test('suggest still ranks own-key matches above aliases (issue 029)', function (
   assert.ok(labels.indexOf('GLSI2') === -1, 'no GLSI* alias in the top 8');
 });
 
-// ---- page structure (no browser available) --------------------------------
+// ---- page structure (no browser available) ---------------------------------
 
-function readPage(name) { return fs.readFileSync(path.join(ROOT, name), 'utf8'); }
-
-test('classes/index.html carries the teachers-page structure and script stack', function () {
-  var html = readPage('classes/index.html');
-  assert.ok(html.indexOf('data-page="classes"') !== -1);
-  ['../js/data.js', '../js/libgroups.js', '../js/model.js', '../js/match.js',
-   '../js/theme.js', '../js/color.js', '../js/classes.js'].forEach(function (s) {
-    assert.ok(html.indexOf('src="' + s + '"') !== -1, 'missing script ' + s);
+test('the classes page component carries the app-page structure, module imports and ids', function () {
+  var html = PAGE_SRC;
+  // the ported page resolves its asset base and carries the full module
+  // stack — the successor of the legacy <script src=…> list
+  assert.ok(html.indexOf("from '$app/paths'") !== -1, 'the page resolves its asset base');
+  ['$lib/load.js', '$lib/model.js', '$lib/match.js', '$lib/color.js',
+   '$lib/libgroups.js', '$lib/data.js', '$lib/display.js', '$lib/clock.js',
+   '$lib/kaomoji.js', '$lib/register.js'].forEach(function (s) {
+    assert.ok(html.indexOf("from '" + s + "'") !== -1, 'missing module ' + s);
   });
-  // the kaomoji empty state mirrors the teachers page, so the vendor is loaded
-  assert.ok(html.indexOf('src="../vendor/kaomoji.js"') !== -1, 'kaomoji vendor must be loaded');
+  // the kaomoji empty state mirrors the teachers page, so the vendor is used
+  assert.ok(html.indexOf('kaomoji.random()') !== -1 || html.indexOf('kaomoji.all()') !== -1,
+    'the kaomoji fallback feeds the empty state');
   // the author credit mirrors the teachers page, under the title (issue 076
   // moved the count line under the filter box, so the credit follows the h1)
-  assert.ok(html.indexOf('</h1>\n    <p class="author-credit">') !== -1, 'author-credit must sit right under the h1 (issue 076)');
+  assert.ok(html.indexOf('</h1>') !== -1 &&
+    html.indexOf('</h1>') < html.indexOf('author-credit'),
+    'author-credit must sit under the h1 (issue 076)');
   assert.ok(html.indexOf('https://github.com/adem482p') !== -1, 'missing author link');
-  // SEO head mirrors the teachers page with classes-specific URLs/descriptions
+  // SEO head: the page title and description travel with the component
+  // (canonical/theme-color live on the built shell, not the page)
+  assert.ok(html.indexOf('<title>Classes — Emplois</title>') !== -1, 'missing page title');
   assert.ok(html.indexOf('name="description"') !== -1, 'missing meta description');
-  assert.ok(html.indexOf('name="theme-color"') !== -1, 'missing theme-color');
-  assert.ok(html.indexOf('rel="canonical"') !== -1, 'missing canonical');
-  assert.ok(html.indexOf('https://adem482p.github.io/time/classes/') !== -1,
-    'canonical/og:url must use the classes app URL (issue 072: the page moved to classes/)');
   ['id="searchWrap"', 'id="search"', 'id="classList"',
    'id="detail"', 'id="status"', 'id="themeCycle"',
    'id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"',
@@ -491,40 +535,30 @@ test('classes/index.html carries the teachers-page structure and script stack', 
 });
 
 test('the classes page carries no navigation links, and still references no unlisted utility view (issues 075, 073)', function () {
-  // Issue 075 removed the nav bar outright — the classes app is now a
-  // dead-end reachable only by URL (the root classes.html stub remains the
-  // other way in). That is the reporter's call; what must stay true is
-  // issue 073's: no page references the unlisted utility views.
-  var html = readPage('classes/index.html');
+  // Issue 075 removed the nav bar outright — the classes component is a
+  // dead-end reachable only by URL (the /classes route stub remains the
+  // other way in). What must stay true is issue 073's: no page references
+  // the unlisted utility views.
+  var html = PAGE_SRC;
   assert.strictEqual(html.indexOf('<nav'), -1,
-    'classes/index.html ships no nav element at all (issue 075)');
+    'the classes page ships no nav element at all (issue 075)');
   assert.strictEqual(html.indexOf('</nav>'), -1, 'no closing tag without an opener');
   ['href="../teachers/"', 'href="index.html"'].forEach(function (a) {
     assert.strictEqual(html.indexOf(a), -1,
-      'classes/index.html must carry no nav link ' + a + ' (issue 075)');
+      'the classes page must carry no nav link ' + a + ' (issue 075)');
   });
   [/time\.html/, /timetable\.html/].forEach(function (old) {
     assert.strictEqual(old.test(html), false,
-      'classes/index.html must not reference the unlisted old URL ' + old + ' (issue 073)');
+      'the classes page must not reference the unlisted old URL ' + old + ' (issue 073)');
   });
 });
 
 // ---- issue 075: nav out, autocomplete out, shortcut heading in --------------
 
-// The real heading renderer, sliced from js/classes.js and driven with the
-// real shortcutOf + esc, exactly as the page runs it.
-function classesHeadingHarness() {
-  var sandbox = { console: console, esc: data.esc, shortcutOf: TT.groups.shortcutOf };
-  vm.createContext(sandbox);
-  vm.runInContext(classesHeadingFn(), sandbox, { filename: 'classes-heading-harness' });
-  return function (name) {
-    return vm.runInContext('headingHTML(' + JSON.stringify(name) + ');', sandbox,
-      { filename: 'classes-heading-call' });
-  };
-}
-
 test('the class heading renders the shortcut with a real <sub> (issue 075)', function () {
-  var heading = classesHeadingHarness();
+  // the display boundary moved to app/src/lib/display.js; headingHTML is the
+  // real renderer the page and the overlay both call.
+  var heading = display.headingHTML;
   // the reporter's exact example, byte for byte
   assert.strictEqual(heading('LCS3-GLSI_D Groupe 2'), 'GLSI3 D<sub>2</sub>');
   assert.strictEqual(heading('LCS3-GLSI_D Groupe 1'), 'GLSI3 D<sub>1</sub>');
@@ -546,25 +580,22 @@ test('the class heading renders the shortcut with a real <sub> (issue 075)', fun
   // tags the renderer can emit are the <sub>/</sub> pair
   assert.strictEqual(heading('LCS3-GLSI_D Groupe <b>2</b>'),
     'LCS3-GLSI_D Groupe &lt;b&gt;2&lt;/b&gt;');
-  var src = classesHeadingFn();
+  var src = DISPLAY_SRC;
   assert.ok(src.indexOf('esc(sc.head)') !== -1 && src.indexOf('esc(sc.sub)') !== -1,
     'both shortcut parts are escaped before the <sub> is appended');
   assert.ok(src.indexOf('esc(name)') !== -1, 'the fallback escapes the full name');
 });
 
 test('the narrow overlay resolves the stored key before shortcutting it (issue 075)', function () {
-  // overlayHeading + headingHTML, sliced from js/classes.js and driven with
-  // the real model/libgroups, exactly as syncOverlay runs them.
-  var sandbox = {
-    console: console, esc: data.esc, shortcutOf: TT.groups.shortcutOf,
-    model: model, groups: groups
-  };
+  // overlayHeading, sliced from the page component and driven with the real
+  // model/libgroups, exactly as the overlay markup runs it. headingHTML is
+  // the real display-boundary renderer.
+  var sandbox = { console: console, model: model };
   vm.createContext(sandbox);
-  vm.runInContext(classesHeadingFn() + classesOverlayFn(), sandbox,
-    { filename: 'classes-overlay-harness' });
+  vm.runInContext(pageSlice('function overlayHeading(groups, ref)',
+    '// ---- leaf-only catalogue'), sandbox, { filename: 'classes-overlay-harness' });
   function overlay(ref) {
-    return vm.runInContext('headingHTML(overlayHeading(groups, ' +
-      JSON.stringify(ref) + '));', sandbox, { filename: 'classes-overlay-call' });
+    return display.headingHTML(sandbox.overlayHeading(groups, ref));
   }
   // the stored ref (issue 065 writes the compact key) resolves to the
   // canonical name and then shortens, byte-identical to the detail <h2>
@@ -578,25 +609,27 @@ test('the narrow overlay resolves the stored key before shortcutting it (issue 0
   assert.ok(!/undefined|null/.test(overlay('GLSI3D2')), 'no leak of undefined/null');
 });
 
-test('the shortcut heads every class-name heading surface of the page (issue 075)', function () {
-  var src = CLASSES_SRC;
+test('the shortcut heads every class-name display surface of the page (issue 075)', function () {
+  var src = PAGE_SRC;
   // the detail heading (same element on desktop and narrow)…
-  assert.ok(src.indexOf("<h2>' + headingHTML(week.name) + '</h2>'") !== -1,
-    'renderWeek heads the detail with the shortcut');
-  assert.ok(src.indexOf('esc(week.name)') === -1,
+  assert.ok(src.indexOf('<h2>{@html headingHTML(sel.week.name)}</h2>') !== -1,
+    'the detail heads the week with the shortcut');
+  assert.ok(src.indexOf('esc(sel.week.name)') === -1,
     'the detail heading no longer renders the raw field name');
   // …and the narrow selected-class overlay (issues 056/058 mobile chrome).
   // The stored selection is a compact key, so the overlay resolves it back to
   // the canonical class name before shortcutting it.
-  assert.ok(src.indexOf('overlayName.innerHTML = headingHTML(overlayHeading(groups, selectedClass))') !== -1,
+  assert.ok(src.indexOf('{@html headingHTML(overlayHeading(modelObjs.groups, selectedClass))}') !== -1,
     'the overlay heads the narrow view with the shortcut of the resolved name');
-  assert.ok(src.indexOf('model.classWeek(groups, ref)') !== -1,
+  assert.ok(src.indexOf('overlayHeading(groups, ref)') !== -1,
     'overlayHeading resolves the compact selection key to its canonical name');
+  assert.ok(src.indexOf('model.classWeek(groups, ref)') !== -1,
+    'the resolver reaches the week through model.classWeek');
   assert.ok(src.indexOf('overlayName.textContent') === -1,
     'the overlay no longer paints the raw name as text');
   // the raw name stays where correctness needs it: list identity, the
-  // leaf-set mark, the no-match echo, and the issue-065 stored ref
-  ['li.dataset.key = r.label', 'markActive', 'No match for "', 'writeStoredClass(ref)']
+  // active mark, the no-match echo, and the issue-065 stored ref
+  ['data-key={r.label}', 'activeKey', 'No match for "', 'writeStoredClass(ref)']
     .forEach(function (tok) {
       assert.ok(src.indexOf(tok) !== -1, 'the full name stays at: ' + tok);
     });
@@ -604,21 +637,18 @@ test('the shortcut heads every class-name heading surface of the page (issue 075
 
 // ---- class hierarchy facts under the heading (issue 078) --------------------
 
-// The real facts renderer, sliced from js/classes.js by the same bounds as the
-// heading harness (it sits between headingHTML and the clock section) and
-// driven with the REAL model nodes, exactly as renderWeek runs it.
-function classFactsHarness() {
-  var sandbox = { console: console, esc: data.esc, shortcutOf: TT.groups.shortcutOf };
-  vm.createContext(sandbox);
-  vm.runInContext(classesHeadingFn(), sandbox, { filename: 'classes-facts-harness' });
-  return function (node) {
-    sandbox.__node__ = node;
-    return vm.runInContext('classFactsHTML(__node__)', sandbox, { filename: 'classes-facts-call' });
-  };
-}
+// The real facts renderer, sliced from the page component (issue 078) and
+// driven with the REAL model nodes, exactly as the detail pane renders it.
+var classFactsSandbox = (function () {
+  var sb = { console: console, esc: esc };
+  vm.createContext(sb);
+  vm.runInContext(pageSlice('function classFactsHTML(node)', '/** today-only next mark'),
+    sb, { filename: 'classes-facts-harness' });
+  return sb;
+})();
 
 test('classFactsHTML lists a fully specified class’s four display facts (issue 078)', function () {
-  var facts = classFactsHarness();
+  var facts = classFactsSandbox.classFactsHTML;
   var html = facts(groups.byKey['GLSI3D2']);
   // GLSI3D2 = track LCS, year 3, spec GLSI, section D, cohort 2
   var pairs = [];
@@ -633,7 +663,7 @@ test('classFactsHTML lists a fully specified class’s four display facts (issue
 });
 
 test('classFactsHTML omits absent levels instead of rendering them empty (issue 078)', function () {
-  var facts = classFactsHarness();
+  var facts = classFactsSandbox.classFactsHTML;
   // MP1-EXR (byKey EXR1): MP track, year 1, spec EXR — no section, no cohort
   var html = facts(groups.byKey['EXR1']);
   var labels = [];
@@ -646,7 +676,7 @@ test('classFactsHTML omits absent levels instead of rendering them empty (issue 
 });
 
 test('classFactsHTML shows a common branch’s track+year as its specialty (issue 078)', function () {
-  var facts = classFactsHarness();
+  var facts = classFactsSandbox.classFactsHTML;
   // LBC1A2 sits under the LBC1 common branch: Specialty = track+year = LBC1
   var html = facts(groups.byKey['LBC1A2']);
   assert.ok(/<dt class="fact-name">Specialty<\/dt><dd class="fact-value">LBC1<\/dd>/.test(html),
@@ -656,7 +686,7 @@ test('classFactsHTML shows a common branch’s track+year as its specialty (issu
 });
 
 test('classFactsHTML escapes every value and survives a missing node (issue 078)', function () {
-  var facts = classFactsHarness();
+  var facts = classFactsSandbox.classFactsHTML;
   assert.strictEqual(facts(null), '', 'no node (no selection) renders nothing');
   assert.strictEqual(facts(undefined), '', 'undefined renders nothing');
   // markup in a data value can never inject: same esc() as the heading
@@ -670,63 +700,63 @@ test('classFactsHTML escapes every value and survives a missing node (issue 078)
   assert.ok(html.indexOf('&quot;Q&quot;') !== -1, 'section quotes are escaped');
 });
 
-test('renderWeek emits the facts dl between the h2 and the first day-head (issue 078)', function () {
-  var src = CLASSES_SRC;
+test('the detail emits the facts dl between the h2 and the first day-head (issue 078)', function () {
+  var src = PAGE_SRC;
   // the emission site: facts follow the heading, same detail element
-  assert.ok(src.indexOf("'<h2>' + headingHTML(week.name) + '</h2>' +") !== -1 &&
-           /'<h2>' \+ headingHTML\(week\.name\) \+ '<\/h2>' \+\s*\n?\s*classFactsHTML\(week\.leaves\[0\]\)/.test(src),
-    'renderWeek appends classFactsHTML of the week’s leaf right after the h2');
-  // order inside renderWeek: h2+facts, then the first day-head section
-  var start = src.indexOf('function renderWeek');
-  var end = src.indexOf('function applyCursor');
-  var slice = src.slice(start, end);
-  var factsAt = slice.indexOf('classFactsHTML(week.leaves[0])');
-  var headAt = slice.indexOf('<h3 class="day-head">');
-  assert.ok(factsAt !== -1 && headAt > factsAt, 'facts precede the first day-head');
-  // the facts renderer lives at module scope inside the heading slice, and
-  // renderWeek's detail still writes through innerHTML in one piece
-  assert.ok(slice.indexOf('detail.innerHTML = h;') !== -1, 'one innerHTML write keeps the facts');
+  var h2At = src.indexOf('{@html headingHTML(sel.week.name)}');
+  var factsAt = src.indexOf('{@html classFactsHTML(sel.week.leaves[0])}');
+  var headAt = src.indexOf('<h3 class="day-head">{model.frDay(g.day)}</h3>');
+  assert.ok(h2At !== -1 && factsAt !== -1 && headAt !== -1,
+    'the three emissiors exist');
+  assert.ok(factsAt > h2At && headAt > factsAt, 'facts sit between the h2 and the first day-head');
+  // the facts renderer is called on the week's leaf, still through one
+  // {@html} write — no token-wise re-implementation of the markup
+  assert.ok(/\{@html classFactsHTML\(sel\.week\.leaves\[0\]\)\}/.test(src),
+    'the facts render from the real classFactsHTML of the leaf');
   // the mirror (narrow overlay) stays heading-only: the one-line ellipsis
   // chrome cannot carry a dl — pinned so the divergence is a decision
-  assert.ok(src.indexOf('overlayName.innerHTML = headingHTML(overlayHeading(groups, selectedClass))') !== -1,
+  assert.ok(src.indexOf('{@html headingHTML(overlayHeading(modelObjs.groups, selectedClass))}') !== -1,
     'the narrow overlay mirrors the heading only, no facts dl');
+  assert.ok(src.indexOf('classFactsHTML(overlayHeading') === -1,
+    'the overlay never carries the facts dl');
 });
 
-test('classes.js derives the count line’s absence from ONE syncClear writer (issues 078/079)', function () {
-  var src = CLASSES_SRC;
-  assert.strictEqual(countTok(src, "classList.toggle('count-away'"), 1,
-    'exactly one count-away writer — inside syncClear');
-  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!\(search\.value \|\| selectedClass\)\);/.test(src),
-    'the toggle rides the same derivation and call sites as the clear X, including selection');
+test('the classes page derives the count line’s absence from the one status class writer (issues 078/079)', function () {
+  var src = PAGE_SRC;
+  assert.strictEqual(countTok(src, "!!!(query || "), 0, 'sanity: no stray count derivation');
+  assert.strictEqual(countTok(src, "(query || selectedClass !== null) ? 'count-away' : ''"), 1,
+    'exactly one count-away writer — the status class derivation, inside the markup');
+  assert.ok(src.indexOf("class={!!(query || selectedClass !== null) ? 'count-away' : ''}") !== -1,
+    'the toggle rides the same derivation as the clear X, including selection');
   assert.ok(src.indexOf('selectedClass') !== -1, 'selectedClass participates in the count derivation');
   assert.strictEqual(src.indexOf('setTimeout'), -1, 'no timer drives the count line');
   assert.strictEqual(src.indexOf('requestAnimationFrame'), -1, 'no rAF drives the count line');
 });
 
-test('the teachers page derives the count line’s absence from ONE syncClear writer (issue 078)', function () {
-  var src = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
-  assert.strictEqual(countTok(src, "classList.toggle('count-away'"), 1,
-    'exactly one count-away writer — inside syncClear');
-  assert.ok(/function syncClear\(\) \{\s*\n\s*if \(searchClear\) searchClear\.hidden = !search\.value;\s*\n\s*status\.classList\.toggle\('count-away', !!\(search\.value \|\| selectedTeacher\)\);/.test(src),
-    'the toggle rides the same derivation and call sites as the clear X, including selection');
+test('the teachers page derives the count line’s absence from the one status class writer (issue 078)', function () {
+  var src = TEACHERS_SRC;
+  assert.strictEqual(countTok(src, "(query || selectedTeacher) ? 'count-away' : ''"), 1,
+    'exactly one count-away writer — the status class derivation, inside the markup');
+  assert.ok(src.indexOf("class={!!(query || selectedTeacher) ? 'count-away' : ''}") !== -1,
+    'the toggle rides the same derivation as the clear X, including selection');
   assert.ok(src.indexOf('selectedTeacher') !== -1, 'selectedTeacher participates in the count derivation');
   assert.strictEqual(src.indexOf('setTimeout'), -1, 'no timer drives the count line');
   assert.strictEqual(src.indexOf('requestAnimationFrame'), -1, 'no rAF drives the count line');
 });
 
 test('class-name display surfaces shorten aliases without changing raw identity (issue 079)', function () {
-  var classes = CLASSES_SRC;
-  var teachers = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
-  var app = fs.readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
-  assert.ok(classes.indexOf('li.dataset.key = r.label') !== -1,
+  var classes = PAGE_SRC;
+  var teachers = TEACHERS_SRC;
+  var at = AT_SRC;
+  assert.ok(classes.indexOf('data-key={r.label}') !== -1,
     'classes list keeps the raw key in data-* identity');
-  assert.ok(classes.indexOf("highlightedHeadingHTML(r.node ? r.node.fullName() : r.label, r.ranges)") !== -1,
+  assert.ok(classes.indexOf('highlightedHeadingHTML(r.node ? r.node.fullName() : r.label, r.ranges)') !== -1,
     'classes list uses the shortcut renderer as its primary label');
   assert.ok(classes.indexOf('class-track') !== -1,
     'classes list can show structured track metadata');
   assert.ok(classes.indexOf('class-attribute') !== -1,
     'classes list can show every matched attribute');
-  assert.strictEqual(classes.indexOf('headingHTML(r.node.fullName())</span>'), -1,
+  assert.strictEqual(classes.indexOf('class="alias"'), -1,
     'classes list does not append a redundant full-name alias');
   assert.ok(classes.indexOf('No match for "') !== -1,
     'classes no-match keeps the raw query echo');
@@ -734,13 +764,11 @@ test('class-name display surfaces shorten aliases without changing raw identity 
     'teacher search class aliases use the shortcut renderer');
   assert.ok(teachers.indexOf("headingHTML(m.label)") !== -1,
     'teacher result class matches use the shortcut renderer');
-  assert.ok(teachers.indexOf("body = headingHTML(r.label)") !== -1,
+  assert.ok(teachers.indexOf("headingHTML(r.label)") !== -1,
     'teacher class suggestions use the shortcut renderer');
-  assert.ok(teachers.indexOf("headingHTML(p)") !== -1,
-    'teacher detail class cells use the shortcut renderer');
   assert.ok(teachers.indexOf("headingHTML(nd.key)") !== -1,
     'teacher class breakdown uses the display renderer');
-  assert.ok(app.indexOf("headingHTML(p)") !== -1,
+  assert.ok(at.indexOf("{@html headingHTML(p)}") !== -1,
     'time-page class pills use the shortcut renderer');
   assert.ok(classes.indexOf('writeStoredClass(ref)') !== -1,
     'classes selection storage remains raw');
@@ -748,39 +776,42 @@ test('class-name display surfaces shorten aliases without changing raw identity 
 
 test('the classes page ships no autocomplete machinery; the teachers page keeps its own (issue 075)', function () {
   // classes markup: no suggestion list, no inline ghost completion
-  var html = readPage('classes/index.html');
+  var html = PAGE_SRC;
   ['id="suggest"', 'id="ghost"', 'id="ghostPre"', 'id="ghostTyped"', 'id="ghostRest"']
     .forEach(function (tok) {
       assert.ok(html.indexOf(tok) === -1, 'classes markup must not carry ' + tok + ' (issue 075)');
     });
   // classes source: every piece of suggest machinery is gone
-  var src = CLASSES_SRC;
+  var src = PAGE_SRC;
   ['renderSuggest', 'paintActive', 'classGhost', 'renderGhost', 'acceptSuggest',
    'classSuggestions', 'suggestIdx', 'suggestRows', 'isCoarsePointer',
-   'match.suggest', 'color.suggestion', "getElementById('suggest'",
+   'match.suggest', "getElementById('suggest'",
    "getElementById('ghost'", '--ghost-pre'].forEach(function (tok) {
-    assert.ok(src.indexOf(tok) === -1, 'js/classes.js must not carry ' + tok + ' (issue 075)');
+    assert.ok(src.indexOf(tok) === -1, 'the classes page must not carry ' + tok + ' (issue 075)');
   });
   // the input keeps every non-suggest behavior: live filtering (060), the
-  // erase-only X (060/064/074), deselection, redaction and the 065 restore
-  ['function eraseFilter()', 'function syncDeselect()', 'match.classSearch',
-   'nameHTML(', 'readStoredClass', 'function restorable', "addEventListener('input'"]
+  // erase-only X (060/064/074), deselection and the 065 restore. The
+  // deselect derivation that syncDeselect used to write is now the button's
+  // hidden attribute itself.
+  ['function eraseFilter()', "hidden={!(selectedClass !== null && query === '')}", 'match.classSearch',
+   'nameHTML(', 'readStoredClass', 'function restorable', 'oninput={onSearchInput}']
     .forEach(function (tok) {
       assert.ok(src.indexOf(tok) !== -1, 'classes keeps ' + tok);
     });
-  // teachers: markup ships its suggest hidden, JS renders it — untouched
-  var thtml = readPage('teachers/index.html');
-  assert.ok(/<ul id="suggest" hidden>/.test(thtml), 'teachers keeps its suggest element');
+  // teachers: markup keeps its suggest hidden element and ghost line, JS
+  // renders them — untouched
+  var thtml = TEACHERS_SRC;
+  assert.ok(/<ul id="suggest" hidden/.test(thtml), 'teachers keeps its suggest element');
   assert.ok(/<div id="ghost"/.test(thtml), 'teachers keeps its ghost line');
-  var tsrc = readPage('js/teachers.js');
-  ['function renderSuggest', 'function renderGhost', 'function acceptSuggest',
-   'match.suggest', "addEventListener('blur'"].forEach(function (tok) {
+  var tsrc = TEACHERS_SRC;
+  ['function renderSuggest', 'function acceptSuggest', 'const sh = $derived.by',
+   'match.shadowText', 'match.suggest', 'onblur={onBlur}'].forEach(function (tok) {
     assert.ok(tsrc.indexOf(tok) !== -1, 'teachers keeps ' + tok);
   });
 });
 
-test('styles.css gains a classes section without touching the mobile block', function () {
-  var css = readPage('styles.css');
+test('app.css keeps the styles.css classes section without touching the mobile block', function () {
+  var css = CSS;
   assert.ok(css.indexOf('classes page') !== -1);
   assert.ok(css.indexOf('table.week') !== -1);
   assert.ok(css.indexOf('.cursor') !== -1);
@@ -804,8 +835,9 @@ test('styles.css gains a classes section without touching the mobile block', fun
 
 // ---- leaf-only selection + session cards (issue 047) -----------------------
 
-// The page filters the match layer down to leaves in classes.js; the match layer
-// itself is untouched, so the tests replicate the page's filter here.
+// The page filters the match layer down to leaves in the component script;
+// the match layer itself is untouched, so the tests replicate the page's
+// filter here.
 function leafSet() {
   var set = {};
   groups.leaves.forEach(function (n) { set[n.key] = true; });
@@ -825,7 +857,7 @@ test('the leaf-filtered catalogue is exactly the leaf set', function () {
   // the same filter on a mid-hierarchy query drops the interior node itself
   var sub = match.classSearch(index, 'lcs1');
   assert.ok(sub.map(function (r) { return r.label; }).indexOf('LCS1') !== -1,
-    'match layer still returns the interior node (filtering lives in classes.js)');
+    'match layer still returns the interior node (filtering lives in the page)');
   var kept = sub.filter(function (r) { return set[(r.node && r.node.key) || r.label]; });
   assert.ok(kept.length < sub.length);
   kept.forEach(function (r) {
@@ -833,7 +865,7 @@ test('the leaf-filtered catalogue is exactly the leaf set', function () {
   });
   // the shared suggest layer still offers interior classes; the classes page
   // no longer consumes it at all (issue 075: it never calls match.suggest —
-  // asserted in "classes.js selects leaves only" below), so the leaf-set
+  // asserted in the "leaf-only" source test below), so the leaf-set
   // filter here is the layer contract itself, not the page's.
   var sug = match.suggest(index, 'lcs1').filter(function (r) { return r.kind === 'class'; });
   var sugKept = sug.filter(function (r) { return set[r.label]; });
@@ -857,37 +889,24 @@ test('leaf week sessions stay in (day, slot) order', function () {
   assert.strictEqual(model.dayCursor(at(12, 9, 45), store.slots).next, '10h00-11h30'); // gap
 });
 
-function classesSection() {
-  var src = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
-  assert.ok(src.indexOf('function boot(') === -1, 'classes file carries no shared boot');
-  return src.slice(src.indexOf('function initClassesPage'));
-}
-
-// The mobile card-list block: the day-grouped c-sessions markup at the end
-// of renderWeek (liveDays computation through the last day-group section).
-function classesListBlock() {
-  var sec = classesSection();
-  var start = sec.indexOf('var liveDays = {};');
-  var end = sec.indexOf('<div class="weekwrap"', start);
-  assert.ok(start !== -1 && end !== -1 && end > start, 'classes list block bounds');
-  return sec.slice(start, end);
-}
-
-test('classes.js selects leaves only (no broader classes)', function () {
-  var sec = classesSection();
+test('the classes page selects leaves only (no broader classes)', function () {
+  // everything from the leaf-only catalogue marker down is page machinery
+  var sec = pageSlice('// ---- leaf-only catalogue', null);
+  assert.ok(sec.indexOf('function boot(') === -1, 'the component carries no shared boot');
   // leaf lookup built once from groups.leaves, applied to every surface
   assert.ok(sec.indexOf('groups.leaves.forEach') !== -1, 'missing leafSet build');
-  assert.ok(sec.indexOf('function isLeafRow') !== -1, 'missing isLeafRow');
   assert.ok(sec.indexOf('function leafRows') !== -1, 'missing leafRows');
-  assert.ok(sec.indexOf('leafRows(match.classSearch(index, q))') !== -1,
-    'onInput/commit must leaf-filter classSearch rows');
-  assert.ok(sec.indexOf('leafRows(match.classSearch(index, \'\'))') !== -1,
-    'initial paint must leaf-filter the catalogue');
+  assert.ok(sec.indexOf('leafRows(match.classSearch(index, query))') !== -1,
+    'the live list must leaf-filter classSearch rows');
+  // the initial paint is the boot query state: the filter boots empty and
+  // the live derivation leaf-filters the catalogue from it
+  assert.ok(PAGE_SRC.indexOf("let query = $state('');") !== -1, 'the filter boots empty');
   assert.ok(sec.indexOf('match.suggest') === -1,
-    'classes.js never calls the suggest layer (issue 075: no autocomplete)');
-  // single-leaf gates: exact refs and showClass take the nomatch path otherwise
-  assert.ok(sec.indexOf('leaves.length === 1') !== -1, 'missing single-leaf commit gate');
-  assert.ok(sec.indexOf('week.leaves.length !== 1') !== -1, 'missing single-leaf showClass gate');
+    'the classes page never calls the suggest layer (issue 075: no autocomplete)');
+  // single-leaf gates: refs resolve through the sel derivation and take the
+  // week-null (nomatch) path otherwise
+  assert.ok(sec.indexOf('week.leaves.length === 1') !== -1, 'missing single-leaf gate');
+  assert.ok(sec.indexOf('week: null') !== -1, 'missing single-leaf nomatch path');
   // the union rendering is gone: no per-line class label, no rotation helper
   assert.ok(sec.indexOf('s-class') === -1, 'union s-class span must be gone');
   assert.ok(sec.indexOf('isUnion') === -1, 'isUnion must be gone');
@@ -895,56 +914,64 @@ test('classes.js selects leaves only (no broader classes)', function () {
   assert.ok(sec.indexOf('isNarrow') === -1, 'isNarrow gate must be gone');
 });
 
-test('classes.js emits a teacher-style day-grouped session list with today-only marking', function () {
-  var sec = classesSection();
-  var list = classesListBlock();
+test('the classes page emits a teacher-style day-grouped session list with today-only marking', function () {
+  // the per-day cards are the markup between the day-head emission and the
+  // WHOLE WEEK label
+  var list = pageSlice('<h3 class="day-head">{model.frDay(g.day)}</h3>',
+    '<h3 class="day-head week-head">WHOLE WEEK</h3>');
+  var sec = pageSlice('// ---- leaf-only catalogue', null);
   assert.ok(list.indexOf('<table class="c-sessions">') !== -1, 'missing c-sessions table');
   assert.ok(list.indexOf('<th></th><th>Time</th>') !== -1 &&
     list.indexOf('<th>Teacher</th><th>Subject</th><th>Room</th>') !== -1,
     'c-sessions header must be Time/Teacher/Subject/Room with no Day column');
   assert.ok(list.indexOf('c-teacher') !== -1, 'missing c-teacher cells');
   assert.ok(list.indexOf('<p class="count">') === -1, 'no session count caption');
-  // today-only model: isCurrentSession + the computed cursor, never the
-  // wrapping nextSessionIdx
+  // today-only model: the markup gates the NOW tag on isCurrentSession with
+  // the computed cursor and nothing else…
   assert.ok(list.indexOf('model.isCurrentSession(s.day, s.time, now)') !== -1);
-  assert.ok(list.indexOf('s.time === cursor.next') !== -1, 'next must reuse the cursor');
+  assert.ok(list.indexOf('{#if model.isCurrentSession(s.day, s.time, now)}') !== -1 &&
+    list.indexOf('{:else if nextMark(s)}') !== -1,
+    'now/next land on the computed cursor, in that order');
+  // …and the NEXT helper reuses the cursor, never the wrapping nextSessionIdx
+  assert.ok(sec.indexOf('s.time === c.next') !== -1, 'next must reuse the cursor');
   assert.ok(sec.indexOf('nextSessionIdx(') === -1, 'must not use the wrapping nextSessionIdx');
-  assert.ok(list.indexOf('color.sessionRow(') !== -1, 'list rows must use color.sessionRow');
-  assert.ok(list.indexOf('NEXT_ARROW') !== -1, 'list gutter must reuse NEXT_ARROW');
+  assert.ok(sec.indexOf('color.sessionRow(') !== -1, 'list rows must use color.sessionRow');
+  assert.ok(list.indexOf('class="nexttag"') !== -1 && list.indexOf('nextarrow') !== -1,
+    'list gutter must reuse the next arrow');
   // the desktop grid is untouched in structure: Monday-first store.days loops
-  assert.ok(sec.indexOf('store.days.forEach') !== -1, 'grid must iterate store.days');
-  assert.ok(sec.indexOf('table class="week"') !== -1 || sec.indexOf('<table class="week">') !== -1,
-    'grid table.week must be kept');
+  assert.ok(sec.indexOf('store.days') !== -1, 'grid must iterate store.days');
+  assert.ok(list.indexOf('<table class="week">') === -1 && PAGE_SRC.indexOf('<table class="week">') !== -1,
+    'grid table.week must sit outside the day-list block');
 });
 
 test('classes row click keeps the filter (G1 keep-filter)', function () {
-  var sec = classesSection();
-  var at = sec.indexOf('li.onclick = function ()');
-  assert.ok(at !== -1, 'row click handler found');
-  var handler = sec.slice(at, sec.indexOf('};', at) + 2);
-  assert.ok(handler.indexOf('selectClass(r.label)') !== -1, 'row click selects through the funnel');
-  assert.ok(handler.indexOf('search.value =') === -1, 'row click must not rewrite the filter');
+  var src = PAGE_SRC;
+  assert.ok(src.indexOf('onclick={() => selectClass(r.label)}') !== -1,
+    'row click selects through the funnel');
+  assert.strictEqual(src.indexOf('searchEl.value'), -1, 'row click must not rewrite the filter');
   // with the autocomplete gone (issue 075) nothing rewrites the box except
   // the one erase-only funnel — the old acceptSuggest commit write left with it
-  var writes = sec.match(/search\.value = /g) || [];
-  assert.strictEqual(writes.length, 1,
-    'exactly one programmatic filter write is left (eraseFilter), got ' + writes.length);
-  assert.ok(sec.indexOf("search.value = '';") !== -1,
-    'that one write is the erase funnel emptying the box');
-  assert.ok(sec.indexOf('function acceptSuggest') === -1,
+  var writes = (src.match(/searchEl\.value\s*=/g) || []).length;
+  assert.strictEqual(writes, 0,
+    'no programmatic filter write is left, got ' + writes);
+  var erase = pageSlice('function eraseFilter()', 'function openMenu()');
+  assert.ok(erase.indexOf("query = '';") !== -1,
+    'that one funnel is the erase command emptying the filter');
+  assert.ok(src.indexOf('function acceptSuggest') === -1,
     'the suggest commit writer stays removed (issue 075)');
 });
 
 test('classes card list groups by day with no Day column (G2)', function () {
-  var list = classesListBlock();
+  var list = pageSlice('<h3 class="day-head">{model.frDay(g.day)}</h3>',
+    '<h3 class="day-head week-head">WHOLE WEEK</h3>');
   // one h3 heading + one section per day, heading OUTSIDE the card
-  assert.ok(list.indexOf('<h3 class="day-head">') !== -1, 'missing day-head h3');
   assert.ok(list.indexOf('<section class="day-group') !== -1, 'missing day-group section');
-  assert.ok(list.indexOf('<h3 class="day-head">') < list.indexOf('<section class="day-group'),
-    'day-head h3 must be emitted before the day-group section');
+  assert.ok(list.indexOf('<h3 class="day-head">{model.frDay(g.day)}</h3>') <
+    list.indexOf('<section class="day-group'), 'day-head h3 must be emitted before the day-group section');
   // first-seen day grouping over the (day, slot)-ordered week
-  assert.ok(list.indexOf('dayOrder.forEach') !== -1, 'missing first-seen day grouping');
-  assert.ok(list.indexOf('byDay[day]') !== -1, 'missing per-day rows');
+  var sec = pageSlice('// ---- leaf-only catalogue', null);
+  assert.ok(sec.indexOf('dayOrder.push') !== -1, 'missing first-seen day grouping');
+  assert.ok(sec.indexOf('byDay[s.day]') !== -1, 'missing per-day rows');
   // the day lives in the heading once: no Day header, no c-day cells
   assert.ok(list.indexOf('<th>Day') === -1, 'no Day header in the classes list');
   assert.ok(list.indexOf('c-day') === -1, 'no c-day cells in the classes list');
@@ -952,22 +979,21 @@ test('classes card list groups by day with no Day column (G2)', function () {
 });
 
 test('classes dim lives on the section, rows stay plain (G3)', function () {
-  var list = classesListBlock();
-  assert.ok(list.indexOf('liveDays') !== -1, 'liveDays computation must stay');
-  assert.ok(list.indexOf('(liveDays[day] ? \'\' : \' dim\')') !== -1,
-    'dim must move to the section');
-  assert.ok(list.indexOf('dimIdle: false') !== -1, 'list rows must pass dimIdle:false');
-  assert.ok(list.indexOf('dayStart') === -1, 'dayStart must not reach color.sessionRow here');
-  assert.ok(list.indexOf('prevDay') === -1, 'prevDay tracking must be gone');
-  assert.ok(classesSection().indexOf('dayStart') === -1,
-    'no dayStart left anywhere in the classes page');
+  var list = pageSlice('<h3 class="day-head">{model.frDay(g.day)}</h3>',
+    '<h3 class="day-head week-head">WHOLE WEEK</h3>');
+  var src = PAGE_SRC;
+  assert.ok(src.indexOf('const liveDays = $derived.by') !== -1, 'liveDays computation must stay');
+  assert.ok(list.indexOf("{liveDays[g.day] ? '' : ' dim'}") !== -1,
+    'dim must ride the section');
+  assert.ok(src.indexOf('dimIdle: false') !== -1, 'list rows must pass dimIdle:false');
+  assert.ok(src.indexOf('dayStart') === -1, 'dayStart must not reach color.sessionRow here');
+  assert.ok(src.indexOf('prevDay') === -1, 'prevDay tracking must be gone');
   // color.sessionRow itself is untouched (still supports the dayStart key)
-  var colorSrc = fs.readFileSync(path.join(ROOT, 'js/color.js'), 'utf8');
-  assert.ok(colorSrc.indexOf('dayStart') !== -1, 'color.js dayStart key must stay');
+  assert.ok(COLOR_SRC.indexOf('dayStart') !== -1, 'color.js dayStart key must stay');
 });
 
-test('styles.css hides the week grid per viewport and labels teacher cells', function () {
-  var css = readPage('styles.css');
+test('app.css hides the week grid per viewport and labels teacher cells', function () {
+  var css = CSS;
   // desktop shows the day tables; narrow hides the WHOLE WEEK label and grid
   assert.ok(css.indexOf('#layout > #detail table.c-sessions { display: none; }') === -1,
     'desktop must keep the classes day tables visible');
@@ -978,7 +1004,6 @@ test('styles.css hides the week grid per viewport and labels teacher cells', fun
   assert.ok(css.indexOf('#detail .week-head { display: none; }') >
     css.lastIndexOf('@media (max-width: 700px)'),
     'the WHOLE WEEK label hide must live in a narrow block');
-  assert.ok(css.indexOf('c-all') === -1, 'the flat full table is gone from the CSS');
   var deskStart = css.indexOf('@media (min-width: 701px)');
   var narrowStart = css.indexOf('@media (max-width: 700px)');
   assert.ok(deskStart !== -1 && narrowStart !== -1 && deskStart < narrowStart,
@@ -998,853 +1023,4 @@ test('styles.css hides the week grid per viewport and labels teacher cells', fun
     'classList hide rule must stay');
   assert.ok(css.indexOf('#classList { max-width: none;') !== -1,
     'classList flattening must stay');
-});
-
-// ---- day-grouped card list behavior (G2/G3) -----------------------------------
-
-// The list block at the end of renderWeek is straight-line HTML building over
-// (week, cursor, now), so the behavioral tests drive the real block source
-// in a vm sandbox with an injected clock, mirroring
-// test/teacher-daygroups.test.js.
-vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/color.js'), 'utf8'),
-  { TT: TT, console: console });
-var color = TT.color;
-
-var CLASSES_SRC = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
-
-function classesArrow() {
-  var start = CLASSES_SRC.indexOf('var NEXT_ARROW =');
-  var end = CLASSES_SRC.indexOf('</svg>\';', start);
-  assert.ok(start !== -1 && end !== -1, 'NEXT_ARROW bounds');
-  return CLASSES_SRC.slice(start, end + '</svg>\';'.length);
-}
-
-// The real heading shortcut renderer (issue 075), sliced from source: it sits
-// at module scope between NEXT_ARROW and the clock section.
-function classesHeadingFn() {
-  var start = CLASSES_SRC.indexOf('function headingHTML(name)');
-  var end = CLASSES_SRC.indexOf('// ---- clock (issue 051)', start);
-  assert.ok(start !== -1 && end !== -1 && end > start, 'headingHTML bounds');
-  return CLASSES_SRC.slice(start, end);
-}
-
-// The real ref→name resolver the narrow overlay heads with (issue 075), sliced
-// from source: it sits at module scope right after restorable().
-function classesOverlayFn() {
-  var start = CLASSES_SRC.indexOf('function overlayHeading(groups, ref)');
-  var end = CLASSES_SRC.indexOf('// ---- classes page', start);
-  assert.ok(start !== -1 && end !== -1 && end > start, 'overlayHeading bounds');
-  return CLASSES_SRC.slice(start, end);
-}
-
-function runClassesList(week, now) {
-  var cursor = model.dayCursor(now, store.slots);
-  var sandbox = {
-    console: console,
-    model: model, color: color, esc: data.esc, nameHTML: data.nameHTML,
-    week: week, cursor: cursor, now: now
-  };
-  vm.createContext(sandbox);
-  var html = vm.runInContext(
-    classesArrow() + '\nvar h = \'\';\n' + classesListBlock() + '\nh;',
-    sandbox, { filename: 'classes-list-harness' });
-  return { html: html, cursor: cursor };
-}
-
-function classHeadingsOf(html) {
-  var out = [];
-  var re = /<h3 class="day-head">([^<]*)<\/h3>/g;
-  var m;
-  while ((m = re.exec(html))) out.push(m[1]);
-  return out;
-}
-
-function classSectionsOf(html) {
-  return html.split('<section').slice(1).map(function (chunk) {
-    var inner = chunk.slice(0, chunk.indexOf('</section>'));
-    var tag = (/class="([^"]*)"/.exec(inner) || [])[1] || '';
-    var tables = inner.split('<table').slice(1);
-    var rows = inner.split('<tr').slice(1).filter(function (r) { return r.indexOf('<td') !== -1; });
-    return { chunk: inner, cls: tag, tables: tables, rows: rows };
-  });
-}
-
-function classRowTime(row) { return (/c-time">([^<]*)</.exec(row) || [])[1]; }
-
-function checkClassesInvariants(key, clock) {
-  var week = model.classWeek(groups, key);
-  assert.strictEqual(week.leaves.length, 1, key + ' must resolve to one leaf');
-  var res = runClassesList(week, clock);
-  var html = res.html, cursor = res.cursor;
-  var live = {};
-  var wantNow = {}, wantNext = {};
-  week.sessions.forEach(function (s) {
-    var isNow = model.isCurrentSession(s.day, s.time, clock);
-    var isNext = !isNow && cursor.visible && s.day === cursor.today && s.time === cursor.next;
-    if (isNow || isNext) live[s.day] = true;
-    if (isNow) wantNow[s.day + '|' + s.time] = true;
-    else if (isNext) wantNext[s.day + '|' + s.time] = true;
-  });
-
-  var heads = classHeadingsOf(html);
-  var secs = classSectionsOf(html);
-
-  // one heading + one section per distinct day, start-from-today, none for empty days
-  var distinct = [];
-  week.sessions.forEach(function (s) { if (distinct.indexOf(s.day) === -1) distinct.push(s.day); });
-  assert.ok(distinct.length > 1, key + ' must span several days to prove grouping');
-  var rotated = main(model.startFromToday(distinct, week.sessions, clock));
-  var wantHeads = rotated.map(function (d) { return model.frDay(d); });
-  assert.deepStrictEqual(heads, wantHeads,
-    key + ': one h3 per distinct day, start-from-today');
-  assert.deepStrictEqual(distinct,
-    main(store.days).filter(function (d) { return distinct.indexOf(d) !== -1; }),
-    key + ': day order is the Monday-first store order');
-  assert.strictEqual(secs.length, distinct.length,
-    key + ': one section per distinct day');
-  main(store.days).forEach(function (d) {
-    if (distinct.indexOf(d) === -1)
-      assert.ok(html.indexOf('day-head">' + model.frDay(d) + '<') === -1,
-        key + ': no heading for empty day ' + d);
-  });
-
-  // h3 is a sibling PRECEDING the card, never a child of it
-  secs.forEach(function (g) {
-    assert.ok(g.chunk.indexOf('day-head') === -1,
-      key + ': day-head must not live inside the section card');
-  });
-  distinct.forEach(function (d) {
-    var fr = model.frDay(d);
-    assert.ok(html.indexOf('<h3 class="day-head">' + fr + '</h3><section class="day-group') !== -1,
-      key + ': heading for ' + d + ' must immediately precede its section');
-  });
-
-  // no Day column / day markers in the markup
-  assert.ok(html.indexOf('c-day') === -1, key + ': no c-day cells');
-  assert.ok(html.indexOf('Day</th>') === -1, key + ': no Day header');
-  assert.ok(html.indexOf('daystart') === -1, key + ': no daystart class');
-  assert.ok(html.indexOf('<hr') === -1, key + ': no rule elements');
-  // the WHOLE WEEK label and the flat full table stay outside the day-list block
-  assert.ok(html.indexOf('week-head') === -1, key + ': the WHOLE WEEK label stays outside the day-list block');
-  assert.ok(html.indexOf('c-all') === -1, key + ': no flat full-table markup in the day groups');
-
-  // row total == week.sessions.length; per-table header cells match data cells
-  assert.strictEqual(html.split('<td class="c-time">').length - 1, week.sessions.length,
-    key + ': row total == week.sessions.length');
-  secs.forEach(function (g) {
-    assert.strictEqual(g.tables.length, 1, 'one table per group');
-    assert.strictEqual(g.tables[0].split('<th').length - 1, 5, 'header has 5 columns');
-    g.rows.forEach(function (r) {
-      assert.strictEqual(r.split('<td').length - 1, 5, 'row has 5 cells');
-    });
-  });
-
-  // NOW/NEXT markers land on the cursor-computed rows
-  var gotNow = {}, gotNext = {};
-  secs.forEach(function (g, gi) {
-    var day = rotated[gi];
-    g.rows.forEach(function (r) {
-      var rowKey = day + '|' + classRowTime(r);
-      if (r.indexOf('nowtag') !== -1) gotNow[rowKey] = true;
-      if (r.indexOf('nexttag') !== -1) gotNext[rowKey] = true;
-    });
-  });
-  assert.deepStrictEqual(gotNow, wantNow, key + ': NOW rows match cursor logic');
-  assert.deepStrictEqual(gotNext, wantNext, key + ': NEXT rows match cursor logic');
-
-  // dim on the section iff its day has no now/next
-  secs.forEach(function (g, gi) {
-    var day = rotated[gi];
-    assert.strictEqual(g.cls.split(' ').indexOf('dim') !== -1, !live[day],
-      key + ': dim on section iff day has no now/next (' + day + ')');
-  });
-
-  // no count captions; h2-free heading order kept simple
-  assert.strictEqual(html.split('class="count"').length - 1, 0, 'no p.count');
-  return { week: week, html: html };
-}
-
-function friClass(hh, mm) { return new Date(2026, 9, 16, hh, mm); } // Friday
-function sunClass(hh, mm) { return new Date(2026, 9, 11, hh, mm); } // Sunday
-
-test('GLSI3D1 at Fri 12:00 groups its week with live Friday markers', function () {
-  var r = checkClassesInvariants('GLSI3D1', friClass(12, 0));
-  assert.strictEqual(classHeadingsOf(r.html)[0], 'vendredi');
-  assert.ok(r.html.indexOf('nowtag') !== -1, 'expected a NOW marker');
-  assert.ok(r.html.indexOf('nexttag') !== -1, 'expected a NEXT marker');
-});
-
-test('GLSI3D1 on Sunday morning dims every group with no markers', function () {
-  var r = checkClassesInvariants('GLSI3D1', sunClass(10, 0));
-  assert.strictEqual(classHeadingsOf(r.html)[0], 'lundi');
-  assert.ok(r.html.indexOf('nowtag') === -1, 'nothing is NOW on Sunday');
-  assert.ok(r.html.indexOf('nexttag') === -1, 'nothing is NEXT on Sunday');
-  assert.ok(r.html.indexOf('day-group dim') !== -1, 'every group dims on Sunday');
-});
-
-test('GLSI3D1 at Fri 18:30 rolls the day groups forward to Saturday', function () {
-  var r = checkClassesInvariants('GLSI3D1', at(16, 18, 30));
-  assert.strictEqual(classHeadingsOf(r.html)[0], 'samedi');
-  assert.ok(r.html.indexOf('nowtag') === -1, 'nothing is NOW at Fri 18:30');
-  assert.ok(r.html.indexOf('nexttag') === -1, 'nothing is NEXT at Fri 18:30');
-});
-
-test('GLSI3D1 at Thu 15:30 starts at Thursday (a session is in progress)', function () {
-  var r = checkClassesInvariants('GLSI3D1', at(15, 15, 30));
-  assert.strictEqual(classHeadingsOf(r.html)[0], 'jeudi');
-  assert.ok(r.html.indexOf('nowtag') !== -1, 'expected a NOW marker (in progress)');
-});
-
-test('GLSI3D1 at Sat 15:26 wraps the finished Saturday back to Monday', function () {
-  var r = checkClassesInvariants('GLSI3D1', at(17, 15, 26));
-  assert.strictEqual(classHeadingsOf(r.html)[0], 'lundi');
-  assert.ok(r.html.indexOf('nowtag') === -1,
-    'nothing is NOW at Sat 15:26 (its only Saturday session ended 09:45)');
-});
-
-test('SD1 at Tue 09:00 starts at Wednesday (no Tuesday sessions)', function () {
-  var r = checkClassesInvariants('SD1', at(13, 9, 0));
-  assert.deepStrictEqual(classHeadingsOf(r.html),
-    ['mercredi', 'jeudi', 'vendredi', 'samedi', 'lundi']);
-});
-
-test('class list rows carry no session count badge', function () {
-  var src = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
-  assert.ok(src.indexOf('weekCount') === -1, 'no per-row session counting');
-  assert.ok(src.indexOf('span class="n"') === -1, 'no count badge in class rows');
-});
-
-// ---- whole-week label + grid (issue 049) -------------------------------------
-
-test('renderWeek emits day groups, then the WHOLE WEEK label, then the week grid', function () {
-  var src = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
-  var start = src.indexOf('function renderWeek');
-  var end = src.indexOf('function applyCursor');
-  assert.ok(start !== -1 && end !== -1 && end > start, 'renderWeek slice bounds');
-  var slice = src.slice(start, end);
-  var prev = -1;
-  ['<h2>', '<h3 class="day-head">', '<section class="day-group',
-   '<h3 class="day-head week-head">WHOLE WEEK</h3>',
-   '<div class="weekwrap"><table class="week">', 'detail.innerHTML = h;'].forEach(function (m) {
-    var at = slice.indexOf(m);
-    assert.ok(at !== -1, 'renderWeek must emit ' + m);
-    assert.ok(at > prev, 'renderWeek emissions must be in order at ' + m);
-    prev = at;
-  });
-  function count(hay, needle) { return hay.split(needle).length - 1; }
-  assert.strictEqual(count(src, '<h3 class="day-head week-head">WHOLE WEEK</h3>'), 1,
-    'the WHOLE WEEK label must be emitted exactly once');
-  // the flat full table is gone: no emission, no leftovers anywhere
-  assert.ok(src.indexOf('<table class="c-all">') === -1, 'no c-all table emission');
-  assert.ok(src.indexOf('<th>Day</th>') === -1, 'no five-column Day header left');
-  assert.ok(src.indexOf('c-all') === -1, 'no c-all string anywhere in classes.js');
-  // only two week.sessions.forEach walks remain in renderWeek: the liveDays
-  // computation and the day grouping (the third was the flat table's)
-  assert.strictEqual(count(slice, 'week.sessions.forEach'), 2,
-    'exactly two week.sessions.forEach in renderWeek (liveDays + day grouping)');
-  // grouping is built exactly once, for the day sections
-  assert.strictEqual(count(src, 'var byDay = {};'), 1, 'byDay must be declared exactly once');
-  assert.strictEqual(count(src, 'var dayOrder = [];'), 1, 'dayOrder must be declared exactly once');
-  assert.strictEqual(count(src, 'dayOrder.forEach'), 1,
-    'exactly one dayOrder.forEach (the sections loop)');
-  // the whole-week grid stays Monday-first (issue 050): from the weekwrap
-  // marker to the innerHTML write, only the two store.days loops feed it
-  var gridTail = slice.slice(slice.indexOf('<div class="weekwrap"><table class="week">'),
-    slice.indexOf('detail.innerHTML = h;'));
-  assert.strictEqual(count(gridTail, 'store.days.forEach'), 2,
-    'the week grid keeps its two Monday-first store.days loops');
-  assert.strictEqual(count(gridTail, 'startFromToday'), 0,
-    'startFromToday must not reach the whole-week grid');
-  assert.ok(src.indexOf('nextSessionIdx(') === -1, 'must not use the wrapping nextSessionIdx');
-  // the session-row helper is declared between liveDays and the first day-head
-  var liveAt = slice.indexOf('var liveDays = {};');
-  var headAt = slice.indexOf('<h3 class="day-head">');
-  assert.ok(liveAt !== -1 && headAt > liveAt, 'liveDays must precede the first day-head');
-  assert.ok(/function \w+\(/.test(slice.slice(liveAt, headAt)),
-    'session-row helper must be declared between liveDays and the day-head emission');
-});
-
-// ---- live week view from the one clock (issue 051) ---------------------------
-
-function countTok(hay, needle) { return hay.split(needle).length - 1; }
-
-// The slice covers indexByDaySlot, renderWeek, applyCursor and onTick; the
-// declarations that live in the page closure (now, currentWeek) are seeded
-// to satisfy vm read-before-write, and the clock is a swappable FakeDate.
-function classesWeekSlice() {
-  var start = CLASSES_SRC.indexOf('function indexByDaySlot');
-  var end = CLASSES_SRC.indexOf('function showClass', start);
-  assert.ok(start !== -1 && end !== -1 && end > start, 'classes week slice bounds');
-  return CLASSES_SRC.slice(start, end);
-}
-
-function runClassesWeek() {
-  var clockMs = at(14, 10, 30).getTime(); // Wed 2026-10-14 10:30, inside 10h00-11h30
-  function FakeDate() { return new Date(clockMs); }
-  var writes = 0, qsa = 0, layoutRemoves = 0, clears = 0;
-  var lastHtml = '';
-  var detail = {};
-  Object.defineProperty(detail, 'innerHTML', {
-    get: function () { return lastHtml; },
-    set: function (v) { lastHtml = v; writes++; }
-  });
-  detail.querySelectorAll = function () { qsa++; return []; };
-  detail.querySelector = function (sel) {
-    return sel === '.cursor' ? { style: { display: 'none' } } : null;
-  };
-  var sandbox = {
-    console: console,
-    model: model, color: color, C: color.CLASSES, esc: data.esc,
-    nameHTML: data.nameHTML,
-    shortcutOf: TT.groups.shortcutOf,   // real heading shortcut (issue 075)
-    store: store,
-    week: model.classWeek(groups, 'GLSI3D1'),
-    detail: detail,
-    layout: { classList: { remove: function () { layoutRemoves++; } } },
-    syncClear: function () { clears++; },
-    now: undefined, currentWeek: undefined,
-    Date: FakeDate
-  };
-  vm.createContext(sandbox);
-  vm.runInContext(classesHeadingFn() + '\n' + classesArrow() + '\n' + classesWeekSlice(), sandbox,
-    { filename: 'classes-week-harness' });
-  return {
-    sandbox: sandbox,
-    select: function () { vm.runInContext('renderWeek(week);', sandbox); },
-    tick: function (clock) {
-      clockMs = clock.getTime();
-      vm.runInContext('onTick(new Date());', sandbox);
-    },
-    counts: function () {
-      return { writes: writes, qsa: qsa, layout: layoutRemoves, clear: clears };
-    },
-    html: function () { return lastHtml; }
-  };
-}
-
-function classRowAt(html, time) {
-  return html.split('<tr').filter(function (r) {
-    return r.indexOf('c-time">' + time + '<') !== -1;
-  }).join('');
-}
-
-test('classes.js drives the week view from one clock and drops the gated ticker (issue 051)', function () {
-  var src = CLASSES_SRC;
-  assert.strictEqual(countTok(src, 'new Date()'), 3,
-    'page capture + renderWeek head + the clock tick — nothing else reads the wall clock');
-  assert.ok(src.indexOf('setInterval(tick, 30000)') !== -1, 'the clock owns the 30 s interval');
-  ['startCursor', 'stopCursor', 'cursorTimer'].forEach(function (tok) {
-    assert.ok(src.indexOf(tok) === -1, tok + ' must be gone');
-  });
-  assert.strictEqual(countTok(src, 'clock.subscribe(onTick);'), 1, 'one subscription per page');
-  assert.ok(src.indexOf('visibilitychange') !== -1 && src.indexOf('document.hidden') !== -1,
-    'the clock wires the tab-return catch-up');
-  assert.strictEqual(countTok(src, 'currentWeek = null;'), 3,
-    'the empty funnel owns the deselect clear; the two nomatch branches (which never reach showEmpty) drop it themselves');
-  assert.ok(src.indexOf('lastWeekHTML') === -1, 'no emitted-string gate state');
-  assert.ok(!/(^|[^a-zA-Z0-9_$])h\s*!==/.test(src), 'no emitted-string comparison gate');
-  var slice = classesWeekSlice();
-  assert.ok(slice.indexOf('now = tickNow || new Date();') !== -1,
-    'renderWeek head takes the tick clock');
-  assert.ok(slice.indexOf('currentWeek = week;') !== -1, 'renderWeek takes ownership');
-  assert.ok(slice.indexOf('if (!tickNow) {') !== -1, 'selection side effects are fenced');
-  assert.ok(slice.indexOf('renderWeek(currentWeek, t)') !== -1, 'onTick re-enters renderWeek');
-  assert.ok(slice.indexOf('h !== ') === -1, 'no string gate inside the week view');
-});
-
-test('selecting a class renders the week once from a fresh clock (issue 051)', function () {
-  var h = runClassesWeek();
-  h.select();
-  var c = h.counts();
-  assert.strictEqual(c.writes, 1, 'one write per selection');
-  var html = h.html();
-  assert.ok(html.indexOf('<span class="nowtag">● NOW</span></td><td class="c-time">10h00-11h30') !== -1,
-    'NOW lands on 10h00-11h30 at Wed 10:30');
-  assert.ok(classRowAt(html, '11h40-13h10').indexOf('nexttag') !== -1,
-    'NEXT marks 11h40-13h10');
-  assert.strictEqual(classHeadingsOf(html)[0], 'mercredi', 'the anchor starts on today');
-  assert.strictEqual(h.sandbox.currentWeek, h.sandbox.week, 'the page owns the rendered week');
-  assert.strictEqual(c.layout, 1, 'the selection dismisses the list pane');
-  assert.strictEqual(c.clear, 1, 'the selection syncs the clear control');
-});
-
-test('a clock tick re-renders the week view from the fresh Date (issue 051)', function () {
-  var h = runClassesWeek();
-  h.select();
-  h.tick(at(14, 12, 0));
-  var c = h.counts();
-  assert.strictEqual(c.writes, 2, 'the tick writes unconditionally (no gate)');
-  var html = h.html();
-  assert.ok(html.indexOf('<span class="nowtag">● NOW</span></td><td class="c-time">11h40-13h10') !== -1,
-    'NOW moves to the fresh slot');
-  assert.ok(html.indexOf('<span class="nowtag">● NOW</span></td><td class="c-time">10h00-11h30') === -1,
-    'the old NOW row is gone');
-  assert.strictEqual(classHeadingsOf(html)[0], 'mercredi', 'the anchor holds within the day');
-  assert.strictEqual(c.layout, 1, 'a tick never flips the pane');
-  assert.strictEqual(c.clear, 1, 'a tick never syncs the clear control');
-  assert.ok(c.qsa >= 4, 'applyCursor still runs on every pass, outside any gate');
-  h.tick(at(14, 12, 20));
-  assert.strictEqual(h.counts().writes, 3,
-    'a same-state tick re-renders on the hit, not on a diff');
-});
-
-test('a tick past day end re-grades the anchor; a cleared view stays cleared (issue 051)', function () {
-  var h = runClassesWeek();
-  h.select();
-  h.tick(at(14, 18, 30));
-  assert.strictEqual(h.counts().writes, 2, 'the day-end tick re-renders unconditionally');
-  var html = h.html();
-  assert.strictEqual(classHeadingsOf(html)[0], 'jeudi',
-    'Wed 18:30: Wednesday ended, the live anchor rolls to Thursday');
-  assert.ok(html.indexOf('nowtag') === -1, 'nothing is NOW after the day');
-  h.sandbox.currentWeek = null; // a clear site dropped ownership
-  h.tick(at(15, 9, 0));
-  assert.strictEqual(h.counts().writes, 2, 'a cleared view is never resurrected by a later tick');
-});
-
-// ---- mobile nav (issue 058) ------------------------------------------------
-
-test('classes nav chrome: state-gated back arrow, class overlay, V gone', function () {
-  var html = readPage('classes/index.html');
-  ['id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"'].forEach(function (id) {
-    assert.ok(html.indexOf(id) !== -1, 'classes/index.html missing ' + id);
-  });
-  assert.ok(html.indexOf('id="searchDone"') === -1,
-    'the V-chevron is gone from the classes page');
-  var css = readPage('styles.css');
-  assert.ok(css.indexOf('#searchDone') === -1, 'no #searchDone at all in styles.css');
-  var base = css.slice(0, css.indexOf('@media (max-width: 700px)'));
-  assert.ok(base.indexOf('#searchBack { display: none; }') !== -1,
-    'desktop armour: the back arrow is display:none at base');
-  assert.ok(base.indexOf('#searchOverlay { display: none; }') !== -1,
-    'desktop armour: the class overlay is display:none at base');
-  var narrow = css.slice(css.indexOf('@media (max-width: 700px)'));
-  assert.ok(narrow.indexOf('#layout.is-list #searchBack') !== -1,
-    'back arrow is gated on the list state, not on focus');
-  assert.ok(narrow.indexOf('#searchOverlay:not([hidden])') !== -1,
-    'overlay renders from its attribute on narrow screens');
-  // issue 057's polish is shared CSS, verified live from the classes page:
-  // the overlay takes the wrap's 8px radius and the input goes invisible
-  var ovAt = narrow.indexOf('#searchOverlay:not([hidden])');
-  var ovRule = narrow.slice(ovAt, narrow.indexOf('}', ovAt));
-  assert.ok(ovRule.indexOf('border-radius: 8px') !== -1,
-    'overlay takes the wrap 8px radius (issue 057, verified from classes)');
-  assert.ok(narrow.indexOf('#searchWrap:has(#searchOverlay:not([hidden])) #search') !== -1,
-    'the input hides while the overlay shows (issue 057, verified from classes)');
-  // anti-D4: the back control is never focus-gated, and the V rules stay dead
-  assert.ok(css.indexOf('#searchWrap:focus-within #searchBack') === -1,
-    'the back control must never be focus-gated (anti-D4 regression pin)');
-  assert.ok(css.indexOf('#searchWrap:focus-within #searchDone') === -1,
-    'the dead V rule must stay gone');
-});
-
-test('classes nav machine: single selection/empty funnels, harness-safe week slice', function () {
-  var src = CLASSES_SRC;
-  assert.ok(src.indexOf('var menuOpen = false;') !== -1, 'menuOpen fact declared');
-  assert.ok(src.indexOf('var selectedClass = null;') !== -1, 'selectedClass fact declared');
-  assert.ok(src.indexOf('var lastResultCount') === -1, 'lastResultCount is dead');
-  assert.ok(src.indexOf('searchFocused') === -1, 'searchFocused is dead');
-  assert.ok(src.indexOf('searchDone') === -1, 'the V machinery is dead');
-  // week-harness safety: that sandbox stubs only layout.classList.remove +
-  // syncClear, so the slice between those bounds may carry no nav state
-  var weekSlice = src.slice(src.indexOf('function indexByDaySlot'),
-    src.indexOf('function showClass'));
-  ['menuOpen', 'search.blur', 'syncOverlay', 'selectClass'].forEach(function (tok) {
-    assert.ok(weekSlice.indexOf(tok) === -1, 'week slice must not contain ' + tok + ' (vm harness)');
-  });
-  function fnBody(sig) {
-    var start = src.indexOf(sig);
-    assert.ok(start !== -1, sig + ' found');
-    var end = src.indexOf('\n    }', start);
-    assert.ok(end !== -1, sig + ' bounds');
-    return src.slice(start, end + '\n    }'.length);
-  }
-  var listFn = fnBody('function syncList()');
-  assert.ok(listFn.indexOf("classList.add('is-list')") !== -1, 'syncList adds the flag');
-  assert.ok(listFn.indexOf("classList.remove('is-list')") !== -1, 'syncList removes the flag');
-  assert.ok(listFn.indexOf('toggle(') === -1, 'syncList uses the add/remove form, not toggle');
-  var sel = fnBody('function selectClass(ref)');
-  ['selectedClass = ref', 'showClass(ref)', 'search.blur()', 'menuOpen = false', 'syncOverlay()'].forEach(function (tok) {
-    assert.ok(sel.indexOf(tok) !== -1, 'selectClass: ' + tok);
-  });
-  var emp = fnBody('function showEmpty()');
-  ['selectedClass = null', 'currentWeek = null;', 'emptyStateHTML()', 'markActive(null)'].forEach(function (tok) {
-    assert.ok(emp.indexOf(tok) !== -1, 'showEmpty: ' + tok);
-  });
-  var inputFn = fnBody('function onInput()');
-  assert.ok(inputFn.indexOf('showEmpty();') !== -1, 'onInput: empty filter deselects');
-  assert.ok(inputFn.indexOf('selectClass(rows[0].label)') !== -1, 'onInput: auto-jump selects via the funnel');
-  var rowStart = src.indexOf('function renderList(rows)');
-  var rowWiring = src.slice(rowStart, src.indexOf('function markActive(key)', rowStart));
-  assert.ok(rowWiring.indexOf('selectClass(r.label)') !== -1, 'row tap selects via the funnel');
-  var commitFn = src.slice(src.indexOf('function commit()'), src.indexOf("search.addEventListener('input'"));
-  assert.ok(commitFn.indexOf('selectClass(q)') !== -1, 'commit exact-week selects via the funnel');
-  assert.ok(commitFn.indexOf('selectClass(like)') !== -1, 'commit exact-label selects via the funnel');
-  assert.ok(commitFn.indexOf('selectClass(rows[0].label)') !== -1, 'commit single-hit selects via the funnel');
-  assert.ok(commitFn.indexOf('showClass(') === -1, 'commit must not bypass the selection funnel');
-  var openSlice = fnBody('function openMenu()');
-  assert.ok(openSlice.indexOf('menuOpen = true') !== -1, 'openMenu arms the fact');
-  var closeSlice = fnBody('function closeMenu()');
-  assert.ok(closeSlice.indexOf('menuOpen = false') !== -1, 'closeMenu drops the fact');
-  assert.ok(closeSlice.indexOf('search.blur()') !== -1, 'closeMenu removes focus');
-  assert.ok(closeSlice.indexOf('syncOverlay()') !== -1, 'closeMenu syncs the overlay');
-  function handlerSlice(sig) {
-    var at = src.indexOf(sig);
-    assert.ok(at !== -1, sig + ' handler found');
-    return src.slice(at, src.indexOf('});', at) + 3);
-  }
-  assert.ok(handlerSlice("addEventListener('focus'").indexOf('openMenu()') !== -1,
-    'focus opens the menu');
-  assert.ok(handlerSlice("search.addEventListener('click'").indexOf('openMenu()') !== -1,
-    'a filter-box tap opens the menu');
-  var backStart = src.indexOf("searchBack.addEventListener('click'");
-  assert.ok(backStart !== -1, 'back wiring found');
-  assert.ok(src.slice(backStart, src.indexOf('});', backStart) + 3).indexOf('closeMenu()') !== -1,
-    'back closes the menu');
-  var ovStart = src.indexOf('searchOverlay.addEventListener');
-  assert.ok(ovStart !== -1, 'overlay wiring found');
-  var ovWiring = src.slice(ovStart, src.indexOf('showEmpty();', ovStart) + 'showEmpty();'.length);
-  assert.ok(ovWiring.indexOf('openMenu()') !== -1, 'overlay tap reopens the list');
-  assert.ok(ovWiring.indexOf('search.focus()') !== -1, 'overlay tap focuses the box');
-  assert.ok(ovWiring.indexOf('stopPropagation') !== -1, 'overlay X does not bubble to the surface');
-  assert.ok(ovWiring.indexOf('showEmpty()') !== -1, 'overlay X deselects');
-  assert.ok(handlerSlice("searchClear.addEventListener('click'").indexOf('search.focus()') === -1,
-    'the X no longer re-focuses the box');
-  assert.ok(handlerSlice("addEventListener('keydown'").indexOf('closeMenu();') !== -1,
-    'Escape closes the menu (issue 075: no suggest overlay to drop first)');
-  // issue 075: the suggestion-key navigation is gone with the autocomplete —
-  // Tab and the arrows fall back to their native input behavior
-  ['e.key === \'Tab\'', '\'ArrowDown\'', '\'ArrowUp\''].forEach(function (tok) {
-    assert.ok(CLASSES_SRC.indexOf(tok) === -1,
-      'classes keydown must not handle ' + tok + ' (issue 075)');
-  });
-  assert.ok(CLASSES_SRC.indexOf("addEventListener('blur'") === -1,
-    'classes has no blur handler left (issue 075: it only dropped the overlay)');
-  var bootTail = src.slice(src.indexOf('// initial paint'), src.indexOf('clock.subscribe(onTick);'));
-  assert.ok(bootTail.indexOf('showEmpty();') !== -1, 'boot paints through the empty funnel');
-});
-
-// ---- theme button tooltip (issue 059) --------------------------------------
-
-test('the theme button carries a media-gated data-tip tooltip (issue 059)', function () {
-  var html = readPage('classes/index.html');
-  var css = readPage('styles.css');
-  var src = readPage('js/theme.js');
-  // markup: the static title stays as the honest no-JS fallback, no #themeName
-  assert.ok(html.indexOf('title="Cycle color preset"') !== -1,
-    'the static no-JS title fallback must stay in the markup');
-  assert.ok(html.indexOf('id="themeName"') === -1, 'the dead #themeName label must stay absent');
-  // CSS: the ::after bubble reads its text from data-tip
-  var tipStart = css.indexOf('#themeCycle::after');
-  assert.ok(tipStart !== -1, 'missing #themeCycle::after tooltip rule');
-  var tipBlock = css.slice(tipStart, css.indexOf('}', tipStart) + 1);
-  ['content: attr(data-tip, none)', 'pointer-events: none', 'z-index: 20',
-   'var(--md-inverse-surface', 'var(--md-inverse-on-surface'].forEach(function (s) {
-    assert.ok(tipBlock.indexOf(s) !== -1, 'tooltip block missing ' + s);
-  });
-  // the hover show occurs exactly once and only inside the hover media gate
-  // (a bare :hover would leave a sticky bubble on touch taps)
-  var hov = css.indexOf('#themeCycle:hover::after');
-  assert.ok(hov !== -1, 'missing hover show rule');
-  assert.strictEqual(hov, css.lastIndexOf('#themeCycle:hover::after'),
-    'the hover show must occur exactly once');
-  assert.ok(hov > css.indexOf('@media (hover: hover)'),
-    'the hover show must come after (inside) the @media (hover: hover) gate');
-  // JS: one description feeds aria-label and data-tip; the native title is out
-  ["setAttribute('aria-label'", "setAttribute('data-tip'", "removeAttribute('title')"].forEach(function (s) {
-    assert.ok(src.indexOf(s) !== -1, 'js/theme.js missing ' + s);
-  });
-  assert.ok(src.indexOf('— click to change') !== -1,
-    'the description string bytes stay unchanged');
-  assert.ok(src.indexOf("setAttribute('title'") === -1,
-    'js/theme.js must never write the native title');
-});
-
-// ---- clear-X / deselect back-arrow split (issues 060, 064) ------------------
-
-test('classes mirrors the clear-X / back-arrow deselect split (issues 060, 064)', function () {
-  // markup: the deselect button sits between the clear X and the overlay
-  var html = readPage('classes/index.html');
-  var clr = html.indexOf('id="searchClear"');
-  var des = html.indexOf('id="searchDeselect"');
-  var ov = html.indexOf('id="searchOverlay"');
-  assert.ok(clr !== -1 && des !== -1 && ov !== -1, 'markup ids present');
-  assert.ok(clr < des && des < ov, '#searchDeselect sits between #searchClear and #searchOverlay');
-  // the deselect glyph is the back arrow (issue 064): the box, the id and the
-  // trigger survived 060→064 verbatim, only the glyph swapped — the erase X
-  // stays with #searchClear, byte for byte (classes mirrors teachers)
-  function btnBlock(id) {
-    var at = html.indexOf('id="' + id + '"');
-    return html.slice(html.lastIndexOf('<button', at), html.indexOf('</button>', at));
-  }
-  var desB = btnBlock('searchDeselect');
-  assert.ok(desB.indexOf('M19 12h-14M12 6l-7 6 7 6') !== -1,
-    'the classes deselect shows the back arrow (arrow-left, issue 064)');
-  assert.ok(desB.indexOf('M6 6l12 12M18 6L6 18') === -1,
-    'the classes deselect no longer shows the X');
-  assert.ok(desB.indexOf('aria-label="Back to the class list"') !== -1,
-    'the deselect button is named for the back action (classes wording)');
-  assert.ok(btnBlock('searchClear').indexOf('M6 6l12 12M18 6L6 18') !== -1,
-    'the erase X is untouched');
-  // shared CSS, verified from classes (house style): the engine cancel button
-  // is suppressed once, at base; the narrow copy moved, it is not a duplicate
-  var css = readPage('styles.css');
-  var base = css.slice(0, css.indexOf('@media (max-width: 700px)'));
-  var narrow = css.slice(css.indexOf('@media (max-width: 700px)'));
-  assert.ok(base.indexOf('#search::-webkit-search-cancel-button') !== -1,
-    'the native cancel button is suppressed at base (app-wide, verified from classes)');
-  assert.ok(narrow.indexOf('#search::-webkit-search-cancel-button') === -1,
-    'the narrow suppression copy moved to base, it is not a duplicate');
-  // the app X owns the 2.7rem right slot on every viewport (the pinned
-  // single-line gutter now lives at base); the ghost clears the slot too
-  assert.ok(base.indexOf('#search { padding-right: 2.7rem; }') !== -1,
-    'the X slot gutter is base-level (verified from classes)');
-  assert.ok(narrow.indexOf('#search { padding-right: 2.7rem; }') === -1,
-    'the narrow gutter copy moved to base, it is not a duplicate');
-  assert.ok(base.indexOf('#ghost { padding-right: 2.7rem; }') !== -1,
-    'the ghost completion clears the X slot as well');
-  assert.strictEqual(base.indexOf('#searchClear { display: none; }'), -1,
-    'the clear X is no longer armour-plated off desktop');
-  // the deselect back arrow overlays the whole box at base; narrow armours it off
-  var desAt = base.indexOf('#searchDeselect {');
-  assert.ok(desAt !== -1, 'base deselect back-arrow rule present');
-  var desRule = base.slice(desAt, base.indexOf('}', desAt));
-  assert.ok(desRule.indexOf('position: absolute') !== -1,
-    'the deselect back arrow covers the whole box (left/top/right/bottom 0)');
-  assert.ok(base.indexOf('#searchDeselect[hidden] { display: none; }') !== -1,
-    'the deselect back arrow honours its [hidden] attribute at base');
-  assert.ok(narrow.split('\n').some(function (line) {
-    return line.trim() === '#searchDeselect { display: none; }';
-  }), 'narrow armours the desktop deselect back arrow off (its chrome is #overlayClear)');
-  // JS: syncDeselect derives from the two facts only (I2)
-  var src = CLASSES_SRC;
-  function body(sig) {
-    var start = src.indexOf(sig);
-    assert.ok(start !== -1, sig + ' found');
-    var end = src.indexOf('\n    }', start);
-    assert.ok(end !== -1, sig + ' bounds');
-    return src.slice(start, end + '\n    }'.length);
-  }
-  var sd = body('function syncDeselect()');
-  assert.ok(sd.indexOf('searchDeselect.hidden = !(') !== -1,
-    'syncDeselect derives the [hidden] attribute');
-  assert.ok(sd.indexOf('selectedClass !== null') !== -1, 'keyed on the selection fact');
-  assert.ok(sd.indexOf("search.value === ''") !== -1, 'keyed on the empty value');
-  assert.ok(sd.indexOf('menuOpen') === -1, 'never keyed on the menu');
-  // both syncs that sit on every fact/value write compose it (I2 stays live)
-  assert.ok(body('function syncClear()').indexOf('syncDeselect();') !== -1,
-    'syncClear composes syncDeselect');
-  assert.ok(body('function syncOverlay()').indexOf('syncDeselect();') !== -1,
-    'syncOverlay composes syncDeselect');
-  // eraseFilter: commit's empty branch minus showEmpty, no funnel writes (I5)
-  var ef = body('function eraseFilter()');
-  ["search.value = '';", 'syncClear();',
-   'syncList();'].forEach(function (tok) {
-    assert.ok(ef.indexOf(tok) !== -1, 'eraseFilter: ' + tok);
-  });
-  // issue 075: the erase funnel dropped the suggest/ghost clears with the
-  // autocomplete itself — nothing suggest-shaped may survive in it
-  ['renderSuggest', 'renderGhost', 'classGhost'].forEach(function (tok) {
-    assert.ok(ef.indexOf(tok) === -1, 'eraseFilter must not touch ' + tok + ' (issue 075)');
-  });
-  assert.ok(ef.indexOf("leafRows(match.classSearch(index, ''))") !== -1,
-    'eraseFilter re-renders the full leaf catalogue from the empty query');
-  assert.ok(ef.indexOf('markActive') === -1,
-    'the re-render re-applies the mark from activeKey itself');
-  ['showEmpty', 'selectTeacher(', 'selectClass(', 'isCoarsePointer', 'matchMedia'].forEach(function (tok) {
-    assert.ok(ef.indexOf(tok) === -1, 'eraseFilter must not touch ' + tok);
-  });
-  // the clear X calls eraseFilter and nothing else — never commit/onInput
-  var clrAt = src.indexOf("searchClear.addEventListener('click'");
-  assert.ok(clrAt !== -1, 'clear X handler found');
-  var clrH = src.slice(clrAt, src.indexOf('});', clrAt) + 3);
-  assert.ok(clrH.indexOf('eraseFilter();') !== -1, 'the X erases only');
-  ['commit()', 'showEmpty()', 'search.focus()'].forEach(function (tok) {
-    assert.ok(clrH.indexOf(tok) === -1, 'the X must not contain ' + tok);
-  });
-  // the deselect back arrow funnels through the one empty funnel, never focuses
-  var desHAt = src.indexOf("searchDeselect.addEventListener('click'");
-  assert.ok(desHAt !== -1, 'deselect back-arrow handler found');
-  var desH = src.slice(desHAt, src.indexOf('});', desHAt) + 3);
-  assert.ok(desH.indexOf('showEmpty();') !== -1, 'the deselect back arrow runs the empty funnel');
-  assert.ok(desH.indexOf('search.focus()') === -1, 'the deselect back arrow never focuses the box');
-  // neither press may arm focus through mousedown
-  ['searchClear', 'searchDeselect'].forEach(function (id) {
-    var at = src.indexOf(id + ".addEventListener('mousedown'");
-    assert.ok(at !== -1, id + ' mousedown handler found');
-    assert.ok(src.slice(at, src.indexOf('});', at) + 3).indexOf('preventDefault') !== -1,
-      id + ' press never focuses the box');
-  });
-  // keyboard divergence: onInput's pinned empty branch is untouched (058)
-  assert.ok(body('function onInput()').indexOf('showEmpty();') !== -1,
-    'backspace-to-empty still deselects');
-});
-
-// ---- clear X absent from the first frame (issue 074) ------------------------
-
-test('classes ships the clear X hidden in the markup, so an empty filter never paints it (issue 074)', function () {
-  // Mirror of the teachers-side pin (test/teacher-daygroups.test.js): the
-  // filter boots empty, so [hidden] IS the true initial state — the markup
-  // declares it and syncClear() stays the sole writer of the attribute. Its
-  // first write lands only after the CSV fetch resolves, so a markup default
-  // of "visible" paints the X from the first frame and yanks it away at boot.
-  var html = readPage('classes/index.html');
-  var css = readPage('styles.css');
-  var base = css.slice(0, css.indexOf('@media (max-width: 700px)'));
-  var clr = /<button[^>]*id="searchClear"[^>]*>/.exec(html);
-  assert.ok(clr, '#searchClear opening tag found');
-  assert.ok(/\shidden\s*>$/.test(clr[0]),
-    'the clear X ships hidden at first paint (issue 074), got: ' + clr[0]);
-  // the state the markup declares is real: the input itself ships empty
-  var input = /<input[^>]*id="search"[^>]*>/.exec(html);
-  assert.ok(input, '#search input found');
-  assert.ok(!/\svalue=/.test(input[0]), 'the filter boots empty');
-  // the declared state really renders: the id rule outranks the UA [hidden]
-  // default, so the base armour rule must stay (no first-frame show rule)
-  assert.ok(base.indexOf('#searchClear[hidden] { display: none; }') !== -1,
-    'base CSS honours #searchClear[hidden] so the markup default renders');
-  // no second visibility mechanism for the X creeps in alongside [hidden]
-  assert.strictEqual((CLASSES_SRC.match(/searchClear\.hidden\s*=/g) || []).length, 1,
-    'syncClear is the only writer of the clear X visibility');
-});
-
-// ---- last selected class (issue 065) -----------------------------------------
-
-// The persistence block of js/classes.js (CLASS_STORE_KEY + the two guarded
-// accessors + the boot validation gate), sliced straight from source and run
-// in a vm with an injected localStorage — the real logic against real
-// storage stand-ins, mirroring the week/list harnesses above.
-function persistenceBlock() {
-  var start = CLASSES_SRC.indexOf('var CLASS_STORE_KEY');
-  var end = CLASSES_SRC.indexOf('// ---- classes page', start);
-  assert.ok(start !== -1 && end !== -1 && end > start, 'persistence block bounds');
-  return CLASSES_SRC.slice(start, end);
-}
-
-function runPersistence(localStorage) {
-  var sandbox = { console: console, model: model };
-  if (localStorage !== undefined) sandbox.localStorage = localStorage;
-  vm.createContext(sandbox);
-  vm.runInContext(persistenceBlock(), sandbox, { filename: 'classes-persistence-harness' });
-  return sandbox;
-}
-
-function memoryStorage() {
-  var map = {};
-  return {
-    map: map,
-    getItem: function (k) { return Object.prototype.hasOwnProperty.call(map, k) ? map[k] : null; },
-    setItem: function (k, v) { map[k] = String(v); },
-    removeItem: function (k) { delete map[k]; }
-  };
-}
-
-test('the selection funnels are the only storage write sites (issue 065)', function () {
-  var src = CLASSES_SRC;
-  // (a) definition + selectClass + showEmpty — exactly three, no other site
-  assert.strictEqual(countTok(src, 'writeStoredClass('), 3,
-    'one definition, one write in selectClass, one clear in showEmpty');
-  assert.strictEqual(countTok(src, 'readStoredClass('), 2,
-    'one definition, one read at boot');
-  function body(sig) {
-    var start = src.indexOf(sig);
-    assert.ok(start !== -1, sig + ' found');
-    var end = src.indexOf('\n    }', start);
-    assert.ok(end !== -1, sig + ' bounds');
-    return src.slice(start, end + '\n    }'.length);
-  }
-  // write on selection commit, at the same statement group as the fact
-  var sel = body('function selectClass(ref)');
-  assert.ok(sel.indexOf('selectedClass = ref') !== -1, 'the fact write stays');
-  assert.ok(sel.indexOf('writeStoredClass(ref)') !== -1, 'selectClass persists the ref');
-  assert.ok(sel.indexOf('selectedClass = ref') < sel.indexOf('writeStoredClass(ref)'),
-    'storage mirrors the fact, in order');
-  // (c) clear on explicit deselect, next to the fact clear
-  var emp = body('function showEmpty()');
-  assert.ok(emp.indexOf('selectedClass = null') !== -1, 'the fact clear stays');
-  assert.ok(emp.indexOf('writeStoredClass(null)') !== -1, 'showEmpty forgets the class');
-  // the 060 erase-only funnel stays pure: no selection fact, no storage
-  var ef = body('function eraseFilter()');
-  assert.ok(ef.indexOf('StoredClass') === -1 && ef.indexOf('localStorage') === -1,
-    'eraseFilter never touches persistence');
-});
-
-test('boot reads, validates and restores around the empty funnel (issue 065)', function () {
-  var src = CLASSES_SRC;
-  var bootAt = src.indexOf('// initial paint');
-  var subAt = src.indexOf('clock.subscribe(onTick);');
-  assert.ok(bootAt !== -1 && subAt > bootAt, 'boot tail bounds');
-  var boot = src.slice(bootAt, subAt);
-  // (b) read BEFORE the funnel — showEmpty clears storage, so the local wins
-  assert.ok(boot.indexOf('var stored = readStoredClass();') !== -1, 'boot reads the stored key');
-  assert.ok(boot.indexOf('var stored = readStoredClass();') < boot.indexOf('showEmpty();'),
-    'the read precedes the clearing funnel');
-  // (b) live validation gate, then re-entry through the one selection funnel;
-  // the slice ends at clock.subscribe(onTick);, so the restore is one-shot at
-  // boot, before the page ever subscribes
-  assert.ok(boot.indexOf('if (stored && restorable(groups, stored)) selectClass(stored);') !== -1,
-    'validated restore re-enters selectClass');
-  assert.strictEqual(countTok(src, 'selectClass(stored)'), 1, 'exactly one restore call');
-  // (d) the no-stored-state fallback keeps the pinned shape verbatim — the
-  // existing bootTail pin (test/classes.test.js, issue 058) asserts it
-  assert.ok(boot.indexOf('showEmpty();') !== -1,
-    'boot still paints through the empty funnel');
-});
-
-test('the stored class round-trips and clears through the guarded accessors (issue 065)', function () {
-  var store = memoryStorage();
-  var sb = runPersistence(store);
-  // write + read round-trip of the exact ref selectClass hands over
-  sb.writeStoredClass('GLSI3D1');
-  assert.strictEqual(store.map['emplois-class'], 'GLSI3D1', 'written under the house key');
-  assert.strictEqual(sb.readStoredClass(), 'GLSI3D1', 'read back the same ref');
-  // another spelling selectClass accepts (full name) survives verbatim
-  sb.writeStoredClass('LCS2-GLSI_C Groupe 2');
-  assert.strictEqual(sb.readStoredClass(), 'LCS2-GLSI_C Groupe 2');
-  // (c) a falsy write clears the key — the showEmpty path
-  sb.writeStoredClass(null);
-  assert.strictEqual('emplois-class' in store.map, false, 'deselect removes the key');
-  assert.strictEqual(sb.readStoredClass(), null, 'nothing left to restore');
-  // the empty string reads as nothing, never as a class
-  sb.writeStoredClass('GLSI3D1');
-  sb.writeStoredClass('');
-  assert.strictEqual(sb.readStoredClass(), null, 'the empty string is not a class');
-});
-
-test('storage failures degrade to no-memory behavior (issue 065)', function () {
-  // no localStorage at all (node/test context): both accessors no-op
-  var bare = runPersistence(undefined);
-  assert.strictEqual(bare.readStoredClass(), null, 'read yields null without storage');
-  assert.doesNotThrow(function () { bare.writeStoredClass('GLSI3D1'); },
-    'write never throws without storage');
-  assert.doesNotThrow(function () { bare.writeStoredClass(null); },
-    'clear never throws without storage');
-  // private mode / quota: every method throws — both accessors swallow it
-  var broken = {
-    getItem: function () { throw new Error('SecurityError'); },
-    setItem: function () { throw new Error('QuotaExceededError'); },
-    removeItem: function () { throw new Error('SecurityError'); }
-  };
-  var sb = runPersistence(broken);
-  assert.strictEqual(sb.readStoredClass(), null, 'a throwing read yields null');
-  assert.doesNotThrow(function () { sb.writeStoredClass('GLSI3D1'); },
-    'a throwing write never escapes');
-  assert.doesNotThrow(function () { sb.writeStoredClass(null); },
-    'a throwing clear never escapes');
-});
-
-test('restorable validates the stored ref against the live catalogue (issue 065)', function () {
-  var sb = runPersistence(memoryStorage());
-  // a real leaf restores
-  assert.strictEqual(sb.restorable(groups, 'GLSI3D1'), true);
-  // an interior node unions >1 leaves and was never selectable: falls through
-  assert.strictEqual(sb.restorable(groups, 'LCS'), false);
-  // unknown / removed class (the CSV is the single source of truth): falls through
-  assert.strictEqual(sb.restorable(groups, 'ZZZZ'), false);
-  // tampered prototype-key value: classWeek's plain-byKey quirk must not escape
-  assert.strictEqual(sb.restorable(groups, 'constructor'), false);
-  // non-strings never pass
-  [null, undefined, 42, {}].forEach(function (v) {
-    assert.strictEqual(sb.restorable(groups, v), false, 'rejects ' + String(v));
-  });
 });

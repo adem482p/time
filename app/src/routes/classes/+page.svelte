@@ -601,6 +601,8 @@
 		name="description"
 		content="Emplois — the ISIM Mahdia timetable, searchable by class or subject."
 	/>
+	<meta name="theme-color" content="#0b4da2" />
+	<link rel="manifest" href="manifest.json" />
 	<link rel="icon" href={`${base}/assets/icon-192.png`} sizes="192x192" type="image/png" />
 	<link rel="apple-touch-icon" href={`${base}/assets/apple-touch-icon.png`} />
 </svelte:head>

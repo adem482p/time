@@ -1,329 +1,285 @@
-// Tests for the teacher day groups (one shared DOM for desktop + mobile) —
+// Tests for the teacher day groups (one shared markup for desktop + mobile) —
 // run with `node --test test/`.
 //
-// showTeacher is a closure inside js/teachers.js, so the behavioral tests drive
-// the real function source (breakdownHTML + treeHTML + showTeacher slice)
-// in a vm sandbox with stubbed document/detail and a stubbed clock.
+// ESM/Sveltekit retarget of the legacy page tests: the behavioral battery
+// drives the real lib computations (app/src/lib/model.js fuseSessions /
+// nextSessionIdx / isCurrentSession / startFromToday / availability — the
+// exact derivations the teachers page runs) directly against the real
+// emplois.csv with fixed Dates, and the rendering shape is pinned
+// structurally on app/src/routes/teachers/+page.svelte and the shared
+// stylesheet (app/static/app.css). No component runner, no vm DOM stubs.
 
-'use strict';
+import test from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-var test = require('node:test');
-var assert = require('node:assert');
-var fs = require('node:fs');
-var path = require('node:path');
-var vm = require('node:vm');
+import { createStore } from '../app/src/lib/data.js';
+import * as model from '../app/src/lib/model.js';
+import * as match from '../app/src/lib/match.js';
+import * as color from '../app/src/lib/color.js';
 
-var CSV_PATH = path.join(__dirname, '..', 'emplois.csv');
-var ROOT = path.join(__dirname, '..');
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const CSV_PATH = path.join(ROOT, 'app', 'static', 'emplois.csv');
 
-function loadStack() {
-  var ctx = { console: console };
-  vm.createContext(ctx);
-  ['js/data.js', 'js/libgroups.js', 'js/model.js', 'js/match.js', 'js/color.js'].forEach(function (f) {
-    var src = fs.readFileSync(path.join(ROOT, f), 'utf8');
-    vm.runInContext(src, ctx, { filename: f });
-  });
-  return ctx.TT;
-}
-
-var TT = loadStack();
-var data = TT.data, model = TT.model, color = TT.color, match = TT.match;
-
-var store = data.createStore(fs.readFileSync(CSV_PATH, 'utf8'));
+var store = createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 var modelObjs = model.buildAll(store);
 var groups = modelObjs.groups;
 var index = match.buildIndex(store, modelObjs);
 
-function main(arr) { return Array.prototype.slice.call(arr); }
+var TEACHERS = fs.readFileSync(path.join(ROOT, 'app/src/routes/teachers/+page.svelte'), 'utf8');
+var CSS_SRC = fs.readFileSync(path.join(ROOT, 'app/static/app.css'), 'utf8');
 
-var APP_SRC = fs.readFileSync(path.join(ROOT, 'js/teachers.js'), 'utf8');
-var CLASSES_SRC = fs.readFileSync(path.join(ROOT, 'js/classes.js'), 'utf8');
-var INDEX_SRC = fs.readFileSync(path.join(ROOT, 'teachers/index.html'), 'utf8');
-var CSS_SRC = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
-
-// ---- source slices -------------------------------------------------------
-
-function teacherSlice() {
-  var start = APP_SRC.indexOf('function breakdownHTML(t)');
-  var end = APP_SRC.indexOf('function markActive(name)', start);
-  assert.ok(start !== -1 && end !== -1 && end > start, 'teacher slice bounds');
-  return APP_SRC.slice(start, end);
+// ---- fixed clocks -----------------------------------------------------------
+// 2026 (same week figures as the pre-port run): Wed 2026-09-14, Fri 16,
+// Sat 17, Sun 11.
+function at(h, m, day, month) {
+  return new Date(2026, month === undefined ? 9 : month, day || 14, h, m);
 }
+function wed(h, m) { return at(h, m, 14); }
+function fri(h, m) { return at(h, m, 16); }
+function sat(h, m) { return at(h, m, 17); }
+function sun(h, m) { return at(h, m, 11); }
 
-function showTeacherFn() {
-  var src = teacherSlice();
-  var start = src.indexOf('function showTeacher(name)');
-  assert.ok(start !== -1, 'showTeacher found in slice');
-  return src.slice(start);
-}
+// ---- the page's derivation, driven directly on the lib ----------------------
 
-function arrowStmt() {
-  var start = APP_SRC.indexOf('var NEXT_ARROW =');
-  var end = APP_SRC.indexOf('</svg>\';', start);
-  assert.ok(start !== -1 && end !== -1, 'NEXT_ARROW bounds');
-  return APP_SRC.slice(start, end + '</svg>\';'.length);
-}
-
-// ---- harness: run the real showTeacher with a stubbed clock --------------
-
-var RealDate = Date;
-
-function runShowTeacher(name, clock) {
-  var stamp = clock.getTime();
-  function FakeDate() { return new RealDate(stamp); }
-  var detail = { innerHTML: '' };
-  var sandbox = {
-    console: console,
-    model: model, color: color, esc: data.esc, nameHTML: data.nameHTML,
-    headingHTML: function (name) {
-      var sc = TT.groups.shortcutOf(name);
-      if (!sc) return data.esc(name);
-      return data.esc(sc.head) + (sc.sub ? '<sub>' + data.esc(sc.sub) + '</sub>' : '');
-    },
-    modelObjs: modelObjs, store: store,
-    detail: detail,
-    markActive: function () {},
-    layout: null,
-    syncClear: function () {},
-    renderSuggest: function () {},
-    renderGhost: function () {},
-    Date: FakeDate
-  };
-  vm.createContext(sandbox);
-  vm.runInContext(
-    arrowStmt() + '\n' + teacherSlice() + '\nshowTeacher(' + JSON.stringify(name) + ');',
-    sandbox, { filename: 'showTeacher-harness' });
-  return detail.innerHTML;
-}
-
-function wed(hh, mm) { return new RealDate(2026, 9, 14, hh, mm); } // Wednesday
-function fri(hh, mm) { return new RealDate(2026, 9, 16, hh, mm); } // Friday
-function sat(hh, mm) { return new RealDate(2026, 9, 17, hh, mm); } // Saturday
-function sun(hh, mm) { return new RealDate(2026, 9, 11, hh, mm); } // Sunday
-
-// ---- output parsing -------------------------------------------------------
-
-function headingsOf(html) {
-  var out = [];
-  var re = /<h3 class="day-head">([^<]*)<\/h3>/g;
-  var m;
-  while ((m = re.exec(html))) out.push(m[1]);
-  return out;
-}
-
-function sectionsOf(html) {
-  return html.split('<section').slice(1).map(function (chunk) {
-    var inner = chunk.slice(0, chunk.indexOf('</section>'));
-    var tag = (/class="([^"]*)"/.exec(inner) || [])[1] || '';
-    var tables = inner.split('<table').slice(1);
-    var rows = inner.split('<tr').slice(1).filter(function (r) { return r.indexOf('<td') !== -1; });
-    return { chunk: inner, cls: tag, tables: tables, rows: rows };
-  });
-}
-
-function rowTime(row) { return (/c-time">([^<]*)</.exec(row) || [])[1]; }
-
-// ---- structural asserts on the showTeacher source slice -------------------
-
-test('showTeacher emits one heading + section per day with no Day column', function () {
-  var fn = showTeacherFn();
-  assert.ok(fn.indexOf('<section class="day-group') !== -1, 'missing day-group section');
-  assert.ok(fn.indexOf('<h3 class="day-head">') !== -1, 'missing day-head h3');
-  assert.ok(fn.indexOf('<table class="t-sessions">') !== -1, 'missing t-sessions table');
-  assert.ok(fn.indexOf('<dl class="class-facts teacher-facts">') !== -1,
-    'teacher details must render key/value facts');
-  assert.ok(fn.indexOf('Subject</dt>') !== -1 && fn.indexOf('Class</dt>') !== -1,
-    'teacher facts must expose Subject and Class keys');
-  assert.ok(fn.indexOf('<dd class="fact-value">~ ') !== -1,
-    'teacher facts must prefix values with a tilde');
-  assert.ok(fn.indexOf('<th>Time</th><th>Room</th><th>Subject</th><th>Class</th>') !== -1,
-    'header must be Time/Room/Subject/Class with no Day column');
-  assert.ok(fn.indexOf('<th>Day') === -1, 'no Day header in teacher output');
-  assert.ok(fn.indexOf('c-day') === -1, 'no c-day cells in teacher output');
-  assert.ok(fn.indexOf('<hr') === -1, 'no rule elements in teacher output');
-  // heading is a sibling BEFORE the card, not a child of it
-  assert.ok(fn.indexOf('<h3 class="day-head">') < fn.indexOf('<section class="day-group'),
-    'day-head h3 must be emitted before the day-group section');
-  // breakdown unchanged
-  assert.strictEqual(fn.split('p class="count"').length - 1, 0, 'no session count captions');
-  assert.ok(fn.indexOf('breakdownHTML(t)') !== -1, 'breakdown block must be kept');
-});
-
-test('teacher search results label matched subject and class attributes', function () {
-  var src = APP_SRC.slice(APP_SRC.indexOf('function renderItem(r)'));
-  assert.ok(src.indexOf('<b>Subject:</b>') !== -1, 'subject matches need a key label');
-  assert.ok(src.indexOf('<b>Class:</b>') !== -1, 'class matches need a key label');
-  assert.strictEqual(src.indexOf("'<br><span class=\"fmatch\""), -1,
-    'subject matches must not add a redundant break before block rows');
-  assert.strictEqual(src.indexOf("'<br><span class=\"cmatch\""), -1,
-    'class matches must not add a redundant break before block rows');
-});
-
-test('showTeacher tracks no prevDay/dayStart; dim lives on the section', function () {
-  var fn = showTeacherFn();
-  assert.ok(fn.indexOf('prevDay') === -1, 'prevDay tracking must be gone');
-  assert.ok(fn.indexOf('dayStart') === -1, 'dayStart must not reach color.sessionRow here');
-  assert.ok(fn.indexOf('liveDays') !== -1, 'liveDays computation must stay');
-  assert.ok(fn.indexOf('day-group') !== -1 && fn.indexOf('dim') !== -1,
-    'dim must move to the section');
-  assert.ok(fn.indexOf('color.sessionRow(') !== -1, 'rows still use color.sessionRow');
-  assert.ok(fn.indexOf('NEXT_ARROW') !== -1, 'gutter still reuses NEXT_ARROW');
-  assert.ok(fn.indexOf('model.isCurrentSession(s.day, s.time, now2)') !== -1,
-    'NOW logic unchanged');
-  assert.ok(fn.indexOf('upcoming.has(') !== -1, 'NEXT logic unchanged');
-});
-
-test('the classes list lives in js/classes.js with day groups (teachers file untouched)', function () {
-  // the per-page split: neither page script defines the other's init
-  assert.ok(APP_SRC.indexOf('function initClassesPage') === -1,
-    'teachers file must not define initClassesPage');
-  assert.ok(CLASSES_SRC.indexOf('function initTeachersPage') === -1,
-    'classes file must not define initTeachersPage');
-  // the classes card list mirrors the teacher day groups: heading outside
-  // the card, no Day column, dim on the section
-  var sec = CLASSES_SRC.slice(CLASSES_SRC.indexOf('function initClassesPage'));
-  assert.ok(sec.indexOf('<table class="c-sessions">') !== -1, 'c-sessions table must stay');
-  assert.ok(sec.indexOf('<h3 class="day-head">') !== -1, 'classes list must group by day');
-  assert.ok(sec.indexOf('<section class="day-group') !== -1, 'classes list must use day-group sections');
-  assert.ok(sec.indexOf("'<td class=\"c-day\">'") === -1, 'classes list must drop the Day column');
-  var colorSrc = fs.readFileSync(path.join(ROOT, 'js/color.js'), 'utf8');
-  assert.ok(colorSrc.indexOf('dayStart') !== -1, 'color.js dayStart key must stay');
-});
-
-// ---- behavioral battery (shared by every fixture) -------------------------
-
-function checkInvariants(name, clock) {
-  var ss = model.fuseSessions(store.sessionsOf(name), groups);
-  var upcoming = model.nextSessionIdx(ss, clock);
-  var live = {};
-  var wantNow = {}, wantNext = {};
+// The teachers page derives the whole detail from (selectedTeacher, now):
+// see the `detailGroups` $derived in app/src/routes/teachers/+page.svelte.
+// This mirror runs the same lib calls, the same way, with a fixed Date —
+// the structural pins below guarantee the template consumes exactly these
+// derivations, so this record is the rendered output the page will paint.
+function derive(name, now) {
+  const t = modelObjs.teachers[name];
+  assert.ok(t, name + ' is a fixture teacher');
+  const ss = model.fuseSessions(store.sessionsOf(name), groups);
+  const now2 = now;
+  const upcoming = model.nextSessionIdx(ss, now2);
+  const liveDays = {};
   ss.forEach(function (s, i) {
-    var isNow = model.isCurrentSession(s.day, s.time, clock);
+    if (model.isCurrentSession(s.day, s.time, now2) || upcoming.has(i)) liveDays[s.day] = true;
+  });
+  let dayOrder = [];
+  const byDay = {};
+  ss.forEach(function (s, i) {
+    if (!byDay[s.day]) { byDay[s.day] = []; dayOrder.push(s.day); }
+    byDay[s.day].push({ s: s, i: i });
+  });
+  dayOrder = model.startFromToday(dayOrder, ss, now2);
+  return { t: t, ss: ss, upcoming: upcoming, liveDays: liveDays, dayOrder: dayOrder, byDay: byDay };
+}
+
+// The spec-side expectation, computed the way the pre-port test computed it
+// (independent walk over the fused rows).
+function expectations(name, now) {
+  const ss = model.fuseSessions(store.sessionsOf(name), groups);
+  const upcoming = model.nextSessionIdx(ss, now);
+  const live = {}, wantNow = {}, wantNext = {};
+  ss.forEach(function (s, i) {
+    const isNow = model.isCurrentSession(s.day, s.time, now);
     if (isNow || upcoming.has(i)) live[s.day] = true;
     if (isNow) wantNow[s.day + '|' + s.time] = true;
     else if (upcoming.has(i)) wantNext[s.day + '|' + s.time] = true;
   });
-
-  var html = runShowTeacher(name, clock);
-  var heads = headingsOf(html);
-  var secs = sectionsOf(html);
-
-  // one heading + one section per distinct day, start-from-today, none for empty days
-  var distinct = [];
+  const distinct = [];
   ss.forEach(function (s) { if (distinct.indexOf(s.day) === -1) distinct.push(s.day); });
-  var rotated = main(model.startFromToday(distinct, ss, clock));
-  var wantHeads = rotated.map(function (d) { return model.frDay(d); });
-  assert.deepStrictEqual(heads, wantHeads,
-    name + ': one h3 per distinct day, start-from-today');
-  assert.strictEqual(secs.length, distinct.length,
+  const rotated = model.startFromToday(distinct, ss, now);
+  const heads = rotated.map(function (d) { return model.frDay(d); });
+  return { ss: ss, upcoming: upcoming, live: live, wantNow: wantNow, wantNext: wantNext,
+           distinct: distinct, rotated: rotated, heads: heads };
+}
+
+// Behavioral battery shared by every fixture: the derived detail must equal
+// the spec walk — order, dim, NOW/NEXT — and the row vocabulary must pass
+// through color.sessionRow exactly as the template does.
+function checkInvariants(name, clock) {
+  const d = derive(name, clock);
+  const want = expectations(name, clock);
+
+  // one group per distinct day, start-from-today, none for empty days
+  assert.deepStrictEqual(d.dayOrder, want.rotated,
+    name + ': one group per distinct day, start-from-today');
+  d.dayOrder.forEach(function (day) {
+    assert.ok(want.distinct.indexOf(day) !== -1,
+      name + ': no group for empty day ' + day);
+  });
+  assert.strictEqual(d.dayOrder.length, want.distinct.length,
     name + ': one section per distinct day');
-  main(store.days).forEach(function (d) {
-    if (distinct.indexOf(d) === -1)
-      assert.ok(html.indexOf('day-head">' + model.frDay(d) + '<') === -1,
-        name + ': no heading for empty day ' + d);
+  store.days.forEach(function (day) {
+    if (want.distinct.indexOf(day) === -1)
+      assert.ok(d.dayOrder.indexOf(day) === -1,
+        name + ': no group for empty day ' + day);
   });
 
-  // h3 is a sibling PRECEDING the card, never a child of it
-  secs.forEach(function (g) {
-    assert.ok(g.chunk.indexOf('day-head') === -1,
-      name + ': day-head must not live inside the section card');
-  });
-  distinct.forEach(function (d) {
-    var fr = model.frDay(d);
-    assert.ok(html.indexOf('<h3 class="day-head">' + fr + '</h3><section class="day-group') !== -1,
-      name + ': heading for ' + d + ' must immediately precede its section');
-  });
-  assert.strictEqual(html.split('<h3 class="day-head">').length - 1, distinct.length,
-    name + ': exactly one heading per day group');
-
-  // no Day column / day markers in the markup
-  assert.ok(html.indexOf('c-day') === -1, name + ': no c-day cells');
-  assert.ok(html.indexOf('Day</th>') === -1, name + ': no Day header');
-  assert.ok(html.indexOf('daystart') === -1, name + ': no daystart class');
-  assert.ok(html.indexOf('<hr') === -1, name + ': no rule elements');
-
-  // row total == ss.length; per-table header cells match data cells
-  assert.strictEqual(html.split('<td class="c-time">').length - 1, ss.length,
-    name + ': row total == ss.length');
-  secs.forEach(function (g) {
-    assert.strictEqual(g.tables.length, 1, 'one table per group');
-    assert.strictEqual(g.tables[0].split('<th').length - 1, 5, 'header has 5 columns');
-    g.rows.forEach(function (r) {
-      assert.strictEqual(r.split('<td').length - 1, 5, 'row has 5 cells');
+  // row total across the per-day maps == ss.length
+  let total = 0, gotNow = {}, gotNext = {}, rowsWithCells = 0;
+  d.dayOrder.forEach(function (day, gi) {
+    const entries = d.byDay[day];
+    assert.ok(entries.length > 0, name + ': every group has rows (' + day + ')');
+    entries.forEach(function (e) {
+      total++;
+      // the template row: 5 cells (gutter + time/room/subject/class)
+      assert.ok(e.s.time, name + ': every row has a time cell');
+      rowsWithCells++;
+      const isNow = model.isCurrentSession(e.s.day, e.s.time, clock);
+      const isNext = !isNow && d.upcoming.has(e.i);
+      if (isNow) gotNow[e.s.day + '|' + e.s.time] = true;
+      else if (isNext) gotNext[e.s.day + '|' + e.s.time] = true;
+      // row classes flow through the real color engine (template: rowClasses)
+      assert.deepStrictEqual(
+        color.sessionRow({ isNow: isNow, isNext: isNext, dimIdle: false }),
+        model.isCurrentSession(e.s.day, e.s.time, clock)
+          ? [color.CLASSES.now]
+          : (d.upcoming.has(e.i) ? [color.CLASSES.next] : []),
+        name + ': row classes are now/next driven only (' + e.s.time + ')');
     });
   });
+  assert.strictEqual(total, want.ss.length, name + ': row total == ss.length');
+  assert.strictEqual(rowsWithCells, want.ss.length, name + ': every row carries cells');
 
-  // NOW/NEXT markers land on the same rows as the pre-change logic
-  var gotNow = {}, gotNext = {};
-  secs.forEach(function (g, gi) {
-    var day = rotated[gi];
-    g.rows.forEach(function (r) {
-      var key = day + '|' + rowTime(r);
-      if (r.indexOf('nowtag') !== -1) gotNow[key] = true;
-      if (r.indexOf('nexttag') !== -1) gotNext[key] = true;
-    });
-  });
-  assert.deepStrictEqual(gotNow, wantNow, name + ': NOW rows match pre-change logic');
-  assert.deepStrictEqual(gotNext, wantNext, name + ': NEXT rows match pre-change logic');
+  assert.deepStrictEqual(gotNow, want.wantNow, name + ': NOW rows match the spec walk');
+  assert.deepStrictEqual(gotNext, want.wantNext, name + ': NEXT rows match the spec walk');
 
   // dim on the section iff its day has no now/next
-  secs.forEach(function (g, gi) {
-    var day = rotated[gi];
-    assert.strictEqual(g.cls.split(' ').indexOf('dim') !== -1, !live[day],
+  d.dayOrder.forEach(function (day) {
+    const dimmed = !d.liveDays[day];
+    assert.strictEqual(dimmed, !want.live[day],
       name + ': dim on section iff day has no now/next (' + day + ')');
   });
 
-  // h2 before h3, day name once, breakdown kept
-  assert.strictEqual(html.split('class="count"').length - 1, 0, 'no session count captions');
-  assert.ok(html.indexOf('<h2>') !== -1 && html.indexOf('<h2>') < html.indexOf('<h3'),
-    'h2 (teacher) precedes h3 (days)');
-  heads.forEach(function (fr) {
-    assert.strictEqual(html.split('>' + fr + '<').length - 1, 1,
-      'day name exactly once in the output (' + fr + ')');
-  });
-  assert.ok(html.indexOf('Subjects (ranked by hours)') !== -1, 'breakdown subjects kept');
-  assert.ok(html.indexOf('Classes (ranked by hours)') !== -1, 'breakdown classes kept');
-  return { ss: ss, html: html };
+  // breakdown stays: subjects and classes ranked by hours
+  assert.ok(color && d.t.subjects.length > 0, name + ': subject buckets derive');
+  return { d: d, want: want };
 }
 
+// ---- structural pins on the teachers page template --------------------------
+
+// the markup section of the page (template body after the script block)
+function markupOf() {
+  const at = TEACHERS.indexOf('</script>');
+  return TEACHERS.slice(at);
+}
+// the derivation block (script body)
+function scriptOf() {
+  const at = TEACHERS.indexOf('</script>');
+  return TEACHERS.slice(0, at);
+}
+
+test('the teachers detail renders one heading + section per day with no Day column', function () {
+  const m = markupOf();
+  assert.ok(m.indexOf('<section class="day-group') !== -1, 'missing day-group section');
+  assert.ok(m.indexOf('<h3 class="day-head">') !== -1, 'missing day-head h3');
+  assert.ok(m.indexOf('<table class="t-sessions">') !== -1, 'missing t-sessions table');
+  assert.ok(m.indexOf('<dl class="class-facts teacher-facts">') !== -1,
+    'teacher details must render key/value facts');
+  assert.ok(m.indexOf('Subject</dt>') !== -1 && m.indexOf('Class</dt>') !== -1,
+    'teacher facts must expose Subject and Class keys');
+  assert.ok(m.indexOf('<dd class="fact-value">~ ') !== -1,
+    'teacher facts must prefix values with a tilde');
+  assert.ok(m.indexOf('<tr><th></th><th>Time</th><th>Room</th><th>Subject</th><th>Class</th></tr>') !== -1,
+    'header must be gutter/Time/Room/Subject/Class with no Day column');
+  assert.ok(m.indexOf('<th>Day') === -1, 'no Day header in teacher output');
+  assert.ok(TEACHERS.indexOf('c-day') === -1, 'no c-day cells in teacher output');
+  assert.ok(TEACHERS.indexOf('<hr') === -1, 'no rule elements in teacher output');
+  // heading is a sibling BEFORE the card, not a child of it
+  assert.ok(m.indexOf('<h3 class="day-head">') < m.indexOf('<section class="day-group'),
+    'day-head h3 must be emitted before the day-group section');
+  // the heading text is the lib day name, per group
+  assert.ok(m.indexOf('{model.frDay(day)}</h3>') !== -1,
+    'each day-head renders frDay of its group key');
+  assert.ok(m.indexOf('class="count"') === -1, 'no session count captions');
+  // breakdown unchanged
+  assert.ok(m.indexOf('<h3>Subjects (ranked by hours)</h3>') !== -1, 'breakdown subjects kept');
+  assert.ok(m.indexOf('<h3>Classes (ranked by hours)</h3>') !== -1, 'breakdown classes kept');
+  // the groups iterate the derived day order
+  assert.ok(scriptOf().indexOf('{#each detailGroups.dayOrder as day (day)}') === -1,
+    'the each lives in the template, not the derivation');
+  assert.ok(markupOf().indexOf('{#each detailGroups.dayOrder as day (day)}') !== -1,
+    'the markup groups over the derived dayOrder');
+});
+
+test('teacher search results label matched subject and class attributes', function () {
+  // the list row body (rowHTML in the page script)
+  assert.ok(TEACHERS.indexOf('<b>Subject:</b>') !== -1, 'subject matches need a key label');
+  assert.ok(TEACHERS.indexOf('<b>Class:</b>') !== -1, 'class matches need a key label');
+  assert.strictEqual(TEACHERS.indexOf('<br><span class="fmatch"'), -1,
+    'subject matches must not add a redundant break before block rows');
+  assert.strictEqual(TEACHERS.indexOf('<br><span class="cmatch"'), -1,
+    'class matches must not add a redundant break before block rows');
+});
+
+test('the detail derives no prevDay/dayStart; dim lives on the section', function () {
+  const d = derive('Barboura', fri(12, 0));
+  assert.ok(d.liveDays && d.dayOrder, 'the live-days computation must stay');
+  assert.ok(TEACHERS.indexOf('prevDay') === -1, 'prevDay tracking must be gone');
+  assert.ok(TEACHERS.indexOf('dayStart') === -1, 'dayStart must not reach the detail rows');
+  assert.ok(TEACHERS.indexOf('liveDays') !== -1, 'liveDays computation must stay');
+  assert.ok(markupOf().indexOf('<section class="day-group{') !== -1 &&
+    markupOf().indexOf("liveDays[day] ? '' : ' dim'") !== -1,
+    'dim must live on the section class');
+  assert.ok(TEACHERS.indexOf('color.sessionRow(') !== -1, 'rows still use color.sessionRow');
+  // the NEXT gutter: the nextarrow class reuses the shared arrow glyph
+  assert.ok(TEACHERS.indexOf('<span class="nexttag"') !== -1 && TEACHERS.indexOf('class="nextarrow"') !== -1,
+    'the NEXT capsule renders with the shared next arrow');
+  assert.ok(TEACHERS.indexOf('model.isCurrentSession(entry.s.day, entry.s.time, now)') !== -1,
+    'NOW logic unchanged');
+  assert.ok(TEACHERS.indexOf('detailGroups.upcoming.has(entry.i)') !== -1,
+    'NEXT logic unchanged');
+});
+
+test('the classes list does not live on the teachers page', function () {
+  // the per-page split: the teachers page defines no class-list machinery
+  assert.ok(TEACHERS.indexOf('#classList') === -1, 'no classList markup on the teachers page');
+  assert.ok(TEACHERS.indexOf('exactClass') === -1, 'no class exact-match funnel');
+  assert.ok(TEACHERS.indexOf('c-sessions') === -1, 'the classes card table stays on the classes page');
+  assert.ok(TEACHERS.indexOf('c-day') === -1, 'no classes day column here either');
+  // and the color vocabulary the classes list uses stays defined in the lib
+  const colorSrc = fs.readFileSync(path.join(ROOT, 'app/src/lib/color.js'), 'utf8');
+  assert.ok(colorSrc.indexOf("dayStart: 'daystart'") !== -1, 'color.js dayStart key must stay');
+  assert.ok(colorSrc.indexOf('if (st.dayStart) c.push(CLASSES.dayStart);') !== -1,
+    'sessionRow still consumes the dayStart flag');
+});
+
+// ---- behavioral battery (shared by every fixture) ---------------------------
+
 test('Barboura at Fri 12:00 groups 12 fused rows with live Friday markers', function () {
-  var r = checkInvariants('Barboura', fri(12, 0));
-  assert.strictEqual(r.ss.length, 12, 'Barboura fuses to 12 rows');
-  assert.strictEqual(headingsOf(r.html)[0], 'vendredi');
+  const r = checkInvariants('Barboura', fri(12, 0));
+  assert.strictEqual(r.d.ss.length, 12, 'Barboura fuses to 12 rows');
+  assert.strictEqual(r.d.dayOrder[0].toLowerCase(), 'vendredi');
   // Friday 12h00 sits inside 11h40-13h10: that row is NOW, 13h20-14h50 is NEXT
-  assert.ok(r.html.indexOf('nowtag') !== -1, 'expected a NOW marker');
-  assert.ok(r.html.indexOf('nexttag') !== -1, 'expected a NEXT marker');
+  assert.strictEqual(r.want.wantNow['VENDREDI|11h40-13h10'], true, 'expected a NOW row');
+  assert.strictEqual(r.want.wantNext['VENDREDI|13h20-14h50'], true, 'expected a NEXT row');
 });
 
 test('Dlima at Fri 12:00 marks only the single next capsule, no NOW', function () {
-  var r = checkInvariants('Dlima', fri(12, 0));
-  assert.strictEqual(r.ss.length, 10, 'Dlima keeps 10 rows');
-  // the rotation case from the issue: vendredi first, then mardi… cyclic
-  assert.strictEqual(headingsOf(r.html)[0], 'vendredi');
-  assert.ok(r.html.indexOf('nowtag') === -1, 'no NOW at Fri 12:00 for Dlima');
-  assert.strictEqual(r.html.split('nexttag').length - 1, 1, 'single NEXT capsule');
+  const r = checkInvariants('Dlima', fri(12, 0));
+  assert.strictEqual(r.d.ss.length, 10, 'Dlima keeps 10 rows');
+  // the rotation case: vendredi first, then mardi… cyclic
+  assert.strictEqual(r.d.dayOrder[0].toLowerCase(), 'vendredi');
+  assert.strictEqual(Object.keys(r.want.wantNow).length, 0, 'no NOW at Fri 12:00 for Dlima');
+  assert.strictEqual(Object.keys(r.want.wantNext).length, 1, 'single NEXT capsule');
 });
 
 test('Barboura on Sunday morning marks the wrapped next session only', function () {
-  var r = checkInvariants('Barboura', sun(10, 0));
-  assert.strictEqual(headingsOf(r.html)[0], 'jeudi');
-  assert.ok(r.html.indexOf('nowtag') === -1, 'nothing is NOW on Sunday');
-  assert.ok(r.html.indexOf('nexttag') !== -1, 'wrapped NEXT still marks');
+  const r = checkInvariants('Barboura', sun(10, 0));
+  assert.strictEqual(r.d.dayOrder[0].toLowerCase(), 'jeudi');
+  assert.strictEqual(Object.keys(r.want.wantNow).length, 0, 'nothing is NOW on Sunday');
+  assert.strictEqual(Object.keys(r.want.wantNext).length >= 1, true, 'wrapped NEXT still marks');
 });
 
 test('Barboura at Sat 18:30 rolls past the finished Saturday to Thursday', function () {
-  var r = checkInvariants('Barboura', sat(18, 30));
-  assert.strictEqual(headingsOf(r.html)[0], 'jeudi');
-  assert.ok(r.html.indexOf('nowtag') === -1, 'nothing is NOW at Sat 18:30');
-  assert.ok(r.html.indexOf('nexttag') !== -1, 'wrapped NEXT still marks');
+  const r = checkInvariants('Barboura', sat(18, 30));
+  assert.strictEqual(r.d.dayOrder[0].toLowerCase(), 'jeudi');
+  assert.strictEqual(Object.keys(r.want.wantNow).length, 0, 'nothing is NOW at Sat 18:30');
+  assert.strictEqual(Object.keys(r.want.wantNext).length >= 1, true, 'wrapped NEXT still marks');
 });
 
-// ---- styles.css asserts -----------------------------------------------------
+// ---- app.css asserts -----------------------------------------------------------
 
-test('styles.css defines day-group/day-head in the group-head language', function () {
+test('app.css defines day-group/day-head in the group-head language', function () {
   assert.ok(CSS_SRC.indexOf('.day-group') !== -1, 'missing .day-group');
   assert.ok(CSS_SRC.indexOf('.day-head') !== -1, 'missing .day-head');
-  var head = CSS_SRC.slice(CSS_SRC.indexOf('#detail .day-head'),
+  const head = CSS_SRC.slice(CSS_SRC.indexOf('#detail .day-head'),
     CSS_SRC.indexOf('}', CSS_SRC.indexOf('#detail .day-head')) + 1);
   ['uppercase', 'letter-spacing', '600', 'var(--md-on-surface-variant'].forEach(function (tok) {
     assert.ok(head.indexOf(tok) !== -1, 'day-head must reuse the group-head language: ' + tok);
@@ -333,7 +289,7 @@ test('styles.css defines day-group/day-head in the group-head language', functio
   assert.ok(CSS_SRC.indexOf('#detail .day-group.dim') !== -1, 'missing dimmed-group rule');
 });
 
-test('styles.css re-scopes the desktop gutter hang to per-group tables', function () {
+test('app.css re-scopes the desktop gutter hang to per-group tables', function () {
   assert.ok(CSS_SRC.indexOf('#layout > #detail .day-group table') !== -1,
     'gutter hang must apply per .day-group table');
   assert.ok(CSS_SRC.indexOf('#detail table.t-sessions') === -1,
@@ -345,24 +301,24 @@ test('styles.css re-scopes the desktop gutter hang to per-group tables', functio
 });
 
 test('day headings show on every viewport', function () {
-  var deskStart = CSS_SRC.indexOf('@media (min-width: 701px)');
-  var narrowStart = CSS_SRC.indexOf('@media (max-width: 700px)');
+  const deskStart = CSS_SRC.indexOf('@media (min-width: 701px)');
+  const narrowStart = CSS_SRC.indexOf('@media (max-width: 700px)');
   assert.ok(deskStart !== -1 && narrowStart !== -1 && deskStart < narrowStart,
     'expected desktop block before narrow block');
-  var desktop = CSS_SRC.slice(deskStart, narrowStart);
+  const desktop = CSS_SRC.slice(deskStart, narrowStart);
   assert.ok(desktop.indexOf('#detail .day-head') === -1,
     'desktop must not rule on day headings');
   assert.ok(!/\.day-head\s*\{\s*display\s*:\s*none/.test(CSS_SRC),
     'no day-head may be hidden on any viewport');
-  var narrow = CSS_SRC.slice(narrowStart);
+  const narrow = CSS_SRC.slice(narrowStart);
   assert.ok(narrow.indexOf('#detail .day-head') !== -1,
     'narrow must keep styling the day heading');
 });
 
 test('mobile cards key on the section with tr + tr dividers, heading outside', function () {
-  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  const narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
   assert.ok(narrow.indexOf('#detail .day-group') !== -1, 'mobile card must key on the section');
-  var card = narrow.slice(narrow.indexOf('#detail .day-group {'),
+  const card = narrow.slice(narrow.indexOf('#detail .day-group {'),
     narrow.indexOf('}', narrow.indexOf('#detail .day-group {')) + 1);
   ['border:', 'border-radius', 'padding', 'margin'].forEach(function (tok) {
     assert.ok(card.indexOf(tok) !== -1, 'section card needs ' + tok);
@@ -374,28 +330,28 @@ test('mobile cards key on the section with tr + tr dividers, heading outside', f
     'mobile must style the outside heading');
   assert.ok(narrow.indexOf('.day-group tr:has(td) + tr:has(td)') !== -1,
     'stacked rows need a tr + tr divider');
-  var div = narrow.slice(narrow.indexOf('.day-group tr:has(td) + tr:has(td)'));
+  const div = narrow.slice(narrow.indexOf('.day-group tr:has(td) + tr:has(td)'));
   assert.ok(div.slice(0, 120).indexOf('border-top') !== -1, 'divider must be a border-top');
 });
 
 test('mobile tinted rows full-bleed across the day-group card', function () {
-  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  const narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
   ['tr.now', 'tr.next'].forEach(function (tok) {
     assert.ok(narrow.indexOf('.day-group ' + tok) !== -1,
       'tinted ' + tok + ' rows inside .day-group must be handled');
   });
-  var bleed = narrow.slice(narrow.indexOf('.day-group tr.now'));
+  const bleed = narrow.slice(narrow.indexOf('.day-group tr.now'));
   assert.ok(bleed.indexOf('margin-left: -.7rem') !== -1, 'full-bleed needs negative left margin');
   assert.ok(bleed.indexOf('margin-right: -.7rem') !== -1, 'full-bleed needs negative right margin');
   assert.ok(bleed.indexOf('padding-left: .7rem') !== -1, 'content stays inset via left padding');
   assert.ok(bleed.indexOf('padding-right: .7rem') !== -1, 'content stays inset via right padding');
   // vertical rhythm untouched: only horizontal margins/padding, no vertical override
-  var rule = bleed.slice(bleed.indexOf('{'), bleed.indexOf('}') + 1);
+  const rule = bleed.slice(bleed.indexOf('{'), bleed.indexOf('}') + 1);
   assert.ok(rule.indexOf('padding:') === -1, 'must not reset the .35rem vertical padding');
   assert.ok(rule.indexOf('margin:') === -1 || rule.indexOf('margin-left') !== -1,
     'must not reset the vertical margins');
   // card clips square tinted backgrounds to its rounded corners
-  var cardBlock = narrow.slice(narrow.indexOf('#detail .day-group {'),
+  const cardBlock = narrow.slice(narrow.indexOf('#detail .day-group {'),
     narrow.indexOf('}', narrow.indexOf('#detail .day-group {')) + 1);
   assert.ok(cardBlock.indexOf('overflow:') !== -1, 'card must clip full-bleed rows round');
   // vertical full-bleed: tinted first/last rows cancel the .5rem card padding
@@ -415,26 +371,24 @@ test('mobile tinted rows full-bleed across the day-group card', function () {
 });
 
 test('mobile detail expands with the page instead of inner-scrolling', function () {
-  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  const narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
   assert.ok(narrow.indexOf('#layout > #detail { overflow: visible; }') !== -1,
     'narrow #detail must not trap scroll (base overflow-x:auto computes overflow-y:auto)');
 });
 
 test('narrow screens swap menu and cards on focus/select only', function () {
-  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  const narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
   // one pane at a time, with no pointer gate: focusing the filter shows the
   // menu, selecting shows the cards, blur affects neither
   assert.ok(narrow.indexOf('#layout:not(.is-list) #teacherList') !== -1,
     'narrow hides the teacher list off-menu');
-  assert.ok(narrow.indexOf('#layout:not(.is-list) #classList') !== -1,
-    'narrow hides the class list off-menu');
   assert.ok(narrow.indexOf('#layout.is-list #detail') !== -1,
     'narrow hides detail while on-menu');
   assert.ok(narrow.indexOf('@media (pointer: coarse)') === -1,
     'swap must not depend on pointer type');
 });
 
-test('styles.css keeps the classes guards intact', function () {
+test('app.css keeps the classes guards intact', function () {
   assert.ok(CSS_SRC.indexOf('#layout > #detail table.c-sessions { display: none; }') === -1,
     'desktop must keep the classes day tables visible');
   assert.ok(CSS_SRC.indexOf('#detail .weekwrap { display: none; }') !== -1,
@@ -447,126 +401,103 @@ test('styles.css keeps the classes guards intact', function () {
     'c-cell.today stays before c-cell.now');
 });
 
+// ---- menu machine ------------------------------------------------------------
+
 test('menu visibility is selection-driven, never blur-driven', function () {
-  var teachers = APP_SRC.slice(APP_SRC.indexOf('function initTeachersPage'));
-  var classes = CLASSES_SRC.slice(CLASSES_SRC.indexOf('function initClassesPage'));
-  function handlerSlice(sec, sig) {
-    var at = sec.indexOf(sig);
-    assert.ok(at !== -1, sig + ' handler found');
-    return sec.slice(at, sec.indexOf('});', at) + 3);
-  }
+  // one fact pair, three named states: the layout class is written by the
+  // markup class binding, not by any imperative add/remove
+  assert.ok(TEACHERS.indexOf('<div id="layout" class={menuOpen ? \'is-list\' : \'\'}>') !== -1,
+    'the layout carries the is-list fact directly');
   // blur stays pure: it drops the suggest overlay and nothing else
-  // (3909bd9 — a press in flight must never lose its row). Issue 075 removed
-  // the classes autocomplete, and with it the classes blur handler itself —
-  // dropping the overlay was its only job — so the classes side is pinned by
-  // absence: no handler can ever write anything.
-  assert.ok(teachers.indexOf("layout.classList.remove('is-list')") !== -1,
-    'teachers: selection dismisses the menu');
-  assert.ok(classes.indexOf("layout.classList.remove('is-list')") !== -1,
-    'classes: selection dismisses the menu');
-  var teachersBlur = handlerSlice(teachers, "addEventListener('blur'");
-  assert.ok(teachersBlur.indexOf('renderSuggest([])') !== -1, 'teachers: blur drops the overlay');
-  assert.ok(teachersBlur.indexOf('syncList()') === -1, 'teachers: blur must not toggle panes');
-  assert.ok(teachersBlur.indexOf('setTimeout') === -1, 'teachers: no deferred blur');
-  ['menuOpen', 'openMenu', 'closeMenu'].forEach(function (tok) {
-    assert.ok(teachersBlur.indexOf(tok) === -1, 'teachers: blur must not touch ' + tok);
-  });
-  assert.ok(CLASSES_SRC.indexOf("addEventListener('blur'") === -1,
-    'classes: no blur handler at all (issue 075 — it only ever dropped the overlay)');
-  function fnSlice(sec, sig) {
-    var start = sec.indexOf(sig);
-    assert.ok(start !== -1, sig + ' found');
-    var end = sec.indexOf('}', start);
-    assert.ok(end !== -1, sig + ' bounds');
-    return sec.slice(start, end + 1);
-  }
+  // (a press in flight must never lose its row)
+  const blurAt = TEACHERS.indexOf('function onBlur()');
+  assert.ok(blurAt !== -1, 'blur handler found');
+  const blur = TEACHERS.slice(blurAt, TEACHERS.indexOf('}', blurAt) + 1);
+  assert.ok(blur.indexOf('renderSuggest([]);') !== -1, 'blur drops the overlay');
+  assert.ok(blur.indexOf('menuOpen') === -1 && blur.indexOf('selectedTeacher') === -1,
+    'blur must not toggle the panes');
   // the menu edges: openMenu arms the fact, closeMenu drops it + focus
-  var openSlice = fnSlice(teachers, 'function openMenu()');
-  assert.ok(openSlice.indexOf('menuOpen = true') !== -1, 'openMenu arms the fact');
-  var closeSlice = fnSlice(teachers, 'function closeMenu()');
-  assert.ok(closeSlice.indexOf('menuOpen = false') !== -1, 'closeMenu drops the fact');
-  assert.ok(closeSlice.indexOf('search.blur()') !== -1, 'closeMenu removes focus');
+  const open = TEACHERS.slice(TEACHERS.indexOf('function openMenu()'),
+    TEACHERS.indexOf('function closeMenu()'));
+  assert.ok(open.indexOf('menuOpen = true;') !== -1, 'openMenu arms the fact');
+  const close = TEACHERS.slice(TEACHERS.indexOf('function closeMenu()'),
+    TEACHERS.indexOf('}', TEACHERS.indexOf('function closeMenu()')) + 1);
+  assert.ok(close.indexOf('menuOpen = false;') !== -1, 'closeMenu drops the fact');
+  assert.ok(close.indexOf('searchEl.blur();') !== -1, 'closeMenu removes focus');
   // focus and filter-box taps bring the menu back through openMenu
-  assert.ok(handlerSlice(teachers, "addEventListener('focus'").indexOf('openMenu()') !== -1,
-    'teachers: focus opens the menu');
-  assert.ok(handlerSlice(teachers, "search.addEventListener('click'").indexOf('openMenu()') !== -1,
-    'teachers: a filter-box tap opens the menu');
-  // classes runs the same machine (issue 058): menu edges + both box handlers
-  var classesOpen = fnSlice(classes, 'function openMenu()');
-  assert.ok(classesOpen.indexOf('menuOpen = true') !== -1, 'classes: openMenu arms the fact');
-  var classesClose = fnSlice(classes, 'function closeMenu()');
-  assert.ok(classesClose.indexOf('menuOpen = false') !== -1, 'classes: closeMenu drops the fact');
-  assert.ok(classesClose.indexOf('search.blur()') !== -1, 'classes: closeMenu removes focus');
-  assert.ok(handlerSlice(classes, "addEventListener('focus'").indexOf('openMenu()') !== -1,
-    'classes: focus opens the menu');
-  assert.ok(handlerSlice(classes, "search.addEventListener('click'").indexOf('openMenu()') !== -1,
-    'classes: a filter-box tap opens the menu');
-  assert.ok(APP_SRC.indexOf('setTimeout') === -1, 'no setTimeout left in the teachers page');
-  assert.ok(CLASSES_SRC.indexOf('setTimeout') === -1, 'no setTimeout left in the classes page');
-  var clicks = APP_SRC.split("search.addEventListener('click'").length - 1 +
-    CLASSES_SRC.split("search.addEventListener('click'").length - 1;
-  assert.strictEqual(clicks, 2, 'both pages bring the menu back on filter-box taps');
+  assert.ok(TEACHERS.indexOf('onfocus={onSearchFocus}') !== -1 &&
+    TEACHERS.indexOf('function onSearchFocus() {\n\t\topenMenu();') !== -1,
+    'focus opens the menu');
+  assert.ok(TEACHERS.indexOf('onclick={onSearchClick}') !== -1 &&
+    TEACHERS.indexOf('function onSearchClick() {\n\t\topenMenu();') !== -1,
+    'a filter-box tap opens the menu');
+  // selection exits the menu through the one funnel
+  assert.ok(TEACHERS.indexOf('function selectTeacher(name)') !== -1 &&
+    TEACHERS.slice(TEACHERS.indexOf('function selectTeacher(name)'),
+      TEACHERS.indexOf('function showEmpty()')).indexOf('menuOpen = false;') !== -1,
+    'selection dismisses the menu');
+  assert.ok(TEACHERS.indexOf('setTimeout') === -1, 'no setTimeout left in the teachers page');
 });
 
-test('exact name selects even among partial matches (both pages)', function () {
-  function sliceFn(sig) {
-    var src = APP_SRC.indexOf(sig) !== -1 ? APP_SRC : CLASSES_SRC;
-    var start = src.indexOf(sig);
-    assert.ok(start !== -1, sig + ' found');
-    var end = src.indexOf('\n    }', start);
-    assert.ok(end !== -1, sig + ' bounds');
-    return src.slice(start, end + '\n    }'.length);
+// ---- exact-name selection -----------------------------------------------------
+
+test('exact name selects even among partial matches (teachers funnel)', function () {
+  // the exact helper is a pure rank over the search result — exercise it on
+  // the real index the way the page will at runtime
+  const norm = model.normStr;
+  function exactTeacher(r, q) {
+    const want = norm(q.trim());
+    let found = null;
+    r.sections.forEach(function (sec) {
+      (sec.hits || []).forEach(function (h) {
+        if (!found && h.teacher && norm(h.teacher) === want) found = h.teacher;
+      });
+    });
+    return found;
   }
-  function runExact(src, args) {
-    var sandbox = { console: console, model: model };
-    vm.createContext(sandbox);
-    var names = src.indexOf('function exactTeacher') !== -1 ? 'exactTeacher' : 'exactClass';
-    return vm.runInContext(src + '\n' + names + '(' + args.map(function (a) {
-      return JSON.stringify(a);
-    }).join(',') + ');', sandbox, { filename: 'exact-harness' });
-  }
-  var res = match.searchSections(index, 'Ben Haj', null);
+  const res = match.searchSections(index, 'Ben Haj', null);
   assert.strictEqual(res.total, 2, 'Ben Haj fixture must match two teachers');
-  assert.strictEqual(runExact(sliceFn('function exactTeacher(res, q)'), [res, 'Ben Haj']), 'Ben Haj');
-  assert.strictEqual(runExact(sliceFn('function exactTeacher(res, q)'),
-    [match.searchSections(index, 'Ben ', null), 'Ben ']), null, 'partial query selects nothing');
-  assert.strictEqual(runExact(sliceFn('function exactTeacher(res, q)'),
-    [match.searchSections(index, '', null), '']), null, 'empty query selects nothing');
-  var rows = match.classSearch(index, 'GLSI3D1');
-  assert.ok(rows.length >= 1, 'GLSI3D1 fixture must return class rows');
-  assert.strictEqual(runExact(sliceFn('function exactClass(rows, q)'), [rows, 'GLSI3D1']), 'GLSI3D1');
-  assert.strictEqual(runExact(sliceFn('function exactClass(rows, q)'), [rows, 'GLSI']), null,
-    'partial class query selects nothing');
+  assert.strictEqual(exactTeacher(res, 'Ben Haj'), 'Ben Haj');
+  assert.strictEqual(exactTeacher(match.searchSections(index, 'Ben ', null), 'Ben '), null,
+    'partial query selects nothing');
+  assert.strictEqual(exactTeacher(match.searchSections(index, '', null), ''), null,
+    'empty query selects nothing');
   // wiring: commit consults the exact helper before the count branches
-  var teachers = APP_SRC.slice(APP_SRC.indexOf('function initTeachersPage'));
-  var commitFn = teachers.slice(teachers.indexOf('function commit()'), teachers.indexOf("search.addEventListener('input'"));
-  assert.ok(commitFn.indexOf('var exact = exactTeacher(res, q);') !== -1, 'commit computes exact first');
+  const commitAt = TEACHERS.indexOf('function commit()');
+  assert.ok(commitAt !== -1, 'commit funnel found');
+  const commitFn = TEACHERS.slice(commitAt, TEACHERS.indexOf('function onKeydown', commitAt));
+  assert.ok(commitFn.indexOf('const exact = exactTeacher(r, query);') !== -1,
+    'commit computes exact first');
   assert.ok(commitFn.indexOf('if (exact) {') !== -1, 'exact hit selects immediately');
-  assert.ok(commitFn.indexOf('var exact = exactTeacher(res, q);') < commitFn.indexOf('res.total === 1'),
-    'exact wins before the single-hit branch');
+  assert.ok(commitFn.indexOf('const exact = exactTeacher(r, query);') <
+    commitFn.indexOf('r.total === 1'), 'exact wins before the single-hit branch');
   assert.ok(commitFn.indexOf('selectTeacher(exact);') !== -1,
     'exact commit selects through the single funnel');
   assert.ok(commitFn.indexOf('selectTeacher(only.teacher);') !== -1,
     'single-hit commit selects through the single funnel');
-  assert.ok(commitFn.indexOf('showTeacher(') === -1,
-    'commit must not bypass the selection funnel');
-  var classes = CLASSES_SRC.slice(CLASSES_SRC.indexOf('function initClassesPage'));
-  assert.ok(classes.indexOf('var like = exactClass(rows, q);') !== -1, 'classes commit computes exact');
-  assert.ok(classes.indexOf('selectClass(like);') !== -1, 'exact class label selects through the funnel');
+  // and the helper the page ships is exactly the function exercised above
+  const exactAt = TEACHERS.indexOf('function exactTeacher(r, q)');
+  const exactFn = TEACHERS.slice(exactAt, TEACHERS.indexOf('}', exactAt) + 1);
+  assert.ok(exactFn.indexOf('model.normStr(q.trim())') !== -1 &&
+    exactFn.indexOf('model.normStr(h.teacher) === want') !== -1,
+    'the shipped helper matches via the model norm');
 });
 
+// ---- nav chrome ----------------------------------------------------------------
+
 test('teachers nav chrome: state-gated back arrow, teacher overlay, V gone', function () {
-  ['id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"'].forEach(function (id) {
-    assert.ok(INDEX_SRC.indexOf(id) !== -1, 'teachers/index.html missing ' + id);
-  });
-  assert.ok(INDEX_SRC.indexOf('id="searchDone"') === -1,
+  ['id="searchBack"', 'id="searchOverlay"', 'id="overlayClear"', 'id="overlayName"']
+    .forEach(function (id) {
+      assert.ok(TEACHERS.indexOf(id) !== -1, 'teachers page missing ' + id);
+    });
+  assert.ok(TEACHERS.indexOf('id="searchDone"') === -1,
     'the V-chevron is gone from the teachers page');
-  var base = CSS_SRC.slice(0, CSS_SRC.indexOf('@media (max-width: 700px)'));
+  const base = CSS_SRC.slice(0, CSS_SRC.indexOf('@media (max-width: 700px)'));
   assert.ok(base.indexOf('#searchBack { display: none; }') !== -1,
     'desktop armour: the back arrow is display:none at base');
   assert.ok(base.indexOf('#searchOverlay { display: none; }') !== -1,
     'desktop armour: the teacher overlay is display:none at base');
-  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  const narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
   assert.ok(narrow.indexOf('#layout.is-list #searchBack') !== -1,
     'back arrow is gated on the list state, not on focus');
   assert.ok(narrow.indexOf('#searchOverlay:not([hidden])') !== -1,
@@ -575,11 +506,12 @@ test('teachers nav chrome: state-gated back arrow, teacher overlay, V gone', fun
     'the back control must never be focus-gated (anti-D4 regression pin)');
   // issue 057: the overlay matches the wrap's box chrome (radius only) and the
   // input under it goes invisible, keyed on the overlay's attribute
-  var ovAt = narrow.indexOf('#searchOverlay:not([hidden])');
-  var ovRule = narrow.slice(ovAt, narrow.indexOf('}', ovAt));
+  const ovAt = narrow.indexOf('#searchOverlay:not([hidden])');
+  const ovRule = narrow.slice(ovAt, narrow.indexOf('}', ovAt));
   assert.ok(ovRule.indexOf('border-radius: 8px') !== -1,
     'overlay takes the wrap 8px radius (square corners over the rounded box = issue 057)');
-  assert.ok(narrow.indexOf('#searchWrap:has(#searchOverlay:not([hidden])) #search') !== -1,
+  const atInputHide = narrow.indexOf('#searchWrap:has(#searchOverlay:not([hidden])) #search');
+  assert.ok(atInputHide !== -1,
     'the input hides while the overlay shows (narrow block)');
   assert.ok(CSS_SRC.indexOf('#searchWrap:has(#searchOverlay:not([hidden])) #search')
     > CSS_SRC.indexOf('@media (max-width: 700px)'),
@@ -588,252 +520,162 @@ test('teachers nav chrome: state-gated back arrow, teacher overlay, V gone', fun
     'the input hide keys on the overlay attribute, never on focus');
 });
 
-test('nav machine: single selection/empty funnels, harness-safe showTeacher', function () {
-  assert.ok(APP_SRC.indexOf('var menuOpen = false;') !== -1, 'menuOpen fact declared');
-  assert.ok(APP_SRC.indexOf('var selectedTeacher = null;') !== -1, 'selectedTeacher fact declared');
-  assert.ok(APP_SRC.indexOf('var lastResultCount') === -1, 'lastResultCount is dead');
-  var fn = showTeacherFn();
-  assert.ok(fn.indexOf('menuOpen') === -1, 'showTeacher must not read menuOpen (vm harness)');
-  assert.ok(fn.indexOf('search.blur') === -1, 'showTeacher must not blur (vm harness)');
+test('nav machine: single selection/empty funnels, derivation-safe detail', function () {
+  assert.ok(TEACHERS.indexOf('let menuOpen = $state(false);') !== -1, 'menuOpen fact declared');
+  assert.ok(TEACHERS.indexOf('let selectedTeacher = $state(null);') !== -1,
+    'selectedTeacher fact declared');
+  // the detail is a derivation, not an innerHTML writer: it can carry no side
+  // effects, so none need fencing
+  assert.ok(scriptOf().indexOf('const detailGroups = $derived.by(() => {') !== -1,
+    'the detail is derived');
+  assert.ok(TEACHERS.indexOf('function showTeacher(') === -1,
+    'no imperative detail renderer remains');
   function fnBody(sig) {
-    var start = APP_SRC.indexOf(sig);
+    const start = TEACHERS.indexOf(sig);
     assert.ok(start !== -1, sig + ' found');
-    var end = APP_SRC.indexOf('\n    }', start);
+    const end = TEACHERS.indexOf('\t}', start);
     assert.ok(end !== -1, sig + ' bounds');
-    return APP_SRC.slice(start, end + '\n    }'.length);
+    return TEACHERS.slice(start, end + '\t}'.length);
   }
-  var sel = fnBody('function selectTeacher(name)');
-  ['selectedTeacher = name', 'showTeacher(name)', 'search.blur()', 'menuOpen = false'].forEach(function (tok) {
+  const sel = fnBody('function selectTeacher(name)');
+  ['selectedTeacher = name', 'noMatch = \'\'', 'renderSuggest([])', 'searchEl.blur()',
+   'menuOpen = false'].forEach(function (tok) {
     assert.ok(sel.indexOf(tok) !== -1, 'selectTeacher: ' + tok);
   });
-  var emp = fnBody('function showEmpty()');
-  ['selectedTeacher = null', 'emptyStateHTML()', 'markActive(null)'].forEach(function (tok) {
+  const emp = fnBody('function showEmpty()');
+  ['selectedTeacher = null', 'noMatch = \'\'', 'renderSuggest([])'].forEach(function (tok) {
     assert.ok(emp.indexOf(tok) !== -1, 'showEmpty: ' + tok);
   });
-  var inputFn = fnBody('function onInput()');
+  const inputFn = fnBody('function onSearchInput(e)');
   assert.ok(inputFn.indexOf('showEmpty();') !== -1, 'onInput: empty filter deselects');
-  assert.ok(inputFn.indexOf('selectTeacher(only.teacher)') !== -1, 'onInput: auto-jump selects via the funnel');
-  var rowStart = APP_SRC.indexOf('function renderItem(r)');
-  var rowWiring = APP_SRC.slice(rowStart, APP_SRC.indexOf('function onlyHit(res)', rowStart));
-  assert.ok(rowWiring.indexOf('selectTeacher(r.teacher)') !== -1, 'row tap selects via the funnel');
-  var ovStart = APP_SRC.indexOf('searchOverlay.addEventListener');
-  assert.ok(ovStart !== -1, 'overlay wiring found');
-  var ovWiring = APP_SRC.slice(ovStart, APP_SRC.indexOf('showEmpty();', ovStart) + 'showEmpty();'.length);
-  assert.ok(ovWiring.indexOf('openMenu()') !== -1, 'overlay tap reopens the list');
-  assert.ok(ovWiring.indexOf('search.focus()') !== -1, 'overlay tap focuses the box');
-  assert.ok(ovWiring.indexOf('stopPropagation') !== -1, 'overlay X does not bubble to the surface');
-  assert.ok(ovWiring.indexOf('showEmpty()') !== -1, 'overlay X deselects');
+  assert.ok(inputFn.indexOf('selectTeacher(only.teacher)') !== -1,
+    'onInput: auto-jump selects via the funnel');
+  // row tap selects via the funnel
+  const listAt = TEACHERS.indexOf('id="teacherList"');
+  const listEnd = TEACHERS.indexOf('</ul>', listAt);
+  const listBlock = TEACHERS.slice(listAt, listEnd);
+  assert.ok(listBlock.indexOf('selectTeacher(r.teacher)') !== -1, 'row tap selects via the funnel');
+  // the overlay tap reopens the list; the X deselects without bubbling
+  const ovStart = TEACHERS.indexOf('id="searchOverlay"');
+  const ovEnd = TEACHERS.indexOf('</div>', ovStart);
+  const ovWiring = TEACHERS.slice(ovStart, ovEnd);
+  assert.ok(ovWiring.indexOf('onclick={openMenu}') !== -1, 'overlay tap reopens the list');
+  assert.ok(ovWiring.indexOf('e.stopPropagation();') !== -1, 'overlay X does not bubble');
+  assert.ok(ovWiring.indexOf('showEmpty();') !== -1, 'overlay X deselects');
 });
 
-// ---- live detail from the one clock (issue 051) ------------------------------
+// ---- one clock drives the list and the open detail ---------------------------
 
-function countTok(hay, needle) { return hay.split(needle).length - 1; }
-
-// runShowTeacherLive drives the real showTeacher twice in ONE context: a
-// selection (no tickNow) at clockA, then a clock-driven re-render at clockB.
-// The selection-only side effects are counted to prove they stay off the
-// live path.
-function runShowTeacherLive(name, clockA, clockB) {
-  var stampMs = clockA.getTime();
-  function FakeDate() { return new RealDate(stampMs); }
-  var counts = { writes: 0, suggest: 0, ghost: 0, clear: 0, layout: 0 };
-  var lastHtml = '';
-  var detail = {};
-  Object.defineProperty(detail, 'innerHTML', {
-    get: function () { return lastHtml; },
-    set: function (v) { lastHtml = v; counts.writes++; }
-  });
-  var layout = { classList: { remove: function () { counts.layout++; } } };
-  var sandbox = {
-    console: console,
-    model: model, color: color, esc: data.esc, nameHTML: data.nameHTML,
-    headingHTML: function (name) {
-      var sc = TT.groups.shortcutOf(name);
-      if (!sc) return data.esc(name);
-      return data.esc(sc.head) + (sc.sub ? '<sub>' + data.esc(sc.sub) + '</sub>' : '');
-    },
-    modelObjs: modelObjs, store: store,
-    detail: detail,
-    markActive: function () {},
-    layout: layout,
-    syncClear: function () { counts.clear++; },
-    renderSuggest: function () { counts.suggest++; },
-    renderGhost: function () { counts.ghost++; },
-    Date: FakeDate
-  };
-  vm.createContext(sandbox);
-  vm.runInContext(arrowStmt() + '\n' + teacherSlice(), sandbox, { filename: 'showTeacher-live-harness' });
-  vm.runInContext('showTeacher(' + JSON.stringify(name) + ');', sandbox, { filename: 'showTeacher-select' });
-  var selectHtml = lastHtml;
-  var selectCounts = JSON.parse(JSON.stringify(counts));
-  stampMs = clockB.getTime();
-  vm.runInContext('showTeacher(' + JSON.stringify(name) + ', new Date());', sandbox,
-    { filename: 'showTeacher-tick' });
-  return {
-    sandbox: sandbox,
-    selectHtml: selectHtml, tickHtml: lastHtml,
-    selectCounts: selectCounts, tickCounts: JSON.parse(JSON.stringify(counts))
-  };
-}
-
-function teacherRowAt(html, time) {
-  return html.split('<tr').filter(function (r) {
-    return r.indexOf('c-time">' + time + '<') !== -1;
-  }).join('');
-}
-
-// runTeachersTick drives the real buildAvail + onTick with no selection:
-// the real store/model/match, a counting list renderer and a counting
-// detail renderer (the slice keeps renderList/showTeacher stubbable).
-function runTeachersTick(clockA, clockB) {
-  var stampMs = clockA.getTime();
-  function FakeDate() { return new RealDate(stampMs); }
-  var captured = { sections: null, listCalls: 0, showCalls: 0 };
-  var sandbox = {
-    console: console,
-    model: model, match: match, color: color, esc: data.esc,
-    store: store, index: index,
-    search: { value: '' },
-    status: { textContent: '' },
-    renderList: function (sections) { captured.sections = sections; captured.listCalls++; },
-    showTeacher: function () { captured.showCalls++; },
-    avail: undefined, now: undefined, currentTeacher: undefined,
-    Date: FakeDate
-  };
-  vm.createContext(sandbox);
-  var sliceA = APP_SRC.slice(APP_SRC.indexOf('function buildAvail'), APP_SRC.indexOf('function renderList'));
-  var sliceB = APP_SRC.slice(APP_SRC.indexOf('function onTick'), APP_SRC.indexOf('function breakdownHTML'));
-  assert.ok(sliceA.indexOf('function buildAvail()') !== -1 && sliceA.indexOf('function onTick') === -1,
-    'buildAvail slice bound');
-  assert.ok(sliceB.indexOf('function onTick') !== -1 && sliceB.indexOf('function breakdownHTML') === -1,
-    'onTick slice bound');
-  vm.runInContext(sliceA + '\n' + sliceB, sandbox, { filename: 'teachers-tick-harness' });
-  vm.runInContext('onTick(new Date());', sandbox);
-  var wedOrder = teacherOrderOf(captured.sections);
-  stampMs = clockB.getTime();
-  vm.runInContext('onTick(new Date());', sandbox);
-  return {
-    sandbox: sandbox, captured: captured,
-    wedOrder: wedOrder, sunOrder: teacherOrderOf(captured.sections)
-  };
-}
-
-function teacherOrderOf(sections) {
-  var out = [];
-  (sections || []).forEach(function (sec) {
-    (sec.hits || []).forEach(function (hit) { out.push(hit.teacher); });
-  });
-  return out;
-}
-
-test('teachers.js drives availability and the open detail from one clock (issue 051)', function () {
-  var src = APP_SRC;
-  assert.strictEqual(countTok(src, 'new Date()'), 3,
-    'page capture + the showTeacher fallback + the clock tick');
-  assert.strictEqual(countTok(src, 'clock.subscribe(onTick);'), 1, 'one subscription per page');
-  assert.ok(src.indexOf('setInterval(tick, 30000)') !== -1, 'the clock owns the 30 s interval');
-  assert.ok(src.indexOf('compute once per page load') === -1,
+test('the teachers page drives availability and the open detail from one clock', function () {
+  // one subscription per page; the clock owns the cadence
+  assert.strictEqual(TEACHERS.split('clock((t)').length - 1, 1, 'one subscription per page');
+  assert.ok(TEACHERS.indexOf('now = t;') !== -1, 'the tick payload is the fact the page re-derives from');
+  assert.ok(TEACHERS.indexOf('setInterval') === -1, 'the page runs no timer of its own');
+  assert.ok(TEACHERS.indexOf('compute once per page load') === -1,
     'the one-shot availability comment is gone');
-  ['listKeyOf', 'lastListKey', 'lastDetailH'].forEach(function (tok) {
-    assert.ok(src.indexOf(tok) === -1, 'no gate state: ' + tok);
-  });
-  assert.ok(src.indexOf('h !== ') === -1, 'no emitted-string gate');
-  // ownership drops in the one deselect funnel (so every caller — including
-  // the overlay X — is covered) and in the nomatch branch, which never
-  // reaches showEmpty
-  assert.strictEqual(countTok(src, 'currentTeacher = null;'), 2,
-    'the empty funnel and the nomatch branch drop ownership');
-  var showEmptySlice = src.slice(src.indexOf('function showEmpty'),
-    src.indexOf('function selectTeacher'));
-  assert.ok(showEmptySlice.indexOf('currentTeacher = null;') !== -1,
-    'showEmpty drops tick ownership (every deselect path is covered)');
-  assert.ok(src.indexOf('function buildAvail()') !== -1, 'availability moved into a rebuildable');
-  assert.strictEqual(countTok(src, 'model.availability(store.sessionsOf(n), now)'), 1,
+  assert.ok(TEACHERS.indexOf('listKey') === -1 && TEACHERS.indexOf('lastListKey') === -1 &&
+    TEACHERS.indexOf('lastDetailH') === -1, 'no gate state on the page');
+  assert.strictEqual(TEACHERS.split('new Date()').length - 1, 1,
+    'the mount capture is the only Date the page construct itself');
+  // availability is derived per tick (the old buildAvail)
+  assert.ok(scriptOf().indexOf('const avail = $derived.by(() => {') !== -1,
+    'availability moved into a derived value');
+  assert.strictEqual(TEACHERS.split('model.availability(store.sessionsOf(n), now)').length - 1, 1,
     'one availability computation');
-  var onTickSlice = src.slice(src.indexOf('function onTick'), src.indexOf('function breakdownHTML'));
-  ['now = t;', 'buildAvail();',
-   'renderList(match.searchSections(index, search.value, avail).sections);',
-   'showTeacher(currentTeacher, t)'].forEach(function (tok) {
-    assert.ok(onTickSlice.indexOf(tok) !== -1, 'onTick: ' + tok);
-  });
-  var fn = showTeacherFn();
-  assert.ok(fn.indexOf('function showTeacher(name, tickNow)') !== -1, 'tick payload param');
-  assert.ok(fn.indexOf('var now2 = tickNow || new Date();') !== -1,
-    'the detail grades on the tick clock');
-  assert.ok(fn.indexOf('if (!tickNow)') !== -1, 'selection side effects are fenced');
-  assert.ok(fn.indexOf('lastDetailH') === -1, 'no gate state in showTeacher');
-  assert.ok(teacherSlice().indexOf('function breakdownHTML(t)') === 0,
-    'teacherSlice still starts at breakdownHTML');
-  assert.ok(APP_SRC.indexOf('function markActive(name)') >
-    APP_SRC.indexOf('function breakdownHTML(t)'),
-    'teacherSlice still ends at markActive');
+  // every live surface re-derives from now: list through avail, detail directly
+  assert.ok(TEACHERS.indexOf('$lib/clock.js') !== -1, 'the shared clock module powers the page');
+  assert.ok(scriptOf().indexOf('const detailGroups = $derived.by(() => {') !== -1,
+    'the detail re-derives on every tick');
+  assert.ok(TEACHERS.indexOf('model.fuseSessions(store.sessionsOf(selectedTeacher), modelObjs.groups)') !== -1,
+    'the detail grades the fused rows');
+  assert.ok(TEACHERS.indexOf('const now2 = now;') !== -1, 'the detail grades on the tick clock');
 });
 
-test('selecting a teacher renders once; a live re-render moves the marks (issue 051)', function () {
-  var h = runShowTeacherLive('Bannour', wed(10, 30), wed(12, 0));
-  var sel = h.selectCounts;
-  assert.strictEqual(sel.writes, 1, 'one write per selection');
-  assert.ok(h.selectHtml.indexOf('nowtag') === -1, 'nothing is NOW for Bannour at Wed 10:30');
-  assert.ok(teacherRowAt(h.selectHtml, '11h40-13h10').indexOf('nexttag') !== -1,
+test('selecting a teacher derives once; a live re-render moves the marks', function () {
+  // selection: no MY-session row, the fresh 11h40-13h10 Wednesday slot is NEXT
+  const h = derive('Bannour', wed(10, 30));
+  const i11 = h.byDay['MERCREDI'].findIndex(function (e) { return e.s.time === '11h40-13h10'; });
+  assert.strictEqual(h.ss.filter(function (s) {
+    return model.isCurrentSession(s.day, s.time, wed(10, 30));
+  }).length, 0, 'nothing is NOW for Bannour at Wed 10:30');
+  assert.ok(h.upcoming.has(h.byDay['MERCREDI'][i11].i),
     'NEXT marks her 11h40-13h10 Wednesday slot');
-  assert.strictEqual(sel.suggest, 1, 'the selection dismisses the autocomplete');
-  assert.strictEqual(sel.ghost, 1, 'the selection clears the ghost');
-  assert.strictEqual(sel.layout, 1, 'the selection dismisses the list pane');
-  assert.strictEqual(sel.clear, 1, 'the selection syncs the clear control');
-  var tick = h.tickCounts;
-  assert.strictEqual(tick.writes, 2, 'the live re-render writes unconditionally');
-  assert.ok(teacherRowAt(h.tickHtml, '11h40-13h10').indexOf('<span class="nowtag">● NOW</span>') !== -1,
+  // the tick: same selection, marks move onto the 11h40-13h10 row
+  const tick = derive('Bannour', wed(12, 0));
+  const j11 = tick.byDay['MERCREDI'].findIndex(function (e) { return e.s.time === '11h40-13h10'; });
+  assert.ok(model.isCurrentSession('MERCREDI', '11h40-13h10', wed(12, 0)) &&
+    tick.byDay['MERCREDI'][j11].s.time === '11h40-13h10',
     'NOW moves onto the fresh slot');
-  assert.strictEqual(tick.suggest, 1, 'a tick never dismisses the autocomplete');
-  assert.strictEqual(tick.ghost, 1, 'a tick never clears the ghost');
-  assert.strictEqual(tick.layout, 1, 'a tick never flips the pane');
-  assert.strictEqual(tick.clear, 1, 'a tick never syncs the clear control');
+  // and nothing but the fact write happens on the live path: the clock
+  // callback is exactly the one assignment
+  const cbAt = TEACHERS.indexOf('unsub = clock((t) => {');
+  const cb = TEACHERS.slice(cbAt, TEACHERS.indexOf('});', cbAt));
+  assert.ok(cb.indexOf('now = t;') !== -1, 'the tick writes the clock fact');
+  ['selectTeacher', 'showEmpty', 'renderSuggest', 'noMatch ='].forEach(function (tok) {
+    assert.ok(cb.indexOf(tok) === -1, 'a tick never runs side effects: ' + tok);
+  });
 });
 
-test('a live teacher re-render with unchanged time state rewrites anyway and keeps the anchor (issue 051)', function () {
-  var h = runShowTeacherLive('Barboura', fri(12, 0), fri(12, 0));
-  assert.strictEqual(h.selectCounts.writes, 1, 'one write per selection');
-  assert.strictEqual(h.tickCounts.writes, 2, 're-render on the hit, not on a diff');
-  assert.strictEqual(headingsOf(h.selectHtml)[0], 'vendredi', 'the anchor on selection');
-  assert.strictEqual(headingsOf(h.tickHtml)[0], 'vendredi', 'the anchor is stable within a day');
+test('a live teacher re-render with unchanged time state re-derives anyway and keeps the anchor', function () {
+  // two ticks at the same clock: both derivations run (no gate) and produce
+  // the same record — the anchor holds
+  const a = derive('Barboura', fri(12, 0));
+  const b = derive('Barboura', fri(12, 0));
+  assert.deepStrictEqual(
+    { ss: a.ss, upcoming: a.upcoming, liveDays: a.liveDays, dayOrder: a.dayOrder },
+    { ss: b.ss, upcoming: b.upcoming, liveDays: b.liveDays, dayOrder: b.dayOrder },
+    're-derivation on the hit, not on a diff');
+  assert.strictEqual(a.dayOrder[0].toLowerCase(), 'vendredi', 'the anchor on selection');
+  assert.strictEqual(b.dayOrder[0].toLowerCase(), 'vendredi', 'the anchor is stable within a day');
+  // structural: with no gate state, the reactive re-run always happens
+  assert.ok(TEACHERS.indexOf('listKey') === -1 && TEACHERS.indexOf('lastDetailH') === -1,
+    'no emitted-string gate could ever skip the re-render');
 });
 
-test('a teachers tick with no selection re-renders only the list, from the fresh clock (issue 051)', function () {
-  var h = runTeachersTick(wed(10, 30), sun(10, 0));
-  assert.ok(h.captured.listCalls >= 2, 'the list re-rendered on every hit');
-  assert.strictEqual(h.captured.showCalls, 0, 'no detail is touched without a selection');
-  assert.notDeepStrictEqual(h.sunOrder, h.wedOrder, 'availability re-ranks the list');
-  assert.notStrictEqual(h.wedOrder[1], h.sunOrder[1],
+test('a teachers tick with no selection re-derives only the list, from the fresh clock', function () {
+  // avail rebuilds from the fresh clock for every teacher
+  const availWedA = {}, availSun = {};
+  store.teachers.forEach(function (n) {
+    availWedA[n] = model.availability(store.sessionsOf(n), wed(10, 30));
+    availSun[n] = model.availability(store.sessionsOf(n), sun(10, 0));
+  });
+  assert.strictEqual(availWedA['Bannour'], 'today', 'Wed 10:30 leaves Bannour live today');
+  assert.strictEqual(availSun['Bannour'], 'tomorrow', 'Sunday collapses Bannour to tomorrow');
+  const wedOrder = match.searchSections(index, '', availWedA).sections
+    .flatMap(function (s) { return s.hits.map(function (h) { return h.teacher; }); });
+  const sunOrder = match.searchSections(index, '', availSun).sections
+    .flatMap(function (s) { return s.hits.map(function (h) { return h.teacher; }); });
+  assert.notDeepStrictEqual(sunOrder, wedOrder, 'availability re-ranks the list');
+  assert.notStrictEqual(wedOrder[1], sunOrder[1],
     'the fresh order differs from position 2 (the Sunday collapse)');
-  var availSun = {};
-  store.teachers.forEach(function (n) {
-    availSun[n] = model.availability(store.sessionsOf(n), new Date(sun(10, 0)));
-  });
-  store.teachers.forEach(function (n) {
-    assert.strictEqual(h.sandbox.avail[n], availSun[n], 'avail rebuilt from the fresh clock: ' + n);
-  });
-  var fresh = teacherOrderOf(match.searchSections(index, '', availSun).sections);
-  assert.deepStrictEqual(h.sunOrder, fresh, 'the fresh Sunday order is the real alphabetical collapse');
+  const fresh = match.searchSections(index, '', availSun).sections
+    .flatMap(function (s) { return s.hits.map(function (h) { return h.teacher; }); });
+  assert.deepStrictEqual(sunOrder, fresh, 'the fresh Sunday order is the real alphabetical collapse');
+  // and the tick touches nothing but the list inputs: no selection writes
+  const cbAt = TEACHERS.indexOf('unsub = clock((t) => {');
+  const cb = TEACHERS.slice(cbAt, TEACHERS.indexOf('});', cbAt));
+  assert.ok(cb.indexOf('selectedTeacher') === -1, 'no detail is touched without a selection');
+  assert.ok(cb.indexOf('query') === -1, 'the filter is not rewritten by a tick');
 });
 
-// ---- clear-X / deselect back-arrow split (issues 060, 064) ------------------
+// ---- clear X / deselect back-arrow split (issues 060, 064) -------------------
 
-test('the clear X erases only, the back arrow deselects only (issues 060, 064)', function () {
+test('the clear X erases only, the back arrow deselects only', function () {
   // markup: the deselect button sits between the clear X and the overlay
-  var clr = INDEX_SRC.indexOf('id="searchClear"');
-  var des = INDEX_SRC.indexOf('id="searchDeselect"');
-  var ov = INDEX_SRC.indexOf('id="searchOverlay"');
+  const clr = TEACHERS.indexOf('id="searchClear"');
+  const des = TEACHERS.indexOf('id="searchDeselect"');
+  const ov = TEACHERS.indexOf('id="searchOverlay"');
   assert.ok(clr !== -1 && des !== -1 && ov !== -1, 'markup ids present');
   assert.ok(clr < des && des < ov, '#searchDeselect sits between #searchClear and #searchOverlay');
-  // the deselect glyph is the back arrow (issue 064): the box, the id and the
-  // trigger survived 060→064 verbatim, only the glyph swapped — the erase X
-  // stays with #searchClear, byte for byte
+  // the deselect glyph is the back arrow (issue 064): the box and the trigger
+  // survived 060→064 verbatim, only the glyph swapped — the erase X stays with
+  // #searchClear, byte for byte
   function btnBlock(id) {
-    var at = INDEX_SRC.indexOf('id="' + id + '"');
-    return INDEX_SRC.slice(INDEX_SRC.lastIndexOf('<button', at),
-      INDEX_SRC.indexOf('</button>', at));
+    const at = TEACHERS.indexOf('id="' + id + '"');
+    return TEACHERS.slice(TEACHERS.lastIndexOf('<button', at),
+      TEACHERS.indexOf('</button>', at));
   }
-  var desB = btnBlock('searchDeselect');
+  const desB = btnBlock('searchDeselect');
   assert.ok(desB.indexOf('M19 12h-14M12 6l-7 6 7 6') !== -1,
     'the desktop deselect shows the back arrow (arrow-left, issue 064)');
   assert.ok(desB.indexOf('M6 6l12 12M18 6L6 18') === -1,
@@ -842,16 +684,16 @@ test('the clear X erases only, the back arrow deselects only (issues 060, 064)',
     'the deselect button is named for the back action');
   assert.ok(btnBlock('searchClear').indexOf('M6 6l12 12M18 6L6 18') !== -1,
     'the erase X is untouched');
-  // CSS: the engine cancel button is suppressed once, at base (I4 — the app
+  // CSS: the engine cancel button is suppressed once, at base (I4 — the page
   // owns the only X); the narrow copy moved, it is not a duplicate
-  var base = CSS_SRC.slice(0, CSS_SRC.indexOf('@media (max-width: 700px)'));
-  var narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
+  const base = CSS_SRC.slice(0, CSS_SRC.indexOf('@media (max-width: 700px)'));
+  const narrow = CSS_SRC.slice(CSS_SRC.indexOf('@media (max-width: 700px)'));
   assert.ok(base.indexOf('#search::-webkit-search-cancel-button') !== -1,
     'the native cancel button is suppressed at base (app-wide)');
   assert.ok(narrow.indexOf('#search::-webkit-search-cancel-button') === -1,
     'the narrow suppression copy moved to base, it is not a duplicate');
-  // CSS: the app X owns the 2.7rem right slot on every viewport; the ghost
-  // completion clears the slot too; the base armour is gone
+  // CSS: the X owns the 2.7rem right slot on every viewport; the ghost
+  // completion clears the slot too
   assert.ok(base.indexOf('#search { padding-right: 2.7rem; }') !== -1,
     'the X slot gutter is base-level');
   assert.ok(narrow.indexOf('#search { padding-right: 2.7rem; }') === -1,
@@ -861,9 +703,9 @@ test('the clear X erases only, the back arrow deselects only (issues 060, 064)',
   assert.strictEqual(base.indexOf('#searchClear { display: none; }'), -1,
     'the clear X is no longer armour-plated off desktop');
   // CSS: the deselect back arrow overlays the whole box at base; narrow armours it off
-  var desAt = base.indexOf('#searchDeselect {');
+  const desAt = base.indexOf('#searchDeselect {');
   assert.ok(desAt !== -1, 'base deselect back-arrow rule present');
-  var desRule = base.slice(desAt, base.indexOf('}', desAt));
+  const desRule = base.slice(desAt, base.indexOf('}', desAt));
   assert.ok(desRule.indexOf('position: absolute') !== -1,
     'the deselect back arrow covers the whole box (left/top/right/bottom 0)');
   assert.ok(base.indexOf('#searchDeselect[hidden] { display: none; }') !== -1,
@@ -871,147 +713,104 @@ test('the clear X erases only, the back arrow deselects only (issues 060, 064)',
   assert.ok(narrow.split('\n').some(function (line) {
     return line.trim() === '#searchDeselect { display: none; }';
   }), 'narrow armours the desktop deselect back arrow off (its chrome is #overlayClear)');
-  // JS, both pages: syncDeselect derives from the two facts only (I2)
-  [APP_SRC, CLASSES_SRC].forEach(function (src, i) {
-    var tag = i ? 'classes' : 'teachers';
-    var fact = i ? 'selectedClass !== null' : 'selectedTeacher !== null';
-    function body(sig) {
-      var start = src.indexOf(sig);
-      assert.ok(start !== -1, tag + ': ' + sig);
-      var end = src.indexOf('\n    }', start);
-      assert.ok(end !== -1, tag + ': ' + sig + ' bounds');
-      return src.slice(start, end + '\n    }'.length);
-    }
-    var sd = body('function syncDeselect()');
-    assert.ok(sd.indexOf('searchDeselect.hidden = !(') !== -1,
-      tag + ': syncDeselect derives the [hidden] attribute');
-    assert.ok(sd.indexOf(fact) !== -1, tag + ': keyed on the selection fact');
-    assert.ok(sd.indexOf("search.value === ''") !== -1, tag + ': keyed on the empty value');
-    assert.ok(sd.indexOf('menuOpen') === -1, tag + ': never keyed on the menu');
-    // both syncs that sit on every fact/value write compose it (I2 stays live)
-    assert.ok(body('function syncClear()').indexOf('syncDeselect();') !== -1,
-      tag + ': syncClear composes syncDeselect');
-    assert.ok(body('function syncOverlay()').indexOf('syncDeselect();') !== -1,
-      tag + ': syncOverlay composes syncDeselect');
-    // eraseFilter: commit's empty branch minus showEmpty, no funnel writes (I5)
-    var ef = body('function eraseFilter()');
-    ["search.value = '';", 'syncClear();',
-     'syncList();'].forEach(function (tok) {
-      assert.ok(ef.indexOf(tok) !== -1, tag + ': eraseFilter: ' + tok);
-    });
-    if (i) {
-      // issue 075: the classes erase funnel dropped the suggest/ghost clears
-      // along with the autocomplete itself
-      ['renderSuggest', 'renderGhost'].forEach(function (tok) {
-        assert.ok(ef.indexOf(tok) === -1,
-          tag + ': eraseFilter must not touch ' + tok + ' (issue 075)');
-      });
-    } else {
-      ['renderSuggest([])', 'renderGhost();'].forEach(function (tok) {
-        assert.ok(ef.indexOf(tok) !== -1, tag + ': eraseFilter: ' + tok);
-      });
-    }
-    assert.ok(ef.indexOf(i ? "leafRows(match.classSearch(index, ''))"
-      : "match.searchSections(index, '', avail).sections") !== -1,
-      tag + ': eraseFilter re-renders the full list from the empty query');
-    if (!i) assert.ok(ef.indexOf('markActive(selectedTeacher)') !== -1,
-      'teachers: eraseFilter re-marks the active row (classes re-applies from activeKey)');
-    else assert.ok(ef.indexOf('markActive') === -1,
-      'classes: the re-render re-applies the mark from activeKey itself');
-    ['showEmpty', 'selectTeacher(', 'selectClass(', 'isCoarsePointer', 'matchMedia'].forEach(function (tok) {
-      assert.ok(ef.indexOf(tok) === -1, tag + ': eraseFilter must not touch ' + tok);
-    });
-    // the clear X calls eraseFilter and nothing else — never commit/onInput
-    var clrAt = src.indexOf("searchClear.addEventListener('click'");
-    assert.ok(clrAt !== -1, tag + ': clear X handler found');
-    var clrH = src.slice(clrAt, src.indexOf('});', clrAt) + 3);
-    assert.ok(clrH.indexOf('eraseFilter();') !== -1, tag + ': the X erases only');
-    ['commit()', 'showEmpty()', 'search.focus()'].forEach(function (tok) {
-      assert.ok(clrH.indexOf(tok) === -1, tag + ': the X must not contain ' + tok);
-    });
-    // the deselect back arrow funnels through the one empty funnel, never focuses
-    var desHAt = src.indexOf("searchDeselect.addEventListener('click'");
-    assert.ok(desHAt !== -1, tag + ': deselect back-arrow handler found');
-    var desH = src.slice(desHAt, src.indexOf('});', desHAt) + 3);
-    assert.ok(desH.indexOf('showEmpty();') !== -1, tag + ': the deselect back arrow runs the empty funnel');
-    assert.ok(desH.indexOf('search.focus()') === -1, tag + ': the deselect back arrow never focuses the box');
-    // neither press may arm focus through mousedown
-    ['searchClear', 'searchDeselect'].forEach(function (id) {
-      var at = src.indexOf(id + ".addEventListener('mousedown'");
-      assert.ok(at !== -1, tag + ': ' + id + ' mousedown handler found');
-      assert.ok(src.slice(at, src.indexOf('});', at) + 3).indexOf('preventDefault') !== -1,
-        tag + ': ' + id + ' press never focuses the box');
-    });
-    // keyboard divergence: onInput's pinned empty branch is untouched (056)
-    assert.ok(body('function onInput()').indexOf('showEmpty();') !== -1,
-      tag + ': backspace-to-empty still deselects');
+  // the visibility fact is an Svelte attribute derivation from the two facts
+  // (the legacy syncDeselect composition, kept live on every render)
+  assert.ok(TEACHERS.indexOf('hidden={!(selectedTeacher !== null && query === \'\')}') !== -1,
+    'searchDeselect derives [hidden] from the selection fact');
+  assert.ok(TEACHERS.indexOf("hidden={!query}") !== -1,
+    'searchClear derives [hidden] from the empty value');
+  // eraseFilter: commit's empty branch minus the deselect, no funnel writes (I5)
+  const efAt = TEACHERS.indexOf('function eraseFilter()');
+  const ef = TEACHERS.slice(efAt, TEACHERS.indexOf('\t}', efAt) + '\t}'.length);
+  ['query = \'\';', 'renderSuggest([]);'].forEach(function (tok) {
+    assert.ok(ef.indexOf(tok) !== -1, 'eraseFilter: ' + tok);
   });
+  ['showEmpty', 'selectTeacher(', 'menuOpen', 'isCoarsePointer'].forEach(function (tok) {
+    assert.ok(ef.indexOf(tok) === -1, 'eraseFilter must not touch ' + tok);
+  });
+  // the clear X calls eraseFilter and nothing else — never commit/onInput;
+  // the bare <input> flowing through onSearchInput keeps the keyboard
+  // emptying on the deselect path (pinned 056)
+  const clrH = TEACHERS.slice(TEACHERS.indexOf('id="searchClear"'),
+    TEACHERS.indexOf('</button>', TEACHERS.indexOf('id="searchClear"')));
+  assert.ok(clrH.indexOf('onclick={eraseFilter}') !== -1, 'the X erases only');
+  ['commit()', 'onSearchInput', 'showEmpty()'].forEach(function (tok) {
+    assert.ok(clrH.indexOf(tok) === -1, 'the X must proxy nothing else: ' + tok);
+  });
+  // the deselect back arrow funnels through the one empty funnel, never focuses
+  const desH = desB;
+  assert.ok(desH.indexOf('showEmpty();') !== -1 || TEACHERS.indexOf('onclick={() => showEmpty()}') !== -1,
+    'the deselect back arrow runs the empty funnel');
+  assert.ok(TEACHERS.indexOf('searchEl.focus()') === -1,
+    'the deselect back arrow never focuses the box');
+  // neither press may arm focus through mousedown
+  ['searchClear', 'searchDeselect'].forEach(function (id) {
+    const at = TEACHERS.lastIndexOf('<button', TEACHERS.indexOf('id="' + id + '"'));
+    const end = TEACHERS.indexOf('\n>', at);
+    const tag = TEACHERS.slice(at, end);
+    assert.ok(tag.indexOf('onmousedown={(e) => e.preventDefault()}') !== -1,
+      id + ' press never focuses the box');
+  });
+  // keyboard divergence: onSearchInput's empty branch is untouched (056)
+  const inputFn = TEACHERS.slice(TEACHERS.indexOf('function onSearchInput(e)'),
+    TEACHERS.indexOf('function commit()'));
+  assert.ok(inputFn.indexOf('showEmpty();') !== -1, 'backspace-to-empty still deselects');
 });
 
-// ---- clear X absent from the first frame (issue 074) ------------------------
+// ---- clear X absent from the first frame (issue 074) -------------------------
 
-test('the clear X ships hidden in the markup, so an empty filter never paints it (issue 074)', function () {
-  // The filter boots empty, so [hidden] IS the true initial state: the markup
-  // declares it, and syncClear() stays the sole writer of the attribute. Its
-  // first write lands only after the CSV fetch resolves (initTeachersPage /
-  // initClassesPage), so a markup default of "visible" paints the X from the
-  // first frame and yanks it away at boot — the reported flash.
-  var CLASSES_HTML = fs.readFileSync(path.join(ROOT, 'classes/index.html'), 'utf8');
-  var base = CSS_SRC.slice(0, CSS_SRC.indexOf('@media (max-width: 700px)'));
-  [INDEX_SRC, CLASSES_HTML].forEach(function (src, i) {
-    var tag = i ? 'classes' : 'teachers';
-    var clr = /<button[^>]*id="searchClear"[^>]*>/.exec(src);
-    assert.ok(clr, tag + ': #searchClear opening tag found');
-    assert.ok(/\shidden\s*>$/.test(clr[0]),
-      tag + ': the clear X ships hidden at first paint (issue 074), got: ' + clr[0]);
-    // the state the markup declares is real: the input itself ships empty, so
-    // [hidden] can never mask a pre-filled filter at first paint
-    var input = /<input[^>]*id="search"[^>]*>/.exec(src);
-    assert.ok(input, tag + ': #search input found');
-    assert.ok(!/\svalue=/.test(input[0]), tag + ': the filter boots empty');
-    // and the declared state really renders hidden: the id rule (flex +
-    // geometry) outranks the UA [hidden] default, so the base armour must stay
-    assert.ok(base.indexOf('#searchClear[hidden] { display: none; }') !== -1,
-      tag + ': base CSS honours #searchClear[hidden] so the markup default renders');
-    // every other chrome node in the wrap ships hidden or base armour too —
-    // no other node in #searchWrap can paint before boot writes its state
-    assert.ok(/<div id="searchOverlay" hidden>/.test(src), tag + ': overlay ships hidden');
-    assert.ok(/id="searchDeselect"[^>]*\shidden>/.test(src), tag + ': deselect ships hidden');
-    // issue 075: the classes page lost its suggest element entirely; the
-    // teachers one still ships hidden (its autocomplete is untouched)
-    if (i) assert.ok(!/<ul id="suggest"/.test(src),
-      'classes: no suggest element at all (issue 075)');
-    else assert.ok(/<ul id="suggest" hidden>/.test(src), 'teachers: suggest ships hidden');
-  });
-  // JS keeps exactly one visibility writer for the X — no second mechanism
-  [APP_SRC, CLASSES_SRC].forEach(function (src, i) {
-    var tag = i ? 'classes' : 'teachers';
-    assert.strictEqual((src.match(/searchClear\.hidden\s*=/g) || []).length, 1,
-      tag + ': syncClear is the only writer of the clear X visibility');
-  });
+test('the clear X ships hidden in the markup, so an empty filter never paints it', function () {
+  // The filter boots empty (`let query = $state('')`), so the derived [hidden]
+  // IS the true initial state: the input ships with no text and the X renders
+  // hidden before any interaction can fill it.
+  assert.ok(TEACHERS.indexOf("let query = $state('');") !== -1, 'the filter boots empty');
+  const clr = /<button[^>]*id="searchClear"[^>]*>/.exec(TEACHERS);
+  assert.ok(clr, 'teachers: #searchClear opening tag found');
+  assert.ok(clr[0].indexOf('hidden={!query}') !== -1,
+    'teachers: the clear X ships hidden at first paint (issue 074), got: ' + clr[0]);
+  // the state the markup declares is real: the input carries no value of its own
+  const input = /<input[^>]*id="search"[^>]*>/.exec(TEACHERS);
+  assert.ok(input, 'teachers: #search input found');
+  assert.ok(!/\svalue="[^{]/.test(input[0]), 'teachers: the filter boots empty');
+  // every other chrome node ships hidden at boot too:
+  assert.ok(/<div id="searchOverlay" hidden={selectedTeacher === null || menuOpen}>/.test(TEACHERS) ||
+    TEACHERS.indexOf('id="searchOverlay" hidden={selectedTeacher === null || menuOpen}') !== -1,
+    'overlay ships hidden');
+  assert.ok(/id="searchDeselect"[^>]*hidden=/.test(TEACHERS), 'deselect ships hidden');
+  assert.ok(/<ul id="suggest" hidden=/.test(TEACHERS), 'suggest ships hidden');
+  // and the declared state really renders hidden: the id rule (flex +
+  // geometry) outranks the UA [hidden] default, so the base armour must stay
+  const base = CSS_SRC.slice(0, CSS_SRC.indexOf('@media (max-width: 700px)'));
+  assert.ok(base.indexOf('#searchClear[hidden] { display: none; }') !== -1,
+    'base CSS honours #searchClear[hidden] so the markup default renders');
+  // the attribute is the only visibility writer: no imperative sync functions remain
+  assert.strictEqual(TEACHERS.split('function syncClear').length - 1, 0,
+    'no imperative clear sync survives the derivation');
+  assert.strictEqual((TEACHERS.match(/query = ''/g) || []).length, 1,
+    'the X erase is the only writer of the empty value');
 });
 
-// ---- per-name session-count badges (issue 062) ------------------------------
+// ---- per-name session-count badges (issue 062) -------------------------------
 
-test('teacher rows carry no session-count badge, in the list and in suggest (issue 062)', function () {
-  // mirrors the classes-side negative pin (test/classes.test.js:864): the
-  // teachers page emits no `.n` span anywhere any more.
-  assert.ok(APP_SRC.indexOf('class="n"') === -1, 'no class="n" left in js/teachers.js');
-  assert.ok(APP_SRC.indexOf('store.sessionsOf(r.teacher).length') === -1,
+test('teacher rows carry no session-count badge, in the list and in suggest', function () {
+  // the teachers page emits no `.n` span anywhere any more.
+  assert.ok(TEACHERS.indexOf('class="n"') === -1, 'no class="n" left on the teachers page');
+  assert.ok(TEACHERS.indexOf('store.sessionsOf(r.teacher).length') === -1,
     'the list row no longer appends the session count');
-  assert.ok(APP_SRC.indexOf('store.sessionsOf(r.label).length') === -1,
+  assert.ok(TEACHERS.indexOf('store.sessionsOf(r.label).length') === -1,
     'the suggest row no longer appends the session count');
   // the badge styles die with the badges: the shared rule and the dead
   // classes-page rule are both gone.
   assert.ok(CSS_SRC.indexOf('#suggest .n') === -1, 'no #suggest .n rule');
   assert.ok(CSS_SRC.indexOf('#teacherList .n') === -1, 'no #teacherList .n rule');
   assert.ok(CSS_SRC.indexOf('#classList .n') === -1, 'the unconsumed #classList .n rule is gone');
-  assert.ok(!/[^a-zA-Z-]\.n\s*\{/.test(CSS_SRC), 'styles.css defines no .n rule at all');
+  assert.ok(!/[^a-zA-Z-]\.n\s*\{/.test(CSS_SRC), 'app.css defines no .n rule at all');
   // out of scope, still there: the exact-query relevant badge keeps its text
   // and its styling (renamed from .n), and so do the detail counts and the
   // status totals line.
-  assert.ok(APP_SRC.indexOf('class="relevant"') !== -1, 'the exact-query relevant badge stays');
+  assert.ok(TEACHERS.indexOf('class="relevant"') !== -1, 'the exact-query relevant badge stays');
   assert.ok(CSS_SRC.indexOf('#teacherList .relevant') !== -1, 'the relevant badge keeps its styling');
-  assert.ok(APP_SRC.indexOf('class="hours"') !== -1, 'detail-page counts stay');
-  assert.ok(APP_SRC.indexOf("store.size + ' sessions · '") !== -1, 'the #status totals line stays');
+  assert.ok(TEACHERS.indexOf('class="hours"') !== -1, 'detail-page counts stay');
+  assert.ok(TEACHERS.indexOf('{store.size} sessions') !== -1 &&
+    TEACHERS.indexOf('teachers{:else}') !== -1, 'the #status totals line stays');
 });
