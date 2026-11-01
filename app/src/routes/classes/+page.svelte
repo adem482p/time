@@ -29,7 +29,7 @@
 	import * as color from '$lib/color.js';
 	import { shortcutOf } from '$lib/libgroups.js';
 	import { esc, nameHTML } from '$lib/data.js';
-	import { headingHTML, nextArrowHTML } from '$lib/display.js';
+	import { headingHTML } from '$lib/display.js';
 	import { clock } from '$lib/clock.js';
 	import * as kaomoji from '$lib/kaomoji.js';
 	import { registerApp } from '$lib/register.js';
@@ -294,34 +294,6 @@
 	// the one fresh clock per render pass (issue 051): the cursor
 	const cursor = $derived(store ? model.dayCursor(now, store.slots) : null);
 
-	// Group the week's sessions by day|slot once, so each grid cell just
-	// looks up its own list.
-	function indexByDaySlot(week) {
-		const by = {};
-		week.sessions.forEach((s) => {
-			const k = s.day + '|' + s.time;
-			(by[k] = by[k] || []).push(s);
-		});
-		return by;
-	}
-
-	/** the detail's day groups, start-from-today order (issue 050). */
-	const dayGroups = $derived.by(() => {
-		if (!sel || !sel.week) return [];
-		const week = sel.week;
-		let dayOrder = [];
-		const byDay = {};
-		week.sessions.forEach((s) => {
-			if (!byDay[s.day]) {
-				byDay[s.day] = [];
-				dayOrder.push(s.day);
-			}
-			byDay[s.day].push(s);
-		});
-		dayOrder = model.startFromToday(dayOrder, week.sessions, now);
-		return dayOrder.map((day) => ({ day: day, sessions: byDay[day] }));
-	});
-
 	// days with no live stake (no now/next session) render dimmed
 	const liveDays = $derived.by(() => {
 		const map = {};
@@ -415,44 +387,7 @@
 		openMenu();
 	}
 
-	// ---- cursor positioning (the successor of applyCursor) --------------------
-	// Every tick re-renders from the fresh clock, and the markup derives the
-	// now/next/today classes itself; what needs the DOM is red cursor line.
-	// Idempotent: repositions (and shows/hides) the line without a full
-	// re-render, every time the week or the clock changes.
-
-	let weekWrapEl = $state(null);
-	let cursorLineEl = $state(null);
 	let searchEl = $state(null);
-
-	$effect(() => {
-		// the `sel` read makes the repositioning re-run after a class switch
-		const s = sel;
-		const c = cursor;
-		const wrap = weekWrapEl;
-		const line = cursorLineEl;
-		if (!s || !s.week || !wrap || !line || !store || !c) return;
-		if (!c.visible) {
-			line.style.display = 'none';
-			return;
-		}
-		line.style.display = '';
-		const trs = wrap.querySelectorAll('tbody tr');
-		// In the short gaps between slots no slot is current; the line
-		// then rests on the boundary — the next row's top edge (frac is
-		// null there, hence the || 0).
-		const slot = c.cur || c.next;
-		const idx = slot ? store.slots.indexOf(slot) : -1;
-		if (idx < 0 || idx >= trs.length) return;
-		const tr = trs[idx];
-		const wrapRect = wrap.getBoundingClientRect();
-		const trRect = tr.getBoundingClientRect();
-		line.style.top = trRect.top - wrapRect.top + (c.frac || 0) * trRect.height + 'px';
-		// Span the full (possibly scrollable) grid: on narrow screens the
-		// grid scrolls horizontally inside .weekwrap, and the absolutely
-		// positioned line must keep crossing it at every scroll offset.
-		line.style.width = wrap.scrollWidth + 'px';
-	});
 
 	// ---- display helpers (the legacy classes.js head + week walks) -----------
 
@@ -532,41 +467,6 @@
 				'</dd></div>';
 		});
 		return h + '</dl>';
-	}
-
-	/** today-only next mark for a session row: the clock's cursor slot on
-	 * today, never nextSessionIdx (it wraps into the coming days). */
-	function nextMark(s) {
-		const c = cursor;
-		return !!c && c.visible && s.day === c.today && s.time === c.next;
-	}
-
-	/** classes for one day-group session row (now/next driven only). */
-	function sessionRowClasses(s) {
-		const isNow = model.isCurrentSession(s.day, s.time, now);
-		const isNext = !isNow && nextMark(s);
-		return color.sessionRow({ isNow: isNow, isNext: isNext, dimIdle: false }).join(' ');
-	}
-
-	// ---- week grid cells ------------------------------------------------------
-
-	/** the today class gate for a day header. */
-	function isTodayCell(d) {
-		const c = cursor;
-		return !!c && c.visible && d === c.today;
-	}
-
-	/** one grid cell: its sessions lookup plus the now/next/today classes.
-	 * now/next only occur inside today's column; model.dayCursor() already
-	 * suppresses both outside the current slot window (Sunday, before 08h15,
-	 * after 18h15). */
-	function weekCell(d, slot) {
-		const c = cursor;
-		const isNow = !!c && c.visible && d === c.today && slot === c.cur;
-		const isNext = !!c && c.visible && d === c.today && slot === c.next;
-		const classes = color.weekCell({ isNow: isNow, isNext: isNext });
-		if (c && c.visible && d === c.today) classes.push(color.CLASSES.today);
-		return { classes: classes, sessions: indexByDaySlot(sel.week)[d + '|' + slot] || [] };
 	}
 
 	// ---- list row body (the legacy renderList innerHTML walk) -----------------
@@ -735,8 +635,6 @@
 				week={sel.week}
 				cursor={cursor}
 				now={now}
-				bind:weekWrapEl
-				bind:cursorLineEl
 			/>
 		{:else if sel && !sel.week}
 			<!-- the legacy showClass gate: a non-leaf (or stale) reference -->

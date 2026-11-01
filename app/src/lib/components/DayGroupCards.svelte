@@ -5,7 +5,7 @@
 	import * as model from '$lib/model.js';
 	import * as color from '$lib/color.js';
 	import { esc } from '$lib/data.js';
-	import { headingHTML, nextArrowHTML } from '$lib/display.js';
+	import { headingHTML } from '$lib/display.js';
 	import { nameHTML } from '$lib/data.js';
 
 	let { week, cursor, now, liveDays } = $props();
