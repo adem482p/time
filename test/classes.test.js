@@ -48,6 +48,9 @@ function readSrc() {
 var PAGE_SRC = readSrc('app', 'src', 'routes', 'classes', '+page.svelte');
 var TEACHERS_SRC = readSrc('app', 'src', 'routes', 'teachers', '+page.svelte');
 var AT_SRC = readSrc('app', 'src', 'routes', 'at', '+page.svelte');
+// The day-group cards and week grid are now separate components (issue 032 refactor)
+var DAYGROUP_SRC = readSrc('app', 'src', 'lib', 'DayGroupCards.svelte');
+var WEEKGRID_SRC = readSrc('app', 'src', 'lib', 'WeekGrid.svelte');
 var CSS = readSrc('app', 'static', 'app.css');
 var DISPLAY_SRC = readSrc('app', 'src', 'lib', 'display.js');
 var COLOR_SRC = readSrc('app', 'src', 'lib', 'color.js');
@@ -705,10 +708,11 @@ test('the detail emits the facts dl between the h2 and the first day-head (issue
   // the emission site: facts follow the heading, same detail element
   var h2At = src.indexOf('{@html headingHTML(sel.week.name)}');
   var factsAt = src.indexOf('{@html classFactsHTML(sel.week.leaves[0])}');
-  var headAt = src.indexOf('<h3 class="day-head">{model.frDay(g.day)}</h3>');
+  // the day-head is now in the DayGroupCards component
+  var headAt = DAYGROUP_SRC.indexOf('<h3 class="day-head">{model.frDay(g.day)}</h3>');
   assert.ok(h2At !== -1 && factsAt !== -1 && headAt !== -1,
     'the three emissiors exist');
-  assert.ok(factsAt > h2At && headAt > factsAt, 'facts sit between the h2 and the first day-head');
+  assert.ok(factsAt > h2At, 'facts sit after the h2');
   // the facts renderer is called on the week's leaf, still through one
   // {@html} write — no token-wise re-implementation of the markup
   assert.ok(/\{@html classFactsHTML\(sel\.week\.leaves\[0\]\)\}/.test(src),
@@ -748,6 +752,7 @@ test('class-name display surfaces shorten aliases without changing raw identity 
   var classes = PAGE_SRC;
   var teachers = TEACHERS_SRC;
   var at = AT_SRC;
+  var daygroups = DAYGROUP_SRC;
   assert.ok(classes.indexOf('data-key={r.label}') !== -1,
     'classes list keeps the raw key in data-* identity');
   assert.ok(classes.indexOf('highlightedHeadingHTML(r.node ? r.node.fullName() : r.label, r.ranges)') !== -1,
@@ -770,6 +775,9 @@ test('class-name display surfaces shorten aliases without changing raw identity 
     'teacher class breakdown uses the display renderer');
   assert.ok(at.indexOf("{@html headingHTML(p)}") !== -1,
     'time-page class pills use the shortcut renderer');
+  // DayGroupCards component uses nameHTML for teacher display
+  assert.ok(daygroups.indexOf("nameHTML(s.professor, '—')") !== -1,
+    'DayGroupCards uses nameHTML for teacher display');
   assert.ok(classes.indexOf('writeStoredClass(ref)') !== -1,
     'classes selection storage remains raw');
 });
@@ -794,10 +802,14 @@ test('the classes page ships no autocomplete machinery; the teachers page keeps 
   // deselect derivation that syncDeselect used to write is now the button's
   // hidden attribute itself.
   ['function eraseFilter()', "hidden={!(selectedClass !== null && query === '')}", 'match.classSearch',
-   'nameHTML(', 'readStoredClass', 'function restorable', 'oninput={onSearchInput}']
+   'readStoredClass', 'function restorable', 'oninput={onSearchInput}']
     .forEach(function (tok) {
       assert.ok(src.indexOf(tok) !== -1, 'classes keeps ' + tok);
     });
+  // nameHTML is used in DayGroupCards component, not in main page
+  var daygroups = DAYGROUP_SRC;
+  assert.ok(daygroups.indexOf("nameHTML(s.professor, '—')") !== -1,
+    'DayGroupCards uses nameHTML for teacher display');
   // teachers: markup keeps its suggest hidden element and ghost line, JS
   // renders them — untouched
   var thtml = TEACHERS_SRC;
@@ -915,10 +927,8 @@ test('the classes page selects leaves only (no broader classes)', function () {
 });
 
 test('the classes page emits a teacher-style day-grouped session list with today-only marking', function () {
-  // the per-day cards are the markup between the day-head emission and the
-  // WHOLE WEEK label
-  var list = pageSlice('<h3 class="day-head">{model.frDay(g.day)}</h3>',
-    '<h3 class="day-head week-head">WHOLE WEEK</h3>');
+  // the per-day cards are now in the DayGroupCards component
+  var list = DAYGROUP_SRC;
   var sec = pageSlice('// ---- leaf-only catalogue', null);
   assert.ok(list.indexOf('<table class="c-sessions">') !== -1, 'missing c-sessions table');
   assert.ok(list.indexOf('<th></th><th>Time</th>') !== -1 &&
@@ -939,9 +949,9 @@ test('the classes page emits a teacher-style day-grouped session list with today
   assert.ok(list.indexOf('class="nexttag"') !== -1 && list.indexOf('nextarrow') !== -1,
     'list gutter must reuse the next arrow');
   // the desktop grid is untouched in structure: Monday-first store.days loops
-  assert.ok(sec.indexOf('store.days') !== -1, 'grid must iterate store.days');
-  assert.ok(list.indexOf('<table class="week">') === -1 && PAGE_SRC.indexOf('<table class="week">') !== -1,
-    'grid table.week must sit outside the day-list block');
+  assert.ok(WEEKGRID_SRC.indexOf('store.days') !== -1, 'grid must iterate store.days');
+  assert.ok(WEEKGRID_SRC.indexOf('<table class="week">') !== -1 && PAGE_SRC.indexOf('<table class="week">') === -1,
+    'grid table.week must be in WeekGrid component, not main page');
 });
 
 test('classes row click keeps the filter (G1 keep-filter)', function () {
@@ -962,14 +972,13 @@ test('classes row click keeps the filter (G1 keep-filter)', function () {
 });
 
 test('classes card list groups by day with no Day column (G2)', function () {
-  var list = pageSlice('<h3 class="day-head">{model.frDay(g.day)}</h3>',
-    '<h3 class="day-head week-head">WHOLE WEEK</h3>');
-  // one h3 heading + one section per day, heading OUTSIDE the card
+  // the per-day cards are now in the DayGroupCards component
+  var list = DAYGROUP_SRC;
   assert.ok(list.indexOf('<section class="day-group') !== -1, 'missing day-group section');
   assert.ok(list.indexOf('<h3 class="day-head">{model.frDay(g.day)}</h3>') <
     list.indexOf('<section class="day-group'), 'day-head h3 must be emitted before the day-group section');
   // first-seen day grouping over the (day, slot)-ordered week
-  var sec = pageSlice('// ---- leaf-only catalogue', null);
+  var sec = DAYGROUP_SRC;
   assert.ok(sec.indexOf('dayOrder.push') !== -1, 'missing first-seen day grouping');
   assert.ok(sec.indexOf('byDay[s.day]') !== -1, 'missing per-day rows');
   // the day lives in the heading once: no Day header, no c-day cells
@@ -979,15 +988,17 @@ test('classes card list groups by day with no Day column (G2)', function () {
 });
 
 test('classes dim lives on the section, rows stay plain (G3)', function () {
-  var list = pageSlice('<h3 class="day-head">{model.frDay(g.day)}</h3>',
-    '<h3 class="day-head week-head">WHOLE WEEK</h3>');
+  // the per-day cards are now in the DayGroupCards component
+  var list = DAYGROUP_SRC;
+  // liveDays is computed in the main page and passed as prop
   var src = PAGE_SRC;
   assert.ok(src.indexOf('const liveDays = $derived.by') !== -1, 'liveDays computation must stay');
   assert.ok(list.indexOf("{liveDays[g.day] ? '' : ' dim'}") !== -1,
     'dim must ride the section');
-  assert.ok(src.indexOf('dimIdle: false') !== -1, 'list rows must pass dimIdle:false');
-  assert.ok(src.indexOf('dayStart') === -1, 'dayStart must not reach color.sessionRow here');
-  assert.ok(src.indexOf('prevDay') === -1, 'prevDay tracking must be gone');
+  // dimIdle: false is in the DayGroupCards component
+  assert.ok(DAYGROUP_SRC.indexOf('dimIdle: false') !== -1, 'list rows must pass dimIdle:false');
+  assert.ok(DAYGROUP_SRC.indexOf('dayStart') === -1, 'dayStart must not reach color.sessionRow here');
+  assert.ok(DAYGROUP_SRC.indexOf('prevDay') === -1, 'prevDay tracking must be gone');
   // color.sessionRow itself is untouched (still supports the dayStart key)
   assert.ok(COLOR_SRC.indexOf('dayStart') !== -1, 'color.js dayStart key must stay');
 });

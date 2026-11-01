@@ -33,6 +33,8 @@
 	import { clock } from '$lib/clock.js';
 	import * as kaomoji from '$lib/kaomoji.js';
 	import { registerApp } from '$lib/register.js';
+	import WeekGrid from '$lib/WeekGrid.svelte';
+	import DayGroupCards from '$lib/DayGroupCards.svelte';
 
 	let store = $state(null);
 	let modelObjs = $state(null);
@@ -719,100 +721,23 @@
 			     (an interior node name) falls back inside headingHTML -->
 			<h2>{@html headingHTML(sel.week.name)}</h2>
 			{@html classFactsHTML(sel.week.leaves[0])}
-			<!-- Per-day session groups, rendered on every viewport: desktop
-			     shows the sections above the week grid, narrow screens shape
-			     them into cards (teacher-style, via the generic mobile table
-			     rules; the whole-week label and grid below are display:none on
-			     narrow). One day-group section per non-empty day, cyclic from
-			     today (issue 050), mirroring showTeacher — the day lives in the
-			     heading once, so there is no Day column and `dim` moves to the
-			     section. Row marking mirrors showTeacher with today-only
-			     semantics: the same `now` and the computed `cursor` keep the
-			     grid and the lists consistent; never nextSessionIdx (it wraps
-			     into the coming days). -->
-			{#each dayGroups as g (g.day)}
-				<h3 class="day-head">{model.frDay(g.day)}</h3>
-				<section class="day-group{liveDays[g.day] ? '' : ' dim'}">
-					<table class="c-sessions">
-						<tbody>
-							<tr><th></th><th>Time</th><th>Teacher</th><th>Subject</th><th>Room</th></tr>
-							{#each g.sessions as s, i (i)}
-								<tr class={sessionRowClasses(s)}>
-								<td>
-									{#if model.isCurrentSession(s.day, s.time, now)}
-										<span class="nowtag">● NOW</span>
-									{:else if nextMark(s)}
-										<span class="nexttag"
-											><svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true"
-												><path d="M4 12h14M12 6l6 6-6 6" /></svg
-											>NEXT</span
-										>
-									{/if}
-								</td>
-								<td class="c-time">{esc(s.time)}</td>
-								<td class="c-teacher">{@html nameHTML(s.professor, '—')}</td>
-								<td class="c-subject">{esc(s.subject)}</td>
-								<td class="c-room">{esc(s.room || '—')}</td>
-							</tr>
-							{/each}
-						</tbody>
-					</table>
-				</section>
-			{/each}
-			<!-- the week grid (days as columns), after the day sections
-			     (issue 048). Desktop labels it WHOLE WEEK below; on narrow
-			     screens the label and this grid are display:none — the day cards
-			     are the whole narrow view. -->
-			<h3 class="day-head week-head">WHOLE WEEK</h3>
-			<div class="weekwrap" bind:this={weekWrapEl}>
-				<table class="week">
-					<thead>
-						<tr>
-							<th class="cgutter"></th><th class="timecol"></th>
-							{#each store.days as d (d)}
-								<th
-									class="c-day{isTodayCell(d) ? ' ' + color.CLASSES.today : ''}"
-									data-day={d}
-								>
-									{model.frDay(d)}
-								</th>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each store.slots as slot (slot)}
-							<tr data-slot={slot}>
-								<td class="cgutter"></td>
-								<td class="c-time">{esc(slot)}</td>
-								{#each store.days as d (d)}
-									{@const cell = weekCell(d, slot)}
-									{@const sessions = cell.sessions}
-									<td
-										class="c-cell{cell.classes.length ? ' ' + cell.classes.join(' ') : ''}"
-										data-day={d}
-										data-slot={slot}
-									>
-										{#each sessions as s, i (i)}
-											<div class="sess">
-												<span class="s-subject">{esc(s.subject)}</span>
-												<span class="s-teacher">{@html nameHTML(s.professor, '—')}</span>
-												<span class="s-room">{esc(s.room || '—')}</span>
-											</div>
-										{/each}
-									</td>
-								{/each}
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-				<!-- the semi-transparent red cursor line (positioned by the
-				     effect above) -->
-				<div class="cursor" aria-hidden="true" bind:this={cursorLineEl}
-					style={'display:' + (cursor && cursor.visible ? '' : 'none')}
-				>
-					<div class="cursor-arrow"></div>
-				</div>
-			</div>
+			<!-- Day-group session cards (mobile) and week grid (desktop) are
+			     now separate components that share the same derived state.
+			     The CSS controls which one is visible per viewport. -->
+			<DayGroupCards
+				week={sel.week}
+				cursor={cursor}
+				now={now}
+				liveDays={liveDays}
+			/>
+			<WeekGrid
+				store={store}
+				week={sel.week}
+				cursor={cursor}
+				now={now}
+				bind:weekWrapEl
+				bind:cursorLineEl
+			/>
 		{:else if sel && !sel.week}
 			<!-- the legacy showClass gate: a non-leaf (or stale) reference -->
 			<p class="nomatch">No class matches "{esc(sel.ref)}".</p>
