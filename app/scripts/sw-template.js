@@ -191,7 +191,7 @@ self.addEventListener('activate', function (event) {
   event.waitUntil(
     caches.keys().then(function (ks) {
       return Promise.all(ks.filter(function (k) {
-        return (k.indexOf(SNAPSHOT_PREFIX) === 0 && k !== SNAPSHOT__LEGACY_ROOT_CLAUSE__;
+        return (k.indexOf(SNAPSHOT_PREFIX) === 0 && k !== SNAPSHOT)__LEGACY_ROOT_CLAUSE__;
       }).map(function (k) { return caches.delete(k); }));
     }).then(function () { return self.clients.claim(); })
   );

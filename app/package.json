@@ -7,7 +7,7 @@
     "predev": "node scripts/sync-static.mjs",
     "build": "vite build",
     "prebuild": "node scripts/sync-static.mjs",
-    "postbuild": "node scripts/gen-sw.mjs",
+    "postbuild": "node scripts/stamp-page.mjs && node scripts/gen-sw.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
