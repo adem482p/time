@@ -9,16 +9,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(HERE, '..');
-
-function readSrc(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), 'utf8');
-}
+import { readSrc } from './helpers.js';
 
 test('the committed exact-query machinery stays removed', function () {
   var src = readSrc('app/src/lib/match.js');

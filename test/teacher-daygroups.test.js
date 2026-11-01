@@ -19,17 +19,17 @@ import { createStore } from '../app/src/lib/data.js';
 import * as model from '../app/src/lib/model.js';
 import * as match from '../app/src/lib/match.js';
 import * as color from '../app/src/lib/color.js';
+import { CSV_PATH, readSrc } from './helpers.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CSV_PATH = path.join(ROOT, 'app', 'static', 'emplois.csv');
 
 var store = createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 var modelObjs = model.buildAll(store);
 var groups = modelObjs.groups;
 var index = match.buildIndex(store, modelObjs);
 
-var TEACHERS = fs.readFileSync(path.join(ROOT, 'app/src/routes/teachers/+page.svelte'), 'utf8');
-var CSS_SRC = fs.readFileSync(path.join(ROOT, 'app/static/app.css'), 'utf8');
+var TEACHERS = readSrc('app', 'src', 'routes', 'teachers', '+page.svelte');
+var CSS_SRC = readSrc('app', 'static', 'app.css');
 
 // ---- fixed clocks -----------------------------------------------------------
 // 2026 (same week figures as the pre-port run): Wed 2026-09-14, Fri 16,

@@ -25,31 +25,18 @@
 
 import test from 'node:test';
 import assert from 'node:assert';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readSrc, cssRule } from './helpers.js';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const APP = path.join(HERE, '..', 'app');
-
-function readSrc(rel) {
-	return fs.readFileSync(path.join(APP, rel), 'utf8');
-}
-
-const CSS = readSrc('static/app.css');
-const TEACHERS = readSrc('src/routes/teachers/+page.svelte');
-const CLASSES = readSrc('src/routes/classes/+page.svelte');
-const AT = readSrc('src/routes/at/+page.svelte');
-const ALL = readSrc('src/routes/all/+page.svelte');
+const CSS = readSrc('app', 'static', 'app.css');
+const TEACHERS = readSrc('app', 'src', 'routes', 'teachers', '+page.svelte');
+const CLASSES = readSrc('app', 'src', 'routes', 'classes', '+page.svelte');
+const AT = readSrc('app', 'src', 'routes', 'at', '+page.svelte');
+const ALL = readSrc('app', 'src', 'routes', 'all', '+page.svelte');
 
 // the first `{…}` block after `sel` — the suite's usual rule-extraction idiom
+// (local variant: cssRule from helpers with identical behavior)
 function rule(css, sel) {
-	const at = css.indexOf(sel);
-	assert.ok(at !== -1, 'missing rule for ' + sel);
-	const open = css.indexOf('{', at);
-	const close = css.indexOf('}', open);
-	assert.ok(open !== -1 && close !== -1, 'unterminated rule for ' + sel);
-	return css.slice(open + 1, close);
+	return cssRule(css, sel);
 }
 
 // ---- (1) the unified h1 ----------------------------------------------------

@@ -1,0 +1,146 @@
+// Shared test plumbing, consolidated from the per-suite copies. Every export
+// must behave exactly like the definition it replaced — same regexes, same
+// default arguments, same returned shapes — so all assertions below keep
+// reading byte-identical material. Assertions themselves still live in the
+// suites; only the plumbing moved here.
+
+import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// The repo root this suite runs from (the parent of test/).
+export var ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// The one canonical CSV path. AGENTS.md: the ROOT file is the single source of
+// truth for every suite — the app/static copy is a build artifact of the site,
+// not a second dataset, so suites must not split between the two.
+export var CSV_PATH = path.join(ROOT, 'emplois.csv');
+
+// Reads a repo file as utf8 text: readSrc('app', 'src', 'lib', 'data.js').
+// Variadic joins ROOT with the parts; single-string call sites
+// (readSrc('app/scripts/sw-template.js')) behave exactly as before.
+export function readSrc(...parts) {
+  return fs.readFileSync(path.join(ROOT, ...parts), 'utf8');
+}
+
+// Resolve a page- or worker-relative URL to a site-root-relative path
+// ('../styles.css' from 'classes' -> 'styles.css', 'index.html' from 'teachers'
+// -> 'teachers/index.html'). Both sides of every offline/PWA comparison go
+// through this, so coverage is checked in one canonical coordinate system.
+export function toRoot(rel, fromDir) {
+  return path.posix.normalize(path.posix.join(fromDir, rel));
+}
+
+// The two independently installable apps (issue 072): each page registers the
+// worker of its own directory, each worker owns its own cache family + status
+// DB. ONE shared descriptor array — the offline and pwa suites used to keep
+// two copies whose overlapping fields (name/dir/page/manifest) could silently
+// drift apart; the union carries every field both suites read (offline:
+// family/db/registerScript; pwa: nameStr/shortName/manifestMode — the issue-078
+// teachers opt-in stays encoded there). No suite ever asserted the whole
+// object, only its own fields, so behaviour is unchanged.
+export var APPS = [
+  {
+    name: 'teachers',
+    dir: 'teachers',
+    page: 'app/src/routes/teachers/+page.svelte',
+    family: 'emplois-teachers-snapshot-',
+    db: 'emplois-teachers-status',
+    registerScript: 'app/src/lib/register.js',
+    manifest: 'app/static/teachers/manifest.json',
+    nameStr: 'Emplois — Enseignants',
+    shortName: 'Enseignants',
+    manifestMode: 'opt-in'
+  },
+  {
+    name: 'classes',
+    dir: 'classes',
+    page: 'app/src/routes/classes/+page.svelte',
+    family: 'emplois-classes-snapshot-',
+    db: 'emplois-classes-status',
+    registerScript: 'app/src/lib/register.js',
+    manifest: 'app/static/classes/manifest.json',
+    nameStr: 'Emplois — Classes',
+    shortName: 'Classes',
+    manifestMode: 'static'
+  }
+];
+
+// Two DIFFERENT URL predicates, exported separately on purpose: they replaced
+// definition sites that share one idea but not one rule.
+//   - isSameOrigin: offline's site-coverage test — anything neither an
+//     http(s)/protocol-relative reference nor a data: URL is fetched
+//     same-origin (no root-absolute clause, no scheme sniffing).
+//   - isRelative: pwa's subpath-safety test (issue 067's lesson) — it
+//     additionally rejects root-absolute "/..." and absolute scheme: URLs,
+//     which break under the production subpath /time/.
+// Merging them would tighten one suite or loosen the other.
+export function isSameOrigin(ref) {
+  return !/^(https?:)?\/\//.test(ref) && !/^data:/.test(ref);
+}
+
+export function isRelative(url) {
+  // Root-absolute ("/..."), protocol-relative ("//...") and absolute URLs break
+  // under the production subpath /time/ (issue 067's lesson).
+  return !/^(https?:)?\/\//.test(url) && !/^\/(?!\/)/.test(url) && !/^[a-z][a-z0-9+.-]*:/i.test(url);
+}
+
+// The <link rel="…"> hrefs of a page source. Matches both double-quoted and
+// expression-wrapped hrefs (Svelte allows href="..." and href={`...`}).
+export function linkHrefs(html, rel) {
+  var out = [], m;
+  // Match both double-quoted and backtick-quoted href attributes.
+  // In Svelte, attributes can be: href="..." or href={`...`} (with expression wrapper)
+  var re = new RegExp('<link\\b[^>]*\\brel="' + rel + '"[^>]*\\bhref=\{?([`"])([^`"]+)\\1\}?', 'g');
+  while ((m = re.exec(html))) out.push(m[2]);
+  return out;
+}
+
+// How many times `needle` occurs in `hay` (split-count idiom, shared by the
+// classes and time suites).
+export function countTok(hay, needle) { return hay.split(needle).length - 1; }
+
+// The first `{…}` block after `sel` — the suite's usual rule-extraction idiom.
+// The NAIVE reader: it stops at the first '}', so it is only valid for flat
+// declaration blocks.
+export function cssRule(css, sel) {
+  const at = css.indexOf(sel);
+  assert.ok(at !== -1, 'missing rule for ' + sel);
+  const open = css.indexOf('{', at);
+  const close = css.indexOf('}', open);
+  assert.ok(open !== -1 && close !== -1, 'unterminated rule for ' + sel);
+  return css.slice(open + 1, close);
+}
+
+// The brace-matched extent of the block that opens after `start` (a marker or
+// rule position the suite has already located — existence/uniqueness
+// assertions stay with the suite). The NESTING-AWARE reader: an @media block
+// carries nested rules and comments mention braces, where a first-index-of
+// '}' would lie. Returns { start, end, block } with block ===
+// css.slice(start, end + 1).
+export function cssBlock(css, start) {
+  const open = css.indexOf('{', start);
+  let depth = 0, end = -1;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    else if (css[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  assert.ok(end !== -1, 'the block closes');
+  return { start, end, block };
+}
+
+// Read a PNG's IHDR: {width, height, colorType} from the real bytes.
+// offset 16..19 width (BE), 20..23 height (BE), 24 bit depth, 25 color type
+// (2 = truecolour RGB — no alpha; 6 = RGBA).
+export function pngIhdr(rel) {
+  var buf = fs.readFileSync(path.join(ROOT, rel));
+  assert.ok(buf.length > 26, rel + ' must be longer than a PNG header');
+  assert.strictEqual(buf.readUInt32BE(0), 0x89504e47, rel + ' must start with the PNG signature');
+  assert.strictEqual(buf.toString('latin1', 12, 16), 'IHDR', rel + ' first chunk must be IHDR');
+  return {
+    width: buf.readUInt32BE(16),
+    height: buf.readUInt32BE(20),
+    colorType: buf.readUInt32BE(25) === 2 ? 2 : buf[25]
+  };
+}
