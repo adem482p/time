@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 import { createStore } from '../app/src/lib/data.js';
 import * as model from '../app/src/lib/model.js';
-import * as match from '../app/src/lib/match.js';
+import * as searchTeachers from '../app/src/lib/search-teachers.js';
 import * as color from '../app/src/lib/color.js';
 import { CSV_PATH, readSrc } from './helpers.js';
 
@@ -26,7 +26,7 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 var store = createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 var modelObjs = model.buildAll(store);
 var groups = modelObjs.groups;
-var index = match.buildIndex(store, modelObjs);
+var index = searchTeachers.buildTeacherIndex(store, modelObjs.groups);
 
 var TEACHERS = readSrc('app', 'src', 'routes', 'teachers', '+page.svelte');
 var CSS_SRC = readSrc('app', 'static', 'app.css');
@@ -455,12 +455,12 @@ test('exact name selects even among partial matches (teachers funnel)', function
     });
     return found;
   }
-  const res = match.searchSections(index, 'Ben Haj', null);
+  const res = searchTeachers.searchSections(index, 'Ben Haj', null);
   assert.strictEqual(res.total, 2, 'Ben Haj fixture must match two teachers');
   assert.strictEqual(exactTeacher(res, 'Ben Haj'), 'Ben Haj');
-  assert.strictEqual(exactTeacher(match.searchSections(index, 'Ben ', null), 'Ben '), null,
+  assert.strictEqual(exactTeacher(searchTeachers.searchSections(index, 'Ben ', null), 'Ben '), null,
     'partial query selects nothing');
-  assert.strictEqual(exactTeacher(match.searchSections(index, '', null), ''), null,
+  assert.strictEqual(exactTeacher(searchTeachers.searchSections(index, '', null), ''), null,
     'empty query selects nothing');
   // wiring: commit consults the exact helper before the count branches
   const commitAt = TEACHERS.indexOf('function commit()');
@@ -641,14 +641,14 @@ test('a teachers tick with no selection re-derives only the list, from the fresh
   });
   assert.strictEqual(availWedA['Bannour'], 'today', 'Wed 10:30 leaves Bannour live today');
   assert.strictEqual(availSun['Bannour'], 'tomorrow', 'Sunday collapses Bannour to tomorrow');
-  const wedOrder = match.searchSections(index, '', availWedA).sections
+  const wedOrder = searchTeachers.searchSections(index, '', availWedA).sections
     .flatMap(function (s) { return s.hits.map(function (h) { return h.teacher; }); });
-  const sunOrder = match.searchSections(index, '', availSun).sections
+  const sunOrder = searchTeachers.searchSections(index, '', availSun).sections
     .flatMap(function (s) { return s.hits.map(function (h) { return h.teacher; }); });
   assert.notDeepStrictEqual(sunOrder, wedOrder, 'availability re-ranks the list');
   assert.notStrictEqual(wedOrder[1], sunOrder[1],
     'the fresh order differs from position 2 (the Sunday collapse)');
-  const fresh = match.searchSections(index, '', availSun).sections
+  const fresh = searchTeachers.searchSections(index, '', availSun).sections
     .flatMap(function (s) { return s.hits.map(function (h) { return h.teacher; }); });
   assert.deepStrictEqual(sunOrder, fresh, 'the fresh Sunday order is the real alphabetical collapse');
   // and the tick touches nothing but the list inputs: no selection writes

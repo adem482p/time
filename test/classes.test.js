@@ -2,7 +2,7 @@
 // `node --test test/classes.test.js`.
 //
 // The pure, DOM-free parts of the page (model.classWeek, model.dayCursor,
-// match.classSearch) are exercised against the real emplois.csv, exactly like
+// searchClasses.searchClasses) are exercised against the real emplois.csv, exactly like
 // test/libgroups.test.js exercises the grouping library. The page itself is
 // checked structurally (Svelte markup / CSS shape) since no browser is
 // available — plus behaviorally for the DOM-free derivations the markup
@@ -31,7 +31,7 @@ import { CSV_PATH, countTok, readSrc } from './helpers.js';
 import { createStore, esc } from '../app/src/lib/data.js';
 import { shortcutOf, fromRows } from '../app/src/lib/libgroups.js';
 import * as model from '../app/src/lib/model.js';
-import * as match from '../app/src/lib/match.js';
+import * as searchClasses from '../app/src/lib/search-classes.js';
 import * as color from '../app/src/lib/color.js';
 import * as display from '../app/src/lib/display.js';
 
@@ -51,7 +51,7 @@ var THEME_SRC = readSrc('app', 'src', 'lib', 'theme.js');
 
 var store = createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 var modelObjs = model.buildAll(store);
-var index = match.buildIndex(store, modelObjs);
+var index = searchClasses.buildClassIndex(modelObjs.groups);
 var groups = modelObjs.groups;
 
 // Slices the page component source between two exact byte markers — the vm
@@ -375,10 +375,10 @@ test('dayCursor defaults to the real clock when none is injected', function () {
   assert.ok(['sunday', 'before', 'during', 'after'].indexOf(c.phase) !== -1);
 });
 
-// ---- match.classSearch -----------------------------------------------------
+// ---- searchClasses.searchClasses -----------------------------------------------------
 
 test('classSearch returns the whole catalogue for an empty query', function () {
-  var rows = match.classSearch(index, '');
+  var rows = searchClasses.searchClasses(index, '');
   assert.strictEqual(rows.length, 163);
   // byte-sorted by key, deterministic
   var keys = rows.map(function (r) { return r.label; });
@@ -387,7 +387,7 @@ test('classSearch returns the whole catalogue for an empty query', function () {
 });
 
 test('classSearch ranks own-key prefix matches first', function () {
-  var rows = match.classSearch(index, 'LCS');
+  var rows = searchClasses.searchClasses(index, 'LCS');
   assert.strictEqual(rows[0].label, 'LCS');
   // the LCS* own-key nodes lead the list
   var own = rows.slice(0, 4).map(function (r) { return r.label; });
@@ -395,12 +395,12 @@ test('classSearch ranks own-key prefix matches first', function () {
 });
 
 test('classSearch finds a fully specified class by exact key', function () {
-  var rows = match.classSearch(index, 'GLSI3D1');
+  var rows = searchClasses.searchClasses(index, 'GLSI3D1');
   assert.deepStrictEqual(rows.map(function (r) { return r.label; }), ['GLSI3D1']);
 });
 
 test('classSearch matches a compact prefix across sections', function () {
-  var rows = match.classSearch(index, 'glsi3d');
+  var rows = searchClasses.searchClasses(index, 'glsi3d');
   assert.deepStrictEqual(
     rows.map(function (r) { return r.label; }),
     ['GLSI3D', 'GLSI3D1', 'GLSI3D2']
@@ -408,7 +408,7 @@ test('classSearch matches a compact prefix across sections', function () {
 });
 
 test('classSearch ranks a year prefix first', function () {
-  var rows = match.classSearch(index, 'lcs1');
+  var rows = searchClasses.searchClasses(index, 'lcs1');
   assert.strictEqual(rows[0].label, 'LCS1');
   assert.ok(rows.length > 1); // the LCS1* subtree follows
 });
@@ -416,13 +416,13 @@ test('classSearch ranks a year prefix first', function () {
 test('classSearch matches a full name via its own tier', function () {
   // the entry's own fullName "LCS2-GLSI_C Groupe 2" is an own
   // match, so GLSI1C2 outranks the alias-only hits
-  var rows = match.classSearch(index, 'LCS2-GLSI_C Groupe 2');
+  var rows = searchClasses.searchClasses(index, 'LCS2-GLSI_C Groupe 2');
   assert.strictEqual(rows[0].label, 'GLSI1C2');
   assert.ok(rows[0].score > rows[1].score);
 });
 
 test('classSearch matches a semester compact prefix', function () {
-  var rows = match.classSearch(index, 'glsi1a');
+  var rows = searchClasses.searchClasses(index, 'glsi1a');
   assert.deepStrictEqual(
     rows.map(function (r) { return r.label; }),
     ['GLSI1A', 'GLSI1A1', 'GLSI1A2']
@@ -432,31 +432,31 @@ test('classSearch matches a semester compact prefix', function () {
 test('classSearch matches a descendant raw spelling', function () {
   // "LCS1-A Groupe 1" is a raw field value of LCS1A1 (an alias
   // text), so LCS1A1 leads, own-key nodes follow as aliases
-  var rows = match.classSearch(index, 'LCS1-A Groupe 1');
+  var rows = searchClasses.searchClasses(index, 'LCS1-A Groupe 1');
   assert.strictEqual(rows[0].label, 'LCS1A1');
 });
 
 test('classSearch returns nothing for an unknown class', function () {
-  assert.strictEqual(match.classSearch(index, 'ZZZZ').length, 0);
+  assert.strictEqual(searchClasses.searchClasses(index, 'ZZZZ').length, 0);
 });
 
 test('classSearch is deterministic', function () {
-  var a = JSON.stringify(match.classSearch(index, 'lcs').map(function (r) { return r.label; }));
-  var b = JSON.stringify(match.classSearch(index, 'lcs').map(function (r) { return r.label; }));
+  var a = JSON.stringify(searchClasses.searchClasses(index, 'lcs').map(function (r) { return r.label; }));
+  var b = JSON.stringify(searchClasses.searchClasses(index, 'lcs').map(function (r) { return r.label; }));
   assert.strictEqual(a, b);
 });
 
 test('classSearch exposes track highlight ranges for track queries', function () {
-  var rows = match.classSearch(index, 'LCS');
+  var rows = searchClasses.searchClasses(index, 'LCS');
   var leaf = rows.filter(function (r) { return r.label === 'GLSI3D1'; })[0];
   assert.ok(leaf, 'expected GLSI3D1 in the LCS results');
   assert.deepStrictEqual(JSON.parse(JSON.stringify(leaf.trackRanges)), [[0, 3]]);
-  assert.strictEqual(match.highlightHTML(leaf.node.track, leaf.trackRanges),
+  assert.strictEqual(searchClasses.highlightHTML(leaf.node.track, leaf.trackRanges),
     '<mark>LCS</mark>');
 });
 
 test('classSearch requires every space-separated token to match', function () {
-  var rows = match.classSearch(index, 'LCS GLSI');
+  var rows = searchClasses.searchClasses(index, 'LCS GLSI');
   var leaves = rows.filter(function (r) { return r.node.leaves().length === 1; });
   assert.ok(leaves.length > 0, 'expected combined track and specialty results');
   assert.ok(leaves.every(function (r) {
@@ -469,18 +469,18 @@ test('classSearch requires every space-separated token to match', function () {
 });
 
 test('classSearch exposes class-name highlight ranges for name tokens', function () {
-  var rows = match.classSearch(index, 'LCS GLSI');
+  var rows = searchClasses.searchClasses(index, 'LCS GLSI');
   var leaf = rows.filter(function (r) { return r.label === 'GLSI3D1'; })[0];
   assert.ok(leaf, 'expected GLSI3D1 in the combined results');
   assert.deepStrictEqual(JSON.parse(JSON.stringify(leaf.ranges)), [[0, 4]]);
-  assert.strictEqual(match.highlightHTML(leaf.label, leaf.ranges),
+  assert.strictEqual(searchClasses.highlightHTML(leaf.label, leaf.ranges),
     '<mark>GLSI</mark>3D1');
 });
 
 // ---- suggest() regression (issue 029 must stay fixed) -----------------------
 
 test('suggest still ranks own-key matches above aliases (issue 029)', function () {
-  var labels = match.suggest(index, 'lcs').map(function (r) { return r.label; });
+  var labels = searchClasses.suggestClasses(index, 'lcs').map(function (r) { return r.label; });
   assert.strictEqual(labels[0], 'LCS');
   assert.ok(labels.indexOf('LCS1') !== -1);
   assert.ok(labels.indexOf('GLSI2') === -1, 'no GLSI* alias in the top 8');
@@ -493,7 +493,7 @@ test('the classes page component carries the app-page structure, module imports 
   // the ported page resolves its asset base and carries the full module
   // stack — the successor of the legacy <script src=…> list
   assert.ok(html.indexOf("from '$app/paths'") !== -1, 'the page resolves its asset base');
-  ['$lib/load.js', '$lib/model.js', '$lib/match.js', '$lib/color.js',
+  ['$lib/load.js', '$lib/model.js', '$lib/search-classes.js', '$lib/color.js',
    '$lib/libgroups.js', '$lib/data.js', '$lib/display.js', '$lib/clock.js',
    '$lib/kaomoji.js', '$lib/register.js'].forEach(function (s) {
     assert.ok(html.indexOf("from '" + s + "'") !== -1, 'missing module ' + s);
@@ -746,7 +746,7 @@ test('class-name display surfaces shorten aliases without changing raw identity 
   var daygroups = DAYGROUP_SRC;
   assert.ok(classes.indexOf('data-key={r.label}') !== -1,
     'classes list keeps the raw key in data-* identity');
-  assert.ok(classes.indexOf('highlightedHeadingHTML(r.node ? r.node.fullName() : r.label, r.ranges)') !== -1,
+  assert.ok(classes.indexOf('searchClasses.highlightHTML(sc.head, r.ranges)') !== -1,
     'classes list uses the shortcut renderer as its primary label');
   assert.ok(classes.indexOf('class-track') !== -1,
     'classes list can show structured track metadata');
@@ -784,7 +784,7 @@ test('the classes page ships no autocomplete machinery; the teachers page keeps 
   var src = PAGE_SRC;
   ['renderSuggest', 'paintActive', 'classGhost', 'renderGhost', 'acceptSuggest',
    'classSuggestions', 'suggestIdx', 'suggestRows', 'isCoarsePointer',
-   'match.suggest', "getElementById('suggest'",
+   'searchClasses.suggestClasses', "getElementById('suggest'",
    "getElementById('ghost'", '--ghost-pre'].forEach(function (tok) {
     assert.ok(src.indexOf(tok) === -1, 'the classes page must not carry ' + tok + ' (issue 075)');
   });
@@ -792,7 +792,7 @@ test('the classes page ships no autocomplete machinery; the teachers page keeps 
   // erase-only X (060/064/074), deselection and the 065 restore. The
   // deselect derivation that syncDeselect used to write is now the button's
   // hidden attribute itself.
-  ['function eraseFilter()', "hidden={!(selectedClass !== null && query === '')}", 'match.classSearch',
+  ['function eraseFilter()', "hidden={!(selectedClass !== null && query === '')}", 'searchClasses.searchClasses',
    'readStoredClass', 'function restorable', 'oninput={onSearchInput}']
     .forEach(function (tok) {
       assert.ok(src.indexOf(tok) !== -1, 'classes keeps ' + tok);
@@ -808,7 +808,7 @@ test('the classes page ships no autocomplete machinery; the teachers page keeps 
   assert.ok(/<div id="ghost"/.test(thtml), 'teachers keeps its ghost line');
   var tsrc = TEACHERS_SRC;
   ['function renderSuggest', 'function acceptSuggest', 'const sh = $derived.by',
-   'match.shadowText', 'match.suggest', 'onblur={onBlur}'].forEach(function (tok) {
+   'searchTeachers.shadowText', 'searchTeachers.suggestTeachers', 'onblur={onBlur}'].forEach(function (tok) {
     assert.ok(tsrc.indexOf(tok) !== -1, 'teachers keeps ' + tok);
   });
 });
@@ -849,7 +849,7 @@ function leafSet() {
 
 test('the leaf-filtered catalogue is exactly the leaf set', function () {
   var set = leafSet();
-  var rows = match.classSearch(index, '').filter(function (r) {
+  var rows = searchClasses.searchClasses(index, '').filter(function (r) {
     return set[(r.node && r.node.key) || r.label];
   });
   assert.strictEqual(rows.length, groups.leaves.length);
@@ -858,7 +858,7 @@ test('the leaf-filtered catalogue is exactly the leaf set', function () {
   assert.ok(labels.indexOf('LCS1') === -1, 'interior LCS1 must be excluded');
   assert.ok(labels.indexOf('LCS') === -1, 'interior LCS must be excluded');
   // the same filter on a mid-hierarchy query drops the interior node itself
-  var sub = match.classSearch(index, 'lcs1');
+  var sub = searchClasses.searchClasses(index, 'lcs1');
   assert.ok(sub.map(function (r) { return r.label; }).indexOf('LCS1') !== -1,
     'match layer still returns the interior node (filtering lives in the page)');
   var kept = sub.filter(function (r) { return set[(r.node && r.node.key) || r.label]; });
@@ -867,13 +867,13 @@ test('the leaf-filtered catalogue is exactly the leaf set', function () {
     assert.ok(groups.byKey[r.label].isLeaf(), r.label + ' must be a leaf');
   });
   // the shared suggest layer still offers interior classes; the classes page
-  // no longer consumes it at all (issue 075: it never calls match.suggest —
+  // no longer consumes it at all (issue 075: it never calls searchClasses.suggestClasses —
   // asserted in the "leaf-only" source test below), so the leaf-set
   // filter here is the layer contract itself, not the page's.
-  var sug = match.suggest(index, 'lcs1').filter(function (r) { return r.kind === 'class'; });
+  var sug = searchClasses.suggestClasses(index, 'lcs1').filter(function (r) { return r.kind === 'class'; });
   var sugKept = sug.filter(function (r) { return set[r.label]; });
   assert.ok(sug.length > sugKept.length,
-    'match.suggest still offers interior classes (only the leaf set keeps them)');
+    'searchClasses.suggestClasses still offers interior classes (only the leaf set keeps them)');
   sugKept.forEach(function (r) {
     assert.ok(groups.byKey[r.label].isLeaf(), r.label + ' must be a leaf');
   });
@@ -899,12 +899,12 @@ test('the classes page selects leaves only (no broader classes)', function () {
   // leaf lookup built once from groups.leaves, applied to every surface
   assert.ok(sec.indexOf('groups.leaves.forEach') !== -1, 'missing leafSet build');
   assert.ok(sec.indexOf('function leafRows') !== -1, 'missing leafRows');
-  assert.ok(sec.indexOf('leafRows(match.classSearch(index, query))') !== -1,
+  assert.ok(sec.indexOf('leafRows(searchClasses.searchClasses(index, query))') !== -1,
     'the live list must leaf-filter classSearch rows');
   // the initial paint is the boot query state: the filter boots empty and
   // the live derivation leaf-filters the catalogue from it
   assert.ok(PAGE_SRC.indexOf("let query = $state('');") !== -1, 'the filter boots empty');
-  assert.ok(sec.indexOf('match.suggest') === -1,
+  assert.ok(sec.indexOf('searchClasses.suggestClasses') === -1,
     'the classes page never calls the suggest layer (issue 075: no autocomplete)');
   // single-leaf gates: refs resolve through the sel derivation and take the
   // week-null (nomatch) path otherwise

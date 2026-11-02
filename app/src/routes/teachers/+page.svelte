@@ -31,7 +31,8 @@
 	import { onMount } from 'svelte';
 	import { loadStore } from '$lib/load.js';
 	import * as model from '$lib/model.js';
-	import * as match from '$lib/match.js';
+	import * as searchTeachers from '$lib/search-teachers.js';
+import { highlightHTML } from '$lib/search.js';
 	import * as color from '$lib/color.js';
 	import { esc, nameHTML, redacted } from '$lib/data.js';
 	import { headingHTML } from '$lib/display.js';
@@ -78,7 +79,7 @@
 			.then((s) => {
 				store = s;
 				modelObjs = model.buildAll(s);
-				index = match.buildIndex(s, modelObjs);
+				index = searchTeachers.buildTeacherIndex(s, modelObjs.groups);
 				// the page subscribes once at mount; the clock owns the cadence (issue 051)
 				unsub = clock((t) => {
 					now = t;
@@ -160,7 +161,7 @@
 
 	// the live search result of the current filter (the successor of the
 	// legacy onInput/commit renderList calls)
-	const res = $derived(index ? match.searchSections(index, query, avail) : null);
+	const res = $derived(index ? searchTeachers.searchSections(index, query, avail) : null);
 
 	// the flat list: a header row introduces each fallback section; the
 	// primary matches-all block stays unlabelled, and a lone section needs
@@ -277,12 +278,12 @@
 	 * line + the first few subject/class match chips (the legacy renderItem
 	 * innerHTML walk). */
 	function rowHTML(r) {
-		let h = match.nameHTML(r.teacher, r.nameRanges);
+		let h = nameHTML(r.teacher, r.nameRanges);
 		if (r.relevantSessions > 0)
 			h +=
 				' <span class="relevant">(' + model.hoursLabel(r.relevantSessions) + ' relevant)</span>';
 		(r.subjectMatches || []).slice(0, 3).forEach((m) => {
-			h += '<span class="fmatch"><b>Subject:</b> ' + match.highlightHTML(m.label, m.ranges) + '</span>';
+			h += '<span class="fmatch"><b>Subject:</b> ' + highlightHTML(m.label, m.ranges) + '</span>';
 		});
 		(r.classMatches || []).slice(0, 3).forEach((m) => {
 			h += '<span class="cmatch"><b>Class:</b> ' + headingHTML(m.label) + '</span>';
@@ -300,9 +301,9 @@
 				headingHTML(r.label) +
 				(r.detail ? ' <span class="alias">— ' + headingHTML(r.detail) + '</span>' : '');
 		} else if (r.kind === 'teacher') {
-			body = match.nameHTML(r.label, r.ranges);
+			body = nameHTML(r.label, r.ranges);
 		} else {
-			body = match.highlightHTML(r.label, r.ranges);
+			body = highlightHTML(r.label, r.ranges);
 		}
 		return body;
 	}
@@ -311,7 +312,7 @@
 	// completion would leak the rest of a teacher name)
 	const sh = $derived.by(() => {
 		const row = redacted() ? null : suggestRows[suggestIdx];
-		return row ? match.shadowText(query, row) : null;
+		return row ? searchTeachers.shadowText(query, row) : null;
 	});
 	let searchEl = $state(null);
 	let ghostPreEl = $state(null);
@@ -345,7 +346,7 @@
 	function onSearchInput(e) {
 		query = e.currentTarget.value;
 		const r = res;
-		renderSuggest(index ? match.suggest(index, query) : []);
+		renderSuggest(index ? searchTeachers.suggestTeachers(index, query) : []);
 		// an empty filter means nothing is selected: back to the empty state
 		if (!query.trim()) showEmpty();
 		// exactly one result left -> auto-jump to the table view

@@ -17,7 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as data from '../app/src/lib/data.js';
-import * as match from '../app/src/lib/match.js';
+import * as search from '../app/src/lib/search.js';
 import { CSV_PATH, readSrc } from './helpers.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -98,16 +98,16 @@ test("nameHTML('', '—') returns esc('—') in both modes", function () {
   assert.strictEqual(data.nameHTML(undefined, '—'), data.esc('—'), 'missing name falls back too');
 });
 
-// ---- 5. match.nameHTML: highlight off, rectangle on ------------------------
+// ---- 5. search.nameHTML: highlight off, rectangle on ------------------------
 
-test('match.nameHTML highlights by default and redacts when on', function () {
+test('search.nameHTML highlights by default and redacts when on', function () {
   const ranges = [[0, 4]];
-  const def = match.nameHTML('Barboura', ranges);
-  assert.strictEqual(def, match.highlightHTML('Barboura', ranges), 'identical to highlightHTML');
+  const def = search.nameHTML('Barboura', ranges);
+  assert.strictEqual(def, search.highlightHTML('Barboura', ranges), 'identical to highlightHTML');
   assert.ok(def.indexOf('<mark>') !== -1, 'the default keeps the match highlight');
   try {
     data.setRedact(true);
-    const rect = match.nameHTML('Barboura', ranges);
+    const rect = search.nameHTML('Barboura', ranges);
     assert.ok(rect.indexOf('class="redact"') !== -1, 'rectangle instead of the label');
     assert.ok(rect.indexOf('<mark>') === -1, 'no highlight marks in redacted output');
     assert.ok(rect.indexOf('Barboura') === -1, 'no name in redacted output');
@@ -115,7 +115,7 @@ test('match.nameHTML highlights by default and redacts when on', function () {
     data.setRedact(false);
   }
   // highlightHTML itself stays the generic label renderer for subjects/classes
-  assert.ok(readSrc('app/src/lib/match.js').indexOf('function highlightHTML(') !== -1);
+  assert.ok(readSrc('app/src/lib/search.js').indexOf('function highlightHTML(') !== -1);
 });
 
 // ---- 6. site-inventory pins ------------------------------------------------
@@ -133,7 +133,7 @@ test('site inventory: no raw-esc name sites left; every page wires nameHTML(', f
   assert.ok(allPage.indexOf('esc(n)') === -1,
     'the matrix axis must not raw-esc n (use nameHTML)');
   assert.ok(teachersPage.indexOf('highlightHTML(r.teacher') === -1,
-    'list rows must go through match.nameHTML, not raw highlightHTML');
+    'list rows must go through search.nameHTML, not raw highlightHTML');
   assert.ok(teachersPage.indexOf('esc(detailGroups.name') === -1,
     'the detail heading must go through nameHTML, not raw esc');
   // positive: each page renders names through the data-layer helper

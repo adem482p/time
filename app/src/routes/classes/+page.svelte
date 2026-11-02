@@ -25,7 +25,7 @@
 	import { onMount } from 'svelte';
 	import { loadStore } from '$lib/load.js';
 	import * as model from '$lib/model.js';
-	import * as match from '$lib/match.js';
+	import * as searchClasses from '$lib/search-classes.js';
 	import * as color from '$lib/color.js';
 	import { shortcutOf } from '$lib/libgroups.js';
 	import { esc, nameHTML } from '$lib/data.js';
@@ -63,7 +63,7 @@
 			.then((s) => {
 				store = s;
 				modelObjs = model.buildAll(s);
-				index = match.buildIndex(s, modelObjs);
+				index = searchClasses.buildClassIndex(modelObjs.groups);
 				// last selected class (issue 065): read BEFORE the empty state
 				// stands (showEmpty clears storage — reached only through the
 				// deselect funnels, which boot state never triggers), then
@@ -173,7 +173,7 @@
 
 	// the live filter's leaf rows (the successor of the legacy renderList calls;
 	// the empty catalogue case renders as the list's "No classes match." row)
-	const rows = $derived(index ? leafRows(match.classSearch(index, query)) : []);
+	const rows = $derived(index ? leafRows(searchClasses.searchClasses(index, query)) : []);
 
 	// ---- the one selection / deselect / erase funnels ------------------------
 
@@ -417,8 +417,8 @@
 			}
 		});
 		return (
-			match.highlightHTML(sc.head, headRanges) +
-			(sc.sub ? '<sub>' + match.highlightHTML(sc.sub, subRanges) + '</sub>' : '')
+			searchClasses.highlightHTML(sc.head, headRanges) +
+			(sc.sub ? '<sub>' + searchClasses.highlightHTML(sc.sub, subRanges) + '</sub>' : '')
 		);
 	}
 
@@ -472,7 +472,10 @@
 	// ---- list row body (the legacy renderList innerHTML walk) -----------------
 
 	function rowHTML(r) {
-		let h = highlightedHeadingHTML(r.node ? r.node.fullName() : r.label, r.ranges);
+		// Use display form (shortcut head + sub) directly with ranges computed on it
+		const sc = r.sc || { head: r.label, sub: '' };
+		let h = searchClasses.highlightHTML(sc.head, r.ranges);
+		if (sc.sub) h += '<sub>' + searchClasses.highlightHTML(sc.sub, r.ranges) + '</sub>';
 		if (query.trim() && r.attributeMatches)
 			r.attributeMatches.forEach((a) => {
 				h +=
@@ -481,7 +484,7 @@
 					'"><b>' +
 					esc(a.name) +
 					':</b> ' +
-					match.highlightHTML(a.value, a.ranges) +
+					searchClasses.highlightHTML(a.value, a.ranges) +
 					'</span>';
 			});
 		return h;
