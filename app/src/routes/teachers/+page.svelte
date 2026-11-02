@@ -17,7 +17,7 @@
 	// stays imperative is exactly what was fact-write in the legacy code:
 	// the suggest overlay updates, the selection funnels and the keyboard
 	// edges. Class names are shortened only for display; every display-bound
-	// string goes through the same escapers (headingHTML / nameHTML /
+	// string goes through the same escapers (headingHTML / teacherName /
 	// highlightHTML return pre-escaped markup, never raw model strings).
 	//
 	// The markup keeps the legacy ids (#layout, #listPane, #searchWrap, …)
@@ -32,10 +32,9 @@
 	import { loadStore } from '$lib/load.js';
 	import * as model from '$lib/model.js';
 	import * as searchTeachers from '$lib/search-teachers.js';
-import { highlightHTML } from '$lib/search.js';
 	import * as color from '$lib/color.js';
-	import { esc, nameHTML, redacted } from '$lib/data.js';
-	import { headingHTML } from '$lib/display.js';
+	import { esc, redacted } from '$lib/data.js';
+	import { headingHTML, teacherName, highlightHTML } from '$lib/display.js';
 	import { clock } from '$lib/clock.js';
 	import * as kaomoji from '$lib/kaomoji.js';
 	import { registerApp } from '$lib/register.js';
@@ -278,7 +277,7 @@ import { highlightHTML } from '$lib/search.js';
 	 * line + the first few subject/class match chips (the legacy renderItem
 	 * innerHTML walk). */
 	function rowHTML(r) {
-		let h = nameHTML(r.teacher, r.nameRanges);
+		let h = teacherName(r.teacher, r.nameRanges);
 		if (r.relevantSessions > 0)
 			h +=
 				' <span class="relevant">(' + model.hoursLabel(r.relevantSessions) + ' relevant)</span>';
@@ -301,7 +300,7 @@ import { highlightHTML } from '$lib/search.js';
 				headingHTML(r.label) +
 				(r.detail ? ' <span class="alias">— ' + headingHTML(r.detail) + '</span>' : '');
 		} else if (r.kind === 'teacher') {
-			body = nameHTML(r.label, r.ranges);
+			body = teacherName(r.label, r.ranges);
 		} else {
 			body = highlightHTML(r.label, r.ranges);
 		}
@@ -547,7 +546,7 @@ import { highlightHTML } from '$lib/search.js';
 				</button>
 				{#if selectedTeacher !== null}
 					<span id="overlayName">
-						{#if redacted()}{@html nameHTML(selectedTeacher)}{:else}{selectedTeacher}{/if}
+						{@html teacherName(selectedTeacher)}
 					</span>
 				{/if}
 				<svg class="overlay-drop" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
@@ -598,11 +597,11 @@ import { highlightHTML } from '$lib/search.js';
 		{:else if detailGroups}
 			<!-- showTeacher: this page owns the detail from here (issue 051) —
 			     re-renders unconditional on every clock tick, no gating -->
-			<h2>{@html nameHTML(detailGroups.name)}</h2>
+			<h2>{@html teacherName(detailGroups.name)}</h2>
 			<dl class="class-facts teacher-facts">
 				<div class="fact-card">
 					<dt class="fact-name">Subject</dt>
-					<dd class="fact-value">~ {esc(detailGroups.t.topSubject ? detailGroups.t.topSubject.name : '—')}</dd>
+					<dd class="fact-value">~ {detailGroups.t.topSubject ? detailGroups.t.topSubject.name : '—'}</dd>
 				</div>
 				<div class="fact-card">
 					<dt class="fact-name">Class</dt>
@@ -632,9 +631,9 @@ import { highlightHTML } from '$lib/search.js';
 										>
 									{/if}
 								</td>
-								<td class="c-time">{esc(entry.s.time)}</td>
-								<td class="c-room">{esc(entry.s.room || '—')}</td>
-								<td class="c-subject">{esc(entry.s.subject)}</td>
+								<td class="c-time">{entry.s.time}</td>
+								<td class="c-room">{entry.s.room || '—'}</td>
+								<td class="c-subject">{entry.s.subject}</td>
 								<td class="c-class">
 									{#each entry.s.pills as p (p)}<span class="pill">{@html headingHTML(p)}</span>{/each}
 								</td>
@@ -649,7 +648,7 @@ import { highlightHTML } from '$lib/search.js';
 			<ul class="subjlist">
 				{#each detailGroups.t.subjects as s (s.name)}
 					<li>
-						{esc(s.name)}
+						{s.name}
 						<span class="hours"
 							>{model.hoursLabel(s.sessions)} ({(s.share * 100).toFixed(1)}%)</span
 						>

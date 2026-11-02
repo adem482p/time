@@ -1,4 +1,4 @@
-import { normStr, tokenize, highlightHTML, fuzzyRanges, scoreMatch, mergeRanges } from './search.js';
+import { normStr, tokenize, fuzzyRanges, scoreMatch, mergeRanges } from './search.js';
 import { shortcutOf } from './libgroups.js';
 
 export function buildClassIndex(groups) {
@@ -134,5 +134,3 @@ export function suggestClasses(index, query) {
 }
 
 function cmpByte(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
-
-export { highlightHTML } from './search.js';

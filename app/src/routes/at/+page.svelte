@@ -12,7 +12,8 @@
 	import { loadStore } from '$lib/load.js';
 	import * as model from '$lib/model.js';
 	import * as color from '$lib/color.js';
-	import { nameHTML, esc } from '$lib/data.js';
+	import { esc } from '$lib/data.js';
+import { teacherName } from '$lib/display.js';
 	import { headingHTML } from '$lib/display.js';
 	import { clock } from '$lib/clock.js';
 
@@ -138,7 +139,7 @@
 					class={entryClasses(d, slot).join(' ')}
 					onclick={() => show(d, slot)}
 				>
-					{esc(slot)}
+					{slot}
 					{#if marksFor(d, slot).isNow}<span class="nowtag">● NOW</span>{/if}
 					{#if marksFor(d, slot).isNext}<span class="nexttag"><svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 6l6 6-6 6" /></svg>NEXT</span>{/if}
 				</li>
@@ -152,7 +153,7 @@
 		{#if !activeSlot}
 			<p>Select a day and time slot to see who teaches then.</p>
 		{:else if detailRows && detailRows.length === 0}
-			<p class="empty">No sessions {esc(activeSlot.split('|')[0])} {esc(activeSlot.split('|')[1])}.</p>
+			<p class="empty">No sessions {activeSlot.split('|')[0]} {activeSlot.split('|')[1]}.</p>
 		{:else if detailRows}
 			<table>
 				<!-- tbody wrapper: the legacy bare <tr> rows were always repaired
@@ -161,9 +162,9 @@
 					<tr><th>Teacher</th><th>Room</th><th>Subject</th><th>Students</th></tr>
 					{#each detailRows as s, i (i)}
 						<tr>
-							<td>{@html nameHTML(s.professor, '—')}</td>
-							<td>{esc(s.room || '—')}</td>
-							<td>{esc(s.subject)}</td>
+							<td> {@html teacherName(s.professor, '—')}</td>
+							<td>{s.room || '—'}</td>
+							<td>{s.subject}</td>
 							<td>
 								{#each s.pills as p (p)}
 									<span class="pill">{@html headingHTML(p)}</span>

@@ -5,7 +5,7 @@
 	import * as model from '$lib/model.js';
 	import * as color from '$lib/color.js';
 	import { esc } from '$lib/data.js';
-	import { nameHTML } from '$lib/data.js';
+	import { teacherName } from '$lib/display.js';
 
 	let { store, week, cursor, weekWrapEl, cursorLineEl } = $props();
 
@@ -94,7 +94,7 @@
 			{#each store.slots as slot (slot)}
 				<tr data-slot={slot}>
 					<td class="cgutter"></td>
-					<td class="c-time">{esc(slot)}</td>
+					<td class="c-time">{slot}</td>
 					{#each store.days as d (d)}
 						{@const cell = weekCell(d, slot)}
 						{@const sessions = cell.sessions}
@@ -105,9 +105,9 @@
 						>
 							{#each sessions as s, i (i)}
 								<div class="sess">
-									<span class="s-subject">{esc(s.subject)}</span>
-									<span class="s-teacher">{@html nameHTML(s.professor, '—')}</span>
-									<span class="s-room">{esc(s.room || '—')}</span>
+									<span class="s-subject">{s.subject}</span>
+									<span class="s-teacher"> {@html teacherName(s.professor, '—')}</span>
+									<span class="s-room">{s.room || '—'}</span>
 								</div>
 							{/each}
 						</td>

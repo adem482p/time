@@ -28,8 +28,8 @@
 	import * as searchClasses from '$lib/search-classes.js';
 	import * as color from '$lib/color.js';
 	import { shortcutOf } from '$lib/libgroups.js';
-	import { esc, nameHTML } from '$lib/data.js';
-	import { headingHTML } from '$lib/display.js';
+	import { esc } from '$lib/data.js';
+	import { headingHTML, highlightHTML } from '$lib/display.js';
 	import { clock } from '$lib/clock.js';
 	import * as kaomoji from '$lib/kaomoji.js';
 	import { registerApp } from '$lib/register.js';
@@ -417,8 +417,8 @@
 			}
 		});
 		return (
-			searchClasses.highlightHTML(sc.head, headRanges) +
-			(sc.sub ? '<sub>' + searchClasses.highlightHTML(sc.sub, subRanges) + '</sub>' : '')
+			highlightHTML(sc.head, headRanges) +
+			(sc.sub ? '<sub>' + highlightHTML(sc.sub, subRanges) + '</sub>' : '')
 		);
 	}
 
@@ -474,8 +474,8 @@
 	function rowHTML(r) {
 		// Use display form (shortcut head + sub) directly with ranges computed on it
 		const sc = r.sc || { head: r.label, sub: '' };
-		let h = searchClasses.highlightHTML(sc.head, r.ranges);
-		if (sc.sub) h += '<sub>' + searchClasses.highlightHTML(sc.sub, r.ranges) + '</sub>';
+		let h = highlightHTML(sc.head, r.ranges);
+		if (sc.sub) h += '<sub>' + highlightHTML(sc.sub, r.ranges) + '</sub>';
 		if (query.trim() && r.attributeMatches)
 			r.attributeMatches.forEach((a) => {
 				h +=
@@ -484,7 +484,7 @@
 					'"><b>' +
 					esc(a.name) +
 					':</b> ' +
-					searchClasses.highlightHTML(a.value, a.ranges) +
+					highlightHTML(a.value, a.ranges) +
 					'</span>';
 			});
 		return h;
@@ -641,7 +641,7 @@
 			/>
 		{:else if sel && !sel.week}
 			<!-- the legacy showClass gate: a non-leaf (or stale) reference -->
-			<p class="nomatch">No class matches "{esc(sel.ref)}".</p>
+			<p class="nomatch">No class matches "{sel.ref}".</p>
 		{:else}
 			<!-- heading first, face below it: the empty-state flex `gap` separates
 			     the two, so the heading reads on top of the emoticon -->

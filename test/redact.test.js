@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 import * as data from '../app/src/lib/data.js';
 import * as search from '../app/src/lib/search.js';
+import * as display from '../app/src/lib/display.js';
 import { CSV_PATH, readSrc } from './helpers.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -100,14 +101,14 @@ test("nameHTML('', '—') returns esc('—') in both modes", function () {
 
 // ---- 5. search.nameHTML: highlight off, rectangle on ------------------------
 
-test('search.nameHTML highlights by default and redacts when on', function () {
+test('display.teacherName highlights by default and redacts when on', function () {
   const ranges = [[0, 4]];
-  const def = search.nameHTML('Barboura', ranges);
-  assert.strictEqual(def, search.highlightHTML('Barboura', ranges), 'identical to highlightHTML');
+  const def = display.teacherName('Barboura', ranges);
+  assert.strictEqual(def, display.highlightHTML('Barboura', ranges), 'identical to highlightHTML');
   assert.ok(def.indexOf('<mark>') !== -1, 'the default keeps the match highlight');
   try {
     data.setRedact(true);
-    const rect = search.nameHTML('Barboura', ranges);
+    const rect = display.teacherName('Barboura', ranges);
     assert.ok(rect.indexOf('class="redact"') !== -1, 'rectangle instead of the label');
     assert.ok(rect.indexOf('<mark>') === -1, 'no highlight marks in redacted output');
     assert.ok(rect.indexOf('Barboura') === -1, 'no name in redacted output');
@@ -115,7 +116,7 @@ test('search.nameHTML highlights by default and redacts when on', function () {
     data.setRedact(false);
   }
   // highlightHTML itself stays the generic label renderer for subjects/classes
-  assert.ok(readSrc('app/src/lib/search.js').indexOf('function highlightHTML(') !== -1);
+  assert.ok(readSrc('app/src/lib/display.js').indexOf('function highlightHTML(') !== -1);
 });
 
 // ---- 6. site-inventory pins ------------------------------------------------
@@ -127,20 +128,19 @@ test('site inventory: no raw-esc name sites left; every page wires nameHTML(', f
   const allPage = readSrc('app/src/routes/all/+page.svelte');
   // negative tokens: a future unredacted name site fails exactly like deadcode
   assert.ok(classesPage.indexOf('esc(s.professor') === -1,
-    'classes must not raw-esc a professor (use nameHTML)');
+    'classes must not raw-esc a professor (use teacherName)');
   assert.ok(atPage.indexOf('esc(s.professor') === -1,
-    'the time page must not raw-esc a professor (use nameHTML)');
+    'the time page must not raw-esc a professor (use teacherName)');
   assert.ok(allPage.indexOf('esc(n)') === -1,
-    'the matrix axis must not raw-esc n (use nameHTML)');
+    'the matrix axis must not raw-esc n (use teacherName)');
   assert.ok(teachersPage.indexOf('highlightHTML(r.teacher') === -1,
-    'list rows must go through search.nameHTML, not raw highlightHTML');
+    'list rows must go through display.teacherName, not raw highlightHTML');
   assert.ok(teachersPage.indexOf('esc(detailGroups.name') === -1,
-    'the detail heading must go through nameHTML, not raw esc');
-  // positive: each page renders names through the data-layer helper
-  // classes page uses nameHTML in the DayGroupCards component
+    'the detail heading must go through teacherName, not raw esc');
+  // positive: each page renders names through the display-layer helper
   ['app/src/routes/teachers/+page.svelte', 'app/src/lib/components/DayGroupCards.svelte',
    'app/src/routes/at/+page.svelte', 'app/src/routes/all/+page.svelte'].forEach(function (f) {
-    assert.ok(readSrc(f).indexOf('nameHTML(') !== -1, f + ' must call nameHTML(');
+    assert.ok(readSrc(f).indexOf('teacherName(') !== -1, f + ' must call teacherName(');
   });
 });
 

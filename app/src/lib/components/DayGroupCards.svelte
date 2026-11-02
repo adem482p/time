@@ -6,7 +6,7 @@
 	import * as color from '$lib/color.js';
 	import { esc } from '$lib/data.js';
 	import { headingHTML } from '$lib/display.js';
-	import { nameHTML } from '$lib/data.js';
+	import { teacherName } from '$lib/display.js';
 
 	let { week, cursor, now, liveDays } = $props();
 
@@ -71,10 +71,10 @@
 							>
 						{/if}
 					</td>
-					<td class="c-time">{esc(s.time)}</td>
-					<td class="c-teacher">{@html nameHTML(s.professor, '—')}</td>
-					<td class="c-subject">{esc(s.subject)}</td>
-					<td class="c-room">{esc(s.room || '—')}</td>
+					<td class="c-time">{s.time}</td>
+					<td class="c-teacher"> {@html teacherName(s.professor, '—')}</td>
+					<td class="c-subject">{s.subject}</td>
+					<td class="c-room">{s.room || '—'}</td>
 				</tr>
 				{/each}
 			</tbody>

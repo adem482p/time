@@ -1,5 +1,5 @@
-import { esc, redacted, nameHTML as dataNameHTML } from './data.js';
-
+// app/src/lib/search.js — pure matching/scoring logic.
+// No display concerns (escaping, highlighting, redaction) — those live in display.js.
 export function normStr(s) {
   return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
@@ -52,20 +52,4 @@ export function scoreMatch(s, token) {
     pos = j + 1;
   }
   return 500 - (last - first);
-}
-
-export function highlightHTML(s, ranges) {
-  if (!ranges || !ranges.length) return esc(s);
-  let h = '';
-  let pos = 0;
-  mergeRanges(ranges).forEach(r => {
-    h += esc(s.slice(pos, r[0])) + '<mark>' + esc(s.slice(r[0], r[1])) + '</mark>';
-    pos = r[1];
-  });
-  return h + esc(s.slice(pos));
-}
-
-export function nameHTML(s, ranges) {
-  if (redacted()) return dataNameHTML(s);
-  return highlightHTML(s, ranges);
 }

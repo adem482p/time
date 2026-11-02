@@ -7,7 +7,8 @@
 	import { onMount } from 'svelte';
 	import { loadStore } from '$lib/load.js';
 	import * as model from '$lib/model.js';
-	import { nameHTML, esc } from '$lib/data.js';
+	import { esc } from '$lib/data.js';
+import { teacherName } from '$lib/display.js';
 
 	const DAYS = model.JS_DAY.slice(1); // Monday-first listing for the filter
 
@@ -85,19 +86,19 @@
 				<tr>
 					<th>Teacher</th>
 					{#each store.slots as s (s)}
-						<th>{esc(s)}</th>
+						<th>{s}</th>
 					{/each}
 				</tr>
 				{#each visibleTeachers as n (n)}
 					<tr>
-						<td>{@html nameHTML(n)}</td>
+						<td>{@html teacherName(n)}</td>
 						{#each store.slots as slot (slot)}
 							<td>
 								{#each sessionsInSlot(n, slot) as s (s.field + '|' + s.subject + '|' + s.room)}
 									<div class="cell">
-										<span class="room">{esc(s.room || '—')}</span><br />
-										<span class="day">{esc(model.frDay(s.day))}</span>
-										{esc(s.subject)}
+										<span class="room">{s.room || '—'}</span><br />
+										<span class="day">{model.frDay(s.day)}</span>
+										{s.subject}
 									</div>
 								{/each}
 							</td>

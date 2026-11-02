@@ -1,5 +1,6 @@
-import { normStr, tokenize, highlightHTML, fuzzyRanges, scoreMatch, mergeRanges } from './search.js';
+import { normStr, tokenize, fuzzyRanges, scoreMatch, mergeRanges } from './search.js';
 import { esc } from './data.js';
+import { highlightHTML, teacherName as nameHTML } from './display.js';
 
 export function buildIndex(store, modelObjs) {
   const groups = modelObjs.groups;
@@ -106,4 +107,4 @@ export function resolveClass(index, value) {
   return null;
 }
 
-export { highlightHTML, nameHTML } from './search.js';
+export { highlightHTML, nameHTML } from './display.js';

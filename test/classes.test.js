@@ -451,7 +451,7 @@ test('classSearch exposes track highlight ranges for track queries', function ()
   var leaf = rows.filter(function (r) { return r.label === 'GLSI3D1'; })[0];
   assert.ok(leaf, 'expected GLSI3D1 in the LCS results');
   assert.deepStrictEqual(JSON.parse(JSON.stringify(leaf.trackRanges)), [[0, 3]]);
-  assert.strictEqual(searchClasses.highlightHTML(leaf.node.track, leaf.trackRanges),
+  assert.strictEqual(display.highlightHTML(leaf.node.track, leaf.trackRanges),
     '<mark>LCS</mark>');
 });
 
@@ -473,7 +473,7 @@ test('classSearch exposes class-name highlight ranges for name tokens', function
   var leaf = rows.filter(function (r) { return r.label === 'GLSI3D1'; })[0];
   assert.ok(leaf, 'expected GLSI3D1 in the combined results');
   assert.deepStrictEqual(JSON.parse(JSON.stringify(leaf.ranges)), [[0, 4]]);
-  assert.strictEqual(searchClasses.highlightHTML(leaf.label, leaf.ranges),
+  assert.strictEqual(display.highlightHTML(leaf.label, leaf.ranges),
     '<mark>GLSI</mark>3D1');
 });
 
@@ -746,7 +746,7 @@ test('class-name display surfaces shorten aliases without changing raw identity 
   var daygroups = DAYGROUP_SRC;
   assert.ok(classes.indexOf('data-key={r.label}') !== -1,
     'classes list keeps the raw key in data-* identity');
-  assert.ok(classes.indexOf('searchClasses.highlightHTML(sc.head, r.ranges)') !== -1,
+  assert.ok(classes.indexOf('highlightHTML(sc.head, r.ranges)') !== -1,
     'classes list uses the shortcut renderer as its primary label');
   assert.ok(classes.indexOf('class-track') !== -1,
     'classes list can show structured track metadata');
@@ -767,7 +767,7 @@ test('class-name display surfaces shorten aliases without changing raw identity 
   assert.ok(at.indexOf("{@html headingHTML(p)}") !== -1,
     'time-page class pills use the shortcut renderer');
   // DayGroupCards component uses nameHTML for teacher display
-  assert.ok(daygroups.indexOf("nameHTML(s.professor, '—')") !== -1,
+  assert.ok(daygroups.indexOf("teacherName(s.professor, '—')") !== -1,
     'DayGroupCards uses nameHTML for teacher display');
   assert.ok(classes.indexOf('writeStoredClass(ref)') !== -1,
     'classes selection storage remains raw');
@@ -799,7 +799,7 @@ test('the classes page ships no autocomplete machinery; the teachers page keeps 
     });
   // nameHTML is used in DayGroupCards component, not in main page
   var daygroups = DAYGROUP_SRC;
-  assert.ok(daygroups.indexOf("nameHTML(s.professor, '—')") !== -1,
+  assert.ok(daygroups.indexOf("teacherName(s.professor, '—')") !== -1,
     'DayGroupCards uses nameHTML for teacher display');
   // teachers: markup keeps its suggest hidden element and ghost line, JS
   // renders them — untouched

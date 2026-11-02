@@ -1,4 +1,4 @@
-import { normStr, tokenize, highlightHTML, fuzzyRanges, scoreMatch } from './search.js';
+import { normStr, tokenize, fuzzyRanges, scoreMatch, mergeRanges } from './search.js';
 import { esc } from './data.js';
 
 export function buildTeacherIndex(store, groups) {
@@ -140,17 +140,6 @@ function tokenScore(s, token) {
     pos = j + 1;
   }
   return 500 - (last - first);
-}
-
-function mergeRanges(rs) {
-  rs = rs.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const out = [];
-  rs.forEach(r => {
-    const l = out[out.length - 1];
-    if (l && r[0] <= l[1]) l[1] = Math.max(l[1], r[1]);
-    else out.push(r);
-  });
-  return out;
 }
 
 function avRank(avail, t) {

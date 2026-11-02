@@ -4,7 +4,7 @@
     "servers": {
       "playwright": {
         "type": "local",
-        "command": ["npx", "-y", "@playwright/mcp@0.0.83", "--executable-path", "/usr/bin/chromium"]
+        "command": ["npx", "-y", "@playwright/mcp@0.0.83", "--headless", "--executable-path", "/usr/bin/chromium"]
       }
     }
   }
