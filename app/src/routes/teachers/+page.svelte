@@ -531,7 +531,13 @@
 			>
 				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12h-14M12 6l-7 6 7 6" /></svg>
 			</button>
-			<div id="searchOverlay" hidden={selectedTeacher === null || menuOpen} onclick={openMenu}>
+			<div id="searchOverlay" hidden={selectedTeacher === null || menuOpen}>
+				<button
+					type="button"
+					id="overlayToggle"
+					aria-label="Open teacher menu"
+					onclick={openMenu}
+				></button>
 				<button
 					type="button"
 					id="overlayClear"
@@ -553,9 +559,16 @@
 			</div>
 			<ul id="suggest" hidden={!suggestRows.length}>
 				{#each suggestRows as r, i (i)}
-					<li class={suggestClasses(r, i)} onmousedown={(e) => { e.preventDefault(); acceptSuggest(r); }}>
-						<span class="kind kind-{r.kind}">{r.kind}</span>
-						{@html rowBodyHTML(r)}
+					<li class={suggestClasses(r, i)}>
+						<button
+							type="button"
+							class="rowhit"
+							tabindex="-1"
+							onmousedown={(e) => { e.preventDefault(); acceptSuggest(r); }}
+						>
+							<span class="kind kind-{r.kind}">{r.kind}</span>
+							{@html rowBodyHTML(r)}
+						</button>
 					</li>
 				{/each}
 			</ul>
@@ -580,12 +593,13 @@
 							.teacherItem({ active: r.teacher === selectedTeacher })
 							.concat(r.exact ? [color.CLASSES.exact] : [color.CLASSES.partial])
 							.join(' ')}
-						onclick={() => selectTeacher(r.teacher)}
 					>
-						<!-- The filter is the source of truth for the list: selecting a
-						     row must not rewrite it, so the result list stays as-is
-						     and the user can move to the next hit. -->
-						{@html rowHTML(r)}
+						<button type="button" class="rowhit" onclick={() => selectTeacher(r.teacher)}>
+							<!-- The filter is the source of truth for the list: selecting a
+							     row must not rewrite it, so the result list stays as-is
+							     and the user can move to the next hit. -->
+							{@html rowHTML(r)}
+						</button>
 					</li>
 				{/if}
 			{/each}

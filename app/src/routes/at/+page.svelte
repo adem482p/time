@@ -135,13 +135,12 @@ import { teacherName } from '$lib/display.js';
 			<li class="bucket {isSunday ? '' : isToday ? color.CLASSES.today : color.CLASSES.dim}">
 				{d + (isToday ? ' (today) (' : ' (')}{countOf(d)})
 			</li>			{#each store.slots as slot (d + '|' + slot)}
-				<li
-					class={entryClasses(d, slot).join(' ')}
-					onclick={() => show(d, slot)}
-				>
-					{slot}
-					{#if marksFor(d, slot).isNow}<span class="nowtag">● NOW</span>{/if}
-					{#if marksFor(d, slot).isNext}<span class="nexttag"><svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 6l6 6-6 6" /></svg>NEXT</span>{/if}
+				<li class={entryClasses(d, slot).join(' ')}>
+					<button type="button" class="rowhit" onclick={() => show(d, slot)}>
+						{slot}
+						{#if marksFor(d, slot).isNow}<span class="nowtag">● NOW</span>{/if}
+						{#if marksFor(d, slot).isNext}<span class="nexttag"><svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 6l6 6-6 6" /></svg>NEXT</span>{/if}
+					</button>
 				</li>
 			{/each}
 			{#if isToday && dayOver}

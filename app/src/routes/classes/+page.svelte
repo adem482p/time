@@ -567,11 +567,16 @@
 			<div
 				id="searchOverlay"
 				hidden={selectedClass === null || menuOpen}
-				onclick={() => {
-					openMenu();
-					searchEl.focus();
-				}}
 			>
+				<button
+					type="button"
+					id="overlayToggle"
+					aria-label="Open class menu"
+					onclick={() => {
+						openMenu();
+						searchEl.focus();
+					}}
+				></button>
 				<button
 					type="button"
 					id="overlayClear"
@@ -602,15 +607,16 @@
 				<li class="empty">No classes match.</li>
 			{/if}
 			{#each rows as r (r.label)}
-				<!-- The filter is the source of truth for the list: selecting a row
-				     must not rewrite it, so the result list stays as-is and the
-				     user can move to the next hit. -->
 				<li
 					data-key={r.label}
 					class={rowClasses(r)}
-					onclick={() => selectClass(r.label)}
 				>
-					{@html rowHTML(r)}
+					<button type="button" class="rowhit" onclick={() => selectClass(r.label)}>
+						<!-- The filter is the source of truth for the list: selecting a row
+						     must not rewrite it, so the result list stays as-is and the
+						     user can move to the next hit. -->
+						{@html rowHTML(r)}
+					</button>
 				</li>
 			{/each}
 		</ul>

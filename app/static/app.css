@@ -288,6 +288,18 @@ body[data-page="classes"] .author-credit span {
   color: var(--md-on-tertiary-container, #1b1b1b);
 }
 
+/* issue 086: a row that accepts taps is a real <button> stretched over its
+   <li>, which keeps every visual trait (padding, borders, hover/active/live
+   classes on the li rules); the button itself is glass — keyboards Tab to it
+   and get Enter/Space for free, the pointer sees no difference. */
+.rowhit {
+  display: block; width: 100%;
+  padding: 0; border: 0; margin: 0;
+  background: transparent;
+  color: inherit; font: inherit;
+  text-align: inherit; cursor: pointer;
+}
+
 /* ---- layout: desktop two columns (search+list left, table right) ----
    The row stretches (#detail included) instead of hugging its content, and the
    viewport-based min-height makes it a definite full-height box: #detail then
@@ -784,8 +796,16 @@ html { background: var(--md-surface, #fff); }
   }
   /* issue 057: while the overlay is the box, the input under it is invisible — keyed on the overlay's attribute, never on focus */
   #searchWrap:has(#searchOverlay:not([hidden])) #search { visibility: hidden; }
+  /* issue 086: the reopen tap becomes a real button stretched over the pane;
+     it may not grab the X, so #overlayClear lifts itself above the stretch */
+  #overlayToggle {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    border: 0; padding: 0; margin: 0; background: transparent;
+    color: inherit; font: inherit; cursor: pointer;
+  }
   /* the deselect X reuses the #searchClear slot look, at the overlay's left */
   #overlayClear {
+    position: relative; z-index: 2;
     flex: 0 0 auto; width: 2.7rem; align-self: stretch;
     display: flex; align-items: center; justify-content: center;
     border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
