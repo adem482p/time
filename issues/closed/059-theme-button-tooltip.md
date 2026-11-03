@@ -349,7 +349,7 @@ only as the honest no-JS fallback in the static markup).
    `/js/theme.js`; kill the server by its recorded PID and confirm dead.
 6. **Diff hygiene** — the final diff touches only `js/theme.js`,
    `styles.css`, `test/classes.test.js`, `test/deadcode.test.js`, and
-   `issues/059-theme-button-tooltip.md`. Verified by comparing the worktree
+   `issues/closed/059-theme-button-tooltip.md`. Verified by comparing the worktree
    against base (`diff -rq`, or `git status --porcelain` read-only): every
    other file, the four HTML pages included, byte-identical.
 7. **No-gos**: no HTML edits of any kind (the duplicated-page convention and

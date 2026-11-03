@@ -1212,7 +1212,7 @@ produced with `diff -u` against them):**
    00:28) shows exactly **8** files written afterwards: `classes/index.html`,
    `js/classes.js`, `js/libgroups.js`, `test/classes.test.js`,
    `test/deadcode.test.js`, `test/libgroups.test.js`,
-   `test/teacher-daygroups.test.js`, `issues/075-classes-nav-autocomplete-shortcut.md`.
+   `test/teacher-daygroups.test.js`, `issues/closed/075-classes-nav-autocomplete-shortcut.md`.
    Nothing else in the tree was touched — no `data/`, `vendor/`, `assets/`,
    `emplois.csv`, `styles.css`, `README.md`, `CONTEXT.md`, `FEATURES.md`,
    `js/teachers.js`, `js/app.js`, `js/data.js`, `js/model.js`, `js/match.js`,

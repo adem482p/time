@@ -339,7 +339,7 @@ checksum snapshot of all 63 files — so this diff is byte-exact):
 +});
 ```
 
-A new file, `issues/062-remove-teacher-session-counts.md`, is added (this
+A new file, `issues/closed/062-remove-teacher-session-counts.md`, is added (this
 issue); it is not part of the diff above.
 
 **Criterion-by-criterion results**
@@ -393,7 +393,7 @@ issue); it is not part of the diff above.
    outside the cited lines.
 9. **met** — git-free diff hygiene: md5 of all 63 files taken before the
    first edit, recomputed after. Changed: `js/teachers.js`, `styles.css`,
-   `test/teacher-daygroups.test.js`; added: `issues/062-remove-teacher-session-counts.md`.
+   `test/teacher-daygroups.test.js`; added: `issues/closed/062-remove-teacher-session-counts.md`.
    The other 60 files are byte-identical, and the reconstructed bases of the
    three edited files md5-match their pre-edit snapshots exactly.
 10. **met** — tests: baseline re-verified **131**/131 pass, 0 fail (both

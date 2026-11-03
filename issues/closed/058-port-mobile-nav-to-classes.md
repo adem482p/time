@@ -927,7 +927,7 @@ five files of ruling 8 + this issue's discussion entry)
     15. **Console** over the whole walk: 0 JS errors (favicon 404 excepted).
 20. **Diff hygiene** — full-tree diff vs base may touch only `classes.html`,
     `js/classes.js`, `styles.css`, `test/classes.test.js`,
-    `test/teacher-daygroups.test.js`, `issues/058-port-mobile-nav-to-classes.md`.
+    `test/teacher-daygroups.test.js`, `issues/closed/058-port-mobile-nav-to-classes.md`.
     **No-go**: no `js/teachers.js`/`index.html` edits; no `setTimeout`; no
     width/pointer reads in JS; no `@media (pointer: coarse)` in CSS; no
     edits inside `renderWeek`/`showClass`/the suggest/ghost/kaomoji/hop

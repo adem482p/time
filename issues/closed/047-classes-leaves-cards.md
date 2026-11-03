@@ -115,7 +115,7 @@ URLs + clicks:
     `LCS1`/`LCS` excluded / `GLSI3D1` kept, leaf ordering + dayCursor
     boundaries, leaf-only app.js structure, c-sessions emission, per-viewport
     CSS rules); every pre-existing test kept green.
-  - `issues/047-classes-leaves-cards.md`: this file.
+  - `issues/closed/047-classes-leaves-cards.md`: this file.
 - Verification results:
   - `node --test test/classes.test.js test/libgroups.test.js`: 57 pass, 0 fail
     (39 classes + 18 libgroups).

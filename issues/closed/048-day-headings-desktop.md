@@ -974,7 +974,7 @@ git status --porcelain:
  M styles.css
  M test/classes.test.js
  M test/teacher-daygroups.test.js
-?? issues/048-day-headings-desktop.md
+?? issues/closed/048-day-headings-desktop.md
 ```
 
 **Visually unverified (risk 10)**: no browser is available to the

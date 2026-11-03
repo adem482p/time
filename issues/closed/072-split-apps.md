@@ -852,7 +852,7 @@ machinery, not the URL lists themselves, is the durable guard.
    `classes.html`, `time.html`, `timetable.html`, `js/data.js`,
    `js/register.js` (header comment only), `test/{classes,offline,pwa,
    teacher-daygroups,theme-boot}.test.js`, `FEATURES.md`,
-   `issues/072-split-apps.md`, and the DELETED root `manifest.json` +
+   `issues/closed/072-split-apps.md`, and the DELETED root `manifest.json` +
    `sw.js`. `data/`, `styles.css`, `README.md`, `CONTEXT.md`, all other
    `issues/*`, all other `js/*`, `vendor/*`, `assets/*`, `emplois.csv` are
    byte-identical. `FEATURES.md` changed only the criterion-11 passages

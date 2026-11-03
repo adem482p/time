@@ -19,7 +19,8 @@
 
 ## Issue tracker (`issues/`)
 
-- One markdown file per issue: `issues/NNN-short-slug.md`.
+- One markdown file per issue: `issues/NNN-short-slug.md` while open, moved to
+  `issues/closed/NNN-short-slug.md` once `Status:` becomes `Fixed`.
 - File structure:
   - `# NNN: Title`, `Status:` (`Open` → `Fixed` once merged), a date/reporter line.
   - `## Description` (observed vs expected), `## Root cause`, `## Repro steps`

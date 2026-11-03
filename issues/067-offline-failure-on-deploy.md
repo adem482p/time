@@ -16,7 +16,7 @@ The user's report, verbatim:
 then lost wifi and reloaded the page. The reload failed — the site did not
 render offline.
 
-**Expected:** per the approved plan in `issues/063-offline-support.md`, after
+**Expected:** per the approved plan in `issues/closed/063-offline-support.md`, after
 one online session the site should be viewable without a network connection:
 online loads are network-first (cache destroyed and rebuilt), and offline the
 last-cached state answers every page. A reload without wifi should render the
@@ -26,7 +26,7 @@ four pages, the stylesheet, the scripts, the three vendored fonts and
 ## Root cause
 
 The offline machinery was **never built**: the plan in
-`issues/063-offline-support.md` (service worker `sw.js` + `js/register.js` +
+`issues/closed/063-offline-support.md` (service worker `sw.js` + `js/register.js` +
 21-URL precache, network-first) is approved but **not implemented** — this
 worktree contains no `sw.js`, no `js/register.js`, and no `serviceWorker` string
 anywhere in the shipped code, so **zero service workers are registered** (live
@@ -37,7 +37,7 @@ cache, and GitHub Pages serves every asset with **`cache-control: max-age=600`**
 `cache-control`) — fresh for 10 minutes only. Chrome's reload
 revalidates the navigation, which requires the network; once the entries are
 stale (or the request is cache-busted) the reload needs the origin and fails
-with `ERR_INTERNET_DISCONNECTED`. `issues/063-offline-support.md`'s Root cause
+with `ERR_INTERNET_DISCONNECTED`. `issues/closed/063-offline-support.md`'s Root cause
 ("a feature that was never built, not a bug") is therefore *the* cause here too,
 now observed in production rather than on the dev server.
 
@@ -223,7 +223,7 @@ timing-dependent behavior that no user should have to reason about.
 
 #### 5. Deploy-target fit check for issue 063's plan (read-only cross-check)
 
-The plan in `issues/063-offline-support.md` (Maintainer decision,
+The plan in `issues/closed/063-offline-support.md` (Maintainer decision,
 2026-10-20) was checked criterion-by-criterion against the measured deploy
 target. **Verdict: the plan fits the GitHub Pages `/time/` deployment
 unchanged; no criterion is invalidated.** Two factual notes and one latent
@@ -327,8 +327,8 @@ no Jekyll interference with the three new files.
   `.nojekyll` is absent, or add `.nojekyll`, so the Jekyll build can never
   drop a precache URL and abort the all-or-nothing install.
 - **Status of this issue stays `Open`**: it is the diagnosis record.
-  Implementation rides on `issues/063-offline-support.md` after the user
+  Implementation rides on `issues/closed/063-offline-support.md` after the user
   approves that plan; 067 should then be closed as fixed-by-063.
 
-Cross-references: `issues/063-offline-support.md` (plan, Root cause,
+Cross-references: `issues/closed/063-offline-support.md` (plan, Root cause,
 Maintainer decision 2026-10-20) — this issue is its production observation.

@@ -80,7 +80,7 @@ to be absent from `js/classes.js`). The `:316-319` comment states the design
 that shipped with issue 048: the flat table is the "Plain full session
 table… like the grid it is display:none on narrow screens", and `:277-280`
 states the day groups come first, then the grid, then the full table
-(`issues/048-day-headings-desktop.md`, criteria 6-8).
+(`issues/closed/048-day-headings-desktop.md`, criteria 6-8).
 
 Visibility rules (`styles.css`):
 

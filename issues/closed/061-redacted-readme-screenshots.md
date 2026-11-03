@@ -512,7 +512,7 @@ assertion; re-capture is manual per the documented recipe. Exact test list:
     `js/teachers.js`, `js/classes.js`, `js/app.js`, `styles.css`,
     `README.md`, `test/redact.test.js` (new), `test/teacher-daygroups.test.js`,
     `test/classes.test.js`, `test/time-live.test.js` (provider lines only),
-    `issues/061-redacted-readme-screenshots.md` (discussion entries), plus the
+    `issues/closed/061-redacted-readme-screenshots.md` (discussion entries), plus the
     7 PNGs. No-gos: no changes to `emplois.csv`, `data/pdfs/`, `data/extract.py`,
     the four HTML files, `js/theme.js`, `js/model.js`; no new dependencies,
     no `package.json`, no capture script; no teacher name in any committed
@@ -1061,7 +1061,7 @@ pre-change **129/129/0** test run — the correctness check for the old sides:
 +});
 ```
 
-The diff of `issues/061-redacted-readme-screenshots.md` is this entry itself
+The diff of `issues/closed/061-redacted-readme-screenshots.md` is this entry itself
 (appended after the `### Maintainer decision (2026-10-20)` block, nothing
 else changed; `Status:` untouched).
 

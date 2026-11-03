@@ -542,7 +542,7 @@ verified during this report (offline navigation → `net::ERR_INTERNET_DISCONNEC
 **Allowed file list for the implementer (nothing else, anywhere):**
 `sw.js` (new), `js/register.js` (new), `test/offline.test.js` (new),
 `index.html`, `classes.html`, `time.html`, `timetable.html` (one script tag
-each), `issues/063-offline-support.md` (this entry). No `styles.css`, no other
+each), `issues/closed/063-offline-support.md` (this entry). No `styles.css`, no other
 `js/*.js`, no `README.md`/`Design.md`, no `vendor/`, no `data/`.
 
 **No-gos:** no stale-while-revalidate, cache-first, or background-refresh

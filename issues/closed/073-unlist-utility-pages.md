@@ -341,7 +341,7 @@ the old URLs 404; the moved pages stay manifest-less/worker-less/register-less).
 
 Deleted: `time.html`, `timetable.html` (no stubs left behind — the old URLs 404).
 Added: `at/index.html`, `all/index.html` (moves with URL re-pointing only),
-`issues/073-unlist-utility-pages.md`.
+`issues/closed/073-unlist-utility-pages.md`.
 
 **Design decisions & justifications**
 

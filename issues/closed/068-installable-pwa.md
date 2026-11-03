@@ -341,7 +341,7 @@ plain `diff -u` against the clean base worktree.
   verified (RGB, opaque, exact sizes).
 - `test/pwa.test.js` (9,982 B) — the 6 test blocks named in the verification
   list above; full source in the worktree.
-- `issues/068-installable-pwa.md` — this file.
+- `issues/closed/068-installable-pwa.md` — this file.
 
 **Status stays `Open` until the main agent merges** (per AGENTS.md, the
 `Open → Fixed` flip happens at merge time).
@@ -489,7 +489,7 @@ CDP `Page.getInstallabilityErrors` from this run returns **`[]`**.
 - Scope discipline: `diff -ru` between `clean` (main @ b6b6cd0) and this
   worktree lists exactly **4 modified HTML files + `sw.js` +
   `test/offline.test.js`** and the new `manifest.json`, 6 `assets/*` files,
-  `test/pwa.test.js`, `issues/068-installable-pwa.md`. `js/theme.js`,
+  `test/pwa.test.js`, `issues/closed/068-installable-pwa.md`. `js/theme.js`,
   `styles.css`, `test/theme-boot.test.js`, `data/`, `README.md`, `Design.md`
   and every `issues/*.md` except 068 are **byte-identical** between the trees
   (066 `Status: Fixed`, 054/067 `Status: Open`, untouched). The four heads keep
@@ -522,7 +522,7 @@ already met by this tree; they are the conditions under which it lands):**
    `sw.js`, `test/offline.test.js`, `manifest.json`, `assets/icon.svg`,
    `assets/icon-maskable.svg`, `assets/icon-192.png`, `assets/icon-512.png`,
    `assets/icon-maskable-512.png`, `assets/apple-touch-icon.png`,
-   `test/pwa.test.js`, `issues/068-installable-pwa.md`.
+   `test/pwa.test.js`, `issues/closed/068-installable-pwa.md`.
 6. Flip `Status: Open` → `Fixed` in this file at merge, per AGENTS.md.
 7. No follow-up JS may ride along: no `beforeinstallprompt` capture, no
    install button, no runtime manifest rewriting (theme/splash divergence in

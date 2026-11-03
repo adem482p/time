@@ -112,7 +112,7 @@ URLs + clicks:
   - `test/classes.test.js`: page-structure test now asserts kaomoji IS loaded,
     author-credit, canonical/meta description; CSS test covers
     `td.c-cell.today` (incl. before-now ordering) and `no-class-selected`.
-  - `issues/046-classes-mirror-teachers.md`: this file.
+  - `issues/closed/046-classes-mirror-teachers.md`: this file.
 - Verification results:
   - `node --test test/classes.test.js test/libgroups.test.js`: 52 pass, 0 fail
     (34 classes + 18 libgroups).

@@ -738,7 +738,7 @@ base verified identical to main's copy, since merged #056 does not touch it):**
    `test/teacher-daygroups.test.js`, `issues/056-*`), none of which I touched.
    An mtime scan of this worktree finds exactly three files modified after
    worktree creation: `js/model.js`, `test/teacher-subjects.test.js`,
-   `issues/053-case-insensitive-subject-counts.md`. Nothing in `data/`,
+   `issues/closed/053-case-insensitive-subject-counts.md`. Nothing in `data/`,
    `emplois.csv` (md5 still `41dbe5a8768c08b94872398245cb78f3`), `Design.md`,
    HTML/CSS, or other issue files.
 6. **Sibling boundaries (as requested, for merge reconciliation):** #052 owns

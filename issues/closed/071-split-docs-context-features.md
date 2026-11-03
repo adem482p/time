@@ -192,7 +192,7 @@ scope fences keep it inside five paths.
 8. `node --test` and `node --test test/*.test.js` → **173 tests, 173 pass,
    0 fail** in both forms (docs-only change: the total must not move).
 9. Diff touches exactly `Design.md` (removed), `CONTEXT.md`, `FEATURES.md`,
-   `README.md`, `issues/071-split-docs-context-features.md`. No code, CSS,
+   `README.md`, `issues/closed/071-split-docs-context-features.md`. No code, CSS,
    test or other issue file — no `Status:` line anywhere is edited.
 
 **Risks / constraints**
@@ -223,7 +223,7 @@ agent. No `Status:` line was edited anywhere — this issue reads `Open` and the
 | `CONTEXT.md` | new — the world model, re-homed from `Design.md` |
 | `FEATURES.md` | new — the feature catalog |
 | `README.md` | +5 lines: a `# Documentation` section inserted before `# Screenshots` |
-| `issues/071-split-docs-context-features.md` | new — this record |
+| `issues/closed/071-split-docs-context-features.md` | new — this record |
 
 **Acceptance criteria — results**
 
@@ -262,7 +262,7 @@ agent. No `Status:` line was edited anywhere — this issue reads `Open` and the
    resolve, alts non-empty and professor-token-free) pass with `# Screenshots`
    byte-identical — the only README change is an insertion above it.
 9. **Met.** Files modified after checkout (`find … -newermt`): `CONTEXT.md`,
-   `FEATURES.md`, `README.md`, `issues/071-split-docs-context-features.md` —
+   `FEATURES.md`, `README.md`, `issues/closed/071-split-docs-context-features.md` —
    plus the removal of `Design.md`. No code, CSS, test, HTML or other issue
    file.
 

@@ -122,7 +122,7 @@ Implemented by the folded researcher+implementer for issue 069.
 | `assets/apple-touch-icon.png` | regenerated @180 — 1431 → 8430 bytes, RGB |
 | `assets/icon-maskable-512.png` | regenerated from `icon-maskable.svg` @512 — 2806 → 21225 bytes, RGB |
 | `test/pwa.test.js` | +2 tests (maskable safe zone measured on real pixels; logo provenance/art pins) |
-| `issues/069-isima-logo-icon.md` | this file |
+| `issues/closed/069-isima-logo-icon.md` | this file |
 
 `manifest.json`, `sw.js` (26-URL PRECACHE untouched), `index.html`,
 `classes.html`, `time.html`, `timetable.html`: **byte-identical** to `main`
@@ -203,7 +203,7 @@ inlined):
 +  <!-- Official ISIMa lockup, white-on-dark variant, copied verbatim from
 +       https://isima.rnu.tn/build/assets/logo-slider-BmNTy0I4.svg
 +       (retrieved 2026-10-21; provenance and licence notes in
-+       issues/069-isima-logo-icon.md). Original viewBox 0 0 301.26 231.42,
++       issues/closed/069-isima-logo-icon.md). Original viewBox 0 0 301.26 231.42,
 +       ink fills it edge to edge. -->
 +    <style type="text/css">
 +    	.st0{fill:url(#SVGID_1_);}
@@ -442,7 +442,7 @@ inlined):
 +  <!-- Official ISIMa lockup, white-on-dark variant, copied verbatim from
 +       https://isima.rnu.tn/build/assets/logo-slider-BmNTy0I4.svg
 +       (retrieved 2026-10-21; provenance and licence notes in
-+       issues/069-isima-logo-icon.md). Original viewBox 0 0 301.26 231.42,
++       issues/closed/069-isima-logo-icon.md). Original viewBox 0 0 301.26 231.42,
 +       ink fills it edge to edge. -->
 +    <style type="text/css">
 +    	.st0{fill:url(#SVGID_1_);}

@@ -237,8 +237,8 @@ the implementation → this entry.
 - `js/classes.js` — 3 hunks (new persistence block after the clock IIFE,
   one call line in each of the two funnels, boot-tail restore)
 - `test/classes.test.js` — one EOF append (3 helpers + 5 tests)
-- `issues/065-remember-last-class.md` — new file (this document; its diff
-  is `--- /dev/null` → `+++ b/issues/065-remember-last-class.md`, entirely
+- `issues/closed/065-remember-last-class.md` — new file (this document; its diff
+  is `--- /dev/null` → `+++ b/issues/closed/065-remember-last-class.md`, entirely
   new — not re-inlined here to avoid quoting this entry inside itself)
 
 **Exact unified diff.** No git was available (subagent rule), so the base
@@ -563,14 +563,14 @@ lengths — then `diff -u` of reconstructed-base → current worktree:
   point; the sibling servers on ports 8085/45815/8113 (other worktrees)
   were left untouched.
 - **Diff hygiene:** my write/edit calls touched exactly three files —
-  `js/classes.js`, `test/classes.test.js`, `issues/065-remember-last-class.md`.
+  `js/classes.js`, `test/classes.test.js`, `issues/closed/065-remember-last-class.md`.
   Zero diff to `classes.html` (still carries the 060 X glyph byte-for-byte,
   confirmed absent of 064's arrow), `index.html`, `js/theme.js`,
   `js/teachers.js`, `styles.css` — no CSS need arose, per criterion 7.
   Cross-check against the `clean` worktree (main, which now carries sibling
   064): the only differences are 065's three files, plus 064's own surfaces
   (`classes.html`, `index.html`, `js/teachers.js`, `styles.css`,
-  `test/teacher-daygroups.test.js`, `issues/064-deselect-back-arrow.md`) —
+  `test/teacher-daygroups.test.js`, `issues/closed/064-deselect-back-arrow.md`) —
   none of which I wrote.
 - **Sibling-overlap analysis for the merge (064 in main):** 064's
   `js/classes.js` hunks are **comment-only** at three regions (the

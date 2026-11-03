@@ -282,7 +282,7 @@ both `node --test` and `node --test test/*.test.js`. No test file other than
 `test/offline.test.js` changes.
 
 **9. Scope fences (allowed file list — nothing else, anywhere):** `sw.js`,
-`js/register.js`, `test/offline.test.js`, `issues/070-snapshot-erased-on-reconnect.md`
+`js/register.js`, `test/offline.test.js`, `issues/closed/070-snapshot-erased-on-reconnect.md`
 (this issue). Untouchable: the four HTML files (registration lines stay as-is;
 HTML heads belong to sibling 066), `js/theme.js`, `styles.css`,
 `js/data.js`, redaction, all other tests, `Design.md`, `README.md`, `vendor/`,
@@ -375,7 +375,7 @@ agent commits. `Status:` left `Open` for the main agent to flip at merge.
 
 **Allowed files touched — exactly four, verified** (`find . -type f -not -path
 './.git/*' -newer <pre-edit snapshot>`): `sw.js`, `js/register.js`,
-`test/offline.test.js`, `issues/070-snapshot-erased-on-reconnect.md` (this
+`test/offline.test.js`, `issues/closed/070-snapshot-erased-on-reconnect.md` (this
 file). The four HTML registration lines, `js/theme.js`, `styles.css`,
 `js/data.js`, `Design.md`, `README.md`, all other tests: untouched.
 
@@ -1000,7 +1000,7 @@ hunks verbatim):**
  });
 ```
 
-(The fourth file, `issues/070-snapshot-erased-on-reconnect.md`, is this issue
+(The fourth file, `issues/closed/070-snapshot-erased-on-reconnect.md`, is this issue
 itself — created and appended to by this run: Description/Root cause/Repro
 steps first, then the three Discussion entries.)
 

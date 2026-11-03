@@ -67,11 +67,11 @@ baseline `node --test` = **103 tests, 103 pass, 0 fail**):
    is the stale side; the rest of the section (grid, cursor, slot
    highlighting, `Design.md:180-187`) is still accurate. Issue 050's
    maintainer already flagged this as pre-existing drift
-   (`issues/050-start-day-groups-from-today.md:313-315`).
+   (`issues/closed/050-start-day-groups-from-today.md:313-315`).
 
 4. **Favicon 404 on every page.** No `<link rel="icon">` exists in any of
    the four HTML files (grep `rel="icon"|favicon` over the whole repo: the
-   only hit is `issues/049-whole-week-only.md:58`, which recorded the same
+   only hit is `issues/closed/049-whole-week-only.md:58`, which recorded the same
    404 in a browser console). No favicon asset exists either (`assets/`
    holds only `preview.png` and `preview.svg`). Every page load therefore
    produces a `GET /favicon.ico → 404` in the console. Head sections:
@@ -185,7 +185,7 @@ tests; this issue is the removal side of that coin.
 - **Favicon**: no `<link rel="icon">` was ever declared in any page, and no
   icon asset exists; browsers unconditionally probe `/favicon.ico`, so every
   page logs a 404 (already observed in issue 049's browser audit,
-  `issues/049-whole-week-only.md:58`). The two SEO-heavy heads
+  `issues/closed/049-whole-week-only.md:58`). The two SEO-heavy heads
   (`index.html`, `classes.html`) and the two minimal heads (`time.html`,
   `timetable.html`) alike lack the declaration.
 - **Test fossils**: `test/classes.test.js:545`'s name and the `app.js`
