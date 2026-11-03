@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { createStore } from '../app/src/lib/data.js';
 import * as model from '../app/src/lib/model.js';
 import * as searchTeachers from '../app/src/lib/search-teachers.js';
+import { fuzzyRanges } from '../app/src/lib/search.js';
 import * as color from '../app/src/lib/color.js';
 import { CSV_PATH, readSrc } from './helpers.js';
 
@@ -813,4 +814,92 @@ test('teacher rows carry no session-count badge, in the list and in suggest', fu
   assert.ok(TEACHERS.indexOf('class="hours"') !== -1, 'detail-page counts stay');
   assert.ok(TEACHERS.indexOf('{store.size} sessions') !== -1 &&
     TEACHERS.indexOf('teachers{:else}') !== -1, 'the #status totals line stays');
+});
+
+// ---- suggest + shadow text (issue 085 phase 4) -------------------------------
+
+test('the suggest rows keep every token, rank score-desc by byte label and cap at 8', function () {
+  // issue 076 verified the cap against typing 'abe' — it still opens 8 rows
+  const abe = searchTeachers.suggestTeachers(index, 'abe');
+  assert.strictEqual(abe.length, 8, 'typing abe still opens 8 suggestions');
+  assert.strictEqual(searchTeachers.suggestTeachers(index, '   ').length, 0,
+    'a blank query suggests nothing');
+  // kind vocabulary is the overlay's {teacher, class, subject} set
+  abe.forEach(function (r) {
+    assert.ok(['teacher', 'subject', 'class'].indexOf(r.kind) !== -1,
+      'row ' + JSON.stringify(r.label) + ' carries a known kind');
+  });
+  // determinism over ties: every glsi prefix scores alike, so the byte
+  // order must decide — ancestor keys included, first-seen deduped
+  assert.deepStrictEqual(
+    searchTeachers.suggestTeachers(index, 'glsi').map(function (r) { return r.label; }),
+    ['GLSI1', 'GLSI1A', 'GLSI1A1', 'GLSI1A2', 'GLSI1B', 'GLSI1B1', 'GLSI1B2', 'GLSI1C'],
+    'equal scores break byte-alphabetically');
+  // token-AND on a two-token query: only texts keeping BOTH tokens survive,
+  // and the tighter prefix scores ahead of the loose one
+  const two = searchTeachers.suggestTeachers(index, 'algo struct');
+  assert.ok(two.length > 0 && two.length <= 8, 'the two-token query still suggests');
+  assert.ok(two.some(function (r) { return r.label === 'Algo Struct de Données I'; }),
+    'the whole-token subject survives the AND');
+  assert.strictEqual(two[0].label, 'Algo Struct de Données I',
+    'the earlier token prefix outranks its & variant');
+  ['abe', 'algo struct', 'machine'].forEach(function (q) {
+    const tokens = q.split(/\s+/).filter(Boolean);
+    searchTeachers.suggestTeachers(index, q).forEach(function (r, i) {
+      tokens.forEach(function (tok) {
+        assert.ok(fuzzyRanges(r.label, tok) !== null,
+          q + ' row ' + JSON.stringify(r.label) + ' keeps every token (' + tok + ')');
+      });
+    });
+  });
+});
+
+test('every suggest commit is a bare text that round-trips through searchSections', function () {
+  ['abe', 'glsi', 'algo struct', 'machine', 'ben'].forEach(function (q) {
+    searchTeachers.suggestTeachers(index, q).forEach(function (r) {
+      assert.strictEqual(r.commit, r.label, 'commits are the bare texts (no typed prefixes)');
+      assert.strictEqual(r.detail, null, 'rows stay minimal: no counted badge hints');
+      const res = searchTeachers.searchSections(index, r.commit, null);
+      assert.ok(res.total > 0,
+        q + ' commit ' + JSON.stringify(r.commit) + ' resolves to hits');
+      if (r.kind === 'teacher') {
+        // the page's exactTeacher: the committed name is still the exact hit
+        let found = null;
+        res.sections.forEach(function (sec) {
+          sec.hits.forEach(function (h) {
+            if (!found && h.teacher && model.normStr(h.teacher) === model.normStr(r.commit)) found = h.teacher;
+          });
+        });
+        assert.strictEqual(found, r.commit, 'a teacher commit is the exact selection');
+      }
+    });
+  });
+  // the class-key commit rides the exact-class relevance: the resolution
+  // walk needs the groups back (they left the index in the redesign) —
+  // counting restores instead of crashing on the leaf lookup
+  const res = searchTeachers.searchSections(index, 'GLSI3D1', null);
+  assert.ok(res.total > 0, 'the GLSI3D1 commit survives the class-exact relevance walk');
+  assert.ok(res.sections[0].hits.some(function (h) {
+    return h.exact === true && h.relevantSessions > 0;
+  }), 'the exact class commit still counts its (n relevant)');
+});
+
+test('shadowText completes commit/label prefixes and stays null on divergence', function () {
+  // the live path: the new suggest's bare-commit rows take the first branch
+  assert.deepStrictEqual(searchTeachers.shadowText('glsi', { label: 'GLSI3D1', commit: 'GLSI3D1' }),
+    { pre: '', rest: '3D1' }, 'a bare commit completes from the typed prefix');
+  assert.deepStrictEqual(searchTeachers.shadowText('hass', { label: 'Hassairi', commit: 'Hassairi' }),
+    { pre: '', rest: 'airi' }, 'teacher names complete inside the word');
+  assert.deepStrictEqual(searchTeachers.shadowText('machine ', { label: 'Machine Learning', commit: 'Machine Learning' }),
+    { pre: '', rest: 'Learning' }, 'a single typed space is an ordinary character');
+  // the pinned prefix-commit example stays a pure-function case (issue 077)
+  assert.deepStrictEqual(searchTeachers.shadowText('glsi', { commit: 'class:GLSI3D1', label: 'GLSI3D1' }),
+    { pre: 'class:', rest: '3D1' }, 'a typed prefix commit surfaces as the ghost pre');
+  // divergence: no trim/collapse — the raw typed run must really prefix
+  assert.strictEqual(searchTeachers.shadowText('machine  ', { label: 'Machine Learning', commit: 'Machine Learning' }),
+    null, 'a double space means the ghost is gone (issue #2)');
+  assert.strictEqual(searchTeachers.shadowText('', { label: 'x', commit: 'x' }), null,
+    'an empty query ghosts nothing');
+  assert.strictEqual(searchTeachers.shadowText('x', null), null,
+    'no row ghosts nothing');
 });

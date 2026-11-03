@@ -3,7 +3,7 @@ import { esc } from './data.js';
 
 export function buildTeacherIndex(store, groups) {
   const teachers = store.teachers;
-  return teachers.map(t => {
+  const index = teachers.map(t => {
     const sessions = store.sessionsOf(t);
     const subjects = {};
     const classes = {};
@@ -19,6 +19,13 @@ export function buildTeacherIndex(store, groups) {
     });
     return { name: t, subjects: Object.keys(subjects), classes: Object.keys(classes), sessions };
   });
+  // The index ships as the flat entries array the page searches; the groups
+  // ride along on it as one lookup, the way the merged match.js index used
+  // to carry them — the exact-commit relevance below resolves class nodes
+  // through index.groups (see covers in searchTeachers), so a committed
+  // class key keeps counting "(n relevant)" instead of hitting undefined.
+  index.groups = groups;
+  return index;
 }
 
 export function searchTeachers(index, query, avail) {
@@ -156,10 +163,67 @@ export function searchSections(index, query, avail) {
   return { attrs: [], text: q, total: plain.length, sections: [{ key: 'text', label: null, hits: plain }] };
 }
 
+/** Typed suggestions for the teacher page: every teacher name, every
+ * distinct subject string and every distinct class key of the index whose
+ * text keeps every query token (token-AND, scored with the shared
+ * scoreMatch tiers), score-descending with a byte-order label tiebreak,
+ * capped at 8. Commits carry the bare text — a picked row falls straight
+ * into searchTeachers' token-AND search, the typed `subject:`/`class:`
+ * prefixes having gone with match.js (issue 085). Dedupe is first-seen in
+ * teacher/subject/class order, so labels stay unique and the sort stays
+ * fully deterministic. */
 export function suggestTeachers(index, query) {
-  return [];
+  const q = String(query == null ? '' : query).trim();
+  if (!q) return [];
+  const tokens = tokenize(q);
+  const seen = {};
+  const out = [];
+  function cand(kind, text) {
+    if (seen[text]) return;
+    seen[text] = true;
+    let score = 0;
+    const rs = [];
+    for (let i = 0; i < tokens.length; i++) {
+      const r = fuzzyRanges(text, tokens[i]);
+      if (!r) return;
+      score += Math.max(scoreMatch(text, tokens[i]), 0);
+      rs.push(...r);
+    }
+    out.push({ kind: kind, label: text, commit: text, detail: null,
+               score: score, ranges: rs.length ? mergeRanges(rs) : null });
+  }
+  index.forEach(e => {
+    cand('teacher', e.name);
+    e.subjects.forEach(s => cand('subject', s));
+    e.classes.forEach(c => cand('class', c));
+  });
+  return out.sort((a, b) => b.score - a.score || cmpByte(a.label, b.label)).slice(0, 8);
 }
 
+/** Shadow text: what Enter/Tab completes. The raw typed string (case
+ * insensitive, no trim/collapse) must be a proper prefix of the target,
+ * otherwise nothing can be completed inline ("machine  " diverges and
+ * returns null, issue #2). The bare commit is the target; a row whose
+ * commit still carries a typed prefix completes its label behind the
+ * `subject:`/`class:`/`teacher:` hint. Worked pin (kept a pure-function
+ * case after the prefix machinery was removed):
+ *   shadowText('glsi', {commit:'class:GLSI3D1', label:'GLSI3D1'})
+ *     -> {pre:'class:', rest:'3D1'}
+ * while new bare-commit rows (commit === label) take the first branch. */
 export function shadowText(query, row) {
+  const raw = String(query == null ? '' : query);
+  if (!raw || !raw.trim() || !row) return null;
+  const rl = raw.toLowerCase();
+  if (row.commit && row.commit.toLowerCase().indexOf(rl) === 0)
+    return { pre: '', rest: row.commit.slice(raw.length) };
+  const pm = /^(subject|class|teacher):/i.exec(row.commit || '');
+  if (pm && row.label && row.label.toLowerCase().indexOf(rl) === 0)
+    return { pre: pm[1].toLowerCase() + ':', rest: row.label.slice(raw.length) };
+  if (row.label && row.label.toLowerCase().indexOf(rl) === 0)
+    return { pre: '', rest: row.label.slice(raw.length) };
   return null;
 }
+
+// Byte-order tiebreak for suggest labels — the same rule suggestClasses
+// applies, kept local like search-classes.js does.
+function cmpByte(a, b) { return a < b ? -1 : a > b ? 1 : 0; }

@@ -9,12 +9,21 @@
 
 import test from 'node:test';
 import assert from 'node:assert';
-import { readSrc } from './helpers.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { readSrc, ROOT } from './helpers.js';
 
-test('the committed exact-query machinery stays removed', function () {
-  var src = readSrc('app/src/lib/match.js');
-  assert.ok(src.indexOf('parseExactQuery') === -1, 'parseExactQuery must stay removed');
-  assert.ok(src.indexOf('exactQuery') === -1, 'exactQuery must stay removed');
+test('match.js stays deleted and the search modules stay prefix-free (issue 085)', function () {
+  assert.strictEqual(fs.existsSync(path.join(ROOT, 'app/src/lib/match.js')), false,
+    'app/src/lib/match.js must stay deleted');
+  // the deletion must not re-import the removed machinery through the
+  // search modules either: no committed-exact-query surface returns
+  ['app/src/lib/search.js', 'app/src/lib/search-classes.js', 'app/src/lib/search-teachers.js']
+    .forEach(function (rel) {
+      var src = readSrc(rel);
+      assert.ok(src.indexOf('parseExactQuery') === -1, 'parseExactQuery must stay out of ' + rel);
+      assert.ok(src.indexOf('exactQuery') === -1, 'exactQuery must stay out of ' + rel);
+    });
 });
 
 test('the utility pages never build a match index', function () {
