@@ -892,9 +892,10 @@ test('shadowText completes commit/label prefixes and stays null on divergence', 
     { pre: '', rest: 'airi' }, 'teacher names complete inside the word');
   assert.deepStrictEqual(searchTeachers.shadowText('machine ', { label: 'Machine Learning', commit: 'Machine Learning' }),
     { pre: '', rest: 'Learning' }, 'a single typed space is an ordinary character');
-  // the pinned prefix-commit example stays a pure-function case (issue 077)
+  // after the prefix cleanup (branch 2 removed), the class:-prefixed commit
+  // no longer surfaces its hint; the label prefix takes over (issue 085)
   assert.deepStrictEqual(searchTeachers.shadowText('glsi', { commit: 'class:GLSI3D1', label: 'GLSI3D1' }),
-    { pre: 'class:', rest: '3D1' }, 'a typed prefix commit surfaces as the ghost pre');
+    { pre: '', rest: '3D1' }, 'the class: prefix no longer surfaces as the ghost pre');
   // divergence: no trim/collapse — the raw typed run must really prefix
   assert.strictEqual(searchTeachers.shadowText('machine  ', { label: 'Machine Learning', commit: 'Machine Learning' }),
     null, 'a double space means the ghost is gone (issue #2)');

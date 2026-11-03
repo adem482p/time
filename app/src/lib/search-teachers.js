@@ -168,8 +168,7 @@ export function searchSections(index, query, avail) {
  * text keeps every query token (token-AND, scored with the shared
  * scoreMatch tiers), score-descending with a byte-order label tiebreak,
  * capped at 8. Commits carry the bare text — a picked row falls straight
- * into searchTeachers' token-AND search, the typed `subject:`/`class:`
- * prefixes having gone with match.js (issue 085). Dedupe is first-seen in
+ * into searchTeachers' token-AND search (issue 085). Dedupe is first-seen in
  * teacher/subject/class order, so labels stay unique and the sort stays
  * fully deterministic. */
 export function suggestTeachers(index, query) {
@@ -203,22 +202,14 @@ export function suggestTeachers(index, query) {
 /** Shadow text: what Enter/Tab completes. The raw typed string (case
  * insensitive, no trim/collapse) must be a proper prefix of the target,
  * otherwise nothing can be completed inline ("machine  " diverges and
- * returns null, issue #2). The bare commit is the target; a row whose
- * commit still carries a typed prefix completes its label behind the
- * `subject:`/`class:`/`teacher:` hint. Worked pin (kept a pure-function
- * case after the prefix machinery was removed):
- *   shadowText('glsi', {commit:'class:GLSI3D1', label:'GLSI3D1'})
- *     -> {pre:'class:', rest:'3D1'}
- * while new bare-commit rows (commit === label) take the first branch. */
+ * returns null, issue #2). The bare commit is the target; branch 1 handles
+ * commit-prefix completion, branch 3 handles plain label-prefix completion. */
 export function shadowText(query, row) {
   const raw = String(query == null ? '' : query);
   if (!raw || !raw.trim() || !row) return null;
   const rl = raw.toLowerCase();
   if (row.commit && row.commit.toLowerCase().indexOf(rl) === 0)
     return { pre: '', rest: row.commit.slice(raw.length) };
-  const pm = /^(subject|class|teacher):/i.exec(row.commit || '');
-  if (pm && row.label && row.label.toLowerCase().indexOf(rl) === 0)
-    return { pre: pm[1].toLowerCase() + ':', rest: row.label.slice(raw.length) };
   if (row.label && row.label.toLowerCase().indexOf(rl) === 0)
     return { pre: '', rest: row.label.slice(raw.length) };
   return null;

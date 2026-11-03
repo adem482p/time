@@ -21,8 +21,10 @@ test('match.js stays deleted and the search modules stay prefix-free (issue 085)
   ['app/src/lib/search.js', 'app/src/lib/search-classes.js', 'app/src/lib/search-teachers.js']
     .forEach(function (rel) {
       var src = readSrc(rel);
-      assert.ok(src.indexOf('parseExactQuery') === -1, 'parseExactQuery must stay out of ' + rel);
-      assert.ok(src.indexOf('exactQuery') === -1, 'exactQuery must stay out of ' + rel);
+      ['parseExactQuery', 'exactQuery', 'completionContext', 'resolveClass',
+       'aliasToCanonical', 'legacyKey'].forEach(function (tok) {
+        assert.ok(src.indexOf(tok) === -1, tok + ' must stay out of ' + rel);
+      });
     });
 });
 

@@ -125,7 +125,7 @@ export function suggestClasses(index, query) {
     });
     
     out.push({
-      kind: 'class', label: e.key, commit: 'class:' + e.key,
+      kind: 'class', label: e.key, commit: e.key,
       detail: e.key, score, ranges: ranges.length ? mergeRanges(ranges) : null
     });
   });

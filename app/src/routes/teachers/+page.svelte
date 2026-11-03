@@ -4,8 +4,8 @@
 	// nav machine (menuOpen / selectedTeacher -> 'list' | 'teacher' |
 	// 'empty'), one selection funnel (selectTeacher), one deselect funnel
 	// (showEmpty), one erase-only funnel for the clear X (eraseFilter), the
-	// desktop autocomplete overlay + shadow-text ghost, grouped live search
-	// (teacher:/class:/subject: constraints), the count line derivation
+	// desktop autocomplete overlay + shadow-text ghost,
+	// grouped live search (token-AND), the count line derivation
 	// (issue 078/079: numbers show only while the box is empty AND nothing is
 	// selected), and the one page clock (issue 051) re-ranking the list from
 	// fresh availability and re-rendering the open detail on every tick.
