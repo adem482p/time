@@ -1,6 +1,6 @@
 # 067: Offline reload fails on the GitHub Pages deploy
 
-- Status: Open
+- Status: Fixed
 - Date: 2026-10-21, Reporter: user
 
 ## Description
@@ -332,3 +332,97 @@ no Jekyll interference with the three new files.
 
 Cross-references: `issues/closed/063-offline-support.md` (plan, Root cause,
 Maintainer decision 2026-10-20) — this issue is its production observation.
+
+### Maintainer decision (2026-11-03): closed as fixed in production
+
+*(Everything below was measured live against `https://adem482p.github.io/time/`
+and byte-compared against `main` in this worktree on 2026-11-03. The deployed
+tree has changed completely since this issue was filed, so the verification
+follows the architecture as it ships today, not the four-page layout of
+2026-10-21.)*
+
+**Where this issue's fix landed.** 063's plan shipped in 2e2ba9e, and three
+later issues reworked the same surface: 068 made the apps installable, 070
+redefined the store from "cache" to a **last snapshot** (IndexedDB-persisted
+online/offline status; every offline→online transition erases the snapshot and
+retakes it wholesale), 072 split the site into **two installable apps each with
+its own worker** — `teachers/sw.js` and `classes/sw.js`, sharing `js/register.js`
+— because Cache Storage and IndexedDB are per-origin, and 073 moved
+`time.html`/`timetable.html` into `at/`/`all/`, made the root a head-only
+redirect to `/teachers/`, and fixed (user criteria) that the root, `at/` and
+`all/` stay **online-only by design** — no worker covers them. So today the
+user-facing offline surface is the two app URLs, not the bare root this issue
+was filed against.
+
+#### 1. Deploy currency (measured, curl + sha256, 2026-11-03)
+
+- `https://adem482p.github.io/time/teachers/sw.js` → **200**,
+  `https://adem482p.github.io/time/classes/sw.js` → **200**,
+  `js/register.js` → **200** — the offline machinery ships. (067's original
+  probe of `/time/sw.js` → 404 reflects the current split: the root worker was
+  retired by 072 in favour of the per-app workers above.)
+- Byte-identical to this worktree build (`sha256sum` live vs local, all equal):
+  `teachers/index.html`, `teachers/sw.js`, `classes/sw.js`, `styles.css`,
+  `emplois.csv`.
+- One local commit, `b4004ab` (2026-10-27, "Add class preview assets…"), is
+  **not yet on `origin/main` / the deploy**: live
+  `/time/classes/index.html` differs from `classes/index.html` only in the two
+  `og:image`/`twitter:image` meta tags (`preview.png` vs
+  `preview-classes.png`) — metadata that no runtime fetch reads — so it is
+  harmless for this issue, but the deploy is behind `main` by one commit and
+  the user may want to push it.
+- The live worker bytes equal the local `teachers/sw.js` (full
+  "last snapshot" model confirmed live: `SNAPSHOT_PREFIX =
+  'emplois-teachers-snapshot-'`, `SNAPSHOT = SNAPSHOT_PREFIX + 'v1'`,
+  IndexedDB `emplois-teachers-status` `last-online` record present).
+
+#### 2. The production offline walk (Playwright, MCP Chromium, network toggled
+with `page.context().setOffline()`)
+
+| step (against the live deploy) | measured result |
+|---|---|
+| online load `https://adem482p.github.io/time/` → redirect to `/time/teachers/` | renders `2093 sessions · 132 teachers`, 132 `#teacherList > li` |
+| `navigator.serviceWorker.getRegistrations()` | exactly one registration: scope `https://…/time/teachers/`, `active`, script `…/time/teachers/sw.js`; the page is **controlled** (`navigator.serviceWorker.controller` truthy) |
+| `caches.keys()` / entry counts | `emplois-teachers-snapshot-v1` → **21/21 entries**; after also loading the classes app, `emplois-classes-snapshot-v1` → **21/21** |
+| fresh-profile install (unregister all + delete all caches + reload) | install re-runs fine on live: worker `activated` again, snapshot back at **21 entries** |
+| **offline → RELOAD `/time/teachers/`** (the user's exact action, today's equivalent) | **renders offline**: `2093 sessions · 132 teachers`, 132 items — served from the snapshot; **zero page JS errors** |
+| offline → goto `/time/classes/` and offline **RELOAD** of it | both render (`2093 sessions · 94 classes`); inspecting the page after the teachers offline reload returned shows `#status` = `2093 sessions · 132 teachers` / 132 items again |
+| offline cross-app navigation teachers ⇄ classes | **works from each app's own snapshot** (176/… counts correct on whichever app is open), even though neither page is "reload" — the workers serve their own scope's navigations |
+| offline navigation to the **bare root** `/time/` | `goto` succeeds only while the root HTML is inside the 600 s HTTP-cache window, and the click-through `location.replace` then lands on `/time/teachers/` which **the teachers worker serves offline**; a bare-root **reload** offline is the same cell 067 measured in 2026-10-21 — the root matches **no registration**, so the reload revalidates against the origin and fails. **This is by now a documented, user-fixed design boundary, not a regression of 063/067**: 073's fixed criteria say the root "shouldn't do anything else" and got exactly that (head-only redirect, worker-less). The offline entry points are the two app URLs — bookmarks, canonical URLs (`teachers/`, `classes/`), and the installed apps' launch icons (078) |
+| recovery: back online | renders fresh; **snapshot intact at 21 entries per app family** |
+
+**Verdict: the offline failure this issue reported is fixed in production** for
+the app pages, which are every intended entry point (criterion set inherited
+from 063, as reshaped by 068/070/072/073 — each of those closed with its own
+verification). `Status: Open` → `Fixed`; fixed by `issues/closed/063-offline-support.md`
+as reshaped by `issues/closed/068-installable-pwa.md`,
+`issues/closed/070-snapshot-erased-on-reconnect.md`,
+`issues/closed/072-split-apps.md` and
+`issues/closed/073-unlist-utility-pages.md`.
+
+#### 3. One live-measured edge worth recording (no action — 070 already decided it)
+
+The first offline attempt in this run **failed** with the reported
+`net::ERR_INTERNET_DISCONNECTED` — and inspecting it found the cause is exactly
+the window `issues/closed/070-snapshot-erased-on-reconnect.md` documented and
+accepted: this browser profile's persisted status was `offline` (left by an
+earlier session), so the first online load of this run fired the
+**erase-then-retake** — the snapshot was deleted (measured: `caches.keys()` →
+`[]`) and the 21-URL retake was mid-flight when the network was cut 1 s later.
+The offline reload then fell to snapshot-miss → `Response.error()`: an honest
+failure, and the retake itself aborts offline (nothing written — never a
+half-written snapshot). After the same transition was allowed to complete
+(measured: status record `online`, snapshot 21/21), **every** offline reload
+succeeded (§2). Consequence worth stating for support purposes: going offline
+again within a couple of seconds of a reconnect can strand a user (the
+snapshot is gone and cannot be retaken while offline) until the next online
+load; 070 weighed this against trust-and-erase and chose erase-first — that
+decision stands, and the healing path (next online navigation retakes
+wholesale) matches its entry.
+
+**Deploy note (unchanged from the 2026-10-21 recommendation).** `.nojekyll`
+still does not exist and the repo is still free of `_`-prefixed paths, so the
+Jekyll build keeps passing every snapshot URL through — nothing to do unless
+that convention is ever broken. On any future push, the live expectations to
+re-verify are the §1 probes: both `…/sw.js` 200, snapshot 21/21 per app, and
+an offline reload of `/time/teachers/` rendering.
