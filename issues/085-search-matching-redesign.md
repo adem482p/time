@@ -1,6 +1,6 @@
 # 085: Redesign search/matching engine — fix highlight bug, reduce complexity
 
-Status: Fixed
+Status: Open
 Date: 2026-11-02
 Reporter: coordinator
 
