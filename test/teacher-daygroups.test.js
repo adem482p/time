@@ -904,3 +904,20 @@ test('shadowText completes commit/label prefixes and stays null on divergence', 
   assert.strictEqual(searchTeachers.shadowText('x', null), null,
     'no row ghosts nothing');
 });
+
+// ---- Tab cycles the suggestion highlight (issue: tab selects next) -----------
+
+test('Tab advances the suggestion highlight instead of committing', function () {
+  const src = readSrc('app/src/routes/teachers/+page.svelte');
+  const tabAt = src.indexOf("e.key === 'Tab'");
+  assert.ok(tabAt !== -1, 'Tab branch present');
+  const branch = src.slice(tabAt, src.indexOf("e.key === 'ArrowDown'"));
+  assert.ok(branch.indexOf('acceptSuggest') === -1,
+    'Tab must not commit a suggestion (Enter does)');
+  assert.ok(branch.indexOf('suggestIdx =') !== -1,
+    'Tab must advance the suggestion index');
+  assert.ok(branch.indexOf('e.shiftKey') !== -1,
+    'Shift+Tab must move to the previous suggestion');
+  assert.ok(branch.indexOf('preventDefault()') !== -1,
+    'Tab must keep focus in the input so the overlay survives');
+});

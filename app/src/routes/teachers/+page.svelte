@@ -390,11 +390,19 @@
 			}
 			closeMenu();
 		} else if (e.key === 'Tab') {
-			// issue 007: Tab must not accept an implicit (non-explicit)
-			// selection on mobile (suggestIdx -1) — same gate as Enter.
-			if (suggestRows.length && suggestIdx >= 0) {
+			// Tab cycles the suggestion highlight (next on Tab, previous on
+			// Shift+Tab) instead of committing: Enter commits the highlighted
+			// row. Issue 007 still holds — no implicit accept; advancing the
+			// highlight is an explicit action, like the arrow keys.
+			if (suggestRows.length) {
 				e.preventDefault();
-				acceptSuggest(suggestRows[suggestIdx]);
+				if (suggestIdx < 0) {
+					suggestIdx = e.shiftKey ? suggestRows.length - 1 : 0;
+				} else {
+					suggestIdx = e.shiftKey
+						? (suggestIdx - 1 + suggestRows.length) % suggestRows.length
+						: (suggestIdx + 1) % suggestRows.length;
+				}
 			}
 		} else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
 			if (suggestRows.length) {
