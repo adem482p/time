@@ -9,9 +9,9 @@
 // links its in-directory manifest statically; the teachers app links it only
 // via its ?install=1 opt-in script — issue 078, executed for real in a vm; the
 // root landing, the online-only utility views and the redirect stub link none
-// — issue 072), and each worker's
-// SNAPSHOT_URLS literal is re-parsed for derived coverage of every manifest-
-// and page-referenced icon. Subpath safety (production deploys under
+// — issue 072), and each worker's runtime cache entry is re-parsed for the
+// per-app family names covering every manifest- and page-referenced icon.
+// Subpath safety (production deploys under
 // https://adem482p.github.io/time/, issue 067) is a first-class assertion: no
 // manifest URL may be root-absolute.
 
@@ -220,37 +220,18 @@ test('manifest URLs are relative and real, and neither manifest declares shortcu
   });
 });
 
-// Parse the SNAPSHOT_URLS array literal out of the worker TEMPLATE.
-// The template uses __SNAPSHOT_URLS__ token which gen-sw.mjs replaces.
-// We verify the token exists and return a marker.
-function snapshotUrlsTemplate() {
-  var src = readSrc('app/scripts/sw-template.js');
-  assert.ok(src.indexOf('var SNAPSHOT_URLS = __SNAPSHOT_URLS__;') !== -1,
-    'sw-template.js must declare the SNAPSHOT_URLS token');
-  return ['__SNAPSHOT_URLS_TOKEN__'];
-}
-
-test('each snapshot covers its manifest and every icon, and the old generations are gone (issues 068, 070, 072)', function () {
-  // We verify the template has the SNAPSHOT_URLS token; gen-sw.mjs expands it per app.
+test('the worker runtime-caches responses — no build-time snapshot list (issues 068, 070, 072, 087)', function () {
   var tmpl = readSrc('app/scripts/sw-template.js');
-  assert.ok(tmpl.indexOf('var SNAPSHOT_URLS = __SNAPSHOT_URLS__;') !== -1,
-    'sw-template.js must declare the SNAPSHOT_URLS token');
-
-  // Verify gen-sw.mjs builds the URL list correctly from the build tree
+  assert.ok(tmpl.indexOf('var CACHE =') !== -1,
+    'sw-template.js must declare the runtime cache entry');
+  assert.ok(tmpl.indexOf('__SNAPSHOT_URLS__') === -1,
+    'sw-template.js must not carry the retired snapshot-list token (issue 087)');
+  assert.ok(tmpl.indexOf('__SNAP_SUFFIX__') === -1,
+    'sw-template.js must not carry the retired snapshot-version token (issue 087)');
+  // The generated worker carries no URL list either.
   var gen = readSrc('app/scripts/gen-sw.mjs');
-  assert.ok(gen.indexOf('walkFiles') !== -1, 'gen-sw.mjs must walk the build tree');
-  assert.ok(gen.indexOf('JSON.stringify(urls') !== -1,
-    'gen-sw.mjs must inject the URL list as JSON');
-
-  // For each app, verify the generated URL list would cover required assets
-  // by checking the generator's logic for exclusions and inclusions
-  APPS.forEach(function (app) {
-    assert.ok(gen.indexOf(app.dir) !== -1, 'gen-sw.mjs must reference ' + app.dir);
-    assert.ok(gen.indexOf('at/index.html') !== -1, 'gen-sw.mjs must exclude at/');
-    assert.ok(gen.indexOf('all/index.html') !== -1, 'gen-sw.mjs must exclude all/');
-    assert.ok(gen.indexOf('index.html') !== -1, 'gen-sw.mjs must exclude root index.html');
-    assert.ok(gen.indexOf('${app}/sw.js') !== -1, 'gen-sw.mjs must exclude the worker itself');
-  });
+  assert.ok(gen.indexOf('__SNAPSHOT_URLS__') === -1,
+    'gen-sw.mjs must not build a snapshot URL list any more (issue 087)');
 });
 
 test('the manifest is served as JSON by filename — no .webmanifest MIME trap (issue 068)', function () {

@@ -166,55 +166,65 @@ the autocomplete ghost is suppressed so a completion cannot leak a name (issue
 061). It exists so the UI can be screenshotted and shared without any name in it;
 the screenshots shipped with the project are taken in this mode.
 
-## Offline: the snapshot model
+## Offline: the runtime cache model
 
-Two network-first service workers (issues 063 + 070 + 072), one per app —
-the teacher worker owns the `teachers/` scope, the classes worker the
-`classes/` scope — stamped out at build time by `app/scripts/sw-template.js` +
+Two network-first service workers (issues 063 + 070 + 072, reworked by issue
+087), one per app — the teacher worker owns the `teachers/` scope, the classes
+worker the `classes/` scope — stamped out at build time by `app/scripts/sw-template.js` +
 `app/scripts/gen-sw.mjs` into `build/teachers/sw.js` and `build/classes/sw.js`
-— each with a "last snapshot" model: the stored copy is a snapshot of
-that app, never a cache the app trusts. Cache Storage and IndexedDB are
-per-origin, shared between the two workers, so every name is namespaced per
-app: the cache families `emplois-teachers-snapshot-*` and
-`emplois-classes-snapshot-*` and the status databases `emplois-teachers-status`
-and `emplois-classes-status`.
+— each with a runtime response cache (issue 087): online every same-origin GET
+is fetched network-first (`cache: 'no-cache'`, so an HTTP-cache hit can never
+fake freshness or connectivity) and every successful response is put into the
+app's runtime cache; offline that runtime cache serves the last successful
+response for the request, and a miss is an honest failure, never fabricated
+content. Because the strategy is network-first, an online session re-puts every
+response it serves, so a cached entry can never go stale without a fresh network
+answer behind it.
+
+Cache Storage and IndexedDB are per-origin, shared between the two workers, so
+every name is namespaced per app: the runtime cache families
+`emplois-teachers-snapshot-` and `emplois-classes-snapshot-` and the status
+databases `emplois-teachers-status` and `emplois-classes-status`.
 
 - **Online, the network wins.** Every request is fetched with `cache: 'no-cache'`
-  so an HTTP-cache hit can never fake connectivity; the snapshot is only ever
-  *built*, wholesale.
-- **Offline, the snapshot answers** (navigations ignoring the query string); a
+  so an HTTP-cache hit can never fake connectivity, and a successful response is
+  PUT into the runtime cache.
+- **Offline, the runtime cache answers** (navigations ignoring the query string); a
   miss is an honest failure, never fabricated content.
-- **Wholesale takes only.** Install precaches the app's snapshot URL list
-  all-or-nothing (a failing install writes nothing and retries), every
-  network-served navigation retakes the whole snapshot, and concurrent takes
-  share one in-flight run. The list is generated at build time from the built
-  tree: the app's own directory plus the shared root assets (the stylesheet,
-  the bundle, the icons and fonts, `emplois.csv`), minus the sibling app dir,
-  the at/all utility pages, the root landing and the redirect stub — exactly
-  the geometry the legacy hand-written lists encoded.
-- **Erase + retake on reconnect** (issue 070): the last online/offline status is
-  logged and persisted per app in its own IndexedDB database — outside Cache
-  Storage, so teardown can never erase it — and the transition offline → online
-  tears down only that app's own cache family and retakes the snapshot from
-  scratch (never "delete all": the sibling app shares the origin's Cache
-  Storage). Storage errors are best-effort and never wedge the chain; the
-  snapshot name carries a version suffix under the family prefix so a semantics
-  change forces a clean retake, and activation destroys every non-current cache
-  of the own family — plus, in the teachers worker only, the legacy pre-split
-  root snapshot `emplois-snapshot-v1` by exact name, which no surviving worker
-  would otherwise clean up.
+- **No build-time snapshot list.** The cache self-populates from real traffic
+  (issue 087): there is no install-time addAll, no generated `SNAPSHOT_URLS` and
+  no snapshot-name versioning any more — the worker source is stamped into the
+  build by `scripts/gen-sw.mjs` (whose only remaining job is the teachers-only
+  legacy root snapshot teardown) and the cache fills itself from whatever the app
+  actually serves. Offline coverage is therefore visit-dependent (the accepted
+  trade-off of runtime caching, issue 087).
+- **Reconnect needs no erase + retake** (issue 070, re-anchored by 087): the last
+  online/offline status is logged and persisted per app in its own IndexedDB
+  database — outside Cache Storage, so teardown can never erase it — and the
+  transition offline → online just logs + persists; the runtime cache is left
+  to self-update, the next successful response putting a fresh entry.
+- **Retired generations are destroyed on activate** (issue 072): activation
+  tears down every OTHER cache of the app's own family (retired
+  `…-v-<digest>` snapshot generations from the old model, stale runtime entries
+  of a superseded worker), keeps the current runtime cache, and — in the
+  teachers worker only — deletes the legacy pre-split root snapshot
+  `emplois-snapshot-v1` by exact name, which no surviving worker would
+  otherwise clean up.
 - **The utility pages and the landing are online-only** (issues 072, 073): navigations
   to `/`, `/at/`, `/all/` and the `classes.html` redirect stub
   match no registration, so no worker ever intercepts them.
 - Registration happens once per load with an immediate `update()` byte-diff
   check (`app/src/lib/register.js`, shared by the two app pages) — each page
   registers the worker of its own directory, the relative `'sw.js'` resolving
-  document-relative. `file://` and other non-http(s) origins are a silent
-  no-op. When the worker gets in the way in development, the console escape
-  hatch unregisters it and deletes every cache.
+  document-relative; in dev the registration is skipped (the worker is a build
+  artifact the vite dev server never serves, issue 087). `file://` and other
+  non-http(s) origins are a silent no-op. When the worker gets in the way in
+  development, the console escape hatch unregisters it and deletes every cache.
 
 Deployment caveat: the GitHub Pages subpath deploy still has an open offline
 reload report (issue 067).
+
+
 
 ## Installable app
 

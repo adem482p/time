@@ -3,7 +3,7 @@
 The context around the app, mainly the data model of the world: what a session,
 a subject, a teacher and a class are, how classes are grouped and named, and how
 the published PDFs become the CSV every page reads. The behavior the website
-ships on top of that world — the views, search, the snapshot model, the theme —
+ships on top of that world — the views, search, the offline runtime cache, the theme —
 is outside this file's scope.
 
 ## The world
