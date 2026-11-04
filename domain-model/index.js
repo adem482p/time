@@ -1,466 +1,702 @@
 const DEFAULT_COMMON_TRACKS = new Set(['LBC', 'LCE', 'LCS', 'MP']);
 const DAYS = new Set(['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI']);
 const SLOTS = new Set(['08h15-09h45', '10h00-11h30', '11h40-13h10', '13h20-14h50', '15h00-16h30', '16h45-18h15']);
+const SESSION_KIND_SCOPES = Object.freeze({
+  'branch-lecture': 'branch',
+  'section-seminar': 'section',
+  'cohort-lab-work': 'cohort'
+});
 
-/**
- * A named educational track such as LCS or MP.
- * @typedef {{type: string, tag: string}} Track
- */
-/**
- * A track at a numbered year, such as LCS1.
- * @typedef {{type: string, track: Track, year: number, identifier: string}} TrackYear
- */
-/**
- * A branch of a track, either common, non-common, or singleton.
- * @typedef {{type: string, kind: string, identifier: string, specialization: (string|null), programmeSemester: (number|null), trackYear: (TrackYear|null)}} Branch
- */
-/**
- * A class population formed from a branch, section, and optional cohort.
- * @typedef {{type: string, level: string, branch: Branch, section: (string|null), cohort: (number|null), identifier: string, singleton: boolean}} ClassPopulation
- */
-/**
- * Parser configuration, including institution-specific common track names.
- * @typedef {{commonTracks: (Array<string>|null)}} ParseOptions
- */
-/**
- * The result of parsing a branch or class reference.
- * @typedef {{valid: boolean, kind: (string|null), branch: (Branch|null), class: (ClassPopulation|null), singletonClass: (ClassPopulation|null), broad: (boolean|null), specific: (boolean|null), notation: (string|null), diagnostics: Array<string>, input: (string|null)}} ParsedReference
- */
-/**
- * A normalized every-week or alternating-week pattern.
- * @typedef {{code: string, name: string}} WeekPattern
- */
-/**
- * A reference to the population attending a session.
- * @typedef {{type: string, parsed: ParsedReference, scope: (string|null)}} PopulationReference
- */
-/**
- * A recurring session without a specific calendar date.
- * @typedef {{type: string, subject: (string|null), teacher: (string|null), room: (string|null), population: (PopulationReference|null), day: (string|null), time: (string|null), week: WeekPattern, kind: (string|null), scope: (string|null)}} SessionSpecifier
- */
-/**
- * A scalar row read from the normalized CSV representation.
- * @typedef {{field: (string|null), professor: (string|null), subject: (string|null), room: (string|null), day: (string|null), time: (string|null), week: (string|null), source: (string|null), color: (string|null)}} CsvRecord
- */
-/**
- * A CSV-derived session record whose kind and scope may still be unknown.
- * @typedef {{type: string, subject: (string|null), teacher: (string|null), room: (string|null), day: (string|null), time: (string|null), week: WeekPattern, population: (PopulationReference|null), reference: string, provenance: ({source: (string|null), color: (string|null)}|null), missing: Array<string>}} PartialSessionRecord
- */
-/**
- * Catalogue membership and ambiguity information for a resolved reference.
- * @typedef {{type: string, result: string, matches: Array<Branch|ClassPopulation>, branchMatches: Array<Branch>, classMatches: Array<ClassPopulation>, ambiguous: boolean, absent: boolean}} CatalogueResult
- */
-/**
- * Publication records matching a resolved reference.
- * @typedef {{present: boolean, records: Array<PartialSessionRecord>}} PublicationResult
- */
-/**
- * The complete result of resolving a reference through all three layers.
- * @typedef {{syntax: ParsedReference, catalogue: CatalogueResult, publication: PublicationResult}} Resolution
- */
+export const Type = Object.freeze({
+  TRACK_SPECIFIER: Symbol('track-specifier'),
+  YEAR_SPECIFIER: Symbol('year-specifier'),
+  SPECIALIZATION_SPECIFIER: Symbol('specialization-specifier'),
+  YEAR_SEMESTER_SPECIFIER: Symbol('year-semester-specifier'),
+  BRANCH_SEMESTER_SPECIFIER: Symbol('branch-semester-specifier'),
+  SECTION_SPECIFIER: Symbol('section-specifier'),
+  COHORT_SPECIFIER: Symbol('cohort-specifier'),
+  TRACK: Symbol('track'),
+  COMMON_BRANCH: Symbol('common-branch'),
+  SPECIALIZATION_BRANCH: Symbol('specialization-branch'),
+  SECTIONLESS_BRANCH: Symbol('sectionless-branch'),
+  SECTION_CLASS: Symbol('section-class'),
+  COHORT_CLASS: Symbol('cohort-class'),
+  SINGLETON_CLASS: Symbol('singleton-class'),
+  INVALID_REFERENCE: Symbol('invalid-reference'),
+  TRACK_SPECIFIER_REFERENCE: Symbol('track-specifier-reference'),
+  SPECIALIZATION_SPECIFIER_REFERENCE: Symbol('specialization-specifier-reference'),
+  TRACK_REFERENCE: Symbol('track-reference'),
+  BRANCH_REFERENCE: Symbol('branch-reference'),
+  CLASS_REFERENCE: Symbol('class-reference'),
+  BRANCH_POPULATION: Symbol('branch-population'),
+  SECTION_POPULATION: Symbol('section-population'),
+  COHORT_POPULATION: Symbol('cohort-population'),
+  SESSION_SPECIFIER: Symbol('session-specifier'),
+  PROVENANCE: Symbol('provenance'),
+  PARTIAL_SESSION_RECORD: Symbol('partial-session-record'),
+  INVALID_CSV_RECORD: Symbol('invalid-csv-record'),
+  INVALID_RESOLUTION: Symbol('invalid-resolution'),
+  NOT_FOUND: Symbol('not-found'),
+  UNIQUE_MATCH: Symbol('unique-match'),
+  AMBIGUOUS_MATCH: Symbol('ambiguous-match'),
+  NOT_APPLICABLE: Symbol('not-applicable'),
+  NO_RECORDS: Symbol('no-records'),
+  RECORDS: Symbol('records')
+});
 
 const freeze = (value) => Object.freeze(value);
 const clean = (value) => String(value ?? '').trim().replace(/\s+/g, ' ');
+const normalizedSet = (values) => new Set([...values].map((value) => clean(value).toUpperCase()));
 
 /**
- * Create a normalized track representation.
- * @param {string} tag
- * @returns {Track}
+ * @typedef {{type: symbol, value: string}} TrackSpecifier
+ * @typedef {{type: symbol, value: number}} YearSpecifier
+ * @typedef {{type: symbol, value: string}} SpecializationSpecifier
+ * @typedef {{type: symbol, value: number}} YearSemesterSpecifier
+ * @typedef {{type: symbol, value: number}} BranchSemesterSpecifier
+ * @typedef {{type: symbol, value: string}} SectionSpecifier
+ * @typedef {{type: symbol, value: number}} CohortSpecifier
+ * @typedef {{type: symbol, track_specifier: TrackSpecifier, year_specifier: YearSpecifier, identifier: string}} Track
+ * @typedef {{type: symbol, track: Track, identifier: string}} CommonBranch
+ * @typedef {{type: symbol, specialization_specifier: SpecializationSpecifier, branch_semester_specifier: BranchSemesterSpecifier, track: Track, identifier: string}} SpecializationBranch
+ * @typedef {{type: symbol, specialization_specifier: SpecializationSpecifier, branch_semester_specifier: BranchSemesterSpecifier, identifier: string}} SectionlessBranch
+ * @typedef {CommonBranch|SpecializationBranch|SectionlessBranch} Branch
+ * @typedef {{type: symbol, branch: Branch, section_specifier: SectionSpecifier, identifier: string}} SectionClass
+ * @typedef {{type: symbol, branch: Branch, section_specifier: SectionSpecifier, cohort_specifier: CohortSpecifier, identifier: string}} CohortClass
+ * @typedef {{type: symbol, branch: Branch, identifier: string}} SingletonClass
+ * @typedef {SectionClass|CohortClass|SingletonClass} ClassPopulation
+ * @typedef {{commonTracks?: Array<string>, expected?: 'track-specifier'|'specialization-specifier'|'track'|'branch'|'class'}} ParseOptions
+ * @typedef {{type: symbol, input: string, diagnostics: Array<string>}} InvalidReference
+ * @typedef {{type: symbol, notation: string, track_specifier: TrackSpecifier}} TrackSpecifierReference
+ * @typedef {{type: symbol, notation: string, specialization_specifier: SpecializationSpecifier}} SpecializationSpecifierReference
+ * @typedef {{type: symbol, notation: string, track: Track}} TrackReference
+ * @typedef {{type: symbol, notation: string, branch: Branch}} BranchReference
+ * @typedef {{type: symbol, notation: string, class: ClassPopulation}} ClassReference
+ * @typedef {InvalidReference|TrackSpecifierReference|SpecializationSpecifierReference|TrackReference|BranchReference|ClassReference} ParsedReference
+ * @typedef {''|'SA'|'SB'} WeekPatternSpecifier
+ * @typedef {{type: symbol, branch: Branch}} BranchPopulation
+ * @typedef {{type: symbol, class: SectionClass}} SectionPopulation
+ * @typedef {{type: symbol, class: CohortClass}} CohortPopulation
+ * @typedef {BranchPopulation|SectionPopulation|CohortPopulation} PopulationReference
+ * @typedef {{type: symbol, subject: string, teacher: string, room: string, population: PopulationReference, day: string, time: string, week_pattern_specifier: WeekPatternSpecifier, session_kind: string}} SessionSpecifier
+ * @typedef {{field: string, professor: string, subject: string, room: string, day: string, time: string, week: string, source: string, color: string}} CsvRecord
+ * @typedef {{type: symbol, source: string, color: string}} Provenance
+ * @typedef {{type: symbol, subject: string, teacher: string, room: string, day: string, time: string, week_pattern_specifier: WeekPatternSpecifier, population: PopulationReference, reference: string, provenance: Provenance, missing: Array<'session_kind'>}} PartialSessionRecord
+ * @typedef {{type: symbol, record: CsvRecord, errors: Array<string>}} InvalidCsvRecord
+ * @typedef {PartialSessionRecord|InvalidCsvRecord} CsvConversion
+ * @typedef {{type: symbol, syntax: InvalidReference, catalogue: {type: symbol}, publication: {type: symbol}}} InvalidResolution
+ * @typedef {{type: symbol, syntax: BranchReference|ClassReference, catalogue: {type: symbol}, publication: {type: symbol|'no-records'|'records', records?: Array<PartialSessionRecord>}}} NotFoundResolution
+ * @typedef {{type: symbol, syntax: BranchReference|ClassReference, catalogue: {type: symbol, match: Branch|ClassPopulation}, publication: {type: symbol|'records', records?: Array<PartialSessionRecord>}}} UniqueResolution
+ * @typedef {{type: symbol, syntax: BranchReference|ClassReference, catalogue: {type: symbol, matches: Array<Branch|ClassPopulation>}, publication: {type: symbol|'records', records?: Array<PartialSessionRecord>}}} AmbiguousResolution
+ * @typedef {InvalidResolution|NotFoundResolution|UniqueResolution|AmbiguousResolution} Resolution
  */
-export function track(tag) {
+
+function trackSpecifierValue(tag) {
+  if (tag?.type === Type.TRACK_SPECIFIER) return tag;
   const value = clean(tag).toUpperCase();
-  if (!/^[A-Z][A-Z0-9-]*$/.test(value)) throw new Error(`Invalid track: ${tag}`);
-  return freeze({ type: 'track', tag: value });
+  if (!/^[A-Z][A-Z0-9-]*$/.test(value)) throw new Error(`Invalid track specifier: ${tag}`);
+  return freeze({ type: Type.TRACK_SPECIFIER, value });
 }
 
-/**
- * Create a track-year representation.
- * @param {string} trackTag
- * @param {number|string} year
- * @returns {TrackYear}
- */
-export function trackYear(trackTag, year) {
-  const t = track(trackTag);
-  const n = Number(year);
-  if (!Number.isInteger(n) || n < 1) throw new Error(`Invalid track year: ${year}`);
-  return freeze({ type: 'track-year', track: t, year: n, identifier: `${t.tag}${n}` });
+function yearSpecifierValue(year) {
+  if (year?.type === Type.YEAR_SPECIFIER) return year;
+  const value = Number(year);
+  if (!Number.isInteger(value) || value < 1) throw new Error(`Invalid year specifier: ${year}`);
+  return freeze({ type: Type.YEAR_SPECIFIER, value });
 }
 
-/**
- * Validate and normalize an academic semester number.
- * @param {number|string} value
- * @returns {number}
- */
-export function academicSemester(value) {
-  const n = Number(value);
-  if (n !== 1 && n !== 2) throw new Error('Academic semester must be 1 or 2');
-  return n;
+function specializationSpecifierValue(value) {
+  if (value?.type === Type.SPECIALIZATION_SPECIFIER) return value;
+  const normalized = clean(value).toUpperCase();
+  if (!/^[A-Z][A-Z0-9-]*$/.test(normalized)) throw new Error(`Invalid specialization specifier: ${value}`);
+  return freeze({ type: Type.SPECIALIZATION_SPECIFIER, value: normalized });
 }
 
-/**
- * Validate and normalize a programme-semester number.
- * @param {number|string} value
- * @returns {number}
- */
-export function programmeSemester(value) {
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < 1) throw new Error('Programme semester must be positive');
-  return n;
+function yearSemesterSpecifierValue(value) {
+  if (value?.type === Type.YEAR_SEMESTER_SPECIFIER) return value;
+  const number = Number(value);
+  if (number !== 1 && number !== 2) throw new Error('Year semester specifier must be 1 or 2');
+  return freeze({ type: Type.YEAR_SEMESTER_SPECIFIER, value: number });
 }
 
-/**
- * Calculate the programme semester for a track year and current academic half.
- * @param {number} trackYearNumber
- * @param {number} start
- * @param {number} currentHalf
- * @returns {number}
- */
-export function programmeSemesterFor(trackYearNumber, start, currentHalf) {
-  academicSemester(currentHalf);
-  if (!Number.isInteger(trackYearNumber) || !Number.isInteger(start) || trackYearNumber < start) {
-    throw new Error('Track year must not precede branch start');
+function branchSemesterSpecifierValue(value) {
+  if (value?.type === Type.BRANCH_SEMESTER_SPECIFIER) return value;
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 1) throw new Error('Branch semester specifier must be positive');
+  return freeze({ type: Type.BRANCH_SEMESTER_SPECIFIER, value: number });
+}
+
+function sectionSpecifierValue(value) {
+  if (value?.type === Type.SECTION_SPECIFIER) return value;
+  const normalized = clean(value).toUpperCase();
+  if (!/^[A-Z]+$/.test(normalized)) throw new Error(`Invalid section specifier: ${value}`);
+  return freeze({ type: Type.SECTION_SPECIFIER, value: normalized });
+}
+
+function cohortSpecifierValue(value) {
+  if (value?.type === Type.COHORT_SPECIFIER) return value;
+  const normalized = String(value);
+  if (!/^[0-9]+$/.test(normalized)) throw new Error(`Invalid cohort specifier: ${value}`);
+  return freeze({ type: Type.COHORT_SPECIFIER, value: Number(normalized) });
+}
+
+function trackValue({ track_specifier, year_specifier } = {}) {
+  const normalized_track_specifier = trackSpecifierValue(track_specifier);
+  const normalized_year_specifier = yearSpecifierValue(year_specifier);
+  return freeze({
+    type: Type.TRACK,
+    track_specifier: normalized_track_specifier,
+    year_specifier: normalized_year_specifier,
+    identifier: `${normalized_track_specifier.value}${normalized_year_specifier.value}`
+  });
+}
+
+function commonBranch(track) {
+  if (track?.type !== Type.TRACK) throw new Error('A common branch requires a track object');
+  return freeze({ type: Type.COMMON_BRANCH, track, identifier: track.identifier });
+}
+
+function specializationBranch(specialization_specifier, branch_semester_specifier, track) {
+  const normalized_specialization_specifier = specializationSpecifierValue(specialization_specifier);
+  const normalized_branch_semester_specifier = branchSemesterSpecifierValue(branch_semester_specifier);
+  if (track?.type !== Type.TRACK) throw new Error('A specialization branch requires a track object');
+  return freeze({
+    type: Type.SPECIALIZATION_BRANCH,
+    specialization_specifier: normalized_specialization_specifier,
+    branch_semester_specifier: normalized_branch_semester_specifier,
+    track,
+    identifier: `${normalized_specialization_specifier.value}${normalized_branch_semester_specifier.value}`
+  });
+}
+
+function sectionlessBranch(specialization_specifier, branch_semester_specifier, identifier) {
+  const normalized_specialization_specifier = specializationSpecifierValue(specialization_specifier);
+  const normalized_branch_semester_specifier = branchSemesterSpecifierValue(branch_semester_specifier);
+  return freeze({
+    type: Type.SECTIONLESS_BRANCH,
+    specialization_specifier: normalized_specialization_specifier,
+    branch_semester_specifier: normalized_branch_semester_specifier,
+    identifier: identifier ?? `${normalized_specialization_specifier.value}${normalized_branch_semester_specifier.value}`
+  });
+}
+
+function classFromBranch(branchValue, sectionValue, cohortValue) {
+  const branch = branchValue;
+  if (sectionValue === undefined) {
+    return freeze({ type: Type.SINGLETON_CLASS, branch, identifier: branch.identifier });
   }
-  return 2 * (trackYearNumber - start) + currentHalf;
-}
-
-/**
- * Create a branch representation from an identifier or its components.
- *
- * A branch may be common, non-common, or a sectionless singleton branch.
- * @param {{identifier?: string, track?: string, year?: (number|string), specialization?: string, semester?: (number|string), start?: number, currentHalf?: number, commonTracks?: Array<string>}} options
- * @returns {Branch}
- */
-export function branch({ identifier, track: trackTag, year, specialization, semester, start, currentHalf, commonTracks } = {}) {
-  const id = clean(identifier).toUpperCase();
-  if (id) {
-    const parsed = parseReference(id, { commonTracks });
-    if (!parsed.valid || parsed.kind !== 'branch') throw new Error(`Invalid branch: ${identifier}`);
-    return freeze(parsed.branch);
+  const sectionValueObject = sectionSpecifierValue(sectionValue);
+  if (cohortValue === undefined) {
+    return freeze({
+      type: Type.SECTION_CLASS,
+      branch,
+      section_specifier: sectionValueObject,
+      identifier: `${branch.identifier} ${sectionValueObject.value}`
+    });
   }
-  if (specialization) {
-    const spec = clean(specialization).toUpperCase();
-    const sem = programmeSemester(semester ?? programmeSemesterFor(Number(year), Number(start), currentHalf ?? 1));
-    if (!/^[A-Z][A-Z0-9-]*$/.test(spec)) throw new Error('Invalid specialization');
-    return freeze({ type: 'branch', kind: 'non-common', specialization: spec, programmeSemester: sem,
-      trackYear: year == null ? null : trackYear(trackTag, year),
-      identifier: `${spec}${sem}` });
+  const cohortValueObject = cohortSpecifierValue(cohortValue);
+  return freeze({
+    type: Type.COHORT_CLASS,
+    branch,
+    section_specifier: sectionValueObject,
+    cohort_specifier: cohortValueObject,
+    identifier: `${branch.identifier} ${sectionValueObject.value}${cohortValueObject.value}`
+  });
+}
+
+function parseOptions(options = {}) {
+  const expectedTypes = new Set(['track-specifier', 'specialization-specifier', 'track', 'branch', 'class']);
+  if (options.expected !== undefined && !expectedTypes.has(options.expected)) {
+    throw new Error(`Invalid expected reference type: ${options.expected}`);
   }
-  if (trackTag == null || year == null) throw new Error('A branch needs a track/year or specialization');
-  const ty = trackYear(trackTag, year);
-  return freeze({ type: 'branch', kind: 'common', trackYear: ty, identifier: ty.identifier });
+  return {
+    commonTracks: options.commonTracks == null ? DEFAULT_COMMON_TRACKS : normalizedSet(options.commonTracks),
+    expected: options.expected
+  };
 }
 
-/**
- * Normalize and validate a section identifier.
- * @param {string} value
- * @returns {string}
- */
-export function section(value) {
-  const v = clean(value).toUpperCase();
-  if (!/^[A-Z]+$/.test(v)) throw new Error(`Invalid section: ${value}`);
-  return v;
+function invalid(input, diagnostics) {
+  return freeze({ type: Type.INVALID_REFERENCE, input, diagnostics: freeze(diagnostics) });
 }
 
-/**
- * Normalize and validate a cohort number.
- * @param {number|string} value
- * @returns {number}
- */
-export function cohort(value) {
-  const v = String(value);
-  if (!/^[0-9]+$/.test(v)) throw new Error(`Invalid cohort: ${value}`);
-  return Number(v);
+function trackSpecifierReference(notation, value) {
+  return freeze({ type: Type.TRACK_SPECIFIER_REFERENCE, notation, track_specifier: value });
 }
 
-/**
- * Create a class population from a branch, section, and optional cohort.
- *
- * Omitting the section creates the branch's singleton class representation.
- * @param {(Branch|string)} branchValue
- * @param {(string|null)} sectionValue
- * @param {(number|string|null)} cohortValue
- * @returns {ClassPopulation}
- */
-export function classPopulation(branchValue, sectionValue, cohortValue = null) {
-  const b = typeof branchValue === 'string' ? branch({ identifier: branchValue }) : branchValue;
-  if (sectionValue == null) {
-    return freeze({ type: 'class', level: 'singleton', branch: b, section: null, cohort: null, identifier: b.identifier, singleton: true });
-  }
-  const s = section(sectionValue);
-  const c = cohortValue == null ? null : cohort(cohortValue);
-  return freeze({ type: 'class', level: c == null ? 'section' : 'cohort', branch: b, section: s, cohort: c,
-    identifier: `${b.identifier} ${s}${c == null ? '' : c}`, singleton: false });
+function specializationSpecifierReference(notation, value) {
+  return freeze({
+    type: Type.SPECIALIZATION_SPECIFIER_REFERENCE,
+    notation,
+    specialization_specifier: value
+  });
 }
 
-/**
- * @param {Array<string>} tokens
- * @param {ParseOptions} options
- * @returns {(Branch|null)}
- */
-function parseBranchTokens(tokens, options = {}) {
+function trackReference(notation, value) {
+  return freeze({ type: Type.TRACK_REFERENCE, notation, track: value });
+}
+
+function branchReference(notation, value) {
+  return freeze({ type: Type.BRANCH_REFERENCE, notation, branch: value });
+}
+
+function classReference(notation, value) {
+  return freeze({ type: Type.CLASS_REFERENCE, notation, class: value });
+}
+
+function parseBranchTokens(tokens, options) {
   if (tokens.length === 1) {
     const singleton = tokens[0].match(/^([A-Z][A-Z0-9-]*)(\d+)-([A-Z][A-Z0-9-]*)$/);
-    if (singleton) {
-      return freeze({ type: 'branch', kind: 'singleton', identifier: tokens[0],
-        specialization: `${singleton[1]}-${singleton[3]}`, programmeSemester: Number(singleton[2]) });
-    }
+    if (singleton) return sectionlessBranch(`${singleton[1]}-${singleton[3]}`, singleton[2], tokens[0]);
   }
-  if (tokens.length === 2 && /^[A-Z][A-Z0-9-]*\d+$/.test(tokens[0]) && /^[A-Z][A-Z0-9-]*\d+$/.test(tokens[1])) {
+  if (tokens.length === 2) {
     const prefix = tokens[0].match(/^([A-Z][A-Z0-9-]*)(\d+)$/);
     const specialization = tokens[1].match(/^([A-Z][A-Z0-9-]*)(\d+)$/);
-    if (!prefix || !specialization) return null;
-    return branch({ specialization: specialization[1], semester: Number(specialization[2]), track: prefix[1], year: Number(prefix[2]), commonTracks: options.commonTracks });
+    if (prefix && specialization && specialization[1].length > 1) {
+      return specializationBranch(
+        specialization[1],
+        specialization[2],
+        trackValue({ track_specifier: prefix[1], year_specifier: prefix[2] })
+      );
+    }
+    return undefined;
   }
-  if (tokens.length !== 1) return null;
+  if (tokens.length !== 1) return undefined;
   const match = tokens[0].match(/^([A-Z][A-Z0-9-]*)(\d+)$/);
-  if (!match) return null;
-  const [, letters, number] = match;
-  const commonTracks = options.commonTracks == null
-    ? DEFAULT_COMMON_TRACKS
-    : new Set([...options.commonTracks].map((value) => clean(value).toUpperCase()));
-  if (commonTracks.has(letters)) return branch({ track: letters, year: Number(number), commonTracks });
-  return branch({ specialization: letters, semester: Number(number) });
+  if (!match) return undefined;
+  return options.commonTracks.has(match[1])
+    ? commonBranch(trackValue({ track_specifier: match[1], year_specifier: match[2] }))
+    : sectionlessBranch(match[1], match[2]);
 }
 
-/**
- * Parse branch and class notation into a structured reference result.
- *
- * Parsing validates notation only; catalogue membership and publication
- * presence are resolved separately by Catalogue.
- * @param {string} input
- * @param {ParseOptions} options
- * @returns {ParsedReference}
- */
+export function trackSpecifier(tag) {
+  return trackSpecifierValue(tag);
+}
+
+export function yearSpecifier(year) {
+  return yearSpecifierValue(year);
+}
+
+export function specializationSpecifier(value) {
+  return specializationSpecifierValue(value);
+}
+
+export function yearSemesterSpecifier(value) {
+  return yearSemesterSpecifierValue(value);
+}
+
+export function branchSemesterSpecifier(value) {
+  return branchSemesterSpecifierValue(value);
+}
+
+export function track({ track_specifier, year_specifier } = {}) {
+  return trackValue({ track_specifier, year_specifier });
+}
+
+export function sectionSpecifier(value) {
+  return sectionSpecifierValue(value);
+}
+
+export function cohortSpecifier(value) {
+  return cohortSpecifierValue(value);
+}
+
+export function branchSemesterFor({
+  year_specifier,
+  branch_start_year,
+  year_semester_specifier
+} = {}) {
+  const year_semester = yearSemesterSpecifierValue(year_semester_specifier);
+  if (!Number.isInteger(year_specifier) || !Number.isInteger(branch_start_year) || year_specifier < branch_start_year) {
+    throw new Error('Year specifier must not precede branch start');
+  }
+  return branchSemesterSpecifierValue(
+    2 * (year_specifier - branch_start_year) + year_semester.value
+  );
+}
+
+export function singletonBranch(track) {
+  return commonBranch(track);
+}
+
+export function branch({
+  track,
+  specialization_specifier,
+  branch_semester_specifier,
+} = {}) {
+  if (track === undefined) throw new Error('A branch requires a track object');
+  if (track?.type !== Type.TRACK) throw new Error('A branch requires a track object');
+  if (specialization_specifier === undefined) {
+    throw new Error('A branch requires a specialization specifier');
+  }
+  return specializationBranch(specialization_specifier, branch_semester_specifier, track);
+}
+
+export function classPopulation({ branch: branch_value, section_specifier, cohort_specifier } = {}) {
+  const value = typeof branch_value === 'string'
+    ? parseReference(branch_value, { expected: 'branch' }).branch
+    : branch_value;
+  if (!value || ![Type.COMMON_BRANCH, Type.SPECIALIZATION_BRANCH, Type.SECTIONLESS_BRANCH].includes(value.type)) {
+    throw new Error('Class population needs a branch');
+  }
+  return classFromBranch(value, section_specifier, cohort_specifier);
+}
+
 export function parseReference(input, options = {}) {
   const original = String(input ?? '');
   const value = clean(original).toUpperCase();
-  const diagnostics = [];
-  if (!value) return { valid: false, kind: null, diagnostics: ['Reference is empty'], input: original };
+  if (!value) return invalid(original, ['Reference is empty']);
+  const parsedOptions = parseOptions(options);
+  const simpleSpecifier = value.match(/^[A-Z][A-Z-]*$/);
+  if (simpleSpecifier) {
+    const tag = simpleSpecifier[0];
+    if (parsedOptions.expected === 'track-specifier' || (
+      parsedOptions.expected === undefined && parsedOptions.commonTracks.has(tag)
+    )) {
+      return trackSpecifierReference(value, trackSpecifierValue(tag));
+    }
+    if (parsedOptions.expected === 'specialization-specifier' || parsedOptions.expected === undefined) {
+      return specializationSpecifierReference(value, specializationSpecifierValue(tag));
+    }
+    return invalid(original, [`Expected a ${parsedOptions.expected} reference, got a specifier reference`]);
+  }
   const compact = value.match(/^([A-Z][A-Z0-9-]*\d+)([A-Z]+)(\d+)$/);
   const tokens = compact ? [compact[1], compact[2], compact[3]] : value.split(' ');
-  if (!compact && tokens.length === 2 &&
-      /^[A-Z][A-Z0-9-]*\d+$/.test(tokens[0]) && /^[A-Z][A-Z0-9-]*\d+$/.test(tokens[1]) &&
-      tokens[1].match(/^([A-Z][A-Z0-9-]*)\d+$/)[1].length > 1) {
-    const verboseBranch = parseBranchTokens(tokens, options);
-    return { valid: Boolean(verboseBranch), kind: verboseBranch ? 'branch' : null,
-      branch: verboseBranch, singletonClass: verboseBranch ? classPopulation(verboseBranch) : null,
-      notation: value, diagnostics: verboseBranch ? [] : ['Malformed branch reference'] };
-  }
   let branchTokens = tokens;
-  let sectionValue = null;
-  let cohortValue = null;
+  let sectionValue;
+  let cohortValue;
+
+  if (!compact && tokens.length === 2 &&
+      /^[A-Z][A-Z0-9-]*\d+$/.test(tokens[0]) &&
+      /^[A-Z][A-Z0-9-]*\d+$/.test(tokens[1]) &&
+      tokens[1].match(/^([A-Z][A-Z0-9-]*)\d+$/)[1].length > 1) {
+    const valueBranch = parseBranchTokens(tokens, parsedOptions);
+    if (!valueBranch) return invalid(original, ['Malformed branch reference']);
+    if (parsedOptions.expected === 'class') {
+      return invalid(original, ['Expected a class reference, got a branch reference']);
+    }
+    return branchReference(value, valueBranch);
+  }
   if (compact) {
     branchTokens = [compact[1]];
     sectionValue = compact[2];
     cohortValue = compact[3];
-  }
-  if (tokens.length >= 2 && /^[A-Z]+$/.test(tokens.at(-1))) {
+  } else if (tokens.length >= 2 && /^[A-Z]+$/.test(tokens.at(-1))) {
     sectionValue = tokens.at(-1);
     branchTokens = tokens.slice(0, -1);
   } else if (tokens.length >= 2 && /^[A-Z]+\d+$/.test(tokens.at(-1))) {
-    const sc = tokens.at(-1).match(/^([A-Z]+)(\d+)$/);
-    sectionValue = sc[1]; cohortValue = sc[2]; branchTokens = tokens.slice(0, -1);
+    const match = tokens.at(-1).match(/^([A-Z]+)(\d+)$/);
+    sectionValue = match[1];
+    cohortValue = match[2];
+    branchTokens = tokens.slice(0, -1);
+  } else if (tokens.length === 2 && /^[A-Z]+\d+$/.test(tokens[1])) {
+    const match = tokens[1].match(/^([A-Z]+)(\d+)$/);
+    sectionValue = match[1];
+    cohortValue = match[2];
+    branchTokens = [tokens[0]];
   }
-  // Canonical "branch A2" and compact "branchA2".
-  if (!sectionValue && tokens.length === 2 && /^[A-Z]+\d+$/.test(tokens[1])) {
-    const sc = tokens[1].match(/^([A-Z]+)(\d+)$/);
-    sectionValue = sc[1]; cohortValue = sc[2]; branchTokens = [tokens[0]];
+
+  const valueBranch = parseBranchTokens(branchTokens, parsedOptions);
+  if (!valueBranch) return invalid(original, ['Malformed branch or class reference']);
+  if (sectionValue !== undefined) {
+    if (parsedOptions.expected === 'branch') {
+      return invalid(original, ['Expected a branch reference, got a class reference']);
+    }
+    return classReference(value, classFromBranch(valueBranch, sectionValue, cohortValue));
   }
-  const b = parseBranchTokens(branchTokens, options);
-  if (!b) return { valid: false, kind: null, diagnostics: ['Malformed branch or class reference'], input: original };
-  if (!sectionValue && tokens.length === 2 && /^[A-Z][A-Z0-9-]*\d+$/.test(tokens[0]) &&
-      /^[A-Z][A-Z0-9-]*\d+$/.test(tokens[1]) &&
-      tokens[1].match(/^([A-Z][A-Z0-9-]*)\d+$/)[1].length > 1) {
-    return { valid: true, kind: 'branch', branch: parseBranchTokens(tokens),
-      singletonClass: classPopulation(parseBranchTokens(tokens)), notation: value, diagnostics };
+  if (parsedOptions.expected === 'class') {
+    return classReference(value, classFromBranch(valueBranch));
   }
-  if (sectionValue) {
-    const c = classPopulation(b, sectionValue, cohortValue);
-    return { valid: true, kind: 'class', branch: b, class: c, broad: c.level === 'section', specific: c.level === 'cohort',
-      notation: value, diagnostics };
+  if (parsedOptions.expected === 'track') {
+    if (valueBranch.type !== Type.COMMON_BRANCH) {
+      return invalid(original, ['Expected a track reference, got a branch reference']);
+    }
+    return trackReference(value, valueBranch.track);
   }
-  return { valid: true, kind: 'branch', branch: b, singletonClass: classPopulation(b), notation: value, diagnostics };
+  if (parsedOptions.expected === 'track-specifier' || parsedOptions.expected === 'specialization-specifier') {
+    return invalid(original, [`Expected a ${parsedOptions.expected} reference, got a compound reference`]);
+  }
+  if (parsedOptions.expected === 'branch') return branchReference(value, valueBranch);
+  switch (valueBranch.type) {
+    case Type.COMMON_BRANCH:
+      return trackReference(value, valueBranch.track);
+    default:
+      return branchReference(value, valueBranch);
+  }
 }
 
-/**
- * Normalize an alternating-week or every-week pattern.
- * @param {string} value
- * @returns {WeekPattern}
- */
-export function weekPattern(value = '') {
-  const v = clean(value).toUpperCase();
-  if (v === '' || v === 'EVERY') return freeze({ code: '', name: 'every' });
-  if (v === 'SA') return freeze({ code: 'SA', name: 'A' });
-  if (v === 'SB') return freeze({ code: 'SB', name: 'B' });
+export function weekPatternSpecifier(value = '') {
+  const normalized = clean(value).toUpperCase();
+  if (normalized === '' || normalized === 'EVERY') return '';
+  if (normalized === 'SA' || normalized === 'SB') return normalized;
   throw new Error(`Invalid week pattern: ${value}`);
 }
 
-export const SESSION_SCOPES = freeze({ lecture: 'branch', seminar: 'section', lab: 'cohort' });
-const SCOPE_KINDS = freeze({ branch: 'lecture', section: 'seminar', cohort: 'lab' });
+export { SESSION_KIND_SCOPES };
 
-/**
- * Validate and normalize a session kind and its corresponding scope.
- * @param {string} kind
- * @param {string} scope
- * @returns {{kind: string, scope: string}}
- */
-export function sessionKind(kind, scope) {
-  let k = clean(kind).toLowerCase();
-  let s = clean(scope).toLowerCase();
-  if (SCOPE_KINDS[k] && SESSION_SCOPES[SCOPE_KINDS[k]]) [k, s] = [s, k];
-  if (!SESSION_SCOPES[k] || SESSION_SCOPES[k] !== s) throw new Error(`Invalid session scope for ${kind}`);
-  return freeze({ kind: k, scope: s });
+export function sessionKind(value) {
+  const normalized = clean(value).toLowerCase();
+  const aliases = {
+    lecture: 'branch-lecture',
+    seminar: 'section-seminar',
+    lab: 'cohort-lab-work',
+    'branch-lecture': 'branch-lecture',
+    'section-seminar': 'section-seminar',
+    'cohort-lab-work': 'cohort-lab-work'
+  };
+  if (!aliases[normalized]) throw new Error(`Invalid session kind: ${value}`);
+  return aliases[normalized];
 }
 
-/**
- * Create a population reference and optionally enforce its scope.
- * @param {(string|ParsedReference)} reference
- * @param {(string|null)} scope
- * @returns {PopulationReference}
- */
-export function populationReference(reference, scope = null) {
-  const parsed = typeof reference === 'string' ? parseReference(reference) : reference;
-  if (!parsed?.valid) throw new Error('Invalid population reference');
-  if (scope === 'branch' && parsed.kind === 'class') throw new Error('Branch population must be a branch');
-  if (scope === 'section' && (parsed.kind !== 'class' || parsed.class.level !== 'section')) {
-    throw new Error('Section population must be a section class');
+function populationForParsed(parsed, sessionKindValue) {
+  if (parsed.type === Type.INVALID_REFERENCE) throw new Error(parsed.diagnostics.join('; '));
+  const scope = sessionKindValue ? SESSION_KIND_SCOPES[sessionKind(sessionKindValue)] : undefined;
+  switch (scope) {
+    case 'branch':
+      if (parsed.type !== Type.BRANCH_REFERENCE) throw new Error('Branch population must be a branch');
+      return freeze({ type: Type.BRANCH_POPULATION, branch: parsed.branch });
+    case 'section':
+      if (parsed.type !== Type.CLASS_REFERENCE || parsed.class.type !== Type.SECTION_CLASS) {
+        throw new Error('Section population must be a section class');
+      }
+      return freeze({ type: Type.SECTION_POPULATION, class: parsed.class });
+    case 'cohort':
+      if (parsed.type !== Type.CLASS_REFERENCE || parsed.class.type !== Type.COHORT_CLASS) {
+        throw new Error('Cohort population must be a cohort class');
+      }
+      return freeze({ type: Type.COHORT_POPULATION, class: parsed.class });
+    default:
+      break;
   }
-  if (scope === 'cohort' && (parsed.kind !== 'class' || parsed.class.level !== 'cohort')) {
-    throw new Error('Cohort population must be a cohort class');
+  switch (parsed.type) {
+    case Type.BRANCH_REFERENCE:
+      return freeze({ type: Type.BRANCH_POPULATION, branch: parsed.branch });
+    case Type.CLASS_REFERENCE:
+      switch (parsed.class.type) {
+        case Type.SECTION_CLASS:
+          return freeze({ type: Type.SECTION_POPULATION, class: parsed.class });
+        case Type.COHORT_CLASS:
+          return freeze({ type: Type.COHORT_POPULATION, class: parsed.class });
+        default:
+          throw new Error('Singleton classes require branch scope');
+      }
+    default:
+      throw new Error('Invalid population reference');
   }
-  return freeze({ type: 'population-reference', parsed, scope });
 }
 
-/**
- * Create a session specifier without assigning it a calendar date.
- *
- * Session kind and scope are synonymous dimensions and may be supplied
- * together or derived from either one.
- * @param {{subject?: string, teacher?: string, room?: string, population?: (string|ParsedReference), day?: string, time?: string, week?: string, kind?: string, scope?: string}} fields
- * @returns {SessionSpecifier}
- */
+export function populationReference({ reference, session_kind } = {}) {
+  const expected = !session_kind || SESSION_KIND_SCOPES[sessionKind(session_kind)] === 'branch'
+    ? 'branch'
+    : 'class';
+  const parsed = typeof reference === 'string' ? parseReference(reference, { expected }) : reference;
+  return populationForParsed(parsed, session_kind);
+}
+
+function requiredText(fields, name) {
+  const value = clean(fields[name]);
+  if (!value) throw new Error(`${name} is required`);
+  return value;
+}
+
 export function sessionSpecifier(fields = {}) {
-  const derivedScope = fields.scope ?? (fields.kind ? SESSION_SCOPES[clean(fields.kind).toLowerCase()] : null);
-  const derivedKind = fields.kind ?? (fields.scope ? SCOPE_KINDS[clean(fields.scope).toLowerCase()] : null);
-  const result = { type: 'session-specifier', subject: fields.subject ?? null, teacher: fields.teacher ?? null,
-    room: fields.room ?? null, population: fields.population ? populationReference(fields.population, derivedScope) : null,
-    day: fields.day ?? null, time: fields.time ?? null, week: weekPattern(fields.week), kind: derivedKind, scope: derivedScope };
-  if (result.kind || result.scope) sessionKind(result.kind, result.scope);
-  return freeze(result);
+  if (fields.session_kind === undefined) throw new Error('session_kind is required');
+  const normalizedSessionKind = sessionKind(fields.session_kind);
+  if (fields.population === undefined) throw new Error('population is required');
+  const population = populationReference({ reference: fields.population, session_kind: normalizedSessionKind });
+  const day = requiredText(fields, 'day').toUpperCase();
+  const time = requiredText(fields, 'time').toLowerCase();
+  if (!DAYS.has(day)) throw new Error(`Invalid day: ${fields.day}`);
+  if (!SLOTS.has(time)) throw new Error(`Invalid time: ${fields.time}`);
+  return freeze({
+    type: Type.SESSION_SPECIFIER,
+    subject: requiredText(fields, 'subject'),
+    teacher: requiredText(fields, 'teacher'),
+    room: requiredText(fields, 'room'),
+    population,
+    day,
+    time,
+    week_pattern_specifier: weekPatternSpecifier(fields.week_pattern_specifier),
+    session_kind: normalizedSessionKind
+  });
 }
 
-/**
- * Convert one normalized CSV record into a partial session record.
- * @param {CsvRecord} record
- * @returns {PartialSessionRecord}
- */
+function csvRecord(record = {}) {
+  const fields = ['field', 'professor', 'subject', 'room', 'day', 'time', 'week', 'source', 'color'];
+  return freeze(Object.fromEntries(fields.map((field) => [field, clean(record[field])])));
+}
+
+function provenance(record) {
+  if (!record.source && !record.color) return freeze({ type: Type.PROVENANCE, source: '', color: '' });
+  return freeze({ type: Type.PROVENANCE, source: record.source, color: record.color });
+}
+
 export function fromCsvRecord(record) {
-  const raw = { ...record };
-  const rawField = clean(raw.field);
-  const singletonNotation = /^[A-Z][A-Z0-9-]*\d+-[A-Z][A-Z0-9-]*$/i.test(rawField);
-  const field = (singletonNotation ? rawField : rawField.replace(/-([A-Z])/, ' $1'))
-    .replace(/\s+GROUPE\s+/i, ' ');
-  const match = field.match(/^(.+?)\s+([A-Z]+)(?:\s+(\d+))?$/);
-  const reference = match ? `${match[1]} ${match[2]}${match[3] ?? ''}` : field;
-  const parsed = parseReference(reference);
-  return freeze({ type: 'partial-session-record', subject: raw.subject ?? null, teacher: raw.professor ?? null,
-    room: raw.room ?? null, day: raw.day ?? null, time: raw.time ?? null, week: weekPattern(raw.week),
-    population: parsed.valid ? populationReference(parsed) : null, reference: raw.field ?? '', provenance: raw.source || raw.color ? freeze({ source: raw.source ?? null, color: raw.color ?? null }) : null,
-    missing: freeze(['kind', 'scope']) });
+  const raw = csvRecord(record);
+  const errors = [];
+  for (const field of ['field', 'subject', 'professor', 'room', 'day', 'time']) {
+    if (!raw[field]) errors.push(`${field} is required`);
+  }
+  let population;
+  let reference = raw.field;
+  if (raw.field) {
+    const singletonNotation = /^[A-Z][A-Z0-9-]*\d+-[A-Z][A-Z-]*$/i.test(raw.field);
+    const normalizedField = (singletonNotation ? raw.field : raw.field.replace(/-([A-Z])/, ' $1'))
+      .replace(/\s+GROUPE\s+/i, ' ');
+    const match = normalizedField.match(/^(.+?)\s+([A-Z]+)(?:\s+(\d+))?$/);
+    reference = match ? `${match[1]} ${match[2]}${match[3] ?? ''}` : normalizedField;
+    try {
+      population = populationReference({ reference: parseReference(reference) });
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+  try {
+    weekPatternSpecifier(raw.week);
+  } catch (error) {
+    errors.push(error.message);
+  }
+  if (errors.length > 0) return freeze({ type: Type.INVALID_CSV_RECORD, record: raw, errors: freeze(errors) });
+  return freeze({
+    type: Type.PARTIAL_SESSION_RECORD,
+    subject: raw.subject,
+    teacher: raw.professor,
+    room: raw.room,
+    day: raw.day.toUpperCase(),
+    time: raw.time.toLowerCase(),
+    week_pattern_specifier: weekPatternSpecifier(raw.week),
+    population,
+    reference,
+    provenance: provenance(raw),
+    missing: freeze(['session_kind'])
+  });
 }
 
-/**
- * Catalogue branches, classes, and published records for reference resolution.
- *
- * Common-track names may be supplied when they differ from the defaults.
- * @param {{branches?: Array<(Branch|string)>, classes?: Array<(ClassPopulation|string)>, records?: Array<PartialSessionRecord>, commonTracks?: Array<string>}} options
- */
+function sameIdentifier(value, identifier) {
+  return value.identifier === identifier;
+}
+
+function publicationRecords(records, syntax, commonTracks) {
+  const targetBranchIdentifier = syntax.type === Type.BRANCH_REFERENCE
+    ? syntax.branch.identifier
+    : syntax.class.branch.identifier;
+  return records.filter((record) => {
+    const parsed = record.population?.type === Type.BRANCH_POPULATION
+      ? branchReference(record.reference, record.population.branch)
+      : record.population?.type === Type.SECTION_POPULATION
+        ? classReference(record.reference, record.population.class)
+        : record.population?.type === Type.COHORT_POPULATION
+          ? classReference(record.reference, record.population.class)
+          : parseReference(record.reference, { commonTracks, expected: 'branch' });
+    switch (parsed.type) {
+      case Type.INVALID_REFERENCE:
+        return false;
+      case Type.BRANCH_REFERENCE:
+        return parsed.branch.identifier === targetBranchIdentifier;
+      case Type.CLASS_REFERENCE:
+        return parsed.class.branch.identifier === targetBranchIdentifier &&
+          (syntax.type === Type.BRANCH_REFERENCE || parsed.class.identifier === syntax.class.identifier);
+      default:
+        return false;
+    }
+  });
+}
+
 export class Catalogue {
-  /** @param {{branches?: Array<(Branch|string)>, classes?: Array<(ClassPopulation|string)>, records?: Array<PartialSessionRecord>, commonTracks?: Array<string>}} options */
   constructor({ branches = [], classes = [], records = [], commonTracks } = {}) {
-    this.commonTracks = commonTracks == null
-      ? DEFAULT_COMMON_TRACKS
-      : new Set([...commonTracks].map((value) => clean(value).toUpperCase()));
-    this.branches = branches.map((b) => typeof b === 'string'
-      ? branch({ identifier: b, commonTracks: this.commonTracks }) : b);
-    this.classes = classes.map((c) => {
-      if (typeof c !== 'string') return c;
-      const parsed = parseReference(c, { commonTracks: this.commonTracks });
-      if (!parsed.valid) throw new Error(`Invalid catalogue class: ${c}`);
-      return parsed.class ?? parsed.singletonClass;
-    }).filter(Boolean);
-    for (const b of this.branches) {
-      if (b.kind === 'singleton' && !this.classes.some((c) => c.identifier === b.identifier)) {
-        this.classes.push(classPopulation(b));
+    this.commonTracks = commonTracks == null ? DEFAULT_COMMON_TRACKS : normalizedSet(commonTracks);
+    this.branches = branches.map((value) => typeof value === 'string'
+      ? parseReference(value, { commonTracks: this.commonTracks, expected: 'branch' }).branch
+      : value);
+    this.classes = classes.map((value) => {
+      if (typeof value !== 'string') return value;
+      const parsed = parseReference(value, { commonTracks: this.commonTracks, expected: 'class' });
+      if (parsed.type === Type.INVALID_REFERENCE) throw new Error(`Invalid catalogue class: ${value}`);
+      switch (parsed.type) {
+        case Type.CLASS_REFERENCE:
+          return parsed.class;
+        case Type.BRANCH_REFERENCE:
+          return classPopulation({ branch: parsed.branch });
+        default:
+          throw new Error(`Invalid catalogue class: ${value}`);
+      }
+    });
+    for (const value of this.branches) {
+      if (value.type === Type.SECTIONLESS_BRANCH && !this.classes.some((item) => item.identifier === value.identifier)) {
+        this.classes.push(classPopulation({ branch: value }));
       }
     }
     this.records = records;
   }
 
-  /** @param {ParsedReference} parsed @returns {Array<(Branch|ClassPopulation)>} */
   matches(parsed) {
-    const id = parsed.kind === 'branch' ? parsed.branch.identifier : parsed.class.identifier;
-    return (parsed.kind === 'branch' ? this.branches : this.classes).filter((x) => x.identifier === id);
+    switch (parsed.type) {
+      case Type.BRANCH_REFERENCE:
+        return this.branches.filter((value) => sameIdentifier(value, parsed.branch.identifier));
+      case Type.CLASS_REFERENCE:
+        return this.classes.filter((value) => sameIdentifier(value, parsed.class.identifier));
+      default:
+        return [];
+    }
   }
 
-  /**
-   * Resolve a reference across syntax, catalogue membership, and publication.
-   * @param {string} input
-   * @returns {Resolution}
-   */
-  resolve(input) {
-    const syntax = parseReference(input, { commonTracks: this.commonTracks });
-    if (!syntax.valid) return {
-      syntax, catalogue: { result: 'invalid', matches: [], ambiguous: false, absent: true },
-      publication: { present: false, records: [] }
-    };
-    const matches = this.matches(syntax);
-    const singleton = syntax.kind === 'branch' && matches.some((item) => item.identifier === syntax.branch.identifier) &&
-      this.classes.some((item) => item.identifier === syntax.branch.identifier);
-    const records = this.records.filter((r) => {
-      const p = r.population?.parsed ?? parseReference(r.reference ?? r.field ?? '', { commonTracks: this.commonTracks });
-      return p.valid && (p.branch.identifier === syntax.branch.identifier) &&
-        (syntax.kind === 'branch' || p.kind === 'branch' || p.class.identifier === syntax.class.identifier);
+  resolve(input, options = {}) {
+    const normalizedInput = clean(input).toUpperCase();
+    const inferredExpected = normalizedInput.includes(' ') ||
+      /^[A-Z][A-Z0-9-]*\d+[A-Z]+\d*$/.test(normalizedInput)
+      ? 'class'
+      : 'branch';
+    const syntax = parseReference(input, {
+      commonTracks: this.commonTracks,
+      expected: options.expected ?? inferredExpected
     });
-    return {
+    if (syntax.type === Type.INVALID_REFERENCE) {
+      return freeze({
+        type: Type.INVALID_RESOLUTION,
+        syntax,
+        catalogue: freeze({ type: Type.NOT_APPLICABLE }),
+        publication: freeze({ type: Type.NOT_APPLICABLE })
+      });
+    }
+    const matches = this.matches(syntax);
+    const records = publicationRecords(this.records, syntax, this.commonTracks);
+    const publication = records.length === 0
+      ? freeze({ type: Type.NO_RECORDS })
+      : freeze({ type: Type.RECORDS, records: freeze(records) });
+    if (matches.length === 0) {
+      return freeze({
+        type: Type.NOT_FOUND,
+        syntax,
+        catalogue: freeze({ type: Type.NOT_FOUND }),
+        publication: matches.length === 0 && records.length === 0 ? publication : publication
+      });
+    }
+    if (matches.length > 1) {
+      return freeze({
+        type: Type.AMBIGUOUS_MATCH,
+        syntax,
+        catalogue: freeze({ type: Type.AMBIGUOUS_MATCH, matches: freeze(matches) }),
+        publication
+      });
+    }
+    return freeze({
+      type: Type.UNIQUE_MATCH,
       syntax,
-      catalogue: {
-        result: singleton ? 'branch-and-singleton-class' : syntax.kind,
-        matches,
-        branchMatches: this.branches.filter((item) => item.identifier === syntax.branch.identifier),
-        classMatches: this.classes.filter((item) => item.identifier === (syntax.kind === 'class' ? syntax.class.identifier : syntax.branch.identifier)),
-        ambiguous: singleton || matches.length > 1,
-        absent: matches.length === 0 && !singleton
-      },
-      publication: { present: records.length > 0, records }
-    };
+      catalogue: freeze({ type: Type.UNIQUE_MATCH, match: matches[0] }),
+      publication
+    });
   }
 }
 
-/**
- * Select catalogue branches matching a predicate.
- * @param {Catalogue} catalogue
- * @param {function(Branch): boolean} predicate
- * @returns {Array<Branch>}
- */
-export function queryBranches(catalogue, predicate = () => true) { return catalogue.branches.filter(predicate); }
+export function queryBranches(catalogue, predicate = () => true) {
+  return catalogue.branches.filter(predicate);
+}
 
-/**
- * Select catalogue classes matching a predicate.
- * @param {Catalogue} catalogue
- * @param {function(ClassPopulation): boolean} predicate
- * @returns {Array<ClassPopulation>}
- */
-export function queryClasses(catalogue, predicate = () => true) { return catalogue.classes.filter(predicate); }
+export function queryClasses(catalogue, predicate = () => true) {
+  return catalogue.classes.filter(predicate);
+}
 
-/**
- * Select records whose fields match all supplied filter values.
- * @param {Array<PartialSessionRecord>} records
- * @param {Object<string, string>} filters
- * @returns {Array<PartialSessionRecord>}
- */
 export function queryRecords(records, filters = {}) {
-  return records.filter((r) => Object.entries(filters).every(([key, value]) => r[key] === value));
+  return records.filter((record) => Object.entries(filters).every(([key, value]) => record[key] === value));
 }
 
 export { DAYS, SLOTS };

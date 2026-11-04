@@ -12,6 +12,11 @@ the application's canonical dataset. A CSV cell contains one scalar field:
 arrays and lists are never serialized inside a CSV cell. Repeated values are
 represented by repeated records.
 
+The domain notation uses **specifiers** as primitive abstractions. A specifier
+is intended to complement and further specify another value rather than stand
+alone as a complete domain object. In particular, a track specifier and a year
+specifier combine to form the concrete track used by normalized branches.
+
 ## Raw timetable publication
 
 **Relational definition.** A raw timetable publication is the collection of
@@ -78,7 +83,8 @@ PDF grid.
 
 **Relational definition.** A source label is text printed in a PDF as part of
 the publication's structure. Different source-label kinds may identify a
-class, session kind, subject, teacher, room, semester, or week pattern. The
+class, session kind, subject, teacher, room, semester, or week-pattern
+specifier. The
 normalization process interprets those labels into domain concepts and fields.
 
 **Editorial definition.** A source label is a unit of raw timetable text whose
@@ -91,10 +97,10 @@ meaning depends on its position and role in the PDF.
 **Relational definition.** A semester source label identifies the academic
 semester of the current year in the source publication. `S1` means semester 1
 of the current year. It is separate from `SA` and `SB`, which identify
-alternating weeks, and it is not stored as a week pattern.
+alternating weeks, and it is not stored as a week-pattern specifier.
 
 **Editorial definition.** `S1` is a source marker for the current year's
-academic semester 1. The parser removes it from the normalized week-pattern
+year-semester specifier 1. The parser removes it from the normalized week-pattern
 field.
 
 **Alternative terms.** semester marker; publication-semester label; term label.
@@ -115,8 +121,8 @@ structured schedule data.
 ## Notation
 
 **Relational definition.** Notation is the set of textual conventions used to
-write domain concepts and their relationships, including source labels,
-class notation, prefixes, year specifiers, and programme-semester
+write domain concepts and their relationships, including source labels, class
+notation, prefixes, track specifiers, year specifiers, and branch-semester
 specifiers. Notation is distinct from the underlying normalized objects.
 
 **Editorial definition.** Notation is how the model writes and parses names,
@@ -129,8 +135,8 @@ codes, and source-derived markers.
 **Relational definition.** A CSV record is one partial normalized
 representation of a session specifier in the application dataset. It relates
 one population reference to one subject, teacher, room, day, time slot, and
-week pattern, with source provenance and optional cell color. The current record
-representation does not specify the session kind/session scope. Every record
+week-pattern specifier, with source provenance and optional cell color. The
+current record representation does not specify the session kind. Every record
 has one scalar value per column; repeated relationships use multiple records
 rather than list-valued cells.
 
@@ -141,12 +147,11 @@ per line. They are a partial representation of the complete domain schedule:
 
 The physical column `field` is semantically named **class reference** for
 compatibility, but its value may be the population reference required by the
-session's scope. In the singleton-class exception, it may contain a branch
+session's required population scope. In the singleton-class exception, it may contain a branch
 reference that is also the identifier of the branch's only class; consumers
 choose the branch or singleton-class interpretation. `week` contains an empty value, `SA`, or
 `SB`; `source` identifies the exact PDF page; `color` is a lowercase
-`#rrggbb` value or empty. Session kind/session scope is not currently a CSV
-field.
+`#rrggbb` value or empty. Session kind is not currently a CSV field.
 
 **Alternative terms.** timetable record; schedule record; normalized record.
 
@@ -193,8 +198,9 @@ dataset.
 
 **Relational definition.** The parser reads raw PDFs and emits normalized CSV
 records. It recognizes inherited class context, session kinds, subjects,
-teachers, rooms, week patterns, source pages, and source-cell colors. It
-removes `S1` as a semester source label and never stores it as a week pattern.
+teachers, rooms, week-pattern specifiers, source pages, and source-cell colors.
+It removes `S1` as a semester source label and never stores it as a
+week-pattern specifier.
 
 **Editorial definition.** The parser is `data/extract.py`, which flattens the
 PDF publications into `emplois.csv`.

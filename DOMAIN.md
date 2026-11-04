@@ -14,6 +14,13 @@ Each concept has:
 - **Alternative terms** — standard terms that may be used when communicating
   the same idea.
 
+The model uses **specifiers** as primitive abstractions. A specifier is not
+intended to stand alone as a complete domain object; it complements another
+specifier or object and further specifies it. The model is therefore built
+bottom up: an abstract track specifier and a year specifier combine to form a
+concrete track. This gives the concrete object the shorter, more frequently
+used name while retaining explicit names for the reusable parts.
+
 The model uses both generic and level-specific terms. A generic term can refer
 to a concept at any level of a hierarchy; a specific term identifies the level
 more precisely. A branch is a curricular node such as `LCS1` or the non-common
@@ -46,99 +53,96 @@ are projections of the schedule; they do not constitute separate schedules.
 
 **Editorial definition.** The schedule is the whole set of normalized
 timetable facts for the publication being modelled. The domain schedule
-includes session kind/session scope even when the current CSV does not yet
+includes session kind even when the current CSV does not yet
 represent it.
 
 **Alternative terms.** scheduling model; schedule dataset; teaching schedule.
 
-## Track
+## Track specifier
 
-**Relational definition.** A track is a degree family that contains track
-years. A track year may be a common branch or may prefix one or more non-common
-branches. A track is written as a tag such as `LBC`, `LCE`, `LCS`, or
-`MP`.
+**Relational definition.** A track specifier is the reusable designation of a
+degree family. It combines with a year specifier to form a track. It is not a
+complete track object by itself.
 
-**Editorial definition.** A track is the broad field of study for which a
-degree can be awarded.
+**Editorial definition.** A track specifier is a tag such as `LBC`, `LCE`,
+`LCS`, or `MP` that identifies the broad field of study without selecting a
+year.
 
-**Alternative terms.** degree programme; study programme; degree program.
-
-## Track year
-
-**Relational definition.** A track year is a level within a track. Its year
-specifier forms a common branch directly or prefixes the non-common branches
-that begin at that level. The number in a track year is not a
-programme-semester number.
-
-**Editorial definition.** A track year identifies a student's year of study
-inside a track, such as `LCS1` or `LCS2`. It is a structural level in a
-programme, not a calendar year such as `2025–2026`.
-
-**Alternative terms.** year of study; study year; academic level.
+**Alternative terms.** track tag; degree-family specifier.
+specifier.
 
 ## Year specifier
 
-**Relational definition.** A year specifier is the numeric suffix of a track
-that identifies its track year. It combines with a track tag to form a
-track-year prefix, such as `LCS` + `2` = `LCS2`. It must not be interpreted as the programme semester appended to a non-common
-branch.
+**Relational definition.** A year specifier is the reusable numeric designation
+of a year within a track. It combines with a track specifier to form a
+concrete track. It is not a branch-semester specifier.
 
 **Editorial definition.** A year specifier is a value such as `1`, `2`, or `3`
-used after a track tag to write the corresponding track year.
+that identifies the year of study once coupled with a track specifier.
 
-**Alternative terms.** year number; study-year number; level number.
+**Alternative terms.** year number; study-year specifier; level specifier.
 
-## Programme semester
+## Track
 
-**Relational definition.** A programme semester is the semester position of a
-non-common branch within its own programme. Its number is counted from the
-branch's starting point, not from the track year's number. It is the semester
+**Relational definition.** A track couples a track specifier and a year
+specifier. It is the concrete level-specific object written as `LCS1`,
+`LCS2`, or `MP1`. A common branch is formed directly from a track; a track
+may also prefix non-common branches that begin at that level.
+
+**Editorial definition.** A track identifies a degree family at one year of
+study. The name `track` is reserved for this frequently used concrete object;
+the abstract family is called a track specifier.
+
+**Alternative terms.** track level; level-specific track; degree-family level.
+
+## Branch semester
+
+**Relational definition.** A branch semester is the semester position of a
+non-common branch within its progression. Its number is counted from the
+branch's starting point, not from the track's year specifier. It is the semester
 number included in the branch's canonical identity and compact notation.
 
-**Editorial definition.** A programme semester is a curriculum position such
+**Editorial definition.** A branch semester is a curriculum position such
 as semester `1` or semester `3` for the non-common branch `GLSI3`. It is
 calculated from the branch's starting point recorded in the catalogue and the
 implicit current-semester context:
 
-`programmeSemester = 2 * (trackYear - start) + CURRENT_HALF`
+`branchSemester = 2 * (yearSpecifier - start) + YEAR_SEMESTER`
 
-**Alternative terms.** semester of study; curriculum semester; programme
-semester.
+**Alternative terms.** semester of study; branch progression semester.
 
-## Programme-semester specifier
+## Branch-semester specifier
 
-**Relational definition.** A programme-semester specifier is the numeric
+**Relational definition.** A branch-semester specifier is the numeric
 component attached to a non-common branch in compact notation. It identifies
-the branch's programme semester and is distinct from the year specifier
+the branch's semester and is distinct from the year specifier
 attached to a track. In `GLSI3`, the `3` is counted from the start of GLSI.
 
-**Editorial definition.** A programme-semester specifier is the digit in a
+**Editorial definition.** A branch-semester specifier is the digit in a
 compact name such as the `3` in `GLSI3`. It means the third semester counted
 from the beginning of the GLSI branch.
 
-**Alternative terms.** semester number; curriculum-semester number; semester
-index.
+**Alternative terms.** semester number; branch-semester number; semester index.
 
-## Academic semester
+## Year-semester specifier
 
-**Relational definition.** An academic semester is the semester of the current
-academic year in which the schedule is published. It supplies the implicit
-current-semester context used when interpreting programme-semester specifiers
-and source labels such as `S1`. It is not itself encoded as a permanent
-property of a class.
+**Relational definition.** A year-semester specifier identifies the first or
+second semester within a year. It supplies the year-semester context used when
+calculating branch-semester specifiers and interpreting source labels such as
+`S1`. It is not itself encoded as a permanent property of a class.
 
-**Editorial definition.** An academic semester is semester 1 or semester 2 of
-the current academic year. The current-semester value is implicit model
-knowledge rather than a property repeated on every class or session.
+**Editorial definition.** A year-semester specifier is `1` or `2`. It is
+explicit input to calculations rather than a property repeated on every class
+or session.
 
-**Alternative terms.** academic term; current semester; semester.
+**Alternative terms.** year half; semester within year.
 
 ## Branch
 
 **Relational definition.** A branch is an explicit curricular object in the
 catalogue that prefixes classes. A common branch consists of a track and year
 specifier, such as `LCS1`. A non-common branch is canonically identified by a
-specialization identifier/name/branch name and the programme-semester number
+specialization identifier/name/branch name and the branch-semester number
 counted from the start of that specialization, such as `GLSI3`. Its more
 verbose notation may make the implied prefix explicit, such as `LCS3 GLSI3`.
 A branch is not
@@ -159,9 +163,9 @@ identifier; branch name; study stream; study pathway; curriculum branch.
 
 **Relational definition.** A specialization specifier is the syntactic
 component that names a non-common specialization within a reference. It
-combines with a programme-semester specifier to identify a non-common branch.
+combines with a branch-semester specifier to identify a non-common branch.
 By itself it does not identify a branch object, just as a year specifier or
-programme-semester specifier does not identify its complete object by itself.
+branch-semester specifier does not identify its complete object by itself.
 
 **Editorial definition.** In `GLSI3`, `GLSI` is the specialization specifier.
 The complete branch object is `GLSI3`, which may also be written more
@@ -205,50 +209,41 @@ class.
 
 **Relational definition.** A section is the section component of a class. Its
 letter is scoped to its branch prefix: `LCE2-IoT A` and `LCE2-IRS A` are
-different classes. A section may be followed by a cohort component, producing
-a more specific class.
+different classes. A section specifier is the reusable letter component; a
+section class combines it with a branch. A section may be followed by a cohort
+specifier, producing a more specific class.
 
 **Editorial definition.** A section is a lettered component of a class, such
-as `A` or `E`.
+as `A` or `E`. The section specifier is not a class by itself.
 
-**Alternative terms.** class section; section group; section division.
+**Alternative terms.** section specifier; class section; section group;
+section division.
 
 ## Cohort
 
 **Relational definition.** A cohort is the cohort component of a class after
 its branch and section. It is the deepest level where the source divides a
-section into `Groupe 1` and `Groupe 2`. A cohort class is more specific than
-its corresponding section class.
+section into `Groupe 1` and `Groupe 2`. A cohort specifier is the reusable
+numbered component; a cohort class combines it with a section class.
 
 **Editorial definition.** A cohort is a numbered subgroup inside a section,
 usually `1` or `2`. In this project it means the source's teaching subgroup,
-not a year-of-entry population.
+not a year-of-entry population. The cohort specifier is not a class by
+itself.
 
-**Alternative terms.** teaching group; subgroup; lab group.
-
-## Class level
-
-**Relational definition.** A class level identifies whether a class contains
-only a branch and section, or a branch, section, and cohort. The level
-determines which sessions can apply to the class.
-
-**Editorial definition.** A class level is the structural specificity of a
-class, from section class to cohort class. A branch alone is not a class except
-when it is represented as a singleton class.
-
-**Alternative terms.** hierarchy level; population level; specificity level.
+**Alternative terms.** cohort specifier; teaching group; subgroup; lab group.
 
 ## Population reference
 
 **Relational definition.** A population reference is the generic audience
 notation attached to a session specifier. It may identify a branch or a class,
-depending on the session kind/session scope. A lecture's population reference
-always has branch scope; a seminar's has section scope; and a lab's has cohort
-scope.
+depending on the session kind. A branch-lecture population reference addresses
+a branch; a section-seminar reference addresses a section; and a cohort-lab-work
+reference addresses a cohort.
 
 **Editorial definition.** A population reference identifies the student
 population to which a session applies without requiring every session to be
-addressed at the same class level.
+addressed at the same population specificity.
 
 **Alternative terms.** audience reference; attendance reference; group
 reference.
@@ -257,8 +252,8 @@ reference.
 
 **Relational definition.** A session specifier describes a recurring teaching
 activity without selecting a specific calendar date. It combines a subject,
-session kind/session scope, teacher, room, population reference, day, time slot,
-and week pattern.
+session kind, teacher, room, population reference, day, time slot, and
+week-pattern specifier.
 
 **Editorial definition.** A session specifier says that a class activity
 occurs every week, in week A, or in week B at a specified day and time. It
@@ -269,21 +264,19 @@ record.
 
 ## Session kind
 
-**Relational definition.** A session kind, also called a session scope,
-describes how a session relates to
-its class population. Lectures apply at branch level, seminars at section
-level, and labs at cohort level; these population scopes are domain invariants.
+**Relational definition.** A session kind combines instructional format and
+population scope. The canonical values are `branch-lecture`,
+`section-seminar`, and `cohort-lab-work`; each maps to exactly one population
+scope. Lectures apply to branches, seminars to sections, and lab work to
+cohorts.
 The source currently writes the kinds with the prefixes `C_`, `TD_`, and
 `TP_`, but those spellings are publication conventions rather than domain
 invariants.
 
-**Editorial definition.** A session kind/session scope is the instructional
-format and population scope of a session: lecture at branch scope,
-seminar/tutorial at section scope, or practical/laboratory work at cohort
-scope.
+**Editorial definition.** A session kind says both what instructional activity
+occurs and which population it addresses.
 
-**Alternative terms.** session scope; class type; activity type; instruction
-format.
+**Alternative terms.** activity type; instruction format.
 
 ## Subject
 
@@ -330,7 +323,7 @@ specifier. It combines with a time slot to locate the activity in a timetable.
 
 **Relational definition.** A time slot is the recurring time coordinate of a
 session specifier. Each day has the same six slots, and a slot may contain
-alternative session specifiers distinguished by their week patterns.
+alternative session specifiers distinguished by their week-pattern specifiers.
 
 **Editorial definition.** A time slot is one of these fixed intervals:
 
@@ -343,18 +336,18 @@ alternative session specifiers distinguished by their week patterns.
 
 **Alternative terms.** class period; teaching period; timetable period.
 
-## Week pattern
+## Week-pattern specifier
 
-**Relational definition.** A week pattern qualifies a session specifier within
-its day and time slot. An empty pattern means every week; `SA` and `SB` mean
-the alternating weeks A and B. It is a recurrence property, not a calendar
-week object.
+**Relational definition.** A week-pattern specifier qualifies a session
+specifier within its day and time slot. An empty specifier means every week;
+`SA` and `SB` mean the alternating weeks A and B. It is a recurrence
+specifier, not a calendar week object.
 
-**Editorial definition.** A week pattern is `every week`, `week A`, or
-`week B`. The source labels the alternating patterns `SA` and `SB`.
+**Editorial definition.** A week-pattern specifier is one of `''`, `SA`, or
+`SB`. The source labels the alternating patterns `SA` and `SB`.
 
-**Alternative terms.** recurrence pattern; alternating-week pattern; weekly
-pattern.
+**Alternative terms.** recurrence specifier; alternating-week specifier;
+weekly specifier.
 
 ## Timetable projection
 
@@ -373,7 +366,7 @@ organized by day and time for a selected class, teacher, or other filter.
 
 **Relational definition.** A name is a notation for a domain concept. A
 source-facing name may preserve the publication's hierarchy, while a class
-identifier encodes a branch, programme-semester specifier, section, and
+identifier encodes a branch, branch-semester specifier, section, and
 cohort. The same object may be written with different levels of verbosity;
 these are notation variants, not a separate alias concept.
 
@@ -382,27 +375,27 @@ designation for a track, branch, class, or other concept.
 
 **Alternative terms.** designation; label; identifier.
 
-## Reference and identifier
+## Identifier
 
-**Relational definition.** A reference, also called an identifier, is notation
-used to identify or query a branch or class object. A branch reference
-identifies a branch; a class reference identifies a class. In the singleton
-case, one notation identifies both objects. The same notation may be called an
-identifier when naming the object and a reference when using the notation as an
-input.
+**Relational definition.** An identifier is the canonical notation owned by a
+concrete domain object. A reference is an input notation expected to resolve
+to that object; when resolution is one-to-one, the reference and the object's
+identifier have the same value. In the singleton case, one identifier can be
+owned by both a branch and its singleton class.
 
-**Editorial definition.** A reference/identifier is the generic term for
-branch and class notation.
+**Editorial definition.** An identifier names the object it belongs to, while
+a reference is the notation supplied for lookup. They are intentionally
+combined in this model when the reference resolves one-to-one.
 
-**Alternative terms.** designation; name; selector.
+**Alternative terms.** designation; canonical reference; object notation.
 
 ## Branch identifier
 
-**Relational definition.** A branch identifier is a reference to a branch
-object. A common branch is written as a track and year specifier, such as
-`LCS1`. A non-common branch is written as a specialization identifier and
-programme-semester number, such as `GLSI3`; its verbose form may make the
-implied prefix explicit, as in `LCS3 GLSI3`.
+**Relational definition.** A branch identifier is the canonical identifier of
+a branch object. A common branch is written from a track and year specifier,
+such as `LCS1`. A non-common branch is written from a specialization
+specifier and branch-semester specifier, such as `GLSI3`; its verbose form
+may make the prefix explicit, as in `LCS3 GLSI3`.
 
 **Editorial definition.** A branch identifier identifies a branch. Usually its
 classes have more specific class identifiers; for a branch without sections,
@@ -414,8 +407,8 @@ identifier.
 
 ## Class identifier
 
-**Relational definition.** A class identifier is a reference to a class below
-a branch. It writes a branch, a space, a section, and optionally a cohort:
+**Relational definition.** A class identifier is the canonical identifier of a
+class below a branch. It writes a branch, a space, a section, and optionally a cohort:
 `GLSI3 A` or `GLSI3 A1`. A verbose non-common form may make the implied prefix
 explicit, as in `LCS3 GLSI3 A2`. The parser may also accept compact input such
 as `GLSI3A2`.
@@ -432,7 +425,9 @@ as `GLSI3A2`.
 class reference through three separate concepts: syntactical validity,
 catalogue match, and publication presence. Resolution is not assumed to be a
 function that returns one value; an attempt may produce multiple catalogue
-matches or diagnostics.
+matches or diagnostics. A consumer may provide an expected object kind before
+parsing, such as branch or class, to choose between valid interpretations of
+the same notation.
 
 **Editorial definition.** Resolution is the process of determining what a
 reference means and whether it is represented in the maintained catalogue and
@@ -490,5 +485,5 @@ tracks, branches, and class populations. It explicitly contains one singleton
 class for every sectionless branch, and may contain branches or classes absent
 from the current timetable publication.
 
-**Alternative terms.** academic catalogue; programme catalogue; curriculum
+**Alternative terms.** academic catalogue; curriculum catalogue; curriculum
 catalogue.
