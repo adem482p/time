@@ -192,15 +192,16 @@ singleton class for timetable purposes.
 
 ## Singleton class
 
-**Relational definition.** A singleton class is the explicit class entry
-contained by a branch that has no section subdivision. Every sectionless
-branch has exactly one singleton class. Its class identifier/reference is equal
-to the branch identifier/reference, so the same notation can resolve either
-to the branch object or to its one class object.
+**Relational definition.** A singleton class is the class entry produced for a
+branch whose population rule for the relevant year declares no sections. It
+is a class-population shape, not a branch kind: the branch remains a
+specialization (or common) branch, and its identifier may differ from the
+class identifier's source notation. Its class identifier/reference is equal
+to the branch identifier/reference.
 
-**Editorial definition.** A singleton class is an explicit catalogue class
-entry whose branch is also its complete class identifier, such as the master
-entries `MP1-EXR`, `MP1-SD`, and `MP2-EXR` present in the current parsed data.
+**Editorial definition.** A singleton class is a catalogue class entry whose
+branch has no section subdivision for that year, such as the master entries
+`MP1-EXR`, `MP1-SD`, and `MP2-EXR` present in the current parsed data.
 
 **Alternative terms.** undivided class; single-section class; branch-level
 class.
@@ -481,9 +482,10 @@ union of raw timetable evidence and editorial corrections, normalization, or
 additions.
 
 **Editorial definition.** The catalogue is the maintained description of known
-tracks, branches, and class populations. It explicitly contains one singleton
-class for every sectionless branch, and may contain branches or classes absent
-from the current timetable publication.
+tracks, branches, and class populations, expressed as a finite grammar of
+specifiers and relationships. It contains no concrete tracks, branches, or
+classes; those are derived. It may contain branches or classes absent from
+the current timetable publication.
 
 **Alternative terms.** academic catalogue; curriculum catalogue; curriculum
 catalogue.
