@@ -9,7 +9,7 @@ import {
   parseReference, populationReference, sessionKind, sessionSpecifier,
   weekPatternSpecifier, fromCsvRecord, branchSemesterFor,
   twoCohorts, noCohorts, sectionsWithTwoCohorts, sectionsWithNoCohorts,
-  populationsForYear, commonBranchRule, specializationRule, branchRule,
+  populationsForYear, commonBranchRule, branchRule,
   queryBranches, queryClasses, queryRecords,
   Catalogue
 } from './index.js';
@@ -35,7 +35,10 @@ test('year and branch construction validated by catalogue', () => {
     () => branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(2) }),
     /outside active duration/
   );
-  assert.throws(() => branchRule({ specialization_specifier: specializationSpecifier('GLSI'), start_year_specifier: 0, duration_semesters: 3 }), /start_year_specifier must be a positive integer/);
+  assert.throws(
+    () => branchRule({ specialization_specifier: specializationSpecifier('GLSI'), track_specifier: trackSpecifier('LCS'), start_year_specifier: 0, duration_semesters: 3 }),
+    /start_year_specifier must be a positive integer/
+  );
 });
 
 test('common branch construction', () => {
@@ -153,14 +156,11 @@ test('strict tree divergence and trunk derivation invariant enforcement', () => 
     () => new Catalogue({
       trackSpecifiers: [trackSpecifier('TST')],
       specializationSpecifiers: [specializationSpecifier('SPEC')],
-      specializationRules: [
-        specializationRule({ specialization_specifier: 'SPEC', track_specifier: 'TST' })
-      ],
       branchRules: [
         branchRule({
           specialization_specifier: 'SPEC',
+          track_specifier: 'TST',
           start_year_specifier: 2,
-          start_year_semester_specifier: 1,
           duration_semesters: 2,
           populations: [populationsForYear({ year_specifier: 2, sections: [] })]
         })
@@ -175,14 +175,11 @@ test('strict tree divergence and trunk derivation invariant enforcement', () => 
     () => new Catalogue({
       trackSpecifiers: [trackSpecifier('TST')],
       specializationSpecifiers: [specializationSpecifier('SPEC')],
-      specializationRules: [
-        specializationRule({ specialization_specifier: 'SPEC', track_specifier: 'TST' })
-      ],
       branchRules: [
         branchRule({
           specialization_specifier: 'SPEC',
+          track_specifier: 'TST',
           start_year_specifier: 2,
-          start_year_semester_specifier: 1,
           duration_semesters: 2,
           populations: [populationsForYear({ year_specifier: 2, sections: [] })]
         })

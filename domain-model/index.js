@@ -41,7 +41,6 @@ export const Type = Object.freeze({
   NO_RECORDS: Symbol('no-records'),
   RECORDS: Symbol('records'),
   COMMON_BRANCH_RULE: Symbol('common-branch-rule'),
-  SPECIALIZATION_RULE: Symbol('specialization-rule'),
   BRANCH_RULE: Symbol('branch-rule')
 });
 
@@ -135,26 +134,17 @@ export function commonBranchRule({ track_specifier, year_specifier, sections } =
   });
 }
 
-export function specializationRule({ specialization_specifier, track_specifier } = {}) {
-  return freeze({
-    type: Type.SPECIALIZATION_RULE,
-    specialization_specifier: specializationSpecifierValue(specialization_specifier),
-    track_specifier: trackSpecifierValue(track_specifier)
-  });
-}
-
 export function branchRule({
   specialization_specifier,
+  track_specifier,
   start_year_specifier,
-  start_year_semester_specifier = 1,
   duration_semesters,
   populations
 } = {}) {
   const spec = specializationSpecifierValue(specialization_specifier);
+  const trackSpec = trackSpecifierValue(track_specifier);
   const startYear = Number(start_year_specifier?.value ?? start_year_specifier);
   if (!Number.isInteger(startYear) || startYear < 1) throw new Error('start_year_specifier must be a positive integer');
-  const startSem = Number(start_year_semester_specifier?.value ?? start_year_semester_specifier);
-  if (startSem !== 1 && startSem !== 2) throw new Error('start_year_semester_specifier must be 1 or 2');
   const durSem = Number(duration_semesters?.value ?? duration_semesters);
   if (!Number.isInteger(durSem) || durSem < 1) throw new Error('duration_semesters must be positive');
   const normalizedPopulations = (populations ?? []).map((entry) => freeze({
@@ -164,8 +154,8 @@ export function branchRule({
   return freeze({
     type: Type.BRANCH_RULE,
     specialization_specifier: spec,
+    track_specifier: trackSpec,
     start_year_specifier: startYear,
-    start_year_semester_specifier: startSem,
     duration_semesters: durSem,
     populations: freeze(normalizedPopulations)
   });
@@ -174,17 +164,15 @@ export function branchRule({
 export function branchSemesterFor({
   year_specifier,
   year_semester_specifier,
-  start_year_specifier,
-  start_year_semester_specifier = 1
+  start_year_specifier
 } = {}) {
   const ys = Number(year_specifier?.value ?? year_specifier);
   const yss = yearSemesterSpecifierValue(year_semester_specifier).value;
   const bys = Number(start_year_specifier?.value ?? start_year_specifier);
-  const byss = Number(start_year_semester_specifier?.value ?? start_year_semester_specifier);
   if (!Number.isInteger(ys) || !Number.isInteger(bys) || ys < bys) throw new Error('Year specifier must not precede start year specifier');
 
   const globalTarget = 2 * (ys - 1) + yss;
-  const globalStart = 2 * (bys - 1) + byss;
+  const globalStart = 2 * (bys - 1) + 1;
   if (globalTarget < globalStart) throw new Error('Target semester precedes branch start semester');
 
   // In this university's compact naming, the numeral represents the global degree semester
@@ -298,7 +286,6 @@ export class Catalogue {
   constructor({
     trackSpecifiers = [],
     specializationSpecifiers = [],
-    specializationRules = [],
     branchRules = [],
     commonBranchRules = [],
     records = []
@@ -308,25 +295,18 @@ export class Catalogue {
     this._trackSpecifierObjects = new Map(trackSpecifiers.map((v) => { const s = toTrackSpecifier(v); return [s.value, s]; }));
     this._specializationSpecifierObjects = new Map(specializationSpecifiers.map((v) => { const s = toSpecializationSpecifier(v); return [s.value, s]; }));
 
-    this.specializationOwners = new Map();
-    for (const rule of specializationRules) {
-      const spec = toSpecializationSpecifier(rule.specialization_specifier).value;
-      const owner = toTrackSpecifier(rule.track_specifier).value;
-      if (!this.specializationSpecifiers.has(spec)) throw new Error(`Unknown specialization specifier: ${spec}`);
-      if (!this.trackSpecifiers.has(owner)) throw new Error(`Unknown track specifier: ${owner}`);
-      this.specializationOwners.set(spec, owner);
-    }
-
     this.branchRules = new Map();
     for (const rule of branchRules) {
       const spec = toSpecializationSpecifier(rule.specialization_specifier).value;
+      const trackSpec = toTrackSpecifier(rule.track_specifier).value;
       if (!this.specializationSpecifiers.has(spec)) throw new Error(`Unknown specialization specifier: ${spec}`);
-      if (!this.specializationOwners.has(spec)) throw new Error(`Specialization has no owner: ${spec}`);
+      if (!this.trackSpecifiers.has(trackSpec)) throw new Error(`Unknown track specifier: ${trackSpec}`);
+      if (this.branchRules.has(spec)) throw new Error(`Duplicate branchRule for specialization: ${spec}`);
 
       this.branchRules.set(spec, {
         specialization_specifier: this._specializationSpecifierObjects.get(spec),
+        track_specifier: this._trackSpecifierObjects.get(trackSpec),
         start_year_specifier: rule.start_year_specifier,
-        start_year_semester_specifier: rule.start_year_semester_specifier,
         duration_semesters: rule.duration_semesters,
         populations: new Map(rule.populations.map((p) => [yearSpecifierValue(p.year_specifier).value, p]))
       });
@@ -336,8 +316,8 @@ export class Catalogue {
     this.trackMetrics = new Map();
     for (const ts of this.trackSpecifiers) {
       const ownedBranches = [];
-      for (const [spec, br] of this.branchRules) {
-        if (this.specializationOwners.get(spec) === ts) {
+      for (const [, br] of this.branchRules) {
+        if (br.track_specifier.value === ts) {
           ownedBranches.push(br);
         }
       }
@@ -353,7 +333,7 @@ export class Catalogue {
       let minStartGlobalSemester = Infinity;
       let maxEndGlobalSemester = 0;
       for (const br of ownedBranches) {
-        const startGlobal = 2 * (br.start_year_specifier - 1) + br.start_year_semester_specifier;
+        const startGlobal = 2 * (br.start_year_specifier - 1) + 1;
         const endGlobal = startGlobal + br.duration_semesters - 1;
         if (startGlobal < minStartGlobalSemester) minStartGlobalSemester = startGlobal;
         if (endGlobal > maxEndGlobalSemester) maxEndGlobalSemester = endGlobal;
@@ -364,7 +344,7 @@ export class Catalogue {
 
       // Verify Non-Convergence Invariant: no specialization can start within or before the common trunk
       for (const br of ownedBranches) {
-        const startGlobal = 2 * (br.start_year_specifier - 1) + br.start_year_semester_specifier;
+        const startGlobal = 2 * (br.start_year_specifier - 1) + 1;
         if (startGlobal <= 2 * trunkDepthYears) {
           throw new Error(
             `Specialization ${br.specialization_specifier.value} starts at semester ${startGlobal} inside common trunk (depth ${trunkDepthYears} years). Branches never merge or co-exist with a common trunk.`
@@ -426,10 +406,9 @@ export class Catalogue {
     }
 
     // specialization branches (derived from exact semester count)
-    for (const [specValue, br] of this.branchRules) {
-      const owner = this.specializationOwners.get(specValue);
-      const specObj = this._specializationSpecifierObjects.get(specValue);
-      const startGlobal = 2 * (br.start_year_specifier - 1) + br.start_year_semester_specifier;
+    for (const [, br] of this.branchRules) {
+      const specObj = br.specialization_specifier;
+      const startGlobal = 2 * (br.start_year_specifier - 1) + 1;
 
       for (let s = 0; s < br.duration_semesters; s++) {
         const globalSem = startGlobal + s;
@@ -595,15 +574,14 @@ export function branch(catalogue, { specialization_specifier, year_specifier, ye
   if (catalogue == null) throw new Error('A branch requires a catalogue');
   const spec = toSpecializationSpecifier(specialization_specifier);
   if (!catalogue.specializationSpecifiers.has(spec.value)) throw new Error(`Unknown specialization specifier: ${spec.value}`);
-  const owner = catalogue.specializationOwners.get(spec.value);
-  if (!owner) throw new Error(`Specialization has no owner: ${spec.value}`);
-  const ys = yearSpecifierValue(year_specifier);
-  const yss = yearSemesterSpecifierValue(year_semester_specifier);
   const br = catalogue.branchRules.get(spec.value);
   if (!br) throw new Error(`No branch rule for: ${spec.value}`);
+  const owner = br.track_specifier.value;
+  const ys = yearSpecifierValue(year_specifier);
+  const yss = yearSemesterSpecifierValue(year_semester_specifier);
 
   const globalTarget = 2 * (ys.value - 1) + yss.value;
-  const globalStart = 2 * (br.start_year_specifier - 1) + br.start_year_semester_specifier;
+  const globalStart = 2 * (br.start_year_specifier - 1) + 1;
   const globalEnd = globalStart + br.duration_semesters - 1;
 
   if (globalTarget < globalStart || globalTarget > globalEnd) {
@@ -613,8 +591,7 @@ export function branch(catalogue, { specialization_specifier, year_specifier, ye
   const semester = branchSemesterFor({
     year_specifier: ys.value,
     year_semester_specifier: yss,
-    start_year_specifier: br.start_year_specifier,
-    start_year_semester_specifier: br.start_year_semester_specifier
+    start_year_specifier: br.start_year_specifier
   });
   const y = year(catalogue, { track_specifier: trackSpecifier(owner), year_specifier: ys });
   return freeze({
@@ -789,7 +766,8 @@ function parseBranchTokens(tokens, options) {
       if (catalogue) {
         if (!catalogue.trackSpecifiers.has(trackSpec)) return undefined;
         if (!catalogue.specializationSpecifiers.has(spec)) return undefined;
-        if (catalogue.specializationOwners.get(spec) !== trackSpec) return undefined;
+        const br = catalogue.branchRules.get(spec);
+        if (!br || br.track_specifier.value !== trackSpec) return undefined;
       } else {
         if (!commonTracks.has(trackSpec) && trackSpec.length <= 3) {
           // permissive fallback
@@ -800,7 +778,7 @@ function parseBranchTokens(tokens, options) {
       if (catalogue) {
         const br = catalogue.branchRules.get(spec);
         if (!br) return undefined;
-        const globalStart = 2 * (br.start_year_specifier - 1) + br.start_year_semester_specifier;
+        const globalStart = 2 * (br.start_year_specifier - 1) + 1;
         const globalTarget = 2 * (year - 1) + 1;
         const globalEnd = globalStart + br.duration_semesters - 1;
         if (globalTarget < globalStart || globalTarget > globalEnd) return undefined;
@@ -830,10 +808,9 @@ function parseBranchTokens(tokens, options) {
       if (catalogue) {
         if (!catalogue.trackSpecifiers.has(trackSpec)) return undefined;
         if (!catalogue.specializationSpecifiers.has(spec)) return undefined;
-        if (catalogue.specializationOwners.get(spec) !== trackSpec) return undefined;
         const br = catalogue.branchRules.get(spec);
-        if (!br) return undefined;
-        const globalStart = 2 * (br.start_year_specifier - 1) + br.start_year_semester_specifier;
+        if (!br || br.track_specifier.value !== trackSpec) return undefined;
+        const globalStart = 2 * (br.start_year_specifier - 1) + 1;
         const globalEnd = globalStart + br.duration_semesters - 1;
         if (semester < globalStart || semester > globalEnd) return undefined;
         const expectedYear = Math.floor((semester - 1) / 2) + 1;
@@ -863,10 +840,10 @@ function parseBranchTokens(tokens, options) {
   if (catalogue && catalogue.specializationSpecifiers.has(tag)) {
     const br = catalogue.branchRules.get(tag);
     if (br) {
-      const globalStart = 2 * (br.start_year_specifier - 1) + br.start_year_semester_specifier;
+      const globalStart = 2 * (br.start_year_specifier - 1) + 1;
       const globalEnd = globalStart + br.duration_semesters - 1;
       if (semNum >= globalStart && semNum <= globalEnd) {
-        const owner = catalogue.specializationOwners.get(tag);
+        const owner = br.track_specifier.value;
         const trackYear = Math.floor((semNum - 1) / 2) + 1;
         const tsObj = trackSpecifier(owner);
         const ysObj = yearSpecifier(trackYear);
