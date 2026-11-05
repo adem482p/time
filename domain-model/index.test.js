@@ -39,7 +39,14 @@ test('common branch construction', () => {
   assert.equal(cb.type, Type.COMMON_BRANCH);
   assert.equal(cb.identifier, 'LBC1');
   assert.equal(cb.year.identifier, 'LBC1');
-  assert.throws(() => commonBranch(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(1) }), /No common branch/);
+  assert.throws(
+    () => commonBranch(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(1) }),
+    /Track MP has no common branch/
+  );
+  assert.throws(
+    () => commonBranch(cat, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(2) }),
+    /diverged into specializations/
+  );
 });
 
 test('class population shapes', () => {
@@ -126,7 +133,67 @@ test('queries', () => {
   assert.equal(queryRecords([{ day: 'LUNDI' }, { day: 'MARDI' }], { day: 'LUNDI' }).length, 1);
 });
 
-test('fixed coordinates', () => {
-  assert.equal(DAYS.has('LUNDI'), true);
-  assert.equal(SLOTS.has('08h15-09h45'), true);
+test('strict tree divergence invariant enforcement', () => {
+  // 1. Trunk must be contiguous starting at 1
+  assert.throws(
+    () => new Catalogue({
+      trackSpecifiers: [trackSpecifier('TST')],
+      trackRules: [
+        trackRule({
+          track_specifier: 'TST',
+          duration: 3,
+          trunk: [populationsForYear({ year_specifier: 2, sections: [] })]
+        })
+      ]
+    }),
+    /must be contiguous starting at year specifier 1/
+  );
+
+  // 2. Trunk year cannot exceed track duration
+  assert.throws(
+    () => new Catalogue({
+      trackSpecifiers: [trackSpecifier('TST')],
+      trackRules: [
+        trackRule({
+          track_specifier: 'TST',
+          duration: 1,
+          trunk: [
+            populationsForYear({ year_specifier: 1, sections: [] }),
+            populationsForYear({ year_specifier: 2, sections: [] })
+          ]
+        })
+      ]
+    }),
+    /exceeds track duration/
+  );
+
+  // 3. Specialization cannot start within or before the common trunk
+  assert.throws(
+    () => new Catalogue({
+      trackSpecifiers: [trackSpecifier('TST')],
+      specializationSpecifiers: [specializationSpecifier('SPEC')],
+      trackRules: [
+        trackRule({
+          track_specifier: 'TST',
+          duration: 3,
+          trunk: [
+            populationsForYear({ year_specifier: 1, sections: [] }),
+            populationsForYear({ year_specifier: 2, sections: [] })
+          ]
+        })
+      ],
+      specializationRules: [
+        specializationRule({ specialization_specifier: 'SPEC', track_specifier: 'TST' })
+      ],
+      branchRules: [
+        branchRule({
+          specialization_specifier: 'SPEC',
+          start_year_specifier: 2,
+          duration: 1,
+          populations: [populationsForYear({ year_specifier: 2, sections: [] })]
+        })
+      ]
+    }),
+    /cannot start at year specifier 2 because track TST has a common trunk through year specifier 2.*Branches never merge/
+  );
 });

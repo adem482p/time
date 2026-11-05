@@ -38,11 +38,22 @@ The hierarchy is described from three complementary perspectives:
    does not itself have section or cohort sub-branches: once a branch is
    followed by a section, the result is a class.
 
-The same hierarchy can be described from different central concepts. For
-example, from the perspective of the class `GLSI3 A`, `GLSI3` is its prefix;
-from the perspective of the cohort class `GLSI3 A1`, `GLSI3 A` is its prefix.
-`GLSI3 A` is the central class concept, and its more specific class forms are
-`GLSI3 A1` and `GLSI3 A2`.
+## Curricular Tree Progression and Non-Convergence
+
+Academic curricula follow a strict directed tree progression without loops or
+re-convergence. A degree family represented by a track specifier begins either:
+
+1. As an undivided **common trunk** (a sequence of common branches starting
+   strictly at year specifier 1 up to some level $k \ge 1$), or
+2. Directly as **specialization branches** from year specifier 1 (in which case
+   no common trunk exists, $k = 0$).
+
+**The Non-Convergence Invariant:** Curricular branches **never merge back**.
+Once a degree family diverges into specialization branches at year specifier $k + 1$,
+common branches permanently cease for that track specifier. Distinct specialization
+branches cannot converge or recombine into a shared branch at any subsequent year level.
+A track specifier's progression may only stay common or divide into specializations;
+it never returns to common.
 
 ## Schedule
 
@@ -141,10 +152,15 @@ or session.
 
 **Relational definition.** A branch is an explicit curricular object in the
 catalogue that prefixes classes. A common branch consists of a year (the couple of a
-track specifier and year specifier), such as `LCS1`. A non-common branch is canonically
+track specifier and year specifier), such as `LCS1`, and belongs strictly to the
+track's initial common trunk. A non-common branch is canonically
 identified by a specialization identifier/name/branch name and the branch-semester number
 counted from the start of that specialization, such as `GLSI3`. Its more
 verbose notation may make the implied prefix explicit, such as `LCS3 GLSI3`.
+A track progression has at most one common branch stage (the common trunk), which
+must begin at year specifier 1 and end before or at the emergence of specializations.
+Once a curriculum divides into specializations, common branches cease permanently
+for that track specifier because branches never merge back.
 A branch is not
 subdivided into sections or cohorts as a branch object; the combination of a
 branch and section is a class. From the perspective of that class, the branch

@@ -27,25 +27,16 @@ export function createCatalogue(records = []) {
     trackSpecifiers: [lbc, lce, lcs, mp],
     specializationSpecifiers: [bi, eb, iot, irs, glsi, exr, sd],
     trackRules: [
-      trackRule({ track_specifier: lbc, years: [
-        { year_specifier: y1, common: sectionsWithTwoCohorts('A','B','C','D','E','F','G','H') },
-        { year_specifier: y2, common: sectionsWithTwoCohorts('A','B','C','D','E','F') },
-        { year_specifier: y3, common: sectionsWithTwoCohorts('A','B','C','D') }
+      trackRule({ track_specifier: lbc, duration: 3, trunk: [
+        populationsForYear({ year_specifier: y1, sections: sectionsWithTwoCohorts('A','B','C','D','E','F','G','H') })
       ]}),
-      trackRule({ track_specifier: lce, years: [
-        { year_specifier: y1, common: sectionsWithTwoCohorts('A','B','C','D','E','F') },
-        { year_specifier: y2, common: sectionsWithTwoCohorts('A','B') },
-        { year_specifier: y3, common: sectionsWithTwoCohorts('A','B') }
+      trackRule({ track_specifier: lce, duration: 3, trunk: [
+        populationsForYear({ year_specifier: y1, sections: sectionsWithTwoCohorts('A','B','C','D','E','F') })
       ]}),
-      trackRule({ track_specifier: lcs, years: [
-        { year_specifier: y1, common: sectionsWithTwoCohorts('A','B','C','D','E') },
-        { year_specifier: y2, common: null },
-        { year_specifier: y3, common: null }
+      trackRule({ track_specifier: lcs, duration: 3, trunk: [
+        populationsForYear({ year_specifier: y1, sections: sectionsWithTwoCohorts('A','B','C','D','E') })
       ]}),
-      trackRule({ track_specifier: mp, years: [
-        { year_specifier: y1, common: null },
-        { year_specifier: y2, common: null }
-      ]})
+      trackRule({ track_specifier: mp, duration: 2, trunk: [] })
     ],
     specializationRules: [
       specializationRule({ specialization_specifier: bi, track_specifier: lbc }),

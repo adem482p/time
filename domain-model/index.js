@@ -124,13 +124,15 @@ export function populationsForYear({ year_specifier, sections } = {}) {
   });
 }
 
-export function trackRule({ track_specifier, years } = {}) {
+export function trackRule({ track_specifier, duration = 3, trunk = [] } = {}) {
   const ts = trackSpecifierValue(track_specifier);
-  const normalizedYears = (years ?? []).map((entry) => freeze({
+  const dur = Number(duration?.value ?? duration);
+  if (!Number.isInteger(dur) || dur < 1) throw new Error('Track duration must be a positive integer');
+  const normalizedTrunk = (trunk ?? []).map((entry) => freeze({
     year_specifier: yearSpecifierValue(entry.year_specifier),
-    common: entry.common == null ? null : normalizeSections(entry.common)
+    sections: normalizeSections(entry.sections ?? [])
   }));
-  return freeze({ type: Type.TRACK_RULE, track_specifier: ts, years: freeze(normalizedYears) });
+  return freeze({ type: Type.TRACK_RULE, track_specifier: ts, duration: dur, trunk: freeze(normalizedTrunk) });
 }
 
 export function specializationRule({ specialization_specifier, track_specifier } = {}) {
@@ -282,14 +284,28 @@ export class Catalogue {
     for (const rule of trackRules) {
       const ts = toTrackSpecifier(rule.track_specifier).value;
       if (!this.trackSpecifiers.has(ts)) throw new Error(`Unknown track specifier in track rule: ${ts}`);
-      const years = new Map();
-      for (const entry of rule.years) {
-        years.set(yearSpecifierValue(entry.year_specifier).value, {
-          year_specifier: yearSpecifierValue(entry.year_specifier),
-          common: entry.common == null ? null : entry.common
-        });
+
+      // Validate trunk is contiguous starting at 1
+      const trunkMap = new Map();
+      let expectedYear = 1;
+      for (const entry of rule.trunk) {
+        const yVal = yearSpecifierValue(entry.year_specifier).value;
+        if (yVal !== expectedYear) {
+          throw new Error(`Trunk for track ${ts} must be contiguous starting at year specifier 1 (expected ${expectedYear}, got ${yVal})`);
+        }
+        if (yVal > rule.duration) {
+          throw new Error(`Trunk year specifier ${yVal} exceeds track duration ${rule.duration} for ${ts}`);
+        }
+        trunkMap.set(yVal, entry);
+        expectedYear++;
       }
-      this.trackRules.set(ts, { track_specifier: this._trackSpecifierObjects.get(ts), years });
+
+      this.trackRules.set(ts, {
+        track_specifier: this._trackSpecifierObjects.get(ts),
+        duration: rule.duration,
+        trunkDepth: trunkMap.size,
+        trunk: trunkMap
+      });
     }
 
     this.specializationOwners = new Map();
@@ -306,6 +322,21 @@ export class Catalogue {
       const spec = toSpecializationSpecifier(rule.specialization_specifier).value;
       if (!this.specializationSpecifiers.has(spec)) throw new Error(`Unknown specialization specifier: ${spec}`);
       if (!this.specializationOwners.has(spec)) throw new Error(`Specialization has no owner: ${spec}`);
+
+      const owner = this.specializationOwners.get(spec);
+      const trackRule = this.trackRules.get(owner);
+      if (trackRule) {
+        // Enforce strict tree divergence: specializations cannot start at or before the common trunk
+        if (rule.start_year_specifier <= trackRule.trunkDepth) {
+          throw new Error(
+            `Specialization ${spec} cannot start at year specifier ${rule.start_year_specifier} because track ${owner} has a common trunk through year specifier ${trackRule.trunkDepth}. Branches never merge or co-exist with a common trunk.`
+          );
+        }
+        if (rule.start_year_specifier + rule.duration - 1 > trackRule.duration) {
+          throw new Error(`Specialization ${spec} exceeds duration of owning track ${owner}`);
+        }
+      }
+
       this.branchRules.set(spec, {
         specialization_specifier: this._specializationSpecifierObjects.get(spec),
         start_year_specifier: rule.start_year_specifier,
@@ -327,10 +358,10 @@ export class Catalogue {
     // years
     for (const [tsValue, rule] of this.trackRules) {
       const tsObj = this._trackSpecifierObjects.get(tsValue);
-      for (const [ysValue, entry] of rule.years) {
-        const ysObj = yearSpecifierValue(ysValue);
-        const y = year(this, { track_specifier: tsObj, year_specifier: ysObj });
-        years.push(y);
+      for (let y = 1; y <= rule.duration; y++) {
+        const ysObj = yearSpecifierValue(y);
+        const yObj = year(this, { track_specifier: tsObj, year_specifier: ysObj });
+        years.push(yObj);
       }
     }
     // specialization branches: for each spec, for each year in duration, for each semester 1,2
@@ -339,9 +370,6 @@ export class Catalogue {
       const tsObj = this._trackSpecifierObjects.get(owner);
       const specObj = this._specializationSpecifierObjects.get(specValue);
       for (let y = br.start_year_specifier; y < br.start_year_specifier + br.duration; y++) {
-        // track year must be valid
-        const trackRule = this.trackRules.get(owner);
-        if (!trackRule || !trackRule.years.has(y)) continue;
         for (const sem of [1, 2]) {
           const b = branch(this, {
             specialization_specifier: specObj,
@@ -352,11 +380,10 @@ export class Catalogue {
         }
       }
     }
-    // common branches
+    // common branches (from the common trunk only)
     for (const [tsValue, rule] of this.trackRules) {
       const tsObj = this._trackSpecifierObjects.get(tsValue);
-      for (const [ysValue, entry] of rule.years) {
-        if (!entry.common) continue;
+      for (const [ysValue] of rule.trunk) {
         const cb = commonBranch(this, { track_specifier: tsObj, year_specifier: yearSpecifierValue(ysValue) });
         branches.push(cb);
       }
@@ -368,8 +395,8 @@ export class Catalogue {
       if (b.type === Type.COMMON_BRANCH) {
         const tsValue = b.year.track_specifier.value;
         const ysValue = b.year.year_specifier.value;
-        const entry = this.trackRules.get(tsValue)?.years.get(ysValue);
-        return entry?.common ?? null;
+        const entry = this.trackRules.get(tsValue)?.trunk.get(ysValue);
+        return entry?.sections ?? null;
       }
       // specialization
       const specValue = b.specialization_specifier.value;
@@ -474,7 +501,7 @@ export function year(catalogue, { track_specifier, year_specifier } = {}) {
   const ys = yearSpecifierValue(year_specifier);
   if (!catalogue.trackSpecifiers.has(ts.value)) throw new Error(`Unknown track specifier: ${ts.value}`);
   const rule = catalogue.trackRules.get(ts.value);
-  if (!rule || !rule.years.has(ys.value)) throw new Error(`Unsupported year: ${ts.value}${ys.value}`);
+  if (!rule || ys.value < 1 || ys.value > rule.duration) throw new Error(`Unsupported year: ${ts.value}${ys.value}`);
   return freeze({
     type: Type.YEAR,
     track_specifier: ts,
@@ -487,8 +514,16 @@ export function commonBranch(catalogue, { track_specifier, year_specifier } = {}
   const ts = toTrackSpecifier(track_specifier);
   const ys = yearSpecifierValue(year_specifier);
   const y = year(catalogue, { track_specifier: ts, year_specifier: ys });
-  const entry = catalogue.trackRules.get(ts.value)?.years.get(ys.value);
-  if (!entry || !entry.common) throw new Error(`No common branch for ${ts.value}${ys.value}`);
+  const rule = catalogue.trackRules.get(ts.value);
+  if (!rule) throw new Error(`Unknown track rule for ${ts.value}`);
+  if (ys.value > rule.trunkDepth) {
+    if (rule.trunkDepth === 0) {
+      throw new Error(`Track ${ts.value} has no common branch; it starts directly as specializations at year specifier 1`);
+    }
+    throw new Error(`Track ${ts.value} diverged into specializations after year specifier ${rule.trunkDepth}; common branch ${ts.value}${ys.value} cannot exist because branches never merge back`);
+  }
+  const entry = rule.trunk.get(ys.value);
+  if (!entry) throw new Error(`No common branch for ${ts.value}${ys.value}`);
   return freeze({
     type: Type.COMMON_BRANCH,
     year: y,
@@ -506,9 +541,13 @@ export function branch(catalogue, { specialization_specifier, year_specifier, ye
   const yss = yearSemesterSpecifierValue(year_semester_specifier);
   const br = catalogue.branchRules.get(spec.value);
   if (!br) throw new Error(`No branch rule for: ${spec.value}`);
-  if (ys.value < br.start_year_specifier || ys.value >= br.start_year_specifier + br.duration) throw new Error(`Branch year specifier outside duration: ${spec.value}`);
+  if (ys.value < br.start_year_specifier || ys.value >= br.start_year_specifier + br.duration) {
+    throw new Error(`Branch year specifier outside duration: ${spec.value}`);
+  }
   const trackRule = catalogue.trackRules.get(owner);
-  if (!trackRule || !trackRule.years.has(ys.value)) throw new Error(`Unsupported year: ${owner}${ys.value}`);
+  if (!trackRule || ys.value < 1 || ys.value > trackRule.duration) {
+    throw new Error(`Unsupported year: ${owner}${ys.value}`);
+  }
   const semester = branchSemesterFor({ year_specifier: ys.value, start_year_specifier: br.start_year_specifier, year_semester_specifier: yss });
   const y = year(catalogue, { track_specifier: trackSpecifier(owner), year_specifier: ys });
   return freeze({
@@ -535,8 +574,8 @@ export function classPopulation(catalogue, { branch: branchValue, section_specif
   if (b.type === Type.COMMON_BRANCH) {
     const tsValue = b.year.track_specifier.value;
     const ysValue = b.year.year_specifier.value;
-    const entry = catalogue.trackRules.get(tsValue)?.years.get(ysValue);
-    sections = entry?.common ?? null;
+    const entry = catalogue.trackRules.get(tsValue)?.trunk.get(ysValue);
+    sections = entry?.sections ?? null;
   } else {
     const specValue = b.specialization_specifier.value;
     const ysValue = b.year.year_specifier.value;
@@ -728,7 +767,7 @@ function parseBranchTokens(tokens, options) {
         if (semester !== base + 1 && semester !== base + 2) return undefined;
         if (yearNum < br.start_year_specifier || yearNum >= br.start_year_specifier + br.duration) return undefined;
         const trackRule = catalogue.trackRules.get(trackSpec);
-        if (!trackRule || !trackRule.years.has(yearNum)) return undefined;
+        if (!trackRule || yearNum < 1 || yearNum > trackRule.duration) return undefined;
       }
       const tsObj = trackSpecifier(trackSpec);
       const ysObj = yearSpecifier(yearNum);
@@ -756,7 +795,7 @@ function parseBranchTokens(tokens, options) {
       if (trackYear >= br.start_year_specifier && trackYear < br.start_year_specifier + br.duration) {
         const owner = catalogue.specializationOwners.get(tag);
         const trackRule = catalogue.trackRules.get(owner);
-        if (trackRule && trackRule.years.has(trackYear)) {
+        if (trackRule && trackYear >= 1 && trackYear <= trackRule.duration) {
           const tsObj = trackSpecifier(owner);
           const ysObj = yearSpecifier(trackYear);
           const y = { type: Type.YEAR, track_specifier: tsObj, year_specifier: ysObj, identifier: `${owner}${trackYear}` };
@@ -777,9 +816,11 @@ function parseBranchTokens(tokens, options) {
     if (catalogue && !catalogue.trackSpecifiers.has(tag)) return undefined;
     if (catalogue) {
       const trackRule = catalogue.trackRules.get(tag);
-      if (!trackRule || !trackRule.years.has(yearNum)) return undefined;
-      const entry = trackRule.years.get(yearNum);
-      if (!entry || !entry.common) return undefined;
+      if (!trackRule || yearNum < 1 || yearNum > trackRule.duration) return undefined;
+      // Branches never merge back: common branch only exists within trunk
+      if (yearNum > trackRule.trunkDepth) return undefined;
+      const entry = trackRule.trunk.get(yearNum);
+      if (!entry) return undefined;
     }
     const tsObj = trackSpecifier(tag);
     const ysObj = yearSpecifier(yearNum);
