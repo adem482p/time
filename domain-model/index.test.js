@@ -9,7 +9,7 @@ import {
   parseReference, populationReference, sessionKind, sessionSpecifier,
   weekPatternSpecifier, fromCsvRecord, branchSemesterFor,
   twoCohorts, noCohorts, sectionsWithTwoCohorts, sectionsWithNoCohorts,
-  populationsForYear, trackRule, specializationRule, branchRule,
+  populationsForYear, commonBranchRule, specializationRule, branchRule,
   queryBranches, queryClasses, queryRecords,
   Catalogue
 } from './index.js';
@@ -27,11 +27,15 @@ test('year and branch construction validated by catalogue', () => {
   assert.equal(y.type, Type.YEAR);
   assert.equal(y.identifier, 'LCS3');
   const b = branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
-  assert.equal(b.identifier, 'GLSI3');
+  assert.equal(b.identifier, 'GLSI5');
   assert.equal(b.year.identifier, 'LCS3');
   assert.throws(() => year(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(3) }), /Unsupported year/);
-  assert.throws(() => branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(1), year_semester_specifier: yearSemesterSpecifier(1) }), /Branch year specifier outside duration/);
-  assert.throws(() => branchRule({ specialization_specifier: specializationSpecifier('GLSI'), start_year_specifier: 0, duration: 2 }), /start_year_specifier must be a positive integer/);
+  // GLSI semester 6 (year 3 sem 2) is outside duration (3 semesters: 3, 4, 5)
+  assert.throws(
+    () => branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(2) }),
+    /outside active duration/
+  );
+  assert.throws(() => branchRule({ specialization_specifier: specializationSpecifier('GLSI'), start_year_specifier: 0, duration_semesters: 3 }), /start_year_specifier must be a positive integer/);
 });
 
 test('common branch construction', () => {
@@ -61,14 +65,20 @@ test('class population shapes', () => {
 });
 
 test('branch semester calculation', () => {
-  assert.deepEqual(branchSemesterFor({ year_specifier: 3, start_year_specifier: 2, year_semester_specifier: yearSemesterSpecifier(1) }), branchSemesterSpecifier(3));
-  assert.deepEqual(branchSemesterFor({ year_specifier: 3, start_year_specifier: 2, year_semester_specifier: yearSemesterSpecifier(2) }), branchSemesterSpecifier(4));
+  assert.deepEqual(
+    branchSemesterFor({ year_specifier: 3, year_semester_specifier: 1, start_year_specifier: 2, start_year_semester_specifier: 1 }),
+    branchSemesterSpecifier(5)
+  );
+  assert.deepEqual(
+    branchSemesterFor({ year_specifier: 2, year_semester_specifier: 2, start_year_specifier: 2, start_year_semester_specifier: 1 }),
+    branchSemesterSpecifier(4)
+  );
 });
 
 test('parseReference catalogue-aware', () => {
-  const r = parseReference('LCS3 GLSI3', { catalogue: cat });
+  const r = parseReference('LCS3 GLSI5', { catalogue: cat });
   assert.equal(r.type, Type.BRANCH_REFERENCE);
-  assert.equal(r.branch.identifier, 'GLSI3');
+  assert.equal(r.branch.identifier, 'GLSI5');
   const c = parseReference('GLSI3', { catalogue: cat });
   assert.equal(c.type, Type.BRANCH_REFERENCE);
   assert.equal(c.branch.type, Type.SPECIALIZATION_BRANCH);
@@ -123,6 +133,10 @@ test('catalogue resolution', () => {
 test('generation', () => {
   assert.ok(cat.years.length > 0);
   assert.ok(cat.branches.some((b) => b.identifier === 'GLSI3'));
+  assert.ok(cat.branches.some((b) => b.identifier === 'GLSI4'));
+  assert.ok(cat.branches.some((b) => b.identifier === 'GLSI5'));
+  // GLSI6 does not exist because duration is 3 semesters
+  assert.equal(cat.branches.some((b) => b.identifier === 'GLSI6'), false);
   assert.ok(cat.classes.some((c) => c.identifier === 'LCS1 A1'));
   assert.ok(cat.classes.some((c) => c.type === Type.SINGLETON_CLASS && c.identifier === 'EXR1'));
 });
@@ -133,55 +147,12 @@ test('queries', () => {
   assert.equal(queryRecords([{ day: 'LUNDI' }, { day: 'MARDI' }], { day: 'LUNDI' }).length, 1);
 });
 
-test('strict tree divergence invariant enforcement', () => {
-  // 1. Trunk must be contiguous starting at 1
-  assert.throws(
-    () => new Catalogue({
-      trackSpecifiers: [trackSpecifier('TST')],
-      trackRules: [
-        trackRule({
-          track_specifier: 'TST',
-          duration: 3,
-          trunk: [populationsForYear({ year_specifier: 2, sections: [] })]
-        })
-      ]
-    }),
-    /must be contiguous starting at year specifier 1/
-  );
-
-  // 2. Trunk year cannot exceed track duration
-  assert.throws(
-    () => new Catalogue({
-      trackSpecifiers: [trackSpecifier('TST')],
-      trackRules: [
-        trackRule({
-          track_specifier: 'TST',
-          duration: 1,
-          trunk: [
-            populationsForYear({ year_specifier: 1, sections: [] }),
-            populationsForYear({ year_specifier: 2, sections: [] })
-          ]
-        })
-      ]
-    }),
-    /exceeds track duration/
-  );
-
-  // 3. Specialization cannot start within or before the common trunk
+test('strict tree divergence and trunk derivation invariant enforcement', () => {
+  // Missing commonBranchRule for derived trunk throws
   assert.throws(
     () => new Catalogue({
       trackSpecifiers: [trackSpecifier('TST')],
       specializationSpecifiers: [specializationSpecifier('SPEC')],
-      trackRules: [
-        trackRule({
-          track_specifier: 'TST',
-          duration: 3,
-          trunk: [
-            populationsForYear({ year_specifier: 1, sections: [] }),
-            populationsForYear({ year_specifier: 2, sections: [] })
-          ]
-        })
-      ],
       specializationRules: [
         specializationRule({ specialization_specifier: 'SPEC', track_specifier: 'TST' })
       ],
@@ -189,11 +160,38 @@ test('strict tree divergence invariant enforcement', () => {
         branchRule({
           specialization_specifier: 'SPEC',
           start_year_specifier: 2,
-          duration: 1,
+          start_year_semester_specifier: 1,
+          duration_semesters: 2,
           populations: [populationsForYear({ year_specifier: 2, sections: [] })]
         })
+      ],
+      commonBranchRules: [] // Missing year 1 commonBranchRule!
+    }),
+    /Missing commonBranchRule for TST at year specifier 1/
+  );
+
+  // Common branch requested past divergence throws
+  assert.throws(
+    () => new Catalogue({
+      trackSpecifiers: [trackSpecifier('TST')],
+      specializationSpecifiers: [specializationSpecifier('SPEC')],
+      specializationRules: [
+        specializationRule({ specialization_specifier: 'SPEC', track_specifier: 'TST' })
+      ],
+      branchRules: [
+        branchRule({
+          specialization_specifier: 'SPEC',
+          start_year_specifier: 2,
+          start_year_semester_specifier: 1,
+          duration_semesters: 2,
+          populations: [populationsForYear({ year_specifier: 2, sections: [] })]
+        })
+      ],
+      commonBranchRules: [
+        commonBranchRule({ track_specifier: 'TST', year_specifier: 1, sections: [] }),
+        commonBranchRule({ track_specifier: 'TST', year_specifier: 2, sections: [] }) // Invalid! Year 2 is already diverged
       ]
     }),
-    /cannot start at year specifier 2 because track TST has a common trunk through year specifier 2.*Branches never merge/
+    /diverged before year specifier 2/
   );
 });

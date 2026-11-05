@@ -41,17 +41,39 @@ The hierarchy is described from three complementary perspectives:
 ## Curricular Tree Progression and Non-Convergence
 
 Academic curricula follow a strict directed tree progression without loops or
-re-convergence. A degree family represented by a track specifier begins either:
+re-convergence. The native temporal unit of course progression is the **academic semester**.
+A degree family operates across global degree semesters $G \in \{1, 2, \dots, 2D\}$,
+where for any academic year specifier $Y$ and year-semester specifier $S \in \{1, 2\}$:
+
+$$G = 2(Y - 1) + S$$
+
+Conversely, from global semester $G$:
+$$Y = \lfloor (G - 1) / 2 \rfloor + 1, \quad S = ((G - 1) \bmod 2) + 1$$
+
+Specialization branches declare their start coordinate ($G_{\text{start}}$) and their
+exact length in academic semesters (`duration_semesters`). A branch does not necessarily
+span a multiple of full years; for example, licence specializations such as `GLSI`
+run for 3 semesters ($S3, S4, S5$), as semester 6 is reserved for the graduation project
+(PFE) without scheduled course sessions.
+
+A degree family represented by a track specifier begins either:
 
 1. As an undivided **common trunk** (a sequence of common branches starting
    strictly at year specifier 1 up to some level $k \ge 1$), or
 2. Directly as **specialization branches** from year specifier 1 (in which case
    no common trunk exists, $k = 0$).
 
+**Derivation of Track Duration and Common Trunk:**
+Tracks do not declare manual durations or trunks; these are pure derivations from
+the branch rules:
+- Earliest specialization divergence: $G_{\min} = \min_{b} G_{\text{start}}(b)$.
+- Common trunk depth in academic years: $Y_{\text{trunk}} = \lfloor (G_{\min} - 1) / 2 \rfloor$.
+- Total degree years: $D = \lceil \max_{b} (G_{\text{start}}(b) + \text{duration\_semesters}(b) - 1) / 2 \rceil$.
+
 **The Non-Convergence Invariant:** Curricular branches **never merge back**.
-Once a degree family diverges into specialization branches at year specifier $k + 1$,
+Once a degree family diverges into specialization branches at semester $G_{\min}$,
 common branches permanently cease for that track specifier. Distinct specialization
-branches cannot converge or recombine into a shared branch at any subsequent year level.
+branches cannot converge or recombine into a shared branch at any subsequent semester.
 A track specifier's progression may only stay common or divide into specializations;
 it never returns to common.
 
@@ -109,16 +131,15 @@ Deprecated alternative term: track.
 ## Branch semester
 
 **Relational definition.** A branch semester is the semester position of a
-non-common branch within its progression. Its number is counted from the
-branch's starting point, not from the year's year specifier. It is the semester
-number included in the branch's canonical identity and compact notation.
+non-common branch within the curriculum progression. In this institution's canonical
+compact notation, it is written as the global degree semester number $G \in \{1 \dots 2D\}$,
+calculated from the year specifier $Y$ and year-semester specifier $S$:
 
-**Editorial definition.** A branch semester is a curriculum position such
-as semester `1` or semester `3` for the non-common branch `GLSI3`. It is
-calculated from the branch's starting point recorded in the catalogue and the
-implicit current-semester context:
+`branchSemester = 2 * (yearSpecifier - 1) + yearSemesterSpecifier`
 
-`branchSemester = 2 * (yearSpecifier - start_year_specifier) + YEAR_SEMESTER`
+For example, `GLSI3` denotes the GLSI specialization in global semester 3
+(academic year specifier 2, year-semester specifier 1). A branch spans a discrete
+number of active semesters given by its `duration_semesters`.
 
 **Alternative terms.** semester of study; branch progression semester.
 

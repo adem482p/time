@@ -41,20 +41,29 @@ this directory (see `data/catalogue.js`).
 ### Vocabulary and rules
 
 ```js
-trackRule({ track_specifier, duration, trunk: [populationsForYear({ year_specifier, sections })] });
+commonBranchRule({ track_specifier, year_specifier, sections });
 specializationRule({ specialization_specifier, track_specifier });
-branchRule({ specialization_specifier, start_year_specifier, duration, populations: [populationsForYear({ year_specifier, sections })] });
+branchRule({
+  specialization_specifier,
+  start_year_specifier,
+  start_year_semester_specifier,
+  duration_semesters,
+  populations: [populationsForYear({ year_specifier, sections })]
+});
 ```
 
-- `trackRule`: declares the degree family's total `duration` in year specifiers
-  and its initial `trunk` (a contiguous sequence of common-branch populations
-  starting at year specifier 1). If `trunk` is empty, the degree family has no
-  common branch and starts directly as specializations.
+- Tracks are **pure derivations**: there is no manual `trackRule`. Total track
+  duration and the common trunk depth are derived automatically from the branch
+  topology.
+- `commonBranchRule`: declares populations for each common trunk year. The common
+  trunk is derived as the prefix of years preceding the earliest specialization start.
 - `specializationRule`: declares which track specifier owns a specialization.
-- `branchRule`: declares the `start_year_specifier` where a specialization
-  branch begins, its `duration` (count of consecutive year specifiers), and
-  which populations each year specifier permits. Because **branches never merge back**,
-  a specialization cannot start within or before the track's common trunk.
+- `branchRule`: declares the branch's exact start coordinate (`start_year_specifier`
+  and `start_year_semester_specifier`) and its length in `duration_semesters`.
+  For example, `GLSI` starts at Year 2, Semester 1 with `duration_semesters: 3`,
+  producing `GLSI3`, `GLSI4`, and `GLSI5` (Semester 6 is the graduation project PFE).
+  Because **branches never merge back**, a specialization cannot start within or
+  before the track's common trunk.
 
 Section population helpers:
 
