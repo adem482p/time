@@ -10,7 +10,7 @@ Import it as an ES module (the paths below are relative to the repository
 root):
 
 ```js
-import { Catalogue, branch, classPopulation, parseReference, Type } from './domain-model/index.js';
+import { Catalogue, commonSpecialty, specialty, classPopulation, parseReference, Type } from './domain-model/index.js';
 ```
 
 ## Core rule: switch on `type`
@@ -25,7 +25,7 @@ catalogue entry are normal query outcomes.
 ## Catalogue as grammar
 
 The `Catalogue` is a finite typed grammar. It contains only specifiers and
-relationships; it does not contain concrete years, branches, classes, or
+relationships; it does not contain concrete years, specialties, classes, or
 sessions. Concrete objects are derived bottom-up under the catalogue's
 supervision.
 
@@ -42,9 +42,9 @@ lives in `catalogue.js`, next to it but separate from the grammar engine.
 ### Vocabulary and rules
 
 ```js
-commonBranchRule({ track_specifier, year_specifier, sections });
-specializationBranchRule({
-  specialization_specifier,
+commonSpecialtyRule({ track_specifier, year_specifier, sections });
+specialtyRule({
+  specialty_specifier,
   track_specifier,
   start_year_specifier,
   duration_semesters,
@@ -53,20 +53,20 @@ specializationBranchRule({
 ```
 
 - Every rule is a frozen object that carries its own `type` symbol:
-  `COMMON_BRANCH_RULE` or `SPECIALIZATION_BRANCH_RULE`.
+  `COMMON_SPECIALTY_RULE` or `SPECIALTY_RULE`.
 - Tracks are **pure derivations**: there is no manual track rule. Total track
-  duration and the common trunk depth are derived automatically from the branch
+  duration and the common trunk depth are derived automatically from the specialty
   topology.
-- `commonBranchRule`: declares populations for each common trunk year. The common
-  trunk is derived as the prefix of years preceding the earliest specialization start.
-- `specializationBranchRule`: declares the specialization, the track specifier
+- `commonSpecialtyRule`: declares populations for each common trunk year. The common
+  trunk is derived as the prefix of years preceding the earliest specialty start.
+- `specialtyRule`: declares the specialty, the track specifier
   that owns it, its start year (`start_year_specifier`, always semester 1) and
   its length in `duration_semesters`.
   For example, `GLSI` starts at Year 2, Semester 1 with `duration_semesters: 3`,
   producing `GLSI3`, `GLSI4`, and `GLSI5` (Semester 6 is the graduation project PFE).
-  Because **branches never merge back**, a specialization cannot start within or
+  Because **specialties never merge back**, a specialty cannot start within or
   before the track's common trunk.
-- Populations stay attached to their branch rule, so the derived trunk and the
+- Populations stay attached to their specialty rule, so the derived trunk and the
   population mappings cannot drift apart.
 
 Section population helpers:
@@ -77,26 +77,26 @@ sectionsWithNoCohorts('A', 'B');
 // singleton class population: []
 ```
 
-## Years, branches, classes
+## Years, specialties, classes
 
 Constructors receive the catalogue and validate against the grammar:
 
 ```js
 const y = year(catalogue, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(3) });
-const cb = commonBranch(catalogue, { track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1) });
-const b = branch(catalogue, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
-const cls = classPopulation(catalogue, { branch: b, section_specifier: 'A', cohort_specifier: 1 });
+const common = commonSpecialty(catalogue, { track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1) });
+const node = specialty(catalogue, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
+const cls = classPopulation(catalogue, { specialty: node, section_specifier: 'A', cohort_specifier: 1 });
 ```
 
 - `year` validates the couple of a track specifier and year specifier against the
   track's derived duration.
-- `commonBranch` requires a common-branch publication for that year.
-- `branch` derives the owning track specifier, forms its concrete prefix `year`,
-  and derives the branch semester; rejects year specifiers outside the declared duration.
-- `classPopulation` derives the allowed population shape from the branch rule;
+- `commonSpecialty` requires a common-specialty publication for that year.
+- `specialty` derives the owning track specifier, forms its concrete prefix `year`,
+  and derives the specialty semester; rejects year specifiers outside the declared duration.
+- `classPopulation` derives the allowed population shape from the specialty rule;
   cohorts are only allowed for cohort-partitioned sections.
 
-There is no "singleton track": `MP1-EXR` is a specialization branch (EXR)
+There is no "singleton track": `MP1-EXR` is a specialty (EXR)
 whose population for that year has no sections, producing a singleton class
 population.
 
@@ -112,9 +112,10 @@ parseReference('LCS1', { catalogue, expected: 'year' });
 ```
 
 `expected` selects the interpretation: `'year'` only succeeds for a common
-branch such as `LCS1`, because a specialization is identified by a branch
-semester (`GLSI3`), not by a year. Without a catalogue, a small built-in track
-list is used as a fallback; pass a catalogue for authoritative results.
+specialty such as `LCS1`, because a non-common specialty is identified by a
+specialty semester (`GLSI3`), not by a year. Without a catalogue, a small
+built-in track list is used as a fallback; pass a catalogue for authoritative
+results.
 
 ## Resolution
 
@@ -139,14 +140,14 @@ fromCsvRecord({ field: 'MP1-EXR', ... }, { catalogue }); // -> EXR1
 
 The canonical notations (`GLSI3 A2`, `LCS1 A2`) are accepted too. Without a
 catalogue only those generic notations are normalized; the publication's
-track-year-specialization form needs the catalogue to derive the branch
+track-year-specialty form needs the catalogue to derive the specialty
 semester.
 
 ## Generation
 
 ```js
 catalogue.years;
-catalogue.branches;
+catalogue.specialties;
 catalogue.classes;
 ```
 

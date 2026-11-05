@@ -15,7 +15,7 @@ represented by repeated records.
 The domain notation uses **specifiers** as primitive abstractions. A specifier
 is intended to complement and further specify another value rather than stand
 alone as a complete domain object. In particular, a track specifier and a year
-specifier combine to form the concrete year used by normalized branches.
+specifier combine to form the concrete year used by normalized specialties.
 
 ## Raw timetable publication
 
@@ -32,7 +32,7 @@ source material as published, before it is interpreted by the parser.
 
 **Relational definition.** A PDF belongs to a raw timetable publication and
 contains ordered PDF pages. It normally covers one year (the couple of a track
-specifier and year specifier); master branches may be published as separate
+specifier and year specifier); master programmes may be published as separate
 files. The parser reads the PDF to produce normalized records.
 
 **Editorial definition.** A PDF is an official timetable document distributed
@@ -44,13 +44,13 @@ to students.
 
 **Relational definition.** A PDF page belongs to one PDF and contains one
 timetable grid. It may name a class directly or inherit the class context from
-the preceding page. A page for a branch with no sections represents that branch's
+the preceding page. A page for a specialty with no sections represents that specialty's
 singleton class. The page identity of included pages is retained as provenance
 on normalized records.
 
 **Editorial definition.** A PDF page is one timetable sheet. A cohort-divided
 class contributes a combined page followed by `Groupe 1` and `Groupe 2`
-pages; a class without cohorts contributes one page. A branch with no
+pages; a class without cohorts contributes one page. A specialty with no
 sections contributes the page for its singleton class.
 
 **Alternative terms.** timetable sheet; schedule page; source page.
@@ -122,7 +122,7 @@ structured schedule data.
 
 **Relational definition.** Notation is the set of textual conventions used to
 write domain concepts and their relationships, including source labels, class
-notation, prefixes, track specifiers, year specifiers, and branch-semester
+notation, prefixes, track specifiers, year specifiers, and specialty-semester
 specifiers. Notation is distinct from the underlying normalized objects.
 
 **Editorial definition.** Notation is how the model writes and parses names,
@@ -147,9 +147,9 @@ per line. They are a partial representation of the complete domain schedule:
 
 The physical column `field` is semantically named **class reference** for
 compatibility, but its value may be the population reference required by the
-session's required population scope. In the singleton-class exception, it may contain a branch
-reference that is also the identifier of the branch's only class; consumers
-choose the branch or singleton-class interpretation. `week` contains an empty value, `SA`, or
+session's required population scope. In the singleton-class exception, it may contain a specialty
+reference that is also the identifier of the specialty's only class; consumers
+choose the specialty or singleton-class interpretation. `week` contains an empty value, `SA`, or
 `SB`; `source` identifies the exact PDF page; `color` is a lowercase
 `#rrggbb` value or empty. Session kind is not currently a CSV field.
 
@@ -215,7 +215,7 @@ elements, while the editor may normalize names, correct relationships, or add
 missing elements. Resolution uses the maintained union.
 
 **Editorial definition.** Catalogue maintenance is the process of keeping the
-known track specifiers, years, branches, and class populations complete and
+known track specifiers, years, specialties, and class populations complete and
 interpretable even when a publication is incomplete.
 
 **Alternative terms.** catalogue curation; reference-data maintenance; data

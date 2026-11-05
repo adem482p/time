@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import { createCatalogue } from './catalogue.js';
 import {
   Type, DAYS, SLOTS, SESSION_KIND_SCOPES,
-  trackSpecifier, yearSpecifier, specializationSpecifier,
-  yearSemesterSpecifier, branchSemesterSpecifier, sectionSpecifier, cohortSpecifier,
-  year, commonBranch, branch, classPopulation,
+  trackSpecifier, yearSpecifier, specialtySpecifier,
+  yearSemesterSpecifier, specialtySemesterSpecifier, sectionSpecifier, cohortSpecifier,
+  year, commonSpecialty, specialty, classPopulation,
   parseReference, populationReference, sessionKind, sessionSpecifier,
-  weekPatternSpecifier, fromCsvRecord, branchSemesterFor,
+  weekPatternSpecifier, fromCsvRecord, specialtySemesterFor,
   twoCohorts, noCohorts, sectionsWithTwoCohorts, sectionsWithNoCohorts,
-  populationsForYear, commonBranchRule, specializationBranchRule,
-  queryBranches, queryClasses, queryRecords,
+  populationsForYear, commonSpecialtyRule, specialtyRule,
+  querySpecialties, queryClasses, queryRecords,
   Catalogue
 } from './index.js';
 
@@ -18,107 +18,107 @@ const cat = createCatalogue();
 
 test('exports unique symbol discriminators', () => {
   assert.equal(typeof Type.INVALID_REFERENCE, 'symbol');
-  assert.notEqual(Type.INVALID_REFERENCE, Type.BRANCH_REFERENCE);
+  assert.notEqual(Type.INVALID_REFERENCE, Type.SPECIALTY_REFERENCE);
   assert.equal(Object.isFrozen(Type), true);
 });
 
 test('grammar rules expose their type symbols', () => {
-  const cb = commonBranchRule({ track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1), sections: [] });
-  assert.equal(cb.type, Type.COMMON_BRANCH_RULE);
-  const sb = specializationBranchRule({
-    specialization_specifier: specializationSpecifier('GLSI'),
+  const commonRule = commonSpecialtyRule({ track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1), sections: [] });
+  assert.equal(commonRule.type, Type.COMMON_SPECIALTY_RULE);
+  const specialtyRuleValue = specialtyRule({
+    specialty_specifier: specialtySpecifier('GLSI'),
     track_specifier: trackSpecifier('LCS'),
     start_year_specifier: 2,
     duration_semesters: 3
   });
-  assert.equal(sb.type, Type.SPECIALIZATION_BRANCH_RULE);
-  assert.equal(Object.isFrozen(sb), true);
+  assert.equal(specialtyRuleValue.type, Type.SPECIALTY_RULE);
+  assert.equal(Object.isFrozen(specialtyRuleValue), true);
 });
 
-test('year and branch construction validated by catalogue', () => {
+test('year and specialty construction validated by catalogue', () => {
   const y = year(cat, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(3) });
   assert.equal(y.type, Type.YEAR);
   assert.equal(y.identifier, 'LCS3');
-  const b = branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
-  assert.equal(b.identifier, 'GLSI5');
-  assert.equal(b.year.identifier, 'LCS3');
+  const node = specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
+  assert.equal(node.identifier, 'GLSI5');
+  assert.equal(node.year.identifier, 'LCS3');
   assert.throws(() => year(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(3) }), /Unsupported year/);
   // GLSI semester 6 (year 3 sem 2) is outside duration (3 semesters: 3, 4, 5)
   assert.throws(
-    () => branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(2) }),
+    () => specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(2) }),
     /outside active duration/
   );
   assert.throws(
-    () => specializationBranchRule({ specialization_specifier: specializationSpecifier('GLSI'), track_specifier: trackSpecifier('LCS'), start_year_specifier: 0, duration_semesters: 3 }),
+    () => specialtyRule({ specialty_specifier: specialtySpecifier('GLSI'), track_specifier: trackSpecifier('LCS'), start_year_specifier: 0, duration_semesters: 3 }),
     /start_year_specifier must be a positive integer/
   );
 });
 
-test('common branch construction', () => {
-  const cb = commonBranch(cat, { track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1) });
-  assert.equal(cb.type, Type.COMMON_BRANCH);
-  assert.equal(cb.identifier, 'LBC1');
-  assert.equal(cb.year.identifier, 'LBC1');
+test('common specialty construction', () => {
+  const commonNode = commonSpecialty(cat, { track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1) });
+  assert.equal(commonNode.type, Type.COMMON_SPECIALTY);
+  assert.equal(commonNode.identifier, 'LBC1');
+  assert.equal(commonNode.year.identifier, 'LBC1');
   assert.throws(
-    () => commonBranch(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(1) }),
-    /Track MP has no common branch/
+    () => commonSpecialty(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(1) }),
+    /Track MP has no common specialty/
   );
   assert.throws(
-    () => commonBranch(cat, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(2) }),
-    /diverged into specializations/
+    () => commonSpecialty(cat, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(2) }),
+    /diverged into specialties/
   );
 });
 
 test('class population shapes', () => {
-  const b = branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(2), year_semester_specifier: yearSemesterSpecifier(1) });
-  const cls = classPopulation(cat, { branch: b, section_specifier: 'A', cohort_specifier: 1 });
+  const node = specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(2), year_semester_specifier: yearSemesterSpecifier(1) });
+  const cls = classPopulation(cat, { specialty: node, section_specifier: 'A', cohort_specifier: 1 });
   assert.equal(cls.type, Type.COHORT_CLASS);
-  assert.equal(cls.identifier, `${b.identifier} A1`);
-  const singletonBranch = branch(cat, { specialization_specifier: specializationSpecifier('EXR'), year_specifier: yearSpecifier(1), year_semester_specifier: yearSemesterSpecifier(1) });
-  const single = classPopulation(cat, { branch: singletonBranch });
+  assert.equal(cls.identifier, `${node.identifier} A1`);
+  const singletonSpecialty = specialty(cat, { specialty_specifier: specialtySpecifier('EXR'), year_specifier: yearSpecifier(1), year_semester_specifier: yearSemesterSpecifier(1) });
+  const single = classPopulation(cat, { specialty: singletonSpecialty });
   assert.equal(single.type, Type.SINGLETON_CLASS);
-  assert.throws(() => classPopulation(cat, { branch: singletonBranch, section_specifier: 'A' }), /Invalid section/);
+  assert.throws(() => classPopulation(cat, { specialty: singletonSpecialty, section_specifier: 'A' }), /Invalid section/);
 });
 
-test('branch semester calculation', () => {
+test('specialty semester calculation', () => {
   assert.deepEqual(
-    branchSemesterFor({ year_specifier: 3, year_semester_specifier: 1, start_year_specifier: 2 }),
-    branchSemesterSpecifier(5)
+    specialtySemesterFor({ year_specifier: 3, year_semester_specifier: 1, start_year_specifier: 2 }),
+    specialtySemesterSpecifier(5)
   );
   assert.deepEqual(
-    branchSemesterFor({ year_specifier: 2, year_semester_specifier: 2, start_year_specifier: 2 }),
-    branchSemesterSpecifier(4)
+    specialtySemesterFor({ year_specifier: 2, year_semester_specifier: 2, start_year_specifier: 2 }),
+    specialtySemesterSpecifier(4)
   );
 });
 
 test('parseReference catalogue-aware', () => {
   const r = parseReference('LCS3 GLSI5', { catalogue: cat });
-  assert.equal(r.type, Type.BRANCH_REFERENCE);
-  assert.equal(r.branch.identifier, 'GLSI5');
+  assert.equal(r.type, Type.SPECIALTY_REFERENCE);
+  assert.equal(r.specialty.identifier, 'GLSI5');
   const c = parseReference('GLSI3', { catalogue: cat });
-  assert.equal(c.type, Type.BRANCH_REFERENCE);
-  assert.equal(c.branch.type, Type.SPECIALIZATION_BRANCH);
+  assert.equal(c.type, Type.SPECIALTY_REFERENCE);
+  assert.equal(c.specialty.type, Type.SPECIALTY);
   const cls = parseReference('GLSI3 A2', { catalogue: cat });
   assert.equal(cls.type, Type.CLASS_REFERENCE);
   const bad = parseReference('ZZZ1', { catalogue: cat });
   assert.equal(bad.type, Type.INVALID_REFERENCE);
-  const mp = parseReference('MP1-EXR', { catalogue: cat, expected: 'branch' });
-  assert.equal(mp.type, Type.BRANCH_REFERENCE);
-  assert.equal(mp.branch.specialization_specifier.value, 'EXR');
+  const mp = parseReference('MP1-EXR', { catalogue: cat, expected: 'specialty' });
+  assert.equal(mp.type, Type.SPECIALTY_REFERENCE);
+  assert.equal(mp.specialty.specialty_specifier.value, 'EXR');
 });
 
 test('population references', () => {
-  const bp = populationReference({ reference: 'LCS1', session_kind: 'branch-lecture', catalogue: cat });
-  assert.equal(bp.type, Type.BRANCH_POPULATION);
+  const specialtyPopulation = populationReference({ reference: 'LCS1', session_kind: 'specialty-lecture', catalogue: cat });
+  assert.equal(specialtyPopulation.type, Type.SPECIALTY_POPULATION);
   const sp = populationReference({ reference: 'LCS1 A', session_kind: 'section-seminar', catalogue: cat });
   assert.equal(sp.type, Type.SECTION_POPULATION);
   const cp = populationReference({ reference: 'LCS1 A1', session_kind: 'cohort-lab-work', catalogue: cat });
   assert.equal(cp.type, Type.COHORT_POPULATION);
-  assert.throws(() => populationReference({ reference: 'LCS1 A', session_kind: 'branch-lecture', catalogue: cat }));
+  assert.throws(() => populationReference({ reference: 'LCS1 A', session_kind: 'specialty-lecture', catalogue: cat }));
 });
 
 test('session specifier', () => {
-  const s = sessionSpecifier({ subject: 'Math', teacher: 'T', room: 'A1', population: 'LCS1', day: 'lundi', time: '10H00-11H30', session_kind: 'branch-lecture', catalogue: cat });
+  const s = sessionSpecifier({ subject: 'Math', teacher: 'T', room: 'A1', population: 'LCS1', day: 'lundi', time: '10H00-11H30', session_kind: 'specialty-lecture', catalogue: cat });
   assert.equal(s.day, 'LUNDI');
   assert.equal(s.time, '10h00-11h30');
   assert.equal(s.week_pattern_specifier, '');
@@ -136,10 +136,10 @@ test('CSV conversion', () => {
   assert.equal(r.population.type, Type.COHORT_POPULATION);
   assert.equal(r.population.class.identifier, 'LCS1 A2');
 
-  const specialization = fromCsvRecord(row('LBC2-BI_A Groupe 1'), { catalogue: cat });
-  assert.equal(specialization.type, Type.PARTIAL_SESSION_RECORD);
-  assert.equal(specialization.reference, 'BI3 A1');
-  assert.equal(specialization.population.class.identifier, 'BI3 A1');
+  const specialtyRow = fromCsvRecord(row('LBC2-BI_A Groupe 1'), { catalogue: cat });
+  assert.equal(specialtyRow.type, Type.PARTIAL_SESSION_RECORD);
+  assert.equal(specialtyRow.reference, 'BI3 A1');
+  assert.equal(specialtyRow.population.class.identifier, 'BI3 A1');
 
   const section = fromCsvRecord(row('LBC3-EB_A'), { catalogue: cat });
   assert.equal(section.reference, 'EB5 A');
@@ -147,7 +147,7 @@ test('CSV conversion', () => {
 
   const singleton = fromCsvRecord(row('MP1-SD'), { catalogue: cat });
   assert.equal(singleton.reference, 'SD1');
-  assert.equal(singleton.population.type, Type.BRANCH_POPULATION);
+  assert.equal(singleton.population.type, Type.SPECIALTY_POPULATION);
 
   const bad = fromCsvRecord({ field: 'LCS1 A', subject: '', week: 'S1' }, { catalogue: cat });
   assert.equal(bad.type, Type.INVALID_CSV_RECORD);
@@ -163,58 +163,58 @@ test('catalogue resolution', () => {
 
 test('generation', () => {
   assert.ok(cat.years.length > 0);
-  assert.ok(cat.branches.some((b) => b.identifier === 'GLSI3'));
-  assert.ok(cat.branches.some((b) => b.identifier === 'GLSI4'));
-  assert.ok(cat.branches.some((b) => b.identifier === 'GLSI5'));
+  assert.ok(cat.specialties.some((node) => node.identifier === 'GLSI3'));
+  assert.ok(cat.specialties.some((node) => node.identifier === 'GLSI4'));
+  assert.ok(cat.specialties.some((node) => node.identifier === 'GLSI5'));
   // GLSI6 does not exist because duration is 3 semesters
-  assert.equal(cat.branches.some((b) => b.identifier === 'GLSI6'), false);
+  assert.equal(cat.specialties.some((node) => node.identifier === 'GLSI6'), false);
   assert.ok(cat.classes.some((c) => c.identifier === 'LCS1 A1'));
   assert.ok(cat.classes.some((c) => c.type === Type.SINGLETON_CLASS && c.identifier === 'EXR1'));
 });
 
 test('queries', () => {
-  assert.equal(queryBranches(cat, (v) => v.identifier === 'LCS1').length, 1);
+  assert.equal(querySpecialties(cat, (v) => v.identifier === 'LCS1').length, 1);
   assert.equal(queryClasses(cat, (v) => v.type === Type.SECTION_CLASS).length > 0, true);
   assert.equal(queryRecords([{ day: 'LUNDI' }, { day: 'MARDI' }], { day: 'LUNDI' }).length, 1);
 });
 
 test('strict tree divergence and trunk derivation invariant enforcement', () => {
-  // Missing commonBranchRule for derived trunk throws
+  // Missing commonSpecialtyRule for derived trunk throws
   assert.throws(
     () => new Catalogue({
       trackSpecifiers: [trackSpecifier('TST')],
-      specializationSpecifiers: [specializationSpecifier('SPEC')],
-      branchRules: [
-        specializationBranchRule({
-          specialization_specifier: 'SPEC',
+      specialtySpecifiers: [specialtySpecifier('SPC')],
+      specialtyRules: [
+        specialtyRule({
+          specialty_specifier: 'SPC',
           track_specifier: 'TST',
           start_year_specifier: 2,
           duration_semesters: 2,
           populations: [populationsForYear({ year_specifier: 2, sections: [] })]
         })
       ],
-      commonBranchRules: [] // Missing year 1 commonBranchRule!
+      commonSpecialtyRules: [] // Missing year 1 commonSpecialtyRule!
     }),
-    /Missing commonBranchRule for TST at year specifier 1/
+    /Missing commonSpecialtyRule for TST at year specifier 1/
   );
 
-  // Common branch requested past divergence throws
+  // Common specialty requested past divergence throws
   assert.throws(
     () => new Catalogue({
       trackSpecifiers: [trackSpecifier('TST')],
-      specializationSpecifiers: [specializationSpecifier('SPEC')],
-      branchRules: [
-        specializationBranchRule({
-          specialization_specifier: 'SPEC',
+      specialtySpecifiers: [specialtySpecifier('SPC')],
+      specialtyRules: [
+        specialtyRule({
+          specialty_specifier: 'SPC',
           track_specifier: 'TST',
           start_year_specifier: 2,
           duration_semesters: 2,
           populations: [populationsForYear({ year_specifier: 2, sections: [] })]
         })
       ],
-      commonBranchRules: [
-        commonBranchRule({ track_specifier: 'TST', year_specifier: 1, sections: [] }),
-        commonBranchRule({ track_specifier: 'TST', year_specifier: 2, sections: [] }) // Invalid! Year 2 is already diverged
+      commonSpecialtyRules: [
+        commonSpecialtyRule({ track_specifier: 'TST', year_specifier: 1, sections: [] }),
+        commonSpecialtyRule({ track_specifier: 'TST', year_specifier: 2, sections: [] }) // Invalid! Year 2 is already diverged
       ]
     }),
     /diverged before year specifier 2/

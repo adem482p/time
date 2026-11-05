@@ -23,19 +23,19 @@ used name while retaining explicit names for the reusable parts.
 
 The model uses both generic and level-specific terms. A generic term can refer
 to a concept at any level of a hierarchy; a specific term identifies the level
-more precisely. A branch is a curricular node such as `LCS1` or the non-common
-branch represented compactly by `GLSI3`; normally a class is a branch together
-with a section or with a section and cohort. A branch without sections also
-contains a singleton class. Thus `GLSI3 A` and `GLSI3 A1` identify classes at
-different levels of specificity.
+more precisely. A specialty is a curricular node such as `LCS1` or the
+non-common specialty represented compactly by `GLSI3`; normally a class is a
+specialty together with a section or with a section and cohort. A specialty
+without sections also contains a singleton class. Thus `GLSI3 A` and `GLSI3 A1`
+identify classes at different levels of specificity.
 
 The hierarchy is described from three complementary perspectives:
 
 1. A **central concept** is the node currently being described.
 2. Its **prefix** is the path of preceding levels by which that targeted node
    is reached.
-3. Its **sub-branches** are the child nodes into which it divides. A branch
-   does not itself have section or cohort sub-branches: once a branch is
+3. Its **children** are the child nodes into which it divides. A specialty
+   does not itself have section or cohort children: once a specialty is
    followed by a section, the result is a class.
 
 ## Curricular Tree Progression and Non-Convergence
@@ -50,31 +50,31 @@ $$G = 2(Y - 1) + S$$
 Conversely, from global semester $G$:
 $$Y = \lfloor (G - 1) / 2 \rfloor + 1, \quad S = ((G - 1) \bmod 2) + 1$$
 
-Specialization branches declare their start coordinate ($G_{\text{start}}$) and their
-exact length in academic semesters (`duration_semesters`). A branch does not necessarily
-span a multiple of full years; for example, licence specializations such as `GLSI`
+Non-common specialties declare their start coordinate ($G_{\text{start}}$) and their
+exact length in academic semesters (`duration_semesters`). A specialty does not necessarily
+span a multiple of full years; for example, licence specialties such as `GLSI`
 run for 3 semesters ($S3, S4, S5$), as semester 6 is reserved for the graduation project
 (PFE) without scheduled course sessions.
 
 A degree family represented by a track specifier begins either:
 
-1. As an undivided **common trunk** (a sequence of common branches starting
+1. As an undivided **common trunk** (a sequence of common specialties starting
    strictly at year specifier 1 up to some level $k \ge 1$), or
-2. Directly as **specialization branches** from year specifier 1 (in which case
+2. Directly as **non-common specialties** from year specifier 1 (in which case
    no common trunk exists, $k = 0$).
 
 **Derivation of Track Duration and Common Trunk:**
 Tracks do not declare manual durations or trunks; these are pure derivations from
-the branch rules:
-- Earliest specialization divergence: $G_{\min} = \min_{b} G_{\text{start}}(b)$.
+the specialty rules:
+- Earliest specialty divergence: $G_{\min} = \min_{b} G_{\text{start}}(b)$.
 - Common trunk depth in academic years: $Y_{\text{trunk}} = \lfloor (G_{\min} - 1) / 2 \rfloor$.
 - Total degree years: $D = \lceil \max_{b} (G_{\text{start}}(b) + \text{duration\_semesters}(b) - 1) / 2 \rceil$.
 
-**The Non-Convergence Invariant:** Curricular branches **never merge back**.
-Once a degree family diverges into specialization branches at semester $G_{\min}$,
-common branches permanently cease for that track specifier. Distinct specialization
-branches cannot converge or recombine into a shared branch at any subsequent semester.
-A track specifier's progression may only stay common or divide into specializations;
+**The Non-Convergence Invariant:** Curricular specialties **never merge back**.
+Once a degree family diverges into specialties at semester $G_{\min}$,
+common specialties permanently cease for that track specifier. Distinct specialties
+cannot converge or recombine into a shared specialty at any subsequent semester.
+A track specifier's progression may only stay common or divide into specialties;
 it never returns to common.
 
 ## Schedule
@@ -107,7 +107,7 @@ year specifier.
 
 **Relational definition.** A year specifier is the reusable numeric designation
 of a year level within a degree family. It combines with a track specifier to form a
-concrete year. It is not a branch-semester specifier.
+concrete year. It is not a specialty-semester specifier.
 
 **Editorial definition.** A year specifier is a value such as `1`, `2`, or `3`
 that identifies the year of study once coupled with a track specifier.
@@ -118,8 +118,8 @@ that identifies the year of study once coupled with a track specifier.
 
 **Relational definition.** A year couples a track specifier and a year
 specifier. It is the concrete level-specific object written as `LCS1`,
-`LCS2`, or `MP1`. A common branch is formed directly from a year; a year
-may also prefix non-common branches that begin at that level.
+`LCS2`, or `MP1`. A common specialty is formed directly from a year; a year
+may also prefix non-common specialties that begin at that level.
 
 **Editorial definition.** A year identifies a degree family at one year of
 study. The name `year` is reserved for this frequently used concrete object;
@@ -128,39 +128,39 @@ the abstract family is called a track specifier.
 **Alternative terms.** year level; degree-family year; level-specific year.
 Deprecated alternative term: track.
 
-## Branch semester
+## Specialty semester
 
-**Relational definition.** A branch semester is the semester position of a
-non-common branch within the curriculum progression. In this institution's canonical
+**Relational definition.** A specialty semester is the semester position of a
+non-common specialty within the curriculum progression. In this institution's canonical
 compact notation, it is written as the global degree semester number $G \in \{1 \dots 2D\}$,
 calculated from the year specifier $Y$ and year-semester specifier $S$:
 
-`branchSemester = 2 * (yearSpecifier - 1) + yearSemesterSpecifier`
+`specialtySemester = 2 * (yearSpecifier - 1) + yearSemesterSpecifier`
 
-For example, `GLSI3` denotes the GLSI specialization in global semester 3
-(academic year specifier 2, year-semester specifier 1). A branch spans a discrete
+For example, `GLSI3` denotes the GLSI specialty in global semester 3
+(academic year specifier 2, year-semester specifier 1). A specialty spans a discrete
 number of active semesters given by its `duration_semesters`.
 
-**Alternative terms.** semester of study; branch progression semester.
+**Alternative terms.** semester of study; specialty progression semester.
 
-## Branch-semester specifier
+## Specialty-semester specifier
 
-**Relational definition.** A branch-semester specifier is the numeric
-component attached to a non-common branch in compact notation. It identifies
-the branch's semester and is distinct from the year specifier
+**Relational definition.** A specialty-semester specifier is the numeric
+component attached to a non-common specialty in compact notation. It identifies
+the specialty's semester and is distinct from the year specifier
 attached to a year. In `GLSI3`, the `3` is counted from the start of GLSI.
 
-**Editorial definition.** A branch-semester specifier is the digit in a
+**Editorial definition.** A specialty-semester specifier is the digit in a
 compact name such as the `3` in `GLSI3`. It means the third semester counted
-from the beginning of the GLSI branch.
+from the beginning of the GLSI specialty.
 
-**Alternative terms.** semester number; branch-semester number; semester index.
+**Alternative terms.** semester number; specialty-semester number; semester index.
 
 ## Year-semester specifier
 
 **Relational definition.** A year-semester specifier identifies the first or
 second semester within a year. It supplies the year-semester context used when
-calculating branch-semester specifiers and interpreting source labels such as
+calculating specialty-semester specifiers and interpreting source labels such as
 `S1`. It is not itself encoded as a permanent property of a class.
 
 **Editorial definition.** A year-semester specifier is `1` or `2`. It is
@@ -169,60 +169,58 @@ or session.
 
 **Alternative terms.** semester within year; study half-year.
 
-## Branch
+## Specialty
 
-**Relational definition.** A branch is an explicit curricular object in the
-catalogue that prefixes classes. A common branch consists of a year (the couple of a
+**Relational definition.** A specialty is an explicit curricular object in the
+catalogue that prefixes classes. A common specialty consists of a year (the couple of a
 track specifier and year specifier), such as `LCS1`, and belongs strictly to the
-track's initial common trunk. A non-common branch is canonically
-identified by a specialization identifier/name/branch name and the branch-semester number
-counted from the start of that specialization, such as `GLSI3`. Its more
+track's initial common trunk. A non-common specialty is canonically
+identified by a specialty identifier/name and the specialty-semester number
+counted from the start of that specialty, such as `GLSI3`. Its more
 verbose notation may make the implied prefix explicit, such as `LCS3 GLSI3`.
-A track progression has at most one common branch stage (the common trunk), which
-must begin at year specifier 1 and end before or at the emergence of specializations.
-Once a curriculum divides into specializations, common branches cease permanently
-for that track specifier because branches never merge back.
-A branch is not
-subdivided into sections or cohorts as a branch object; the combination of a
-branch and section is a class. From the perspective of that class, the branch
+A track progression has at most one common specialty stage (the common trunk), which
+must begin at year specifier 1 and end before or at the emergence of specialties.
+Once a curriculum divides into specialties, common specialties cease permanently
+for that track specifier because specialties never merge back.
+A specialty is not
+subdivided into sections or cohorts as a specialty object; the combination of a
+specialty and section is a class. From the perspective of that class, the specialty
 is its prefix.
 
-**Editorial definition.** A branch is a curriculum subdivision such as `LCS1`
-or `GLSI3`. For a non-common branch, **specialization** is the preferred term,
-although specialization and branch are synonymous in this model. `LCS1` is
-itself the complete common branch; `LCS1 A2` is a class below that branch, not a
-branch. Branch is not a synonym for a section, cohort, or class.
+**Editorial definition.** A specialty is a curriculum subdivision such as `LCS1`
+or `GLSI3`. `LCS1` is itself the complete common specialty; `LCS1 A2` is a
+class below that specialty, not a specialty. Specialty is not a synonym for a
+section, cohort, or class.
 
-**Alternative terms.** specialization; specialization name; specialization
-identifier; branch name; study stream; study pathway; curriculum branch.
+**Alternative terms.** study stream; study pathway; curriculum specialty;
+specialty name; specialty identifier.
 
-## Specialization specifier
+## Specialty specifier
 
-**Relational definition.** A specialization specifier is the syntactic
-component that names a non-common specialization within a reference. It
-combines with a branch-semester specifier to identify a non-common branch.
-By itself it does not identify a branch object, just as a year specifier or
-branch-semester specifier does not identify its complete object by itself.
+**Relational definition.** A specialty specifier is the syntactic
+component that names a non-common specialty within a reference. It
+combines with a specialty-semester specifier to identify a non-common specialty.
+By itself it does not identify a specialty object, just as a year specifier or
+specialty-semester specifier does not identify its complete object by itself.
 
-**Editorial definition.** In `GLSI3`, `GLSI` is the specialization specifier.
-The complete branch object is `GLSI3`, which may also be written more
+**Editorial definition.** In `GLSI3`, `GLSI` is the specialty specifier.
+The complete specialty object is `GLSI3`, which may also be written more
 verbosely as `LCS3 GLSI3`.
 
-**Alternative terms.** specialization code; specialization token; branch
-specifier.
+**Alternative terms.** specialty code; specialty token; specialty tag.
 
 ## Class
 
-**Relational definition.** Normally, a class is exactly a branch plus a
-section, or a branch plus a section and cohort. Its branch is the prefix by
+**Relational definition.** Normally, a class is exactly a specialty plus a
+section, or a specialty plus a section and cohort. Its specialty is the prefix by
 which the class is reached. A section class such as `GLSI3 A` and a cohort
 class such as `GLSI3 A1` are both classes; the latter is more specific, but
-neither is a branch. If a branch has no section subdivision, it contains a
-singleton class whose identifier is the same as the branch identifier.
+neither is a specialty. If a specialty has no section subdivision, it contains a
+singleton class whose identifier is the same as the specialty identifier.
 
 **Editorial definition.** A class is a defined student group that follows a
-timetable and a planned set of courses. It normally has a branch and section,
-and may also have a cohort. A branch without sections is represented as a
+timetable and a planned set of courses. It normally has a specialty and section,
+and may also have a cohort. A specialty without sections is represented as a
 singleton class for timetable purposes.
 
 **Alternative terms.** student group; teaching group.
@@ -230,25 +228,25 @@ singleton class for timetable purposes.
 ## Singleton class
 
 **Relational definition.** A singleton class is the class entry produced for a
-branch whose population rule for the relevant year declares no sections. It
-is a class-population shape, not a branch kind: the branch remains a
-specialization (or common) branch, and its identifier may differ from the
+specialty whose specialty rule for the relevant year declares no sections. It
+is a class-population shape, not a specialty kind: the specialty remains a
+non-common (or common) specialty, and its identifier may differ from the
 class identifier's source notation. Its class identifier/reference is equal
-to the branch identifier/reference.
+to the specialty identifier/reference.
 
 **Editorial definition.** A singleton class is a catalogue class entry whose
-branch has no section subdivision for that year, such as the master entries
+specialty has no section subdivision for that year, such as the master entries
 `MP1-EXR`, `MP1-SD`, and `MP2-EXR` present in the current parsed data.
 
-**Alternative terms.** undivided class; single-section class; branch-level
+**Alternative terms.** undivided class; single-section class; specialty-level
 class.
 
 ## Section
 
 **Relational definition.** A section is the section component of a class. Its
-letter is scoped to its branch prefix: `LCE2-IoT A` and `LCE2-IRS A` are
+letter is scoped to its specialty prefix: `LCE2-IoT A` and `LCE2-IRS A` are
 different classes. A section specifier is the reusable letter component; a
-section class combines it with a branch. A section may be followed by a cohort
+section class combines it with a specialty. A section may be followed by a cohort
 specifier, producing a more specific class.
 
 **Editorial definition.** A section is a lettered component of a class, such
@@ -260,7 +258,7 @@ section division.
 ## Cohort
 
 **Relational definition.** A cohort is the cohort component of a class after
-its branch and section. It is the deepest level where the source divides a
+its specialty and section. It is the deepest level where the source divides a
 section into `Groupe 1` and `Groupe 2`. A cohort specifier is the reusable
 numbered component; a cohort class combines it with a section class.
 
@@ -274,9 +272,9 @@ itself.
 ## Population reference
 
 **Relational definition.** A population reference is the generic audience
-notation attached to a session specifier. It may identify a branch or a class,
-depending on the session kind. A branch-lecture population reference addresses
-a branch; a section-seminar reference addresses a section; and a cohort-lab-work
+notation attached to a session specifier. It may identify a specialty or a class,
+depending on the session kind. A specialty-lecture population reference addresses
+a specialty; a section-seminar reference addresses a section; and a cohort-lab-work
 reference addresses a cohort.
 
 **Editorial definition.** A population reference identifies the student
@@ -303,9 +301,9 @@ record.
 ## Session kind
 
 **Relational definition.** A session kind combines instructional format and
-population scope. The canonical values are `branch-lecture`,
+population scope. The canonical values are `specialty-lecture`,
 `section-seminar`, and `cohort-lab-work`; each maps to exactly one population
-scope. Lectures apply to branches, seminars to sections, and lab work to
+scope. Lectures apply to specialties, seminars to sections, and lab work to
 cohorts.
 The source currently writes the kinds with the prefixes `C_`, `TD_`, and
 `TP_`, but those spellings are publication conventions rather than domain
@@ -404,12 +402,12 @@ organized by day and time for a selected class, teacher, or other filter.
 
 **Relational definition.** A name is a notation for a domain concept. A
 source-facing name may preserve the publication's hierarchy, while a class
-identifier encodes a branch, branch-semester specifier, section, and
+identifier encodes a specialty, specialty-semester specifier, section, and
 cohort. The same object may be written with different levels of verbosity;
 these are notation variants, not a separate alias concept.
 
 **Editorial definition.** A name is a human-readable or machine-readable
-designation for a track, branch, class, or other concept.
+designation for a track, specialty, class, or other concept.
 
 **Alternative terms.** designation; label; identifier.
 
@@ -419,7 +417,7 @@ designation for a track, branch, class, or other concept.
 concrete domain object. A reference is an input notation expected to resolve
 to that object; when resolution is one-to-one, the reference and the object's
 identifier have the same value. In the singleton case, one identifier can be
-owned by both a branch and its singleton class.
+owned by both a specialty and its singleton class.
 
 **Editorial definition.** An identifier names the object it belongs to, while
 a reference is the notation supplied for lookup. They are intentionally
@@ -427,26 +425,25 @@ combined in this model when the reference resolves one-to-one.
 
 **Alternative terms.** designation; canonical reference; object notation.
 
-## Branch identifier
+## Specialty identifier
 
-**Relational definition.** A branch identifier is the canonical identifier of
-a branch object. A common branch is written from a year (track specifier and
-year specifier), such as `LCS1`. A non-common branch is written from a specialization
-specifier and branch-semester specifier, such as `GLSI3`; its verbose form
+**Relational definition.** A specialty identifier is the canonical identifier of
+a specialty object. A common specialty is written from a year (track specifier and
+year specifier), such as `LCS1`. A non-common specialty is written from a specialty
+specifier and specialty-semester specifier, such as `GLSI3`; its verbose form
 may make the prefix explicit, as in `LCS3 GLSI3`.
 
-**Editorial definition.** A branch identifier identifies a branch. Usually its
-classes have more specific class identifiers; for a branch without sections,
+**Editorial definition.** A specialty identifier identifies a specialty. Usually its
+classes have more specific class identifiers; for a specialty without sections,
 the same identifier also identifies its singleton class. A consumer can choose
 which object interpretation it needs.
 
-**Alternative terms.** branch reference; branch notation; specialization
-identifier.
+**Alternative terms.** specialty reference; specialty notation.
 
 ## Class identifier
 
 **Relational definition.** A class identifier is the canonical identifier of a
-class below a branch. It writes a branch, a space, a section, and optionally a cohort:
+class below a specialty. It writes a specialty, a space, a section, and optionally a cohort:
 `GLSI3 A` or `GLSI3 A1`. A verbose non-common form may make the implied prefix
 explicit, as in `LCS3 GLSI3 A2`. The parser may also accept compact input such
 as `GLSI3A2`.
@@ -459,12 +456,12 @@ as `GLSI3A2`.
 
 ## Resolution
 
-**Relational definition.** Resolution is the interpretation of a branch or
+**Relational definition.** Resolution is the interpretation of a specialty or
 class reference through three separate concepts: syntactical validity,
 catalogue match, and publication presence. Resolution is not assumed to be a
 function that returns one value; an attempt may produce multiple catalogue
 matches or diagnostics. A consumer may provide an expected object kind before
-parsing, such as branch or class, to choose between valid interpretations of
+parsing, such as specialty or class, to choose between valid interpretations of
 the same notation.
 
 **Editorial definition.** Resolution is the process of determining what a
@@ -475,8 +472,8 @@ current timetable data.
 
 ## Syntactical validity
 
-**Relational definition.** Syntactical validity describes whether a branch or
-class reference follows the notation rules for tracks, branches, sections, and
+**Relational definition.** Syntactical validity describes whether a specialty or
+class reference follows the notation rules for tracks, specialties, sections, and
 cohorts. It is independent of whether the reference names anything in the
 catalogue or appears in the current publication.
 
@@ -487,9 +484,9 @@ form can be parsed according to the class notation.
 
 ## Catalogue match
 
-**Relational definition.** A catalogue match is the set of branch or class
-objects identified by a syntactically valid reference. A branch match
-represents a branch object whose classes can be queried; a class match
+**Relational definition.** A catalogue match is the set of specialty or class
+objects identified by a syntactically valid reference. A specialty match
+represents a specialty object whose classes can be queried; a class match
 represents a class object. The set may contain zero, one, or multiple objects,
 so absence and ambiguity are distinct outcomes.
 
@@ -501,7 +498,7 @@ elements, if any, correspond to a reference.
 ## Publication presence
 
 **Relational definition.** Publication presence states whether a matched
-catalogue branch or class has corresponding records in the current timetable
+catalogue specialty or class has corresponding records in the current timetable
 publication. It is independent of syntax and catalogue existence.
 
 **Editorial definition.** Publication presence is whether the current
@@ -512,17 +509,16 @@ normalized timetable data contains the referenced element.
 ## Catalogue
 
 **Relational definition.** The catalogue describes the available track specifiers,
-specializations, years, and branches, and the class populations associated with
+specialties, years, and class populations associated with
 them through sections and cohorts. It is not itself treated as a hierarchy of
 domain objects. Its structure is fixed by the model, while its field values are
 populated by a union of raw timetable evidence and editorial corrections,
 normalization, or additions.
 
 **Editorial definition.** The catalogue is the maintained description of known
-track specifiers, years, branches, and class populations, expressed as a finite
-grammar of specifiers and relationships. It contains no concrete years, branches, or
-classes; those are derived. It may contain branches or classes absent from
+track specifiers, years, specialties, and class populations, expressed as a finite
+grammar of specifiers and relationships. It contains no concrete years, specialties, or
+classes; those are derived. It may contain specialties or classes absent from
 the current timetable publication.
 
-**Alternative terms.** academic catalogue; curriculum catalogue; curriculum
-catalogue.
+**Alternative terms.** academic catalogue; curriculum catalogue.
