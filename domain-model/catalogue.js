@@ -3,7 +3,7 @@ import {
   commonBranchRule, branchRule,
   populationsForYear, sectionsWithTwoCohorts, sectionsWithNoCohorts,
   Catalogue
-} from '../domain-model/index.js';
+} from './index.js';
 
 const lbc = trackSpecifier('LBC');
 const lce = trackSpecifier('LCE');

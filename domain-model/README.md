@@ -31,12 +31,12 @@ supervision.
 A catalogue is built from rule objects:
 
 ```js
-import { createCatalogue } from '../data/catalogue.js';
+import { createCatalogue } from './catalogue.js';
 const catalogue = createCatalogue();
 ```
 
 The library stays generic; the institution-specific rule table lives outside
-this directory (see `data/catalogue.js`).
+this directory (see `./catalogue.js`).
 
 ### Vocabulary and rules
 

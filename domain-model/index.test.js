@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createCatalogue } from '../data/catalogue.js';
+import { createCatalogue } from './catalogue.js';
 import {
   Type, DAYS, SLOTS, SESSION_KIND_SCOPES,
   trackSpecifier, yearSpecifier, specializationSpecifier,
