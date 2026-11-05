@@ -1,11 +1,25 @@
+/**
+ * Weekday names accepted by a session specifier.
+ */
 const DAYS = new Set(['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI']);
+
+/**
+ * Time slots accepted by a session specifier.
+ */
 const SLOTS = new Set(['08h15-09h45', '10h00-11h30', '11h40-13h10', '13h20-14h50', '15h00-16h30', '16h45-18h15']);
+
+/**
+ * Map from each session kind to the population scope it addresses.
+ */
 const SESSION_KIND_SCOPES = Object.freeze({
   'specialty-lecture': 'specialty',
   'section-seminar': 'section',
   'cohort-lab-work': 'cohort'
 });
 
+/**
+ * Frozen set of symbol discriminators that tag every composite value.
+ */
 export const Type = Object.freeze({
   TRACK_SPECIFIER: Symbol('track-specifier'),
   YEAR_SPECIFIER: Symbol('year-specifier'),
@@ -44,45 +58,180 @@ export const Type = Object.freeze({
   SPECIALTY_RULE: Symbol('specialty-rule')
 });
 
+/**
+ * Domain model type annotations: each entry names the constructor function
+ * that produces the value and the fields it is built from.
+ *
+ * Track specifier — constructed by `trackSpecifier(...)`; structure {value}.
+ * @typedef {{type: symbol, value: string}} TrackSpecifier
+ * Year specifier — constructed by `yearSpecifier(...)`; structure {value}.
+ * @typedef {{type: symbol, value: number}} YearSpecifier
+ * Specialty specifier — constructed by `specialtySpecifier(...)`; structure {value}.
+ * @typedef {{type: symbol, value: string}} SpecialtySpecifier
+ * Year-semester specifier — constructed by `yearSemesterSpecifier(...)`; structure {value}.
+ * @typedef {{type: symbol, value: number}} YearSemesterSpecifier
+ * Specialty-semester specifier — constructed by `specialtySemesterSpecifier(...)`; structure {value}.
+ * @typedef {{type: symbol, value: number}} SpecialtySemesterSpecifier
+ * Section specifier — constructed by `sectionSpecifier(...)`; structure {value}.
+ * @typedef {{type: symbol, value: string}} SectionSpecifier
+ * Cohort specifier — constructed by `cohortSpecifier(...)`; structure {value}.
+ * @typedef {{type: symbol, value: number}} CohortSpecifier
+ *
+ * Year — constructed by `year(...)`; structure {track specifier, year specifier, identifier}.
+ * @typedef {{type: symbol, track_specifier: TrackSpecifier, year_specifier: YearSpecifier, identifier: string}} Year
+ * Common specialty — constructed by `commonSpecialty(...)`; structure {year, identifier}.
+ * @typedef {{type: symbol, year: Year, identifier: string}} CommonSpecialty
+ * Specialty — constructed by `specialty(...)`; structure {specialty specifier, specialty-semester specifier, year, identifier}.
+ * @typedef {{type: symbol, specialty_specifier: SpecialtySpecifier, specialty_semester_specifier: SpecialtySemesterSpecifier, year: Year, identifier: string}} Specialty
+ * Section class — constructed by `classPopulation(...)`; structure {specialty, section specifier, identifier}.
+ * @typedef {{type: symbol, specialty: (Specialty|CommonSpecialty), section_specifier: SectionSpecifier, identifier: string}} SectionClass
+ * Cohort class — constructed by `classPopulation(...)`; structure {specialty, section specifier, cohort specifier, identifier}.
+ * @typedef {{type: symbol, specialty: (Specialty|CommonSpecialty), section_specifier: SectionSpecifier, cohort_specifier: CohortSpecifier, identifier: string}} CohortClass
+ * Singleton class — constructed by `classPopulation(...)`; structure {specialty, identifier}.
+ * @typedef {{type: symbol, specialty: (Specialty|CommonSpecialty), identifier: string}} SingletonClass
+ * @typedef {SectionClass|CohortClass|SingletonClass} ClassNode
+ *
+ * Section descriptor — constructed by `sectionsWithTwoCohorts(...)` or `sectionsWithNoCohorts(...)`; structure {section specifier, cohorting}, or a bare section letter (single uppercase letter).
+ * @typedef {({section_specifier: (SectionSpecifier|string), cohorting: string}|string)} SectionDescriptor
+ * Year population — constructed by `populationsForYear(...)`; structure {year specifier, sections}.
+ * @typedef {{year_specifier: YearSpecifier, sections: Array<SectionDescriptor>}} YearPopulation
+ * Common specialty rule — constructed by `commonSpecialtyRule(...)`; structure {track specifier, year specifier, sections}.
+ * @typedef {{type: symbol, track_specifier: TrackSpecifier, year_specifier: YearSpecifier, sections: Array<SectionDescriptor>}} CommonSpecialtyRule
+ * Specialty rule — constructed by `specialtyRule(...)`; structure {specialty specifier, track specifier, start year specifier, duration semesters, populations}.
+ * @typedef {{type: symbol, specialty_specifier: SpecialtySpecifier, track_specifier: TrackSpecifier, start_year_specifier: number, duration_semesters: number, populations: Map<number, YearPopulation>}} SpecialtyRule
+ *
+ * Invalid reference — constructed by `parseReference(...)`; structure {input, diagnostics}.
+ * @typedef {{type: symbol, input: string, diagnostics: Array<string>}} InvalidReference
+ * Track specifier reference — constructed by `parseReference(...)`; structure {notation, track specifier}.
+ * @typedef {{type: symbol, notation: string, track_specifier: TrackSpecifier}} TrackSpecifierReference
+ * Specialty specifier reference — constructed by `parseReference(...)`; structure {notation, specialty specifier}.
+ * @typedef {{type: symbol, notation: string, specialty_specifier: SpecialtySpecifier}} SpecialtySpecifierReference
+ * Year reference — constructed by `parseReference(...)`; structure {notation, year}.
+ * @typedef {{type: symbol, notation: string, year: Year}} YearReference
+ * Specialty reference — constructed by `parseReference(...)`; structure {notation, specialty}.
+ * @typedef {{type: symbol, notation: string, specialty: (Specialty|CommonSpecialty)}} SpecialtyReference
+ * Class reference — constructed by `parseReference(...)`; structure {notation, class}.
+ * @typedef {{type: symbol, notation: string, class: ClassNode}} ClassReference
+ * @typedef {InvalidReference|TrackSpecifierReference|SpecialtySpecifierReference|YearReference|SpecialtyReference|ClassReference} Reference
+ *
+ * Specialty population — constructed by `populationReference(...)`; structure {specialty}.
+ * @typedef {{type: symbol, specialty: (Specialty|CommonSpecialty)}} SpecialtyPopulation
+ * Section population — constructed by `populationReference(...)`; structure {class}.
+ * @typedef {{type: symbol, class: SectionClass}} SectionPopulation
+ * Cohort population — constructed by `populationReference(...)`; structure {class}.
+ * @typedef {{type: symbol, class: CohortClass}} CohortPopulation
+ * @typedef {SpecialtyPopulation|SectionPopulation|CohortPopulation} Population
+ *
+ * Week-pattern specifier — constructed by `weekPatternSpecifier(...)`; structure {'SA' | 'SB' | ''}.
+ * @typedef {'SA'|'SB'|''} WeekPatternSpecifier
+ * Session specifier — constructed by `sessionSpecifier(...)`; structure {subject, teacher, room, population, day, time, week pattern specifier, session kind}.
+ * @typedef {{type: symbol, subject: string, teacher: string, room: string, population: Population, day: string, time: string, week_pattern_specifier: WeekPatternSpecifier, session_kind: string}} SessionSpecifier
+ * Provenance — constructed by `provenance(...)`; structure {source, color}.
+ * @typedef {{type: symbol, source: string, color: string}} Provenance
+ *
+ * CSV record — constructed by `csvRecord(...)`; structure {field, professor, subject, room, day, time, week, source, color}.
+ * @typedef {{field: string, professor: string, subject: string, room: string, day: string, time: string, week: string, source: string, color: string}} CsvRecord
+ * Partial session record — constructed by `fromCsvRecord(...)`; structure {subject, teacher, room, day, time, week pattern specifier, population, reference, provenance, missing}.
+ * @typedef {{type: symbol, subject: string, teacher: string, room: string, day: string, time: string, week_pattern_specifier: WeekPatternSpecifier, population: Population, reference: string, provenance: Provenance, missing: Array<string>}} PartialSessionRecord
+ * Invalid CSV record — constructed by `fromCsvRecord(...)`; structure {record, errors}.
+ * @typedef {{type: symbol, record: CsvRecord, errors: Array<string>}} InvalidCsvRecord
+ * @typedef {PartialSessionRecord|InvalidCsvRecord} CsvConversion
+ *
+ * Not-applicable marker — constructed by `Catalogue.resolve(...)`; structure {type}.
+ * @typedef {{type: symbol}} NotApplicable
+ * No-records marker — constructed by `Catalogue.resolve(...)`; structure {type}.
+ * @typedef {{type: symbol}} NoRecords
+ * Records marker — constructed by `Catalogue.resolve(...)`; structure {type, records}.
+ * @typedef {{type: symbol, records: Array<PartialSessionRecord>}} Records
+ * Invalid resolution — constructed by `Catalogue.resolve(...)`; structure {syntax, catalogue, publication}.
+ * @typedef {{type: symbol, syntax: Reference, catalogue: {type: Type.NOT_APPLICABLE}, publication: {type: Type.NOT_APPLICABLE}}} InvalidResolution
+ * Not-found resolution — constructed by `Catalogue.resolve(...)`; structure {syntax, catalogue, publication}.
+ * @typedef {{type: symbol, syntax: Reference, catalogue: {type: Type.NOT_FOUND}, publication: {type: Type.NOT_APPLICABLE|Type.NO_RECORDS|Type.RECORDS, records?: Array<PartialSessionRecord>}}} NotFoundResolution
+ * Unique-match resolution — constructed by `Catalogue.resolve(...)`; structure {syntax, catalogue, publication}.
+ * @typedef {{type: symbol, syntax: Reference, catalogue: {type: Type.UNIQUE_MATCH, match: (Year|Specialty|CommonSpecialty|ClassNode)}, publication: {type: Type.UNIQUE_MATCH|Type.NO_RECORDS|Type.RECORDS, records?: Array<PartialSessionRecord>}}} UniqueMatchResolution
+ * Ambiguous-match resolution — constructed by `Catalogue.resolve(...)`; structure {syntax, catalogue, publication}.
+ * @typedef {{type: symbol, syntax: Reference, catalogue: {type: Type.AMBIGUOUS_MATCH, matches: Array<(Year|Specialty|CommonSpecialty|ClassNode)>}, publication: {type: Type.AMBIGUOUS_MATCH|Type.NO_RECORDS|Type.RECORDS, records?: Array<PartialSessionRecord>}}} AmbiguousMatchResolution
+ * @typedef {InvalidResolution|NotFoundResolution|UniqueMatchResolution|AmbiguousMatchResolution} Resolution
+ *
+ * Catalogue options — passed to `new Catalogue(...)`; structure {track specifiers, specialty specifiers, specialty rules, common specialty rules, records}.
+ * @typedef {{trackSpecifiers?: Array<(TrackSpecifier|string)>, specialtySpecifiers?: Array<(SpecialtySpecifier|string)>, specialtyRules?: Array<SpecialtyRule>, commonSpecialtyRules?: Array<CommonSpecialtyRule>, records?: Array<CsvRecord>}} CatalogueOptions
+ * Track metrics — derived by `new Catalogue(...)`; structure {duration years, trunk depth years, minimum start global semester}.
+ * @typedef {{durationYears: number, trunkDepthYears: number, minStartGlobalSemester: number}} TrackMetrics
+ */
+
+/**
+ * Freeze a value so it can no longer be mutated.
+ */
 const freeze = (value) => Object.freeze(value);
+
+/**
+ * Stringify a value, then trim and collapse its whitespace.
+ */
 const clean = (value) => String(value ?? '').trim().replace(/\s+/g, ' ');
 
+/**
+ * Normalize a track specifier, reusing an existing one or parsing a raw tag.
+ */
 function trackSpecifierValue(tag) {
   if (tag?.type === Type.TRACK_SPECIFIER) return tag;
   const value = clean(tag).toUpperCase();
   if (!/^[A-Z][A-Z0-9-]*$/.test(value)) throw new Error(`Invalid track specifier: ${tag}`);
   return freeze({ type: Type.TRACK_SPECIFIER, value });
 }
+
+/**
+ * Normalize a year specifier, reusing an existing one or parsing a raw number.
+ */
 function yearSpecifierValue(year) {
   if (year?.type === Type.YEAR_SPECIFIER) return year;
   const value = Number(year);
   if (!Number.isInteger(value) || value < 1) throw new Error(`Invalid year specifier: ${year}`);
   return freeze({ type: Type.YEAR_SPECIFIER, value });
 }
+
+/**
+ * Normalize a specialty specifier, reusing an existing one or parsing a raw tag.
+ */
 function specialtySpecifierValue(value) {
   if (value?.type === Type.SPECIALTY_SPECIFIER) return value;
   const normalized = clean(value).toUpperCase();
   if (!/^[A-Z][A-Z0-9-]*$/.test(normalized)) throw new Error(`Invalid specialty specifier: ${value}`);
   return freeze({ type: Type.SPECIALTY_SPECIFIER, value: normalized });
 }
+
+/**
+ * Normalize a year-semester specifier to 1 or 2.
+ */
 function yearSemesterSpecifierValue(value) {
   if (value?.type === Type.YEAR_SEMESTER_SPECIFIER) return value;
   const number = Number(value);
   if (number !== 1 && number !== 2) throw new Error('Year semester specifier must be 1 or 2');
   return freeze({ type: Type.YEAR_SEMESTER_SPECIFIER, value: number });
 }
+
+/**
+ * Normalize a specialty-semester specifier to a positive integer.
+ */
 function specialtySemesterSpecifierValue(value) {
   if (value?.type === Type.SPECIALTY_SEMESTER_SPECIFIER) return value;
   const number = Number(value);
   if (!Number.isInteger(number) || number < 1) throw new Error('Specialty semester specifier must be positive');
   return freeze({ type: Type.SPECIALTY_SEMESTER_SPECIFIER, value: number });
 }
+
+/**
+ * Normalize a section specifier, reusing an existing one or parsing a raw letter.
+ */
 function sectionSpecifierValue(value) {
   if (value?.type === Type.SECTION_SPECIFIER) return value;
   const normalized = clean(value).toUpperCase();
   if (!/^[A-Z]+$/.test(normalized)) throw new Error(`Invalid section specifier: ${value}`);
   return freeze({ type: Type.SECTION_SPECIFIER, value: normalized });
 }
+
+/**
+ * Normalize a cohort specifier to a number, reusing an existing one.
+ */
 function cohortSpecifierValue(value) {
   if (value?.type === Type.COHORT_SPECIFIER) return value;
   const normalized = String(value);
@@ -90,17 +239,54 @@ function cohortSpecifierValue(value) {
   return freeze({ type: Type.COHORT_SPECIFIER, value: Number(normalized) });
 }
 
+/**
+ * Construct a track specifier.
+ */
 export function trackSpecifier(tag) { return trackSpecifierValue(tag); }
+
+/**
+ * Construct a year specifier.
+ */
 export function yearSpecifier(year) { return yearSpecifierValue(year); }
+
+/**
+ * Construct a specialty specifier.
+ */
 export function specialtySpecifier(value) { return specialtySpecifierValue(value); }
+
+/**
+ * Construct a year-semester specifier.
+ */
 export function yearSemesterSpecifier(value) { return yearSemesterSpecifierValue(value); }
+
+/**
+ * Construct a specialty-semester specifier.
+ */
 export function specialtySemesterSpecifier(value) { return specialtySemesterSpecifierValue(value); }
+
+/**
+ * Construct a section specifier.
+ */
 export function sectionSpecifier(value) { return sectionSpecifierValue(value); }
+
+/**
+ * Construct a cohort specifier.
+ */
 export function cohortSpecifier(value) { return cohortSpecifierValue(value); }
 
+/**
+ * Marker value for a section split into two cohorts.
+ */
 export const twoCohorts = 'two-cohorts';
+
+/**
+ * Marker value for a section with no cohort split.
+ */
 export const noCohorts = 'no-cohorts';
 
+/**
+ * Normalize section descriptors, accepting shorthand section letters.
+ */
 function normalizeSections(sections) {
   if (sections == null) return null;
   return freeze(sections.map((item) => {
@@ -109,13 +295,24 @@ function normalizeSections(sections) {
     return freeze({ section_specifier: sectionSpecifierValue(item), cohorting: noCohorts });
   }));
 }
+
+/**
+ * Build section descriptors for sections split into two cohorts.
+ */
 export function sectionsWithTwoCohorts(...letters) {
   return letters.map((letter) => ({ section_specifier: sectionSpecifier(letter), cohorting: twoCohorts }));
 }
+
+/**
+ * Build section descriptors for sections with no cohort split.
+ */
 export function sectionsWithNoCohorts(...letters) {
   return letters.map((letter) => ({ section_specifier: sectionSpecifier(letter), cohorting: noCohorts }));
 }
 
+/**
+ * Build the population descriptor of one year of a specialty.
+ */
 export function populationsForYear({ year_specifier, sections } = {}) {
   return freeze({
     year_specifier: yearSpecifierValue(year_specifier),
@@ -123,6 +320,9 @@ export function populationsForYear({ year_specifier, sections } = {}) {
   });
 }
 
+/**
+ * Build the rule that gives a trunk year its common specialty and sections.
+ */
 export function commonSpecialtyRule({ track_specifier, year_specifier, sections } = {}) {
   const ts = trackSpecifierValue(track_specifier);
   const ys = yearSpecifierValue(year_specifier);
@@ -134,6 +334,9 @@ export function commonSpecialtyRule({ track_specifier, year_specifier, sections 
   });
 }
 
+/**
+ * Build the rule that gives a specialty its owner, duration and populations.
+ */
 export function specialtyRule({
   specialty_specifier,
   track_specifier,
@@ -161,6 +364,9 @@ export function specialtyRule({
   });
 }
 
+/**
+ * Compute the specialty-semester specifier for a year and semester inside a specialty.
+ */
 export function specialtySemesterFor({
   year_specifier,
   year_semester_specifier,
@@ -179,6 +385,9 @@ export function specialtySemesterFor({
   return specialtySemesterSpecifierValue(globalTarget);
 }
 
+/**
+ * Normalize a week pattern to every week, week A or week B.
+ */
 export function weekPatternSpecifier(value = '') {
   const normalized = clean(value).toUpperCase();
   if (normalized === '' || normalized === 'EVERY') return '';
@@ -186,6 +395,9 @@ export function weekPatternSpecifier(value = '') {
   throw new Error(`Invalid week pattern: ${value}`);
 }
 
+/**
+ * Normalize a session kind alias to its canonical name.
+ */
 export function sessionKind(value) {
   const normalized = clean(value).toLowerCase();
   const aliases = {
@@ -202,6 +414,9 @@ export function sessionKind(value) {
 
 export { SESSION_KIND_SCOPES };
 
+/**
+ * Wrap a parsed reference in the population its session kind requires.
+ */
 function populationForParsed(parsed, sessionKindValue) {
   if (parsed.type === Type.INVALID_REFERENCE) throw new Error(parsed.diagnostics.join('; '));
   const scope = sessionKindValue ? SESSION_KIND_SCOPES[sessionKind(sessionKindValue)] : undefined;
@@ -235,11 +450,17 @@ function populationForParsed(parsed, sessionKindValue) {
   }
 }
 
+/**
+ * Guess whether a reference denotes a class or a specialty.
+ */
 function inferExpectedReference(reference) {
   const value = clean(reference).toUpperCase();
   return value.includes(' ') || /^[A-Z][A-Z0-9-]*\d+[A-Z]+\d*$/.test(value) ? 'class' : 'specialty';
 }
 
+/**
+ * Resolve a reference into the population a session addresses.
+ */
 export function populationReference({ reference, session_kind, catalogue } = {}) {
   const scope = session_kind ? SESSION_KIND_SCOPES[sessionKind(session_kind)] : undefined;
   const expected = scope === 'specialty'
@@ -251,12 +472,18 @@ export function populationReference({ reference, session_kind, catalogue } = {})
   return populationForParsed(parsed, session_kind);
 }
 
+/**
+ * Read a required, trimmed text field or throw.
+ */
 function requiredText(fields, name) {
   const value = clean(fields[name]);
   if (!value) throw new Error(`${name} is required`);
   return value;
 }
 
+/**
+ * Build a recurring session specifier from its fields.
+ */
 export function sessionSpecifier(fields = {}) {
   if (fields.session_kind === undefined) throw new Error('session_kind is required');
   const normalizedSessionKind = sessionKind(fields.session_kind);
@@ -281,16 +508,29 @@ export function sessionSpecifier(fields = {}) {
 
 // ---- Catalogue ----
 
+/**
+ * Coerce a value into a track specifier.
+ */
 function toTrackSpecifier(v) {
   if (v?.type === Type.TRACK_SPECIFIER) return v;
   return trackSpecifierValue(v);
 }
+
+/**
+ * Coerce a value into a specialty specifier.
+ */
 function toSpecialtySpecifier(v) {
   if (v?.type === Type.SPECIALTY_SPECIFIER) return v;
   return specialtySpecifierValue(v);
 }
 
+/**
+ * Maintained catalogue of track specifiers, specialty rules and their derived years, specialties and classes.
+ */
 export class Catalogue {
+  /**
+   * Build the catalogue, derive track metrics and validate the trunk and non-convergence invariants.
+   */
   constructor({
     trackSpecifiers = [],
     specialtySpecifiers = [],
@@ -397,6 +637,9 @@ export class Catalogue {
     this._cache = null;
   }
 
+  /**
+   * Materialise the derived years, specialties and classes once, then reuse them.
+   */
   _buildCache() {
     if (this._cache) return this._cache;
     const years = [];
@@ -475,10 +718,22 @@ export class Catalogue {
     return this._cache;
   }
 
+  /**
+   * Derived years of every track.
+   */
   get years() { return this._buildCache().years; }
+  /**
+   * Derived common and non-common specialties.
+   */
   get specialties() { return this._buildCache().specialties; }
+  /**
+   * Derived section, cohort and singleton classes.
+   */
   get classes() { return this._buildCache().classes; }
 
+  /**
+   * Return the catalogue nodes whose identifier matches a parsed reference.
+   */
   matches(parsed) {
     const { years, specialties, classes } = this._buildCache();
     switch (parsed.type) {
@@ -493,6 +748,9 @@ export class Catalogue {
     }
   }
 
+  /**
+   * Resolve a reference across syntax, catalogue match and publication presence.
+   */
   resolve(input, options = {}) {
     const syntax = parseReference(input, {
       catalogue: this,
@@ -538,6 +796,9 @@ export class Catalogue {
 
 // ---- Bottom-up constructors ----
 
+/**
+ * Construct a Year, rejecting years outside the track metrics.
+ */
 export function year(catalogue, { track_specifier, year_specifier } = {}) {
   const ts = toTrackSpecifier(track_specifier);
   const ys = yearSpecifierValue(year_specifier);
@@ -552,6 +813,9 @@ export function year(catalogue, { track_specifier, year_specifier } = {}) {
   });
 }
 
+/**
+ * Construct a common specialty for a year inside the common trunk.
+ */
 export function commonSpecialty(catalogue, { track_specifier, year_specifier } = {}) {
   const ts = toTrackSpecifier(track_specifier);
   const ys = yearSpecifierValue(year_specifier);
@@ -573,6 +837,9 @@ export function commonSpecialty(catalogue, { track_specifier, year_specifier } =
   });
 }
 
+/**
+ * Construct a specialty for one semester of its active duration.
+ */
 export function specialty(catalogue, { specialty_specifier, year_specifier, year_semester_specifier } = {}) {
   if (catalogue == null) throw new Error('A specialty requires a catalogue');
   const specialtySpec = toSpecialtySpecifier(specialty_specifier);
@@ -606,6 +873,9 @@ export function specialty(catalogue, { specialty_specifier, year_specifier, year
   });
 }
 
+/**
+ * Construct the singleton, section or cohort class of a specialty.
+ */
 export function classPopulation(catalogue, { specialty: specialtyValue, section_specifier, cohort_specifier } = {}) {
   // accept string specialty reference
   let node = specialtyValue;
@@ -660,6 +930,9 @@ export function classPopulation(catalogue, { specialty: specialtyValue, section_
 
 // ---- parseReference (catalogue-aware) ----
 
+/**
+ * Parse a reference string into a syntactically valid reference composite.
+ */
 export function parseReference(input, options = {}) {
   const original = String(input ?? '');
   const value = clean(original).toUpperCase();
@@ -748,6 +1021,9 @@ export function parseReference(input, options = {}) {
   }
 }
 
+/**
+ * Parse specialty tokens into a common or non-common specialty.
+ */
 function parseSpecialtyTokens(tokens, options) {
   const catalogue = options.catalogue ?? null;
   const commonTracks = options.commonTracks ?? new Set();
@@ -872,6 +1148,9 @@ function parseSpecialtyTokens(tokens, options) {
   return undefined;
 }
 
+/**
+ * Build the class composite of a specialty from its section and cohort tokens.
+ */
 function classFromSpecialty(specialtyValue, sectionValue, cohortValue) {
   const node = specialtyValue;
   if (sectionValue === undefined) {
@@ -896,32 +1175,61 @@ function classFromSpecialty(specialtyValue, sectionValue, cohortValue) {
   });
 }
 
+/**
+ * Build the invalid reference composite.
+ */
 function invalid(input, diagnostics) {
   return freeze({ type: Type.INVALID_REFERENCE, input, diagnostics: freeze(diagnostics) });
 }
+
+/**
+ * Build the track specifier reference composite.
+ */
 function trackSpecifierReference(notation, value) {
   return freeze({ type: Type.TRACK_SPECIFIER_REFERENCE, notation, track_specifier: value });
 }
+
+/**
+ * Build the specialty specifier reference composite.
+ */
 function specialtySpecifierReference(notation, value) {
   return freeze({ type: Type.SPECIALTY_SPECIFIER_REFERENCE, notation, specialty_specifier: value });
 }
+
+/**
+ * Build the year reference composite.
+ */
 function yearReference(notation, value) {
   return freeze({ type: Type.YEAR_REFERENCE, notation, year: value });
 }
+
+/**
+ * Build the specialty reference composite.
+ */
 function specialtyReference(notation, value) {
   return freeze({ type: Type.SPECIALTY_REFERENCE, notation, specialty: value });
 }
+
+/**
+ * Build the class reference composite.
+ */
 function classReference(notation, value) {
   return freeze({ type: Type.CLASS_REFERENCE, notation, class: value });
 }
 
 // ---- CSV ----
 
+/**
+ * Pick and trim the known columns of a raw CSV row.
+ */
 function csvRecord(record = {}) {
   const fields = ['field', 'professor', 'subject', 'room', 'day', 'time', 'week', 'source', 'color'];
   return freeze(Object.fromEntries(fields.map((field) => [field, clean(record[field])])));
 }
 
+/**
+ * Build the provenance composite from a source page and colour.
+ */
 function provenance(record) {
   if (!record.source && !record.color) return freeze({ type: Type.PROVENANCE, source: '', color: '' });
   return freeze({ type: Type.PROVENANCE, source: record.source, color: record.color });
@@ -929,6 +1237,10 @@ function provenance(record) {
 
 // Publication notation, e.g. `LBC2-BI_A Groupe 1`, `LBC1-A`, `MP1-EXR`.
 // Returns the canonical reference, or null when the field is not in that shape.
+
+/**
+ * Read a canonical reference out of a publication field label.
+ */
 function sourceFieldReference(field, catalogue) {
   const matched = clean(field).toUpperCase().match(
     /^([A-Z][A-Z0-9-]*?)(\d+)-(.+?)(?:\s+GROUPE\s+(\d+))?$/
@@ -958,6 +1270,9 @@ function sourceFieldReference(field, catalogue) {
   return section === undefined ? specialtyIdentifier : `${specialtyIdentifier} ${section}${cohort ?? ''}`;
 }
 
+/**
+ * Normalize a CSV field into a reference string.
+ */
 function csvFieldReference(field, catalogue) {
   if (catalogue) {
     const source = sourceFieldReference(field, catalogue);
@@ -970,6 +1285,9 @@ function csvFieldReference(field, catalogue) {
   return match ? `${match[1]} ${match[2]}${match[3] ?? ''}` : normalizedField;
 }
 
+/**
+ * Convert a CSV row into a partial session record, or report why it is invalid.
+ */
 export function fromCsvRecord(record, { catalogue } = {}) {
   const raw = csvRecord(record);
   const errors = [];
@@ -1009,6 +1327,9 @@ export function fromCsvRecord(record, { catalogue } = {}) {
 
 // ---- publication records filter ----
 
+/**
+ * Select the publication records that belong to a resolved reference.
+ */
 function publicationRecords(records, syntax, catalogue) {
   const targetSpecialtyIdentifier = syntax.type === Type.SPECIALTY_REFERENCE
     ? syntax.specialty.identifier
@@ -1041,12 +1362,23 @@ function publicationRecords(records, syntax, catalogue) {
 
 // ---- query helpers ----
 
+/**
+ * List the catalogue specialties matching a predicate.
+ */
 export function querySpecialties(catalogue, predicate = () => true) {
   return catalogue.specialties.filter(predicate);
 }
+
+/**
+ * List the catalogue classes matching a predicate.
+ */
 export function queryClasses(catalogue, predicate = () => true) {
   return (catalogue.classes ?? []).filter(predicate);
 }
+
+/**
+ * List the records matching every field of a filter object.
+ */
 export function queryRecords(records, filters = {}) {
   return (records ?? []).filter((record) => Object.entries(filters).every(([key, value]) => record[key] === value));
 }

@@ -2,9 +2,7 @@
 
 ## Meta
 
-This document defines the normalized domain model and its notation. It
-describes the scheduling data after the source documents have been interpreted,
-not the visual structure of those documents.
+This document defines the normalized domain model and its notation.
 
 Each concept has:
 
