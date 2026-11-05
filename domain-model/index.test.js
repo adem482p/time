@@ -5,7 +5,7 @@ import {
   Type, DAYS, SLOTS, SESSION_KIND_SCOPES,
   trackSpecifier, yearSpecifier, specializationSpecifier,
   yearSemesterSpecifier, branchSemesterSpecifier, sectionSpecifier, cohortSpecifier,
-  track, commonBranch, branch, classPopulation,
+  year, commonBranch, branch, classPopulation,
   parseReference, populationReference, sessionKind, sessionSpecifier,
   weekPatternSpecifier, fromCsvRecord, branchSemesterFor,
   twoCohorts, noCohorts, sectionsWithTwoCohorts, sectionsWithNoCohorts,
@@ -22,20 +22,23 @@ test('exports unique symbol discriminators', () => {
   assert.equal(Object.isFrozen(Type), true);
 });
 
-test('track and branch construction validated by catalogue', () => {
-  const t = track(cat, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(3) });
-  assert.equal(t.identifier, 'LCS3');
+test('year and branch construction validated by catalogue', () => {
+  const y = year(cat, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(3) });
+  assert.equal(y.type, Type.YEAR);
+  assert.equal(y.identifier, 'LCS3');
   const b = branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
   assert.equal(b.identifier, 'GLSI3');
-  assert.equal(b.track.identifier, 'LCS3');
-  assert.throws(() => track(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(3) }), /Unsupported track year/);
-  assert.throws(() => branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(1), year_semester_specifier: yearSemesterSpecifier(1) }), /Branch year outside duration/);
+  assert.equal(b.year.identifier, 'LCS3');
+  assert.throws(() => year(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(3) }), /Unsupported year/);
+  assert.throws(() => branch(cat, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(1), year_semester_specifier: yearSemesterSpecifier(1) }), /Branch year specifier outside duration/);
+  assert.throws(() => branchRule({ specialization_specifier: specializationSpecifier('GLSI'), start_year_specifier: 0, duration: 2 }), /start_year_specifier must be a positive integer/);
 });
 
 test('common branch construction', () => {
   const cb = commonBranch(cat, { track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1) });
   assert.equal(cb.type, Type.COMMON_BRANCH);
   assert.equal(cb.identifier, 'LBC1');
+  assert.equal(cb.year.identifier, 'LBC1');
   assert.throws(() => commonBranch(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(1) }), /No common branch/);
 });
 
@@ -51,8 +54,8 @@ test('class population shapes', () => {
 });
 
 test('branch semester calculation', () => {
-  assert.deepEqual(branchSemesterFor({ year_specifier: 3, branch_start_year: 2, year_semester_specifier: yearSemesterSpecifier(1) }), branchSemesterSpecifier(3));
-  assert.deepEqual(branchSemesterFor({ year_specifier: 3, branch_start_year: 2, year_semester_specifier: yearSemesterSpecifier(2) }), branchSemesterSpecifier(4));
+  assert.deepEqual(branchSemesterFor({ year_specifier: 3, start_year_specifier: 2, year_semester_specifier: yearSemesterSpecifier(1) }), branchSemesterSpecifier(3));
+  assert.deepEqual(branchSemesterFor({ year_specifier: 3, start_year_specifier: 2, year_semester_specifier: yearSemesterSpecifier(2) }), branchSemesterSpecifier(4));
 });
 
 test('parseReference catalogue-aware', () => {
@@ -111,7 +114,7 @@ test('catalogue resolution', () => {
 });
 
 test('generation', () => {
-  assert.ok(cat.tracks.length > 0);
+  assert.ok(cat.years.length > 0);
   assert.ok(cat.branches.some((b) => b.identifier === 'GLSI3'));
   assert.ok(cat.classes.some((c) => c.identifier === 'LCS1 A1'));
   assert.ok(cat.classes.some((c) => c.type === Type.SINGLETON_CLASS && c.identifier === 'EXR1'));

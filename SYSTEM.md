@@ -15,7 +15,7 @@ represented by repeated records.
 The domain notation uses **specifiers** as primitive abstractions. A specifier
 is intended to complement and further specify another value rather than stand
 alone as a complete domain object. In particular, a track specifier and a year
-specifier combine to form the concrete track used by normalized branches.
+specifier combine to form the concrete year used by normalized branches.
 
 ## Raw timetable publication
 
@@ -31,9 +31,9 @@ source material as published, before it is interpreted by the parser.
 ## PDF
 
 **Relational definition.** A PDF belongs to a raw timetable publication and
-contains ordered PDF pages. It normally covers one track and year; master
-branches may be published as separate files. The parser reads the PDF
-to produce normalized records.
+contains ordered PDF pages. It normally covers one year (the couple of a track
+specifier and year specifier); master branches may be published as separate
+files. The parser reads the PDF to produce normalized records.
 
 **Editorial definition.** A PDF is an official timetable document distributed
 to students.
@@ -215,8 +215,8 @@ elements, while the editor may normalize names, correct relationships, or add
 missing elements. Resolution uses the maintained union.
 
 **Editorial definition.** Catalogue maintenance is the process of keeping the
-known tracks, branches, and class populations complete and interpretable even
-when a publication is incomplete.
+known track specifiers, years, branches, and class populations complete and
+interpretable even when a publication is incomplete.
 
 **Alternative terms.** catalogue curation; reference-data maintenance; data
 stewardship.

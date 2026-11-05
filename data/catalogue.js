@@ -57,30 +57,30 @@ export function createCatalogue(records = []) {
       specializationRule({ specialization_specifier: sd, track_specifier: mp })
     ],
     branchRules: [
-      branchRule({ specialization_specifier: bi, start_year: 2, duration_years: 2, populations: [
+      branchRule({ specialization_specifier: bi, start_year_specifier: 2, duration: 2, populations: [
         populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B','C','D','E','F') }),
         populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B','C','D') })
       ]}),
-      branchRule({ specialization_specifier: eb, start_year: 3, duration_years: 1, populations: [
+      branchRule({ specialization_specifier: eb, start_year_specifier: 3, duration: 1, populations: [
         populationsForYear({ year_specifier: y3, sections: sectionsWithNoCohorts('A') })
       ]}),
-      branchRule({ specialization_specifier: iot, start_year: 2, duration_years: 2, populations: [
+      branchRule({ specialization_specifier: iot, start_year_specifier: 2, duration: 2, populations: [
         populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B') }),
         populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B') })
       ]}),
-      branchRule({ specialization_specifier: irs, start_year: 2, duration_years: 2, populations: [
+      branchRule({ specialization_specifier: irs, start_year_specifier: 2, duration: 2, populations: [
         populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B') }),
         populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B') })
       ]}),
-      branchRule({ specialization_specifier: glsi, start_year: 2, duration_years: 2, populations: [
+      branchRule({ specialization_specifier: glsi, start_year_specifier: 2, duration: 2, populations: [
         populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B','C','D') }),
         populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B','C','D') })
       ]}),
-      branchRule({ specialization_specifier: exr, start_year: 1, duration_years: 2, populations: [
+      branchRule({ specialization_specifier: exr, start_year_specifier: 1, duration: 2, populations: [
         populationsForYear({ year_specifier: y1, sections: [] }),
         populationsForYear({ year_specifier: y2, sections: [] })
       ]}),
-      branchRule({ specialization_specifier: sd, start_year: 1, duration_years: 2, populations: [
+      branchRule({ specialization_specifier: sd, start_year_specifier: 1, duration: 2, populations: [
         populationsForYear({ year_specifier: y1, sections: [] }),
         populationsForYear({ year_specifier: y2, sections: sectionsWithNoCohorts('A','B') })
       ]})

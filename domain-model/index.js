@@ -14,7 +14,7 @@ export const Type = Object.freeze({
   BRANCH_SEMESTER_SPECIFIER: Symbol('branch-semester-specifier'),
   SECTION_SPECIFIER: Symbol('section-specifier'),
   COHORT_SPECIFIER: Symbol('cohort-specifier'),
-  TRACK: Symbol('track'),
+  YEAR: Symbol('year'),
   COMMON_BRANCH: Symbol('common-branch'),
   SPECIALIZATION_BRANCH: Symbol('specialization-branch'),
   SECTION_CLASS: Symbol('section-class'),
@@ -23,7 +23,7 @@ export const Type = Object.freeze({
   INVALID_REFERENCE: Symbol('invalid-reference'),
   TRACK_SPECIFIER_REFERENCE: Symbol('track-specifier-reference'),
   SPECIALIZATION_SPECIFIER_REFERENCE: Symbol('specialization-specifier-reference'),
-  TRACK_REFERENCE: Symbol('track-reference'),
+  YEAR_REFERENCE: Symbol('year-reference'),
   BRANCH_REFERENCE: Symbol('branch-reference'),
   CLASS_REFERENCE: Symbol('class-reference'),
   BRANCH_POPULATION: Symbol('branch-population'),
@@ -141,12 +141,12 @@ export function specializationRule({ specialization_specifier, track_specifier }
   });
 }
 
-export function branchRule({ specialization_specifier, start_year, duration_years, populations } = {}) {
+export function branchRule({ specialization_specifier, start_year_specifier, duration, populations } = {}) {
   const spec = specializationSpecifierValue(specialization_specifier);
-  const start = Number(start_year?.value ?? start_year);
-  if (!Number.isInteger(start) || start < 1) throw new Error('start_year must be a positive integer');
-  const duration = Number(duration_years?.value ?? duration_years);
-  if (!Number.isInteger(duration) || duration < 1) throw new Error('duration_years must be positive');
+  const start = Number(start_year_specifier?.value ?? start_year_specifier);
+  if (!Number.isInteger(start) || start < 1) throw new Error('start_year_specifier must be a positive integer');
+  const dur = Number(duration?.value ?? duration);
+  if (!Number.isInteger(dur) || dur < 1) throw new Error('duration must be positive');
   const normalizedPopulations = (populations ?? []).map((entry) => freeze({
     year_specifier: yearSpecifierValue(entry.year_specifier),
     sections: normalizeSections(entry.sections ?? [])
@@ -154,17 +154,17 @@ export function branchRule({ specialization_specifier, start_year, duration_year
   return freeze({
     type: Type.BRANCH_RULE,
     specialization_specifier: spec,
-    start_year: start,
-    duration_years: duration,
+    start_year_specifier: start,
+    duration: dur,
     populations: freeze(normalizedPopulations)
   });
 }
 
-export function branchSemesterFor({ year_specifier, branch_start_year, year_semester_specifier } = {}) {
+export function branchSemesterFor({ year_specifier, start_year_specifier, year_semester_specifier } = {}) {
   const year_semester = yearSemesterSpecifierValue(year_semester_specifier);
   const ys = Number(year_specifier?.value ?? year_specifier);
-  const bs = Number(branch_start_year?.value ?? branch_start_year);
-  if (!Number.isInteger(ys) || !Number.isInteger(bs) || ys < bs) throw new Error('Year specifier must not precede branch start');
+  const bs = Number(start_year_specifier?.value ?? start_year_specifier);
+  if (!Number.isInteger(ys) || !Number.isInteger(bs) || ys < bs) throw new Error('Year specifier must not precede start year specifier');
   return branchSemesterSpecifierValue(2 * (ys - bs) + year_semester.value);
 }
 
@@ -308,8 +308,8 @@ export class Catalogue {
       if (!this.specializationOwners.has(spec)) throw new Error(`Specialization has no owner: ${spec}`);
       this.branchRules.set(spec, {
         specialization_specifier: this._specializationSpecifierObjects.get(spec),
-        start_year: rule.start_year,
-        duration_years: rule.duration_years,
+        start_year_specifier: rule.start_year_specifier,
+        duration: rule.duration,
         populations: new Map(rule.populations.map((p) => [yearSpecifierValue(p.year_specifier).value, p]))
       });
     }
@@ -320,17 +320,17 @@ export class Catalogue {
 
   _buildCache() {
     if (this._cache) return this._cache;
-    const tracks = [];
+    const years = [];
     const branches = []; // common + specialization
     const classes = [];
 
-    // tracks
+    // years
     for (const [tsValue, rule] of this.trackRules) {
       const tsObj = this._trackSpecifierObjects.get(tsValue);
       for (const [ysValue, entry] of rule.years) {
         const ysObj = yearSpecifierValue(ysValue);
-        const t = track(this, { track_specifier: tsObj, year_specifier: ysObj });
-        tracks.push(t);
+        const y = year(this, { track_specifier: tsObj, year_specifier: ysObj });
+        years.push(y);
       }
     }
     // specialization branches: for each spec, for each year in duration, for each semester 1,2
@@ -338,7 +338,7 @@ export class Catalogue {
       const owner = this.specializationOwners.get(specValue);
       const tsObj = this._trackSpecifierObjects.get(owner);
       const specObj = this._specializationSpecifierObjects.get(specValue);
-      for (let y = br.start_year; y < br.start_year + br.duration_years; y++) {
+      for (let y = br.start_year_specifier; y < br.start_year_specifier + br.duration; y++) {
         // track year must be valid
         const trackRule = this.trackRules.get(owner);
         if (!trackRule || !trackRule.years.has(y)) continue;
@@ -357,7 +357,6 @@ export class Catalogue {
       const tsObj = this._trackSpecifierObjects.get(tsValue);
       for (const [ysValue, entry] of rule.years) {
         if (!entry.common) continue;
-        const t = track(this, { track_specifier: tsObj, year_specifier: yearSpecifierValue(ysValue) });
         const cb = commonBranch(this, { track_specifier: tsObj, year_specifier: yearSpecifierValue(ysValue) });
         branches.push(cb);
       }
@@ -367,14 +366,14 @@ export class Catalogue {
     // helper to get population sections for a branch at its year
     const populationSectionsFor = (b) => {
       if (b.type === Type.COMMON_BRANCH) {
-        const tsValue = b.track.track_specifier.value;
-        const ysValue = b.track.year_specifier.value;
+        const tsValue = b.year.track_specifier.value;
+        const ysValue = b.year.year_specifier.value;
         const entry = this.trackRules.get(tsValue)?.years.get(ysValue);
         return entry?.common ?? null;
       }
       // specialization
       const specValue = b.specialization_specifier.value;
-      const ysValue = b.track.year_specifier.value;
+      const ysValue = b.year.year_specifier.value;
       const br = this.branchRules.get(specValue);
       const pop = br?.populations.get(ysValue);
       return pop ? pop.sections : null;
@@ -398,23 +397,23 @@ export class Catalogue {
       }
     }
 
-    this._cache = { tracks, branches, classes };
+    this._cache = { years, branches, classes };
     return this._cache;
   }
 
-  get tracks() { return this._buildCache().tracks; }
+  get years() { return this._buildCache().years; }
   get branches() { return this._buildCache().branches; }
   get classes() { return this._buildCache().classes; }
 
   matches(parsed) {
-    const { tracks, branches, classes } = this._buildCache();
+    const { years, branches, classes } = this._buildCache();
     switch (parsed.type) {
       case Type.BRANCH_REFERENCE:
         return branches.filter((v) => v.identifier === parsed.branch.identifier);
       case Type.CLASS_REFERENCE:
         return classes.filter((v) => v.identifier === parsed.class.identifier);
-      case Type.TRACK_REFERENCE:
-        return tracks.filter((v) => v.identifier === parsed.track.identifier);
+      case Type.YEAR_REFERENCE:
+        return years.filter((v) => v.identifier === parsed.year.identifier);
       default:
         return [];
     }
@@ -470,14 +469,14 @@ export class Catalogue {
 
 // ---- Bottom-up constructors ----
 
-export function track(catalogue, { track_specifier, year_specifier } = {}) {
+export function year(catalogue, { track_specifier, year_specifier } = {}) {
   const ts = toTrackSpecifier(track_specifier);
   const ys = yearSpecifierValue(year_specifier);
   if (!catalogue.trackSpecifiers.has(ts.value)) throw new Error(`Unknown track specifier: ${ts.value}`);
   const rule = catalogue.trackRules.get(ts.value);
-  if (!rule || !rule.years.has(ys.value)) throw new Error(`Unsupported track year: ${ts.value}${ys.value}`);
+  if (!rule || !rule.years.has(ys.value)) throw new Error(`Unsupported year: ${ts.value}${ys.value}`);
   return freeze({
-    type: Type.TRACK,
+    type: Type.YEAR,
     track_specifier: ts,
     year_specifier: ys,
     identifier: `${ts.value}${ys.value}`
@@ -487,13 +486,13 @@ export function track(catalogue, { track_specifier, year_specifier } = {}) {
 export function commonBranch(catalogue, { track_specifier, year_specifier } = {}) {
   const ts = toTrackSpecifier(track_specifier);
   const ys = yearSpecifierValue(year_specifier);
-  const t = track(catalogue, { track_specifier: ts, year_specifier: ys });
+  const y = year(catalogue, { track_specifier: ts, year_specifier: ys });
   const entry = catalogue.trackRules.get(ts.value)?.years.get(ys.value);
   if (!entry || !entry.common) throw new Error(`No common branch for ${ts.value}${ys.value}`);
   return freeze({
     type: Type.COMMON_BRANCH,
-    track: t,
-    identifier: t.identifier
+    year: y,
+    identifier: y.identifier
   });
 }
 
@@ -507,16 +506,16 @@ export function branch(catalogue, { specialization_specifier, year_specifier, ye
   const yss = yearSemesterSpecifierValue(year_semester_specifier);
   const br = catalogue.branchRules.get(spec.value);
   if (!br) throw new Error(`No branch rule for: ${spec.value}`);
-  if (ys.value < br.start_year || ys.value >= br.start_year + br.duration_years) throw new Error(`Branch year outside duration: ${spec.value}`);
+  if (ys.value < br.start_year_specifier || ys.value >= br.start_year_specifier + br.duration) throw new Error(`Branch year specifier outside duration: ${spec.value}`);
   const trackRule = catalogue.trackRules.get(owner);
-  if (!trackRule || !trackRule.years.has(ys.value)) throw new Error(`Unsupported track year: ${owner}${ys.value}`);
-  const semester = branchSemesterFor({ year_specifier: ys.value, branch_start_year: br.start_year, year_semester_specifier: yss });
-  const t = track(catalogue, { track_specifier: trackSpecifier(owner), year_specifier: ys });
+  if (!trackRule || !trackRule.years.has(ys.value)) throw new Error(`Unsupported year: ${owner}${ys.value}`);
+  const semester = branchSemesterFor({ year_specifier: ys.value, start_year_specifier: br.start_year_specifier, year_semester_specifier: yss });
+  const y = year(catalogue, { track_specifier: trackSpecifier(owner), year_specifier: ys });
   return freeze({
     type: Type.SPECIALIZATION_BRANCH,
     specialization_specifier: spec,
     branch_semester_specifier: semester,
-    track: t,
+    year: y,
     identifier: `${spec.value}${semester.value}`
   });
 }
@@ -534,13 +533,13 @@ export function classPopulation(catalogue, { branch: branchValue, section_specif
   // determine population sections for this branch/year
   let sections = null;
   if (b.type === Type.COMMON_BRANCH) {
-    const tsValue = b.track.track_specifier.value;
-    const ysValue = b.track.year_specifier.value;
+    const tsValue = b.year.track_specifier.value;
+    const ysValue = b.year.year_specifier.value;
     const entry = catalogue.trackRules.get(tsValue)?.years.get(ysValue);
     sections = entry?.common ?? null;
   } else {
     const specValue = b.specialization_specifier.value;
-    const ysValue = b.track.year_specifier.value;
+    const ysValue = b.year.year_specifier.value;
     const br = catalogue.branchRules.get(specValue);
     const pop = br?.populations.get(ysValue);
     sections = pop ? pop.sections : null;
@@ -583,7 +582,7 @@ export function parseReference(input, options = {}) {
   const catalogue = options.catalogue ?? null;
   const commonTracks = catalogue ? new Set(catalogue.trackSpecifiers) : new Set(['LBC','LCE','LCS','MP']);
   const parsedOptions = { commonTracks, expected: options.expected };
-  if (options.expected !== undefined && !['track-specifier','specialization-specifier','track','branch','class'].includes(options.expected)) {
+  if (options.expected !== undefined && !['track-specifier','specialization-specifier','year','branch','class'].includes(options.expected)) {
     throw new Error(`Invalid expected reference type: ${options.expected}`);
   }
 
@@ -656,9 +655,9 @@ export function parseReference(input, options = {}) {
   if (parsedOptions.expected === 'class') {
     return classReference(value, classFromBranch(valueBranch));
   }
-  if (parsedOptions.expected === 'track') {
-    if (valueBranch.type !== Type.COMMON_BRANCH) return invalid(original, ['Expected a track reference, got a branch reference']);
-    return trackReference(value, valueBranch.track);
+  if (parsedOptions.expected === 'year') {
+    if (valueBranch.type !== Type.COMMON_BRANCH) return invalid(original, ['Expected a year reference, got a branch reference']);
+    return yearReference(value, valueBranch.year);
   }
   if (parsedOptions.expected === 'track-specifier' || parsedOptions.expected === 'specialization-specifier') {
     return invalid(original, [`Expected a ${parsedOptions.expected} reference, got a compound reference`]);
@@ -666,7 +665,7 @@ export function parseReference(input, options = {}) {
   if (parsedOptions.expected === 'branch') return branchReference(value, valueBranch);
   switch (valueBranch.type) {
     case Type.COMMON_BRANCH:
-      return trackReference(value, valueBranch.track);
+      return yearReference(value, valueBranch.year);
     default:
       return branchReference(value, valueBranch);
   }
@@ -695,19 +694,18 @@ function parseBranchTokens(tokens, options) {
       let semester = 1;
       if (catalogue) {
         const br = catalogue.branchRules.get(spec);
-        if (!br || year < br.start_year || year >= br.start_year + br.duration_years) return undefined;
-        semester = 2 * (year - br.start_year) + 1;
+        if (!br || year < br.start_year_specifier || year >= br.start_year_specifier + br.duration) return undefined;
+        semester = 2 * (year - br.start_year_specifier) + 1;
       }
       const tsObj = trackSpecifier(trackSpec);
       const specObj = specializationSpecifier(spec);
-      const t = { type: Type.TRACK, track_specifier: tsObj, year_specifier: yearSpecifier(year), identifier: `${trackSpec}${year}` };
-      // build specialization branch object directly (avoid requiring catalogue trackRule)
+      const y = { type: Type.YEAR, track_specifier: tsObj, year_specifier: yearSpecifier(year), identifier: `${trackSpec}${year}` };
       const branchSem = branchSemesterSpecifier(semester);
       return freeze({
         type: Type.SPECIALIZATION_BRANCH,
         specialization_specifier: specObj,
         branch_semester_specifier: branchSem,
-        track: t,
+        year: y,
         identifier: `${spec}${branchSem.value}`
       });
     }
@@ -717,7 +715,7 @@ function parseBranchTokens(tokens, options) {
     const specialization = tokens[1].match(/^([A-Z][A-Z0-9-]*)(\d+)$/);
     if (prefix && specialization && specialization[1].length > 1) {
       const trackSpec = prefix[1];
-      const year = Number(prefix[2]);
+      const yearNum = Number(prefix[2]);
       const spec = specialization[1];
       const semester = Number(specialization[2]);
       if (catalogue) {
@@ -726,23 +724,20 @@ function parseBranchTokens(tokens, options) {
         if (catalogue.specializationOwners.get(spec) !== trackSpec) return undefined;
         const br = catalogue.branchRules.get(spec);
         if (!br) return undefined;
-        // validate semester corresponds to some (year, yearSemester) in duration
-        // branch semester = 2*(year-start)+ys ; ys in {1,2}; so semester in {2*(year-start)+1, 2*(year-start)+2}
-        const base = 2 * (year - br.start_year);
+        const base = 2 * (yearNum - br.start_year_specifier);
         if (semester !== base + 1 && semester !== base + 2) return undefined;
-        if (year < br.start_year || year >= br.start_year + br.duration_years) return undefined;
+        if (yearNum < br.start_year_specifier || yearNum >= br.start_year_specifier + br.duration) return undefined;
         const trackRule = catalogue.trackRules.get(trackSpec);
-        if (!trackRule || !trackRule.years.has(year)) return undefined;
+        if (!trackRule || !trackRule.years.has(yearNum)) return undefined;
       }
       const tsObj = trackSpecifier(trackSpec);
-      const ysObj = yearSpecifier(year);
-      const t = { type: Type.TRACK, track_specifier: tsObj, year_specifier: ysObj, identifier: `${trackSpec}${year}` };
-      // Note: track object here is a plain track; but constructor track() validates. For parsing we keep plain (resolution validates via catalogue match).
+      const ysObj = yearSpecifier(yearNum);
+      const y = { type: Type.YEAR, track_specifier: tsObj, year_specifier: ysObj, identifier: `${trackSpec}${yearNum}` };
       return freeze({
         type: Type.SPECIALIZATION_BRANCH,
         specialization_specifier: specializationSpecifier(spec),
         branch_semester_specifier: branchSemesterSpecifier(semester),
-        track: t,
+        year: y,
         identifier: `${spec}${semester}`
       });
     }
@@ -752,25 +747,25 @@ function parseBranchTokens(tokens, options) {
   const match = tokens[0].match(/^([A-Z][A-Z0-9-]*)(\d+)$/);
   if (!match) return undefined;
   const tag = match[1];
-  const year = Number(match[2]);
+  const yearNum = Number(match[2]);
   // compact specialization branch form: specialization specifier + branch semester
   if (catalogue && catalogue.specializationSpecifiers.has(tag)) {
     const br = catalogue.branchRules.get(tag);
     if (br) {
-      const trackYear = br.start_year + Math.floor((year - 1) / 2);
-      if (trackYear >= br.start_year && trackYear < br.start_year + br.duration_years) {
+      const trackYear = br.start_year_specifier + Math.floor((yearNum - 1) / 2);
+      if (trackYear >= br.start_year_specifier && trackYear < br.start_year_specifier + br.duration) {
         const owner = catalogue.specializationOwners.get(tag);
         const trackRule = catalogue.trackRules.get(owner);
         if (trackRule && trackRule.years.has(trackYear)) {
           const tsObj = trackSpecifier(owner);
           const ysObj = yearSpecifier(trackYear);
-          const t = { type: Type.TRACK, track_specifier: tsObj, year_specifier: ysObj, identifier: `${owner}${trackYear}` };
+          const y = { type: Type.YEAR, track_specifier: tsObj, year_specifier: ysObj, identifier: `${owner}${trackYear}` };
           return freeze({
             type: Type.SPECIALIZATION_BRANCH,
             specialization_specifier: specializationSpecifier(tag),
-            branch_semester_specifier: branchSemesterSpecifier(year),
-            track: t,
-            identifier: `${tag}${year}`
+            branch_semester_specifier: branchSemesterSpecifier(yearNum),
+            year: y,
+            identifier: `${tag}${yearNum}`
           });
         }
       }
@@ -778,21 +773,21 @@ function parseBranchTokens(tokens, options) {
     return undefined;
   }
   if (commonTracks.has(tag)) {
-    // common branch / track
+    // common branch / year
     if (catalogue && !catalogue.trackSpecifiers.has(tag)) return undefined;
     if (catalogue) {
       const trackRule = catalogue.trackRules.get(tag);
-      if (!trackRule || !trackRule.years.has(year)) return undefined;
-      const entry = trackRule.years.get(year);
+      if (!trackRule || !trackRule.years.has(yearNum)) return undefined;
+      const entry = trackRule.years.get(yearNum);
       if (!entry || !entry.common) return undefined;
     }
     const tsObj = trackSpecifier(tag);
-    const ysObj = yearSpecifier(year);
-    const t = { type: Type.TRACK, track_specifier: tsObj, year_specifier: ysObj, identifier: `${tag}${year}` };
+    const ysObj = yearSpecifier(yearNum);
+    const y = { type: Type.YEAR, track_specifier: tsObj, year_specifier: ysObj, identifier: `${tag}${yearNum}` };
     return freeze({
       type: Type.COMMON_BRANCH,
-      track: t,
-      identifier: t.identifier
+      year: y,
+      identifier: y.identifier
     });
   }
   // unknown single token with digits: rejected (no sectionless fallback)
@@ -832,8 +827,8 @@ function trackSpecifierReference(notation, value) {
 function specializationSpecifierReference(notation, value) {
   return freeze({ type: Type.SPECIALIZATION_SPECIFIER_REFERENCE, notation, specialization_specifier: value });
 }
-function trackReference(notation, value) {
-  return freeze({ type: Type.TRACK_REFERENCE, notation, track: value });
+function yearReference(notation, value) {
+  return freeze({ type: Type.YEAR_REFERENCE, notation, year: value });
 }
 function branchReference(notation, value) {
   return freeze({ type: Type.BRANCH_REFERENCE, notation, branch: value });

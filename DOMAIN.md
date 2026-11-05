@@ -18,7 +18,7 @@ The model uses **specifiers** as primitive abstractions. A specifier is not
 intended to stand alone as a complete domain object; it complements another
 specifier or object and further specifies it. The model is therefore built
 bottom up: an abstract track specifier and a year specifier combine to form a
-concrete track. This gives the concrete object the shorter, more frequently
+concrete year. This gives the concrete object the shorter, more frequently
 used name while retaining explicit names for the reusable parts.
 
 The model uses both generic and level-specific terms. A generic term can refer
@@ -61,45 +61,45 @@ represent it.
 ## Track specifier
 
 **Relational definition.** A track specifier is the reusable designation of a
-degree family. It combines with a year specifier to form a track. It is not a
-complete track object by itself.
+degree family. It combines with a year specifier to form a year. It is not a
+complete year object by itself.
 
 **Editorial definition.** A track specifier is a tag such as `LBC`, `LCE`,
 `LCS`, or `MP` that identifies the broad field of study without selecting a
-year.
+year specifier.
 
 **Alternative terms.** track tag; degree-family specifier.
-specifier.
 
 ## Year specifier
 
 **Relational definition.** A year specifier is the reusable numeric designation
-of a year within a track. It combines with a track specifier to form a
-concrete track. It is not a branch-semester specifier.
+of a year level within a degree family. It combines with a track specifier to form a
+concrete year. It is not a branch-semester specifier.
 
 **Editorial definition.** A year specifier is a value such as `1`, `2`, or `3`
 that identifies the year of study once coupled with a track specifier.
 
 **Alternative terms.** year number; study-year specifier; level specifier.
 
-## Track
+## Year
 
-**Relational definition.** A track couples a track specifier and a year
+**Relational definition.** A year couples a track specifier and a year
 specifier. It is the concrete level-specific object written as `LCS1`,
-`LCS2`, or `MP1`. A common branch is formed directly from a track; a track
+`LCS2`, or `MP1`. A common branch is formed directly from a year; a year
 may also prefix non-common branches that begin at that level.
 
-**Editorial definition.** A track identifies a degree family at one year of
-study. The name `track` is reserved for this frequently used concrete object;
+**Editorial definition.** A year identifies a degree family at one year of
+study. The name `year` is reserved for this frequently used concrete object;
 the abstract family is called a track specifier.
 
-**Alternative terms.** track level; level-specific track; degree-family level.
+**Alternative terms.** year level; degree-family year; level-specific year.
+Deprecated alternative term: track.
 
 ## Branch semester
 
 **Relational definition.** A branch semester is the semester position of a
 non-common branch within its progression. Its number is counted from the
-branch's starting point, not from the track's year specifier. It is the semester
+branch's starting point, not from the year's year specifier. It is the semester
 number included in the branch's canonical identity and compact notation.
 
 **Editorial definition.** A branch semester is a curriculum position such
@@ -107,7 +107,7 @@ as semester `1` or semester `3` for the non-common branch `GLSI3`. It is
 calculated from the branch's starting point recorded in the catalogue and the
 implicit current-semester context:
 
-`branchSemester = 2 * (yearSpecifier - start) + YEAR_SEMESTER`
+`branchSemester = 2 * (yearSpecifier - start_year_specifier) + YEAR_SEMESTER`
 
 **Alternative terms.** semester of study; branch progression semester.
 
@@ -116,7 +116,7 @@ implicit current-semester context:
 **Relational definition.** A branch-semester specifier is the numeric
 component attached to a non-common branch in compact notation. It identifies
 the branch's semester and is distinct from the year specifier
-attached to a track. In `GLSI3`, the `3` is counted from the start of GLSI.
+attached to a year. In `GLSI3`, the `3` is counted from the start of GLSI.
 
 **Editorial definition.** A branch-semester specifier is the digit in a
 compact name such as the `3` in `GLSI3`. It means the third semester counted
@@ -135,14 +135,14 @@ calculating branch-semester specifiers and interpreting source labels such as
 explicit input to calculations rather than a property repeated on every class
 or session.
 
-**Alternative terms.** year half; semester within year.
+**Alternative terms.** semester within year; study half-year.
 
 ## Branch
 
 **Relational definition.** A branch is an explicit curricular object in the
-catalogue that prefixes classes. A common branch consists of a track and year
-specifier, such as `LCS1`. A non-common branch is canonically identified by a
-specialization identifier/name/branch name and the branch-semester number
+catalogue that prefixes classes. A common branch consists of a year (the couple of a
+track specifier and year specifier), such as `LCS1`. A non-common branch is canonically
+identified by a specialization identifier/name/branch name and the branch-semester number
 counted from the start of that specialization, such as `GLSI3`. Its more
 verbose notation may make the implied prefix explicit, such as `LCS3 GLSI3`.
 A branch is not
@@ -393,8 +393,8 @@ combined in this model when the reference resolves one-to-one.
 ## Branch identifier
 
 **Relational definition.** A branch identifier is the canonical identifier of
-a branch object. A common branch is written from a track and year specifier,
-such as `LCS1`. A non-common branch is written from a specialization
+a branch object. A common branch is written from a year (track specifier and
+year specifier), such as `LCS1`. A non-common branch is written from a specialization
 specifier and branch-semester specifier, such as `GLSI3`; its verbose form
 may make the prefix explicit, as in `LCS3 GLSI3`.
 
@@ -474,16 +474,16 @@ normalized timetable data contains the referenced element.
 
 ## Catalogue
 
-**Relational definition.** The catalogue describes the available tracks and
-branches and the class populations associated with them through sections and
-cohorts. It is not itself treated as a hierarchy of domain objects. Its
-structure is fixed by the model, while its field values are populated by a
-union of raw timetable evidence and editorial corrections, normalization, or
-additions.
+**Relational definition.** The catalogue describes the available track specifiers,
+specializations, years, and branches, and the class populations associated with
+them through sections and cohorts. It is not itself treated as a hierarchy of
+domain objects. Its structure is fixed by the model, while its field values are
+populated by a union of raw timetable evidence and editorial corrections,
+normalization, or additions.
 
 **Editorial definition.** The catalogue is the maintained description of known
-tracks, branches, and class populations, expressed as a finite grammar of
-specifiers and relationships. It contains no concrete tracks, branches, or
+track specifiers, years, branches, and class populations, expressed as a finite
+grammar of specifiers and relationships. It contains no concrete years, branches, or
 classes; those are derived. It may contain branches or classes absent from
 the current timetable publication.
 

@@ -24,7 +24,7 @@ catalogue entry are normal query outcomes.
 ## Catalogue as grammar
 
 The `Catalogue` is a finite typed grammar. It contains only specifiers and
-relationships; it does not contain concrete tracks, branches, classes, or
+relationships; it does not contain concrete years, branches, classes, or
 sessions. Concrete objects are derived bottom-up under the catalogue's
 supervision.
 
@@ -43,14 +43,16 @@ this directory (see `data/catalogue.js`).
 ```js
 trackRule({ track_specifier, years: [{ year_specifier, common }] });
 specializationRule({ specialization_specifier, track_specifier });
-branchRule({ specialization_specifier, start_year, duration_years, populations: [populationsForYear({ year_specifier, sections })] });
+branchRule({ specialization_specifier, start_year_specifier, duration, populations: [populationsForYear({ year_specifier, sections })] });
 ```
 
-- `trackRule`: declares valid track years and, per year, the common-branch
-  population shape (`common: null` means no common branch that year).
+- `trackRule`: declares valid year specifiers for a track specifier and, per
+  year specifier, the common-branch population shape (`common: null` means no
+  common branch for that year).
 - `specializationRule`: declares which track specifier owns a specialization.
-- `branchRule`: declares when a specialization branch is studied and which
-  populations each year permits.
+- `branchRule`: declares the `start_year_specifier` where a specialization
+  branch begins, its `duration` (count of consecutive year specifiers), and
+  which populations each year specifier permits.
 
 Section population helpers:
 
@@ -60,21 +62,21 @@ sectionsWithNoCohorts('A', 'B');
 // singleton class population: []
 ```
 
-## Tracks, branches, classes
+## Years, branches, classes
 
 Constructors receive the catalogue and validate against the grammar:
 
 ```js
-const t = track(catalogue, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(3) });
+const y = year(catalogue, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(3) });
 const cb = commonBranch(catalogue, { track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1) });
 const b = branch(catalogue, { specialization_specifier: specializationSpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
 const cls = classPopulation(catalogue, { branch: b, section_specifier: 'A', cohort_specifier: 1 });
 ```
 
-- `track` validates the track specifier and year against `trackRule`.
-- `commonBranch` requires a common-branch publication for that track/year.
-- `branch` derives the owning track and branch semester; rejects years outside
-  the declared duration.
+- `year` validates the couple of a track specifier and year specifier against `trackRule`.
+- `commonBranch` requires a common-branch publication for that year.
+- `branch` derives the owning track specifier, forms its concrete prefix `year`,
+  and derives the branch semester; rejects year specifiers outside the declared duration.
 - `classPopulation` derives the allowed population shape from the branch/year
   rule; cohorts are only allowed for cohort-partitioned sections.
 
@@ -90,6 +92,7 @@ specifiers at parse time:
 ```js
 parseReference('GLSI3', { catalogue });
 parseReference('LCS1 A2', { catalogue, expected: 'class' });
+parseReference('LCS2', { catalogue, expected: 'year' });
 ```
 
 ## Resolution
@@ -109,12 +112,12 @@ Returns `INVALID_RESOLUTION`, `NOT_FOUND`, `UNIQUE_MATCH`, or
 ## Generation
 
 ```js
-catalogue.generateTracks();
+catalogue.generateYears();
 catalogue.generateBranches();
 catalogue.generateClasses();
 ```
 
-Available as `catalogue.tracks`, `catalogue.branches`, `catalogue.classes`.
+Available as `catalogue.years`, `catalogue.branches`, `catalogue.classes`.
 
 ## Testing
 
