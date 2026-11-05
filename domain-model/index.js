@@ -14,7 +14,6 @@ export const Type = Object.freeze({
   BRANCH_SEMESTER_SPECIFIER: Symbol('branch-semester-specifier'),
   SECTION_SPECIFIER: Symbol('section-specifier'),
   COHORT_SPECIFIER: Symbol('cohort-specifier'),
-  BRANCH_DURATION: Symbol('branch-duration'),
   TRACK: Symbol('track'),
   COMMON_BRANCH: Symbol('common-branch'),
   SPECIALIZATION_BRANCH: Symbol('specialization-branch'),
@@ -100,33 +99,17 @@ export function branchSemesterSpecifier(value) { return branchSemesterSpecifierV
 export function sectionSpecifier(value) { return sectionSpecifierValue(value); }
 export function cohortSpecifier(value) { return cohortSpecifierValue(value); }
 
-export function branchDuration(value) {
-  const number = Number(value?.value ?? value);
-  if (!Number.isInteger(number) || number < 1) throw new Error('Branch duration must be positive');
-  return freeze({ type: Type.BRANCH_DURATION, value: number });
-}
-
 export const twoCohorts = 'two-cohorts';
 export const noCohorts = 'no-cohorts';
 
-export function sectionRule({ section_specifier, cohorting = noCohorts } = {}) {
-  const spec = sectionSpecifierValue(section_specifier);
-  if (cohorting !== twoCohorts && cohorting !== noCohorts) throw new Error('Invalid cohorting mode');
-  return freeze({ section_specifier: spec, cohorting });
-}
-
 function normalizeSections(sections) {
   if (sections == null) return null;
-  if (sections === noSectionsMarker) return [];
   return freeze(sections.map((item) => {
     if (item?.section_specifier) return freeze({ section_specifier: sectionSpecifierValue(item.section_specifier), cohorting: item.cohorting === twoCohorts ? twoCohorts : noCohorts });
     // allow shorthand strings
     return freeze({ section_specifier: sectionSpecifierValue(item), cohorting: noCohorts });
   }));
 }
-const noSectionsMarker = Symbol('no-sections');
-export function noSections() { return []; }
-
 export function sectionsWithTwoCohorts(...letters) {
   return letters.map((letter) => ({ section_specifier: sectionSpecifier(letter), cohorting: twoCohorts }));
 }
@@ -141,20 +124,12 @@ export function populationsForYear({ year_specifier, sections } = {}) {
   });
 }
 
-export function trackRule({ track_specifier, year_specifiers, years } = {}) {
+export function trackRule({ track_specifier, years } = {}) {
   const ts = trackSpecifierValue(track_specifier);
-  let normalizedYears;
-  if (years) {
-    normalizedYears = years.map((entry) => freeze({
-      year_specifier: yearSpecifierValue(entry.year_specifier),
-      common: entry.common == null ? null : normalizeSections(entry.common)
-    }));
-  } else {
-    normalizedYears = (year_specifiers ?? []).map((ys) => freeze({
-      year_specifier: yearSpecifierValue(ys),
-      common: null
-    }));
-  }
+  const normalizedYears = (years ?? []).map((entry) => freeze({
+    year_specifier: yearSpecifierValue(entry.year_specifier),
+    common: entry.common == null ? null : normalizeSections(entry.common)
+  }));
   return freeze({ type: Type.TRACK_RULE, track_specifier: ts, years: freeze(normalizedYears) });
 }
 
@@ -286,16 +261,6 @@ export function sessionSpecifier(fields = {}) {
 }
 
 // ---- Catalogue ----
-
-function specifierValue(v) {
-  if (v?.type === Type.TRACK_SPECIFIER || v?.type === Type.SPECIALIZATION_SPECIFIER) return v;
-  // accept strings
-  if (typeof v === 'string') {
-    // guess: uppercase; if known? default track specifier heuristic
-    return null;
-  }
-  return v;
-}
 
 function toTrackSpecifier(v) {
   if (v?.type === Type.TRACK_SPECIFIER) return v;
@@ -968,7 +933,7 @@ function publicationRecords(records, syntax, catalogue) {
 // ---- query helpers ----
 
 export function queryBranches(catalogue, predicate = () => true) {
-  return (catalogue.branches ?? catalogue).filter ? (catalogue.branches ?? []).filter(predicate) : [];
+  return catalogue.branches.filter(predicate);
 }
 export function queryClasses(catalogue, predicate = () => true) {
   return (catalogue.classes ?? []).filter(predicate);

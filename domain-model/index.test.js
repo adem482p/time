@@ -8,7 +8,7 @@ import {
   track, commonBranch, branch, classPopulation,
   parseReference, populationReference, sessionKind, sessionSpecifier,
   weekPatternSpecifier, fromCsvRecord, branchSemesterFor,
-  branchDuration, twoCohorts, noCohorts, sectionsWithTwoCohorts, sectionsWithNoCohorts, noSections,
+  twoCohorts, noCohorts, sectionsWithTwoCohorts, sectionsWithNoCohorts,
   populationsForYear, trackRule, specializationRule, branchRule,
   queryBranches, queryClasses, queryRecords,
   Catalogue

@@ -57,7 +57,7 @@ Section population helpers:
 ```js
 sectionsWithTwoCohorts('A', 'B', 'C');
 sectionsWithNoCohorts('A', 'B');
-noSections(); // singleton class population
+// singleton class population: []
 ```
 
 ## Tracks, branches, classes
