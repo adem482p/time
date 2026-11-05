@@ -1,6 +1,6 @@
 import {
   trackSpecifier, yearSpecifier, specializationSpecifier,
-  commonBranchRule, branchRule,
+  commonBranchRule, specializationBranchRule,
   populationsForYear, sectionsWithTwoCohorts, sectionsWithNoCohorts,
   Catalogue
 } from './index.js';
@@ -28,34 +28,34 @@ export function createCatalogue(records = []) {
     specializationSpecifiers: [bi, eb, iot, irs, glsi, exr, sd],
     branchRules: [
       // LBC branches: BI starts at year 2 (semester 3), lasts 4 semesters
-      branchRule({ specialization_specifier: bi, track_specifier: lbc, start_year_specifier: 2, duration_semesters: 4, populations: [
+      specializationBranchRule({ specialization_specifier: bi, track_specifier: lbc, start_year_specifier: 2, duration_semesters: 4, populations: [
         populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B','C','D','E','F') }),
         populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B','C','D') })
       ]}),
       // EB starts at year 3 (semester 5), lasts 2 semesters
-      branchRule({ specialization_specifier: eb, track_specifier: lbc, start_year_specifier: 3, duration_semesters: 2, populations: [
+      specializationBranchRule({ specialization_specifier: eb, track_specifier: lbc, start_year_specifier: 3, duration_semesters: 2, populations: [
         populationsForYear({ year_specifier: y3, sections: sectionsWithNoCohorts('A') })
       ]}),
       // LCE branches: IoT & IRS start at year 2 (semester 3), last 4 semesters
-      branchRule({ specialization_specifier: iot, track_specifier: lce, start_year_specifier: 2, duration_semesters: 4, populations: [
+      specializationBranchRule({ specialization_specifier: iot, track_specifier: lce, start_year_specifier: 2, duration_semesters: 4, populations: [
         populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B') }),
         populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B') })
       ]}),
-      branchRule({ specialization_specifier: irs, track_specifier: lce, start_year_specifier: 2, duration_semesters: 4, populations: [
+      specializationBranchRule({ specialization_specifier: irs, track_specifier: lce, start_year_specifier: 2, duration_semesters: 4, populations: [
         populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B') }),
         populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B') })
       ]}),
       // LCS branch: GLSI starts at year 2 (semester 3), lasts exactly 3 semesters (GLSI3, GLSI4, GLSI5 - sem 6 is PFE)
-      branchRule({ specialization_specifier: glsi, track_specifier: lcs, start_year_specifier: 2, duration_semesters: 3, populations: [
+      specializationBranchRule({ specialization_specifier: glsi, track_specifier: lcs, start_year_specifier: 2, duration_semesters: 3, populations: [
         populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B','C','D') }),
         populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B','C','D') })
       ]}),
       // MP branches: EXR & SD start at year 1 (semester 1), last 3 semesters (courses during S1, S2, S3 - S4 is master thesis)
-      branchRule({ specialization_specifier: exr, track_specifier: mp, start_year_specifier: 1, duration_semesters: 3, populations: [
+      specializationBranchRule({ specialization_specifier: exr, track_specifier: mp, start_year_specifier: 1, duration_semesters: 3, populations: [
         populationsForYear({ year_specifier: y1, sections: [] }),
         populationsForYear({ year_specifier: y2, sections: [] })
       ]}),
-      branchRule({ specialization_specifier: sd, track_specifier: mp, start_year_specifier: 1, duration_semesters: 3, populations: [
+      specializationBranchRule({ specialization_specifier: sd, track_specifier: mp, start_year_specifier: 1, duration_semesters: 3, populations: [
         populationsForYear({ year_specifier: y1, sections: [] }),
         populationsForYear({ year_specifier: y2, sections: sectionsWithNoCohorts('A','B') })
       ]})

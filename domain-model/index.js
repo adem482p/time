@@ -41,7 +41,7 @@ export const Type = Object.freeze({
   NO_RECORDS: Symbol('no-records'),
   RECORDS: Symbol('records'),
   COMMON_BRANCH_RULE: Symbol('common-branch-rule'),
-  BRANCH_RULE: Symbol('branch-rule')
+  SPECIALIZATION_BRANCH_RULE: Symbol('specialization-branch-rule')
 });
 
 const freeze = (value) => Object.freeze(value);
@@ -134,7 +134,7 @@ export function commonBranchRule({ track_specifier, year_specifier, sections } =
   });
 }
 
-export function branchRule({
+export function specializationBranchRule({
   specialization_specifier,
   track_specifier,
   start_year_specifier,
@@ -152,7 +152,7 @@ export function branchRule({
     sections: normalizeSections(entry.sections ?? [])
   }));
   return freeze({
-    type: Type.BRANCH_RULE,
+    type: Type.SPECIALIZATION_BRANCH_RULE,
     specialization_specifier: spec,
     track_specifier: trackSpec,
     start_year_specifier: startYear,
@@ -202,7 +202,7 @@ export function sessionKind(value) {
 
 export { SESSION_KIND_SCOPES };
 
-function populationForParsed(parsed, sessionKindValue, catalogue) {
+function populationForParsed(parsed, sessionKindValue) {
   if (parsed.type === Type.INVALID_REFERENCE) throw new Error(parsed.diagnostics.join('; '));
   const scope = sessionKindValue ? SESSION_KIND_SCOPES[sessionKind(sessionKindValue)] : undefined;
   switch (scope) {
@@ -235,10 +235,18 @@ function populationForParsed(parsed, sessionKindValue, catalogue) {
   }
 }
 
+function inferExpectedReference(reference) {
+  const value = clean(reference).toUpperCase();
+  return value.includes(' ') || /^[A-Z][A-Z0-9-]*\d+[A-Z]+\d*$/.test(value) ? 'class' : 'branch';
+}
+
 export function populationReference({ reference, session_kind, catalogue } = {}) {
-  const expected = !session_kind || SESSION_KIND_SCOPES[sessionKind(session_kind)] === 'branch'
+  const scope = session_kind ? SESSION_KIND_SCOPES[sessionKind(session_kind)] : undefined;
+  const expected = scope === 'branch'
     ? 'branch'
-    : 'class';
+    : scope === 'section' || scope === 'cohort'
+      ? 'class'
+      : inferExpectedReference(reference);
   const parsed = typeof reference === 'string' ? parseReference(reference, { catalogue, expected }) : reference;
   return populationForParsed(parsed, session_kind);
 }
@@ -486,14 +494,9 @@ export class Catalogue {
   }
 
   resolve(input, options = {}) {
-    const normalizedInput = clean(input).toUpperCase();
-    const inferredExpected = normalizedInput.includes(' ') ||
-      /^[A-Z][A-Z0-9-]*\d+[A-Z]+\d*$/.test(normalizedInput)
-      ? 'class'
-      : 'branch';
     const syntax = parseReference(input, {
       catalogue: this,
-      expected: options.expected ?? inferredExpected
+      expected: options.expected ?? inferExpectedReference(input)
     });
     if (syntax.type === Type.INVALID_REFERENCE) {
       return freeze({
@@ -663,31 +666,23 @@ export function parseReference(input, options = {}) {
   if (!value) return invalid(original, ['Reference is empty']);
   const catalogue = options.catalogue ?? null;
   const commonTracks = catalogue ? new Set(catalogue.trackSpecifiers) : new Set(['LBC','LCE','LCS','MP']);
-  const parsedOptions = { commonTracks, expected: options.expected };
-  if (options.expected !== undefined && !['track-specifier','specialization-specifier','year','branch','class'].includes(options.expected)) {
-    throw new Error(`Invalid expected reference type: ${options.expected}`);
+  const expected = options.expected;
+  if (expected !== undefined && !['track-specifier','specialization-specifier','year','branch','class'].includes(expected)) {
+    throw new Error(`Invalid expected reference type: ${expected}`);
   }
-
-  // validate catalogue-awareness helpers
-  const isKnownTrackSpec = (tag) => !catalogue || catalogue.trackSpecifiers.has(tag);
-  const isKnownSpecSpec = (tag) => !catalogue || catalogue.specializationSpecifiers.has(tag);
 
   const simpleSpecifier = value.match(/^[A-Z][A-Z-]*$/);
   if (simpleSpecifier) {
     const tag = simpleSpecifier[0];
-    if (parsedOptions.expected === 'track-specifier' || (parsedOptions.expected === undefined && commonTracks.has(tag))) {
+    if (expected === 'track-specifier' || (expected === undefined && commonTracks.has(tag))) {
       if (catalogue && !catalogue.trackSpecifiers.has(tag)) return invalid(original, [`Unknown track specifier: ${tag}`]);
       return trackSpecifierReference(value, trackSpecifierValue(tag));
     }
-    if (parsedOptions.expected === 'specialization-specifier' || parsedOptions.expected === undefined) {
-      if (catalogue && !catalogue.specializationSpecifiers.has(tag)) {
-        // could be a track specifier known? if expected undefined and tag known track, already handled above only if commonTracks; for unknown common, fall through? Reject.
-      }
-      // if catalogue and tag is a known track specifier but expected undefined, we already didn't take track branch because commonTracks? Actually commonTracks==trackSpecifiers when catalogue. So known track specifier would have been taken above. So here tag is not a known track specifier.
+    if (expected === 'specialization-specifier' || expected === undefined) {
       if (catalogue && !catalogue.specializationSpecifiers.has(tag)) return invalid(original, [`Unknown specifier: ${tag}`]);
       return specializationSpecifierReference(value, specializationSpecifierValue(tag));
     }
-    return invalid(original, [`Expected a ${parsedOptions.expected} reference, got a specifier reference`]);
+    return invalid(original, [`Expected a ${expected} reference, got a specifier reference`]);
   }
 
   // compact notation GLSI3A2
@@ -701,7 +696,7 @@ export function parseReference(input, options = {}) {
       tokens[1].match(/^([A-Z][A-Z0-9-]*)\d+$/)[1].length > 1) {
     const valueBranch = parseBranchTokens(tokens, { catalogue, commonTracks });
     if (!valueBranch) return invalid(original, ['Malformed branch reference']);
-    if (parsedOptions.expected === 'class') return invalid(original, ['Expected a class reference, got a branch reference']);
+    if (expected === 'class') return invalid(original, ['Expected a class reference, got a branch reference']);
     return branchReference(value, valueBranch);
   }
 
@@ -731,20 +726,20 @@ export function parseReference(input, options = {}) {
   const valueBranch = parseBranchTokens(branchTokens, { catalogue, commonTracks });
   if (!valueBranch) return invalid(original, ['Malformed branch or class reference']);
   if (sectionValue !== undefined) {
-    if (parsedOptions.expected === 'branch') return invalid(original, ['Expected a branch reference, got a class reference']);
+    if (expected === 'branch') return invalid(original, ['Expected a branch reference, got a class reference']);
     return classReference(value, classFromBranch(valueBranch, sectionValue, cohortValue));
   }
-  if (parsedOptions.expected === 'class') {
+  if (expected === 'class') {
     return classReference(value, classFromBranch(valueBranch));
   }
-  if (parsedOptions.expected === 'year') {
+  if (expected === 'year') {
     if (valueBranch.type !== Type.COMMON_BRANCH) return invalid(original, ['Expected a year reference, got a branch reference']);
     return yearReference(value, valueBranch.year);
   }
-  if (parsedOptions.expected === 'track-specifier' || parsedOptions.expected === 'specialization-specifier') {
-    return invalid(original, [`Expected a ${parsedOptions.expected} reference, got a compound reference`]);
+  if (expected === 'track-specifier' || expected === 'specialization-specifier') {
+    return invalid(original, [`Expected a ${expected} reference, got a compound reference`]);
   }
-  if (parsedOptions.expected === 'branch') return branchReference(value, valueBranch);
+  if (expected === 'branch') return branchReference(value, valueBranch);
   switch (valueBranch.type) {
     case Type.COMMON_BRANCH:
       return yearReference(value, valueBranch.year);
@@ -768,10 +763,6 @@ function parseBranchTokens(tokens, options) {
         if (!catalogue.specializationSpecifiers.has(spec)) return undefined;
         const br = catalogue.branchRules.get(spec);
         if (!br || br.track_specifier.value !== trackSpec) return undefined;
-      } else {
-        if (!commonTracks.has(trackSpec) && trackSpec.length <= 3) {
-          // permissive fallback
-        }
       }
       // derive branch semester at year, semester 1
       let semester = 1;
@@ -936,6 +927,49 @@ function provenance(record) {
   return freeze({ type: Type.PROVENANCE, source: record.source, color: record.color });
 }
 
+// Publication notation, e.g. `LBC2-BI_A Groupe 1`, `LBC1-A`, `MP1-EXR`.
+// Returns the canonical reference, or null when the field is not in that shape.
+function sourceFieldReference(field, catalogue) {
+  const matched = clean(field).toUpperCase().match(
+    /^([A-Z][A-Z0-9-]*?)(\d+)-(.+?)(?:\s+GROUPE\s+(\d+))?$/
+  );
+  if (!matched) return null;
+  const [, track, yearText, rest] = matched;
+  const cohort = matched[4];
+  const parts = rest.match(/^(?:([A-Z][A-Z0-9-]*)_)?([A-Z]+)$/);
+  if (!parts) return null;
+  let specification = parts[1];
+  let section = parts[2];
+  if (specification === undefined) {
+    const rule = catalogue.branchRules.get(rest);
+    if (rule && rule.track_specifier.value === track) {
+      specification = rest;
+      section = undefined;
+    }
+  }
+  const year = Number(yearText);
+  const branchIdentifier = specification === undefined
+    ? commonBranch(catalogue, { track_specifier: track, year_specifier: year }).identifier
+    : branch(catalogue, {
+      specialization_specifier: specification,
+      year_specifier: year,
+      year_semester_specifier: 1
+    }).identifier;
+  return section === undefined ? branchIdentifier : `${branchIdentifier} ${section}${cohort ?? ''}`;
+}
+
+function csvFieldReference(field, catalogue) {
+  if (catalogue) {
+    const source = sourceFieldReference(field, catalogue);
+    if (source) return source;
+  }
+  const singletonNotation = /^[A-Z][A-Z0-9-]*\d+-[A-Z][A-Z-]*$/i.test(field);
+  const normalizedField = (singletonNotation ? field : field.replace(/-([A-Z])/, ' $1'))
+    .replace(/\s+GROUPE\s+/i, ' ');
+  const match = normalizedField.match(/^(.+?)\s+([A-Z]+)(?:\s+(\d+))?$/);
+  return match ? `${match[1]} ${match[2]}${match[3] ?? ''}` : normalizedField;
+}
+
 export function fromCsvRecord(record, { catalogue } = {}) {
   const raw = csvRecord(record);
   const errors = [];
@@ -945,20 +979,13 @@ export function fromCsvRecord(record, { catalogue } = {}) {
   let population;
   let reference = raw.field;
   if (raw.field) {
-    const singletonNotation = /^[A-Z][A-Z0-9-]*\d+-[A-Z][A-Z-]*$/i.test(raw.field);
-    const normalizedField = (singletonNotation ? raw.field : raw.field.replace(/-([A-Z])/, ' $1'))
-      .replace(/\s+GROUPE\s+/i, ' ');
-    const match = normalizedField.match(/^(.+?)\s+([A-Z]+)(?:\s+(\d+))?$/);
-    reference = match ? `${match[1]} ${match[2]}${match[3] ?? ''}` : normalizedField;
     try {
-      population = populationReference({ reference: parseReference(reference, { catalogue, expected: reference.includes(' ') ? 'class' : 'branch' }), session_kind: undefined });
-      // populationReference without session_kind derives from reference shape
+      reference = csvFieldReference(raw.field, catalogue);
+      population = populationReference({ reference, catalogue, session_kind: undefined });
     } catch (error) {
       errors.push(error.message);
     }
-    // If parseReference returned invalid, populationReference throws? It receives a parsed object; check.
   }
-  // Actually populationReference expects reference string or parsed; passing parsed object is okay (populationForParsed handles parsed). But if parsed invalid, populationForParsed throws. Good.
   try {
     weekPatternSpecifier(raw.week);
   } catch (error) {

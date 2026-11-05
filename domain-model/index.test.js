@@ -9,7 +9,7 @@ import {
   parseReference, populationReference, sessionKind, sessionSpecifier,
   weekPatternSpecifier, fromCsvRecord, branchSemesterFor,
   twoCohorts, noCohorts, sectionsWithTwoCohorts, sectionsWithNoCohorts,
-  populationsForYear, commonBranchRule, branchRule,
+  populationsForYear, commonBranchRule, specializationBranchRule,
   queryBranches, queryClasses, queryRecords,
   Catalogue
 } from './index.js';
@@ -20,6 +20,19 @@ test('exports unique symbol discriminators', () => {
   assert.equal(typeof Type.INVALID_REFERENCE, 'symbol');
   assert.notEqual(Type.INVALID_REFERENCE, Type.BRANCH_REFERENCE);
   assert.equal(Object.isFrozen(Type), true);
+});
+
+test('grammar rules expose their type symbols', () => {
+  const cb = commonBranchRule({ track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1), sections: [] });
+  assert.equal(cb.type, Type.COMMON_BRANCH_RULE);
+  const sb = specializationBranchRule({
+    specialization_specifier: specializationSpecifier('GLSI'),
+    track_specifier: trackSpecifier('LCS'),
+    start_year_specifier: 2,
+    duration_semesters: 3
+  });
+  assert.equal(sb.type, Type.SPECIALIZATION_BRANCH_RULE);
+  assert.equal(Object.isFrozen(sb), true);
 });
 
 test('year and branch construction validated by catalogue', () => {
@@ -36,7 +49,7 @@ test('year and branch construction validated by catalogue', () => {
     /outside active duration/
   );
   assert.throws(
-    () => branchRule({ specialization_specifier: specializationSpecifier('GLSI'), track_specifier: trackSpecifier('LCS'), start_year_specifier: 0, duration_semesters: 3 }),
+    () => specializationBranchRule({ specialization_specifier: specializationSpecifier('GLSI'), track_specifier: trackSpecifier('LCS'), start_year_specifier: 0, duration_semesters: 3 }),
     /start_year_specifier must be a positive integer/
   );
 });
@@ -69,11 +82,11 @@ test('class population shapes', () => {
 
 test('branch semester calculation', () => {
   assert.deepEqual(
-    branchSemesterFor({ year_specifier: 3, year_semester_specifier: 1, start_year_specifier: 2, start_year_semester_specifier: 1 }),
+    branchSemesterFor({ year_specifier: 3, year_semester_specifier: 1, start_year_specifier: 2 }),
     branchSemesterSpecifier(5)
   );
   assert.deepEqual(
-    branchSemesterFor({ year_specifier: 2, year_semester_specifier: 2, start_year_specifier: 2, start_year_semester_specifier: 1 }),
+    branchSemesterFor({ year_specifier: 2, year_semester_specifier: 2, start_year_specifier: 2 }),
     branchSemesterSpecifier(4)
   );
 });
@@ -117,10 +130,25 @@ test('week pattern', () => {
 });
 
 test('CSV conversion', () => {
-  const r = fromCsvRecord({ field: 'LCS1-A Groupe 2', professor: 'T', subject: 'Math', room: 'A1', day: 'Lundi', time: '08h15-09h45', week: 'SA', source: 'p1', color: '#aabbcc' }, { catalogue: cat });
+  const row = (field) => ({ field, professor: 'T', subject: 'Math', room: 'A1', day: 'Lundi', time: '08h15-09h45', week: 'SA', source: 'p1', color: '#aabbcc' });
+  const r = fromCsvRecord(row('LCS1-A Groupe 2'), { catalogue: cat });
   assert.equal(r.type, Type.PARTIAL_SESSION_RECORD);
   assert.equal(r.population.type, Type.COHORT_POPULATION);
   assert.equal(r.population.class.identifier, 'LCS1 A2');
+
+  const specialization = fromCsvRecord(row('LBC2-BI_A Groupe 1'), { catalogue: cat });
+  assert.equal(specialization.type, Type.PARTIAL_SESSION_RECORD);
+  assert.equal(specialization.reference, 'BI3 A1');
+  assert.equal(specialization.population.class.identifier, 'BI3 A1');
+
+  const section = fromCsvRecord(row('LBC3-EB_A'), { catalogue: cat });
+  assert.equal(section.reference, 'EB5 A');
+  assert.equal(section.population.type, Type.SECTION_POPULATION);
+
+  const singleton = fromCsvRecord(row('MP1-SD'), { catalogue: cat });
+  assert.equal(singleton.reference, 'SD1');
+  assert.equal(singleton.population.type, Type.BRANCH_POPULATION);
+
   const bad = fromCsvRecord({ field: 'LCS1 A', subject: '', week: 'S1' }, { catalogue: cat });
   assert.equal(bad.type, Type.INVALID_CSV_RECORD);
 });
@@ -157,7 +185,7 @@ test('strict tree divergence and trunk derivation invariant enforcement', () => 
       trackSpecifiers: [trackSpecifier('TST')],
       specializationSpecifiers: [specializationSpecifier('SPEC')],
       branchRules: [
-        branchRule({
+        specializationBranchRule({
           specialization_specifier: 'SPEC',
           track_specifier: 'TST',
           start_year_specifier: 2,
@@ -176,7 +204,7 @@ test('strict tree divergence and trunk derivation invariant enforcement', () => 
       trackSpecifiers: [trackSpecifier('TST')],
       specializationSpecifiers: [specializationSpecifier('SPEC')],
       branchRules: [
-        branchRule({
+        specializationBranchRule({
           specialization_specifier: 'SPEC',
           track_specifier: 'TST',
           start_year_specifier: 2,
