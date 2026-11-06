@@ -129,15 +129,18 @@ Deprecated alternative term: track.
 ## Specialty semester
 
 **Relational definition.** A specialty semester is the semester position of a
-non-common specialty within the curriculum progression. In this institution's canonical
-compact notation, it is written as the global degree semester number $G \in \{1 \dots 2D\}$,
-calculated from the year specifier $Y$ and year-semester specifier $S$:
+non-common specialty within the curriculum progression, counted from the start
+of that specialty. The first semester of a specialty is semester 1, the second
+is semester 2, etc. It is related to the global degree semester $G$ and the
+specialty's start global semester $G_{\text{start}}$ by:
 
-`specialtySemester = 2 * (yearSpecifier - 1) + yearSemesterSpecifier`
+$\text{specialtySemester} = G - G_{\text{start}} + 1$
 
-For example, `GLSI3` denotes the GLSI specialty in global semester 3
-(academic year specifier 2, year-semester specifier 1). A specialty spans a discrete
-number of active semesters given by its `duration_semesters`.
+where $G = 2(Y - 1) + S$ for academic year specifier $Y$ and year-semester specifier $S$.
+
+For example, `GLSI` starts at global semester 3 (year 2, semester 1). Its
+semesters are: `GLSI1` (global 3), `GLSI2` (global 4), `GLSI3` (global 5).
+A specialty spans a discrete number of active semesters given by its `duration_semesters`.
 
 **Alternative terms.** semester of study; specialty progression semester.
 
@@ -145,8 +148,8 @@ number of active semesters given by its `duration_semesters`.
 
 **Relational definition.** A specialty-semester specifier is the numeric
 component attached to a non-common specialty in compact notation. It identifies
-the specialty's semester and is distinct from the year specifier
-attached to a year. In `GLSI3`, the `3` is counted from the start of GLSI.
+the specialty's semester counted from the start of that specialty. In `GLSI3`,
+the `3` means the third semester of the GLSI specialty.
 
 **Editorial definition.** A specialty-semester specifier is the digit in a
 compact name such as the `3` in `GLSI3`. It means the third semester counted

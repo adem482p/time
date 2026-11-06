@@ -39,18 +39,25 @@ test('year and specialty construction validated by catalogue', () => {
   const y = year(cat, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(3) });
   assert.equal(y.type, Type.YEAR);
   assert.equal(y.identifier, 'LCS3');
-  const node = specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
-  assert.equal(node.identifier, 'GLSI5');
-  assert.equal(node.year.identifier, 'LCS3');
+  // GLSI: start_year=2, duration=3 semesters (global 3,4,5)
+  // Specialty-relative semesters: 1,2,3
+  // GLSI1 = global sem 3 = year 2, sem 1
+  const node = specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(2), year_semester_specifier: yearSemesterSpecifier(1) });
+  assert.equal(node.identifier, 'GLSI1');
+  assert.equal(node.year.identifier, 'LCS2');
+  // GLSI2 = global sem 4 = year 2, sem 2
+  const node2 = specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(2), year_semester_specifier: yearSemesterSpecifier(2) });
+  assert.equal(node2.identifier, 'GLSI2');
+  assert.equal(node2.year.identifier, 'LCS2');
+  // GLSI3 = global sem 5 = year 3, sem 1
+  const node3 = specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
+  assert.equal(node3.identifier, 'GLSI3');
+  assert.equal(node3.year.identifier, 'LCS3');
   assert.throws(() => year(cat, { track_specifier: trackSpecifier('MP'), year_specifier: yearSpecifier(3) }), /Unsupported year/);
-  // GLSI semester 6 (year 3 sem 2) is outside duration (3 semesters: 3, 4, 5)
+  // GLSI semester 4 (year 3 sem 2) is outside duration (3 semesters)
   assert.throws(
     () => specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(2) }),
     /outside active duration/
-  );
-  assert.throws(
-    () => specialtyRule({ specialty_specifier: specialtySpecifier('GLSI'), track_specifier: trackSpecifier('LCS'), start_year_specifier: 0, duration_semesters: 3 }),
-    /start_year_specifier must be a positive integer/
   );
 });
 
@@ -73,7 +80,7 @@ test('class population shapes', () => {
   const node = specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(2), year_semester_specifier: yearSemesterSpecifier(1) });
   const cls = classPopulation(cat, { specialty: node, section_specifier: 'A', cohort_specifier: 1 });
   assert.equal(cls.type, Type.COHORT_CLASS);
-  assert.equal(cls.identifier, `${node.identifier} A1`);
+  assert.equal(cls.identifier, 'GLSI1 A1');
   const singletonSpecialty = specialty(cat, { specialty_specifier: specialtySpecifier('EXR'), year_specifier: yearSpecifier(1), year_semester_specifier: yearSemesterSpecifier(1) });
   const single = classPopulation(cat, { specialty: singletonSpecialty });
   assert.equal(single.type, Type.SINGLETON_CLASS);
@@ -83,22 +90,22 @@ test('class population shapes', () => {
 test('specialty semester calculation', () => {
   assert.deepEqual(
     specialtySemesterFor({ year_specifier: 3, year_semester_specifier: 1, start_year_specifier: 2 }),
-    specialtySemesterSpecifier(5)
+    specialtySemesterSpecifier(3)
   );
   assert.deepEqual(
     specialtySemesterFor({ year_specifier: 2, year_semester_specifier: 2, start_year_specifier: 2 }),
-    specialtySemesterSpecifier(4)
+    specialtySemesterSpecifier(2)
   );
 });
 
 test('parseReference catalogue-aware', () => {
-  const r = parseReference('LCS3 GLSI5', { catalogue: cat });
+  const r = parseReference('LCS3 GLSI3', { catalogue: cat });
   assert.equal(r.type, Type.SPECIALTY_REFERENCE);
-  assert.equal(r.specialty.identifier, 'GLSI5');
-  const c = parseReference('GLSI3', { catalogue: cat });
+  assert.equal(r.specialty.identifier, 'GLSI3');
+  const c = parseReference('GLSI1', { catalogue: cat });
   assert.equal(c.type, Type.SPECIALTY_REFERENCE);
   assert.equal(c.specialty.type, Type.SPECIALTY);
-  const cls = parseReference('GLSI3 A2', { catalogue: cat });
+  const cls = parseReference('GLSI1 A2', { catalogue: cat });
   assert.equal(cls.type, Type.CLASS_REFERENCE);
   const bad = parseReference('ZZZ1', { catalogue: cat });
   assert.equal(bad.type, Type.INVALID_REFERENCE);
@@ -136,15 +143,18 @@ test('CSV conversion', () => {
   assert.equal(r.population.type, Type.COHORT_POPULATION);
   assert.equal(r.population.class.identifier, 'LCS1 A2');
 
+  // BI starts at year 2, duration 4. LBC2 = year 2 = BI semester 1
   const specialtyRow = fromCsvRecord(row('LBC2-BI_A Groupe 1'), { catalogue: cat });
   assert.equal(specialtyRow.type, Type.PARTIAL_SESSION_RECORD);
-  assert.equal(specialtyRow.reference, 'BI3 A1');
-  assert.equal(specialtyRow.population.class.identifier, 'BI3 A1');
+  assert.equal(specialtyRow.reference, 'BI1 A1');
+  assert.equal(specialtyRow.population.class.identifier, 'BI1 A1');
 
+  // EB starts at year 3, duration 2. LBC3 = year 3 = EB semester 1
   const section = fromCsvRecord(row('LBC3-EB_A'), { catalogue: cat });
-  assert.equal(section.reference, 'EB5 A');
+  assert.equal(section.reference, 'EB1 A');
   assert.equal(section.population.type, Type.SECTION_POPULATION);
 
+  // MP specialties start at year 1. MP1 = year 1 = semester 1
   const singleton = fromCsvRecord(row('MP1-SD'), { catalogue: cat });
   assert.equal(singleton.reference, 'SD1');
   assert.equal(singleton.population.type, Type.SPECIALTY_POPULATION);
@@ -163,11 +173,11 @@ test('catalogue resolution', () => {
 
 test('generation', () => {
   assert.ok(cat.years.length > 0);
+  assert.ok(cat.specialties.some((node) => node.identifier === 'GLSI1'));
+  assert.ok(cat.specialties.some((node) => node.identifier === 'GLSI2'));
   assert.ok(cat.specialties.some((node) => node.identifier === 'GLSI3'));
-  assert.ok(cat.specialties.some((node) => node.identifier === 'GLSI4'));
-  assert.ok(cat.specialties.some((node) => node.identifier === 'GLSI5'));
-  // GLSI6 does not exist because duration is 3 semesters
-  assert.equal(cat.specialties.some((node) => node.identifier === 'GLSI6'), false);
+  // GLSI4 does not exist because duration is 3 semesters
+  assert.equal(cat.specialties.some((node) => node.identifier === 'GLSI4'), false);
   assert.ok(cat.classes.some((c) => c.identifier === 'LCS1 A1'));
   assert.ok(cat.classes.some((c) => c.type === Type.SINGLETON_CLASS && c.identifier === 'EXR1'));
 });

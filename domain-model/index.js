@@ -366,6 +366,7 @@ export function specialtyRule({
 
 /**
  * Compute the specialty-semester specifier for a year and semester inside a specialty.
+ * Returns the specialty-relative semester (1-based from specialty start).
  */
 export function specialtySemesterFor({
   year_specifier,
@@ -381,8 +382,9 @@ export function specialtySemesterFor({
   const globalStart = 2 * (bys - 1) + 1;
   if (globalTarget < globalStart) throw new Error('Target semester precedes specialty start semester');
 
-  // In this university's compact naming, the numeral represents the global degree semester
-  return specialtySemesterSpecifierValue(globalTarget);
+  // Specialty-relative semester: 1 for first semester of specialty, 2 for second, etc.
+  const specialtySemester = globalTarget - globalStart + 1;
+  return specialtySemesterSpecifierValue(specialtySemester);
 }
 
 /**
@@ -863,7 +865,18 @@ export function specialty(catalogue, { specialty_specifier, year_specifier, year
     year_semester_specifier: yss,
     start_year_specifier: rule.start_year_specifier
   });
-  const y = year(catalogue, { track_specifier: trackSpecifier(owner), year_specifier: ys });
+  // Derive academic year from global semester position.
+  // G = 2*(Y-1) + S, so Y = ceil(G/2) = floor((G-1)/2) + 1
+  const derivedYear = Math.floor((globalTarget - 1) / 2) + 1;
+  // Validate caller-provided year_specifier matches derived year.
+  if (ys.value !== derivedYear) {
+    throw new Error(
+      `Specialty ${specialtySpec.value} semester ${globalTarget} maps to year ${derivedYear}, ` +
+      `but year_specifier ${ys.value} was supplied. Use the correct year_specifier or let ` +
+      `the function derive it from the global semester.`
+    );
+  }
+  const y = year(catalogue, { track_specifier: trackSpecifier(owner), year_specifier: yearSpecifier(derivedYear) });
   return freeze({
     type: Type.SPECIALTY,
     specialty_specifier: specialtySpec,
@@ -1071,16 +1084,18 @@ function parseSpecialtyTokens(tokens, options) {
       const trackSpec = prefix[1];
       const yearNum = Number(prefix[2]);
       const specialtyTag = specialtyMatch[1];
-      const semester = Number(specialtyMatch[2]);
+      const semester = Number(specialtyMatch[2]); // specialty-relative semester
       if (catalogue) {
         if (!catalogue.trackSpecifiers.has(trackSpec)) return undefined;
         if (!catalogue.specialtySpecifiers.has(specialtyTag)) return undefined;
         const rule = catalogue.specialtyRules.get(specialtyTag);
         if (!rule || rule.track_specifier.value !== trackSpec) return undefined;
+        // Validate specialty-relative semester
+        if (semester < 1 || semester > rule.duration_semesters) return undefined;
+        // Compute expected track year from specialty-relative semester
         const globalStart = 2 * (rule.start_year_specifier - 1) + 1;
-        const globalEnd = globalStart + rule.duration_semesters - 1;
-        if (semester < globalStart || semester > globalEnd) return undefined;
-        const expectedYear = Math.floor((semester - 1) / 2) + 1;
+        const globalTarget = globalStart + semester - 1;
+        const expectedYear = Math.floor((globalTarget - 1) / 2) + 1;
         if (yearNum !== expectedYear) return undefined;
         const metrics = catalogue.trackMetrics.get(trackSpec);
         if (!metrics || yearNum < 1 || yearNum > metrics.durationYears) return undefined;
@@ -1102,16 +1117,17 @@ function parseSpecialtyTokens(tokens, options) {
   const match = tokens[0].match(/^([A-Z][A-Z0-9-]*)(\d+)$/);
   if (!match) return undefined;
   const tag = match[1];
-  const semNum = Number(match[2]);
+  const semNum = Number(match[2]); // specialty-relative semester
   // compact specialty form: specialty specifier + specialty semester (e.g. GLSI3)
   if (catalogue && catalogue.specialtySpecifiers.has(tag)) {
     const rule = catalogue.specialtyRules.get(tag);
     if (rule) {
-      const globalStart = 2 * (rule.start_year_specifier - 1) + 1;
-      const globalEnd = globalStart + rule.duration_semesters - 1;
-      if (semNum >= globalStart && semNum <= globalEnd) {
+      // Validate specialty-relative semester
+      if (semNum >= 1 && semNum <= rule.duration_semesters) {
         const owner = rule.track_specifier.value;
-        const trackYear = Math.floor((semNum - 1) / 2) + 1;
+        const globalStart = 2 * (rule.start_year_specifier - 1) + 1;
+        const globalTarget = globalStart + semNum - 1;
+        const trackYear = Math.floor((globalTarget - 1) / 2) + 1;
         const tsObj = trackSpecifier(owner);
         const ysObj = yearSpecifier(trackYear);
         const y = { type: Type.YEAR, track_specifier: tsObj, year_specifier: ysObj, identifier: `${owner}${trackYear}` };
