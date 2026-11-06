@@ -20,7 +20,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const appDir = path.resolve(here, '..');
 const buildDir = path.join(appDir, 'build');
 
-const APPS = ['teachers', 'classes'];
+const APPS = ['teachers', 'classes', 'omni'];
 
 const template = fs.readFileSync(path.join(appDir, 'scripts', 'sw-template.js'), 'utf8');
 
@@ -77,32 +77,3 @@ for (const [file, pageName] of appPages(buildDir)) {
 	}
 }
 console.log(`gen-sw: ${stamped} page(s) stamped (body data-page)`);
-
-// ---- stage two: the two app service workers -------------------------------
-
-for (const app of APPS) {
-	const sibling = APPS.find((a) => a !== app);
-	if (!fs.existsSync(path.join(buildDir, app, 'index.html'))) {
-		console.error(`gen-sw: build/${app}/index.html missing — run the SvelteKit build first`);
-		process.exit(1);
-	}
-	// Teachers worker only: the legacy pre-split root snapshot
-	// 'emplois-snapshot-v1' is deleted by exact name — existing installs
-	// carry it and no root worker survives to clean it (issue 072).
-	const legacyRoot =
-		app === 'teachers'
-			? {
-					comment:
-						"\n  // Teachers worker only: the legacy pre-split root snapshot\n  // 'emplois-snapshot-v1' is deleted by exact name — existing installs\n  // carry it and no root worker survives to clean it (issue 072).",
-					clause: " || k === 'emplois-snapshot-v1'"
-				}
-			: { comment: '', clause: '' };
-	let body = template
-		.replaceAll('__APP__', app)
-		.replaceAll('__SIBLING__', sibling)
-		.replaceAll(' __LEGACY_ROOT_COMMENT__', legacyRoot.comment)
-		.replaceAll('__LEGACY_ROOT_CLAUSE__', legacyRoot.clause);
-	const out = path.join(buildDir, app, 'sw.js');
-	fs.writeFileSync(out, body);
-	console.error(`gen-sw: ${path.relative(appDir, out)} — runtime cache '${app}-snapshot-'`);
-}
