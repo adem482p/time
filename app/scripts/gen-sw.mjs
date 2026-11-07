@@ -77,3 +77,73 @@ for (const [file, pageName] of appPages(buildDir)) {
 	}
 }
 console.log(`gen-sw: ${stamped} page(s) stamped (body data-page)`);
+
+// ---- stage three: generate the SPA shell index.html -----------------------
+
+// With ssr = false there are no prerendered pages. The site is a pure
+// client-side app: every route serves the same index.html shell, and the
+// SvelteKit client runtime mounts and fetches time.csv on demand. We generate
+// a single shell at build/index.html and mirror it into every route directory
+// so that direct URL visits (and refreshes) resolve to a real file under a
+// plain static file server (no SPA fallback middleware needed).
+
+const entryDir = path.join(buildDir, '_app', 'immutable', 'entry');
+const startFile = fs.existsSync(entryDir)
+  ? fs.readdirSync(entryDir).find((f) => f.startsWith('start.') && f.endsWith('.js'))
+  : null;
+
+if (!startFile) {
+	console.error('gen-sw: no start.*.js entry found in build/_app/immutable/entry/');
+	process.exit(1);
+}
+
+// root-relative paths work when served from the build/ root (python3 -m http.server)
+const shell = `<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light dark" />
+		<script>
+			/* theme replay before first paint — persisted per-scheme custom
+			   properties written verbatim so the first frame is already themed. */
+			(function () {
+				try {
+					var s = JSON.parse(localStorage.getItem('time-theme') || 'null');
+					if (!s || !s.vars) return;
+					var d = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+					var v = s.vars[d ? 'dark' : 'light'];
+					if (!v) return;
+					var st = document.documentElement.style;
+					for (var k in v) if (v.hasOwnProperty(k)) st.setProperty(k, v[k]);
+				} catch (e) { /* corrupt/unavailable storage: default theme */ }
+			})();
+		</script>
+		<link rel="stylesheet" href="/app.css" />
+		<title>Time</title>
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<script type="module" src="/_app/immutable/entry/${startFile}"></script>
+	</body>
+</html>
+`;
+
+fs.writeFileSync(path.join(buildDir, 'index.html'), shell);
+
+// mirror the shell into every route directory so each route URL serves it.
+// Routes are discovered from the source tree (app/src/routes/<name>/), so
+// routes with no static adapter output (e.g. /all, /at under ssr=false) are
+// still covered.
+const routesSrc = path.join(appDir, 'src', 'routes');
+const routeDirs = [];
+for (const entry of fs.readdirSync(routesSrc, { withFileTypes: true })) {
+	if (entry.isDirectory()) {
+		routeDirs.push(entry.name);
+	}
+}
+for (const route of routeDirs) {
+	const routeBuildDir = path.join(buildDir, route);
+	fs.mkdirSync(routeBuildDir, { recursive: true });
+	fs.copyFileSync(path.join(buildDir, 'index.html'), path.join(routeBuildDir, 'index.html'));
+}
+console.log(`gen-sw: SPA shell written to index.html and mirrored into ${routeDirs.length} route dirs`);
