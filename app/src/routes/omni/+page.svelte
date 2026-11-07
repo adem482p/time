@@ -275,6 +275,13 @@
 		if (searchEl) searchEl.blur();
 	}
 
+	// Focus search input after menu opens (runs after DOM update)
+	$effect(() => {
+		if (menuOpen && (selectedTeacher !== null || selectedClass !== null) && searchEl) {
+			searchEl.focus();
+		}
+	});
+
 	let searchEl = $state(null);
 
 	function onKeydown(e) {
@@ -480,6 +487,7 @@
 					type="button"
 					id="overlayToggle"
 					aria-label="Open menu"
+					onmousedown={(e) => e.preventDefault()}
 					onclick={() => {
 						openMenu();
 						if (searchEl) searchEl.focus();
