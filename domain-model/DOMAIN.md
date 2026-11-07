@@ -184,14 +184,14 @@ must begin at year specifier 1 and end before or at the emergence of specialties
 Once a curriculum divides into specialties, common specialties cease permanently
 for that track specifier because specialties never merge back.
 A specialty is not
-subdivided into sections or cohorts as a specialty object; the combination of a
-specialty and section is a class. From the perspective of that class, the specialty
+subdivided into groups or cohorts as a specialty object; the combination of a
+specialty and group is a class. From the perspective of that class, the specialty
 is its prefix.
 
 **Editorial definition.** A specialty is a curriculum subdivision such as `LCS1`
 or `GLSI3`. `LCS1` is itself the complete common specialty; `LCS1 A2` is a
 class below that specialty, not a specialty. Specialty is not a synonym for a
-section, cohort, or class.
+group, cohort, or class.
 
 **Alternative terms.** study stream; study pathway; curriculum specialty;
 specialty name; specialty identifier.
@@ -213,15 +213,15 @@ verbosely as `LCS3 GLSI3`.
 ## Class
 
 **Relational definition.** Normally, a class is exactly a specialty plus a
-section, or a specialty plus a section and cohort. Its specialty is the prefix by
-which the class is reached. A section class such as `GLSI3 A` and a cohort
+group, or a specialty plus a group and cohort. Its specialty is the prefix by
+which the class is reached. A group class such as `GLSI3 A` and a cohort
 class such as `GLSI3 A1` are both classes; the latter is more specific, but
-neither is a specialty. If a specialty has no section subdivision, it contains a
+neither is a specialty. If a specialty has no group subdivision, it contains a
 singleton class whose identifier is the same as the specialty identifier.
 
 **Editorial definition.** A class is a defined student group that follows a
-timetable and a planned set of courses. It normally has a specialty and section,
-and may also have a cohort. A specialty without sections is represented as a
+timetable and a planned set of courses. It normally has a specialty and group,
+and may also have a cohort. A specialty without groups is represented as a
 singleton class for timetable purposes.
 
 **Alternative terms.** student group; teaching group.
@@ -229,41 +229,40 @@ singleton class for timetable purposes.
 ## Singleton class
 
 **Relational definition.** A singleton class is the class entry produced for a
-specialty whose specialty rule for the relevant year declares no sections. It
+specialty whose specialty rule for the relevant year declares no groups. It
 is a class-population shape, not a specialty kind: the specialty remains a
 non-common (or common) specialty, and its identifier may differ from the
 class identifier's source notation. Its class identifier/reference is equal
 to the specialty identifier/reference.
 
 **Editorial definition.** A singleton class is a catalogue class entry whose
-specialty has no section subdivision for that year, such as the master entries
+specialty has no group subdivision for that year, such as the master entries
 `MP1-EXR`, `MP1-SD`, and `MP2-EXR` present in the current parsed data.
 
-**Alternative terms.** undivided class; single-section class; specialty-level
+**Alternative terms.** undivided class; single-group class; specialty-level
 class.
 
-## Section
+## Group
 
-**Relational definition.** A section is the section component of a class. Its
+**Relational definition.** A group is the group component of a class. Its
 letter is scoped to its specialty prefix: `LCE2-IoT A` and `LCE2-IRS A` are
-different classes. A section specifier is the reusable letter component; a
-section class combines it with a specialty. A section may be followed by a cohort
+different classes. A group specifier is the reusable letter component; a
+group class combines it with a specialty. A group may be followed by a cohort
 specifier, producing a more specific class.
 
-**Editorial definition.** A section is a lettered component of a class, such
-as `A` or `E`. The section specifier is not a class by itself.
+**Editorial definition.** A group is a lettered component of a class, such
+as `A` or `E`. The group specifier is not a class by itself.
 
-**Alternative terms.** section specifier; class section; section group;
-section division.
+**Alternative terms.** group specifier; class group; group division.
 
 ## Cohort
 
 **Relational definition.** A cohort is the cohort component of a class after
-its specialty and section. It is the deepest level where the source divides a
-section into `Groupe 1` and `Groupe 2`. A cohort specifier is the reusable
-numbered component; a cohort class combines it with a section class.
+its specialty and group. It is the deepest level where the source divides a
+group into `Groupe 1` and `Groupe 2`. A cohort specifier is the reusable
+numbered component; a cohort class combines it with a group class.
 
-**Editorial definition.** A cohort is a numbered subgroup inside a section,
+**Editorial definition.** A cohort is a numbered subgroup inside a group,
 usually `1` or `2`. In this project it means the source's teaching subgroup,
 not a year-of-entry population. The cohort specifier is not a class by
 itself.
@@ -275,7 +274,7 @@ itself.
 **Relational definition.** A population reference is the generic audience
 notation attached to a session specifier. It may identify a specialty or a class,
 depending on the session kind. A specialty-lecture population reference addresses
-a specialty; a section-seminar reference addresses a section; and a cohort-lab-work
+a specialty; a group-seminar reference addresses a group; and a cohort-lab-work
 reference addresses a cohort.
 
 **Editorial definition.** A population reference identifies the student
@@ -303,8 +302,8 @@ record.
 
 **Relational definition.** A session kind combines instructional format and
 population scope. The canonical values are `specialty-lecture`,
-`section-seminar`, and `cohort-lab-work`; each maps to exactly one population
-scope. Lectures apply to specialties, seminars to sections, and lab work to
+`group-seminar`, and `cohort-lab-work`; each maps to exactly one population
+scope. Lectures apply to specialties, seminars to groups, and lab work to
 cohorts.
 The source currently writes the kinds with the prefixes `C_`, `TD_`, and
 `TP_`, but those spellings are publication conventions rather than domain
@@ -403,7 +402,7 @@ organized by day and time for a selected class, teacher, or other filter.
 
 **Relational definition.** A name is a notation for a domain concept. A
 source-facing name may preserve the publication's hierarchy, while a class
-identifier encodes a specialty, specialty-semester specifier, section, and
+identifier encodes a specialty, specialty-semester specifier, group, and
 cohort. The same object may be written with different levels of verbosity;
 these are notation variants, not a separate alias concept.
 
@@ -435,7 +434,7 @@ specifier and specialty-semester specifier, such as `GLSI3`; its verbose form
 may make the prefix explicit, as in `LCS3 GLSI3`.
 
 **Editorial definition.** A specialty identifier identifies a specialty. Usually its
-classes have more specific class identifiers; for a specialty without sections,
+classes have more specific class identifiers; for a specialty without groups,
 the same identifier also identifies its singleton class. A consumer can choose
 which object interpretation it needs.
 
@@ -444,7 +443,7 @@ which object interpretation it needs.
 ## Class identifier
 
 **Relational definition.** A class identifier is the canonical identifier of a
-class below a specialty. It writes a specialty, a space, a section, and optionally a cohort:
+class below a specialty. It writes a specialty, a space, a group, and optionally a cohort:
 `GLSI3 A` or `GLSI3 A1`. A verbose non-common form may make the implied prefix
 explicit, as in `LCS3 GLSI3 A2`. The parser may also accept compact input such
 as `GLSI3A2`.
@@ -474,7 +473,7 @@ current timetable data.
 ## Syntactical validity
 
 **Relational definition.** Syntactical validity describes whether a specialty or
-class reference follows the notation rules for tracks, specialties, sections, and
+class reference follows the notation rules for tracks, specialties, groups, and
 cohorts. It is independent of whether the reference names anything in the
 catalogue or appears in the current publication.
 
@@ -511,7 +510,7 @@ normalized timetable data contains the referenced element.
 
 **Relational definition.** The catalogue describes the available track specifiers,
 specialties, years, and class populations associated with
-them through sections and cohorts. It is not itself treated as a hierarchy of
+them through groups and cohorts. It is not itself treated as a hierarchy of
 domain objects. Its structure is fixed by the model, while its field values are
 populated by a union of raw timetable evidence and editorial corrections,
 normalization, or additions.

@@ -1,7 +1,7 @@
 import {
   trackSpecifier, yearSpecifier, specialtySpecifier,
   commonSpecialtyRule, specialtyRule,
-  populationsForYear, sectionsWithTwoCohorts, sectionsWithNoCohorts,
+  populationsForYear, groupsWithTwoCohorts, groupsWithNoCohorts,
   Catalogue
 } from './index.js';
 
@@ -29,41 +29,41 @@ export function createCatalogue(records = []) {
     specialtyRules: [
       // LBC specialties: BI starts at year 2 (semester 3), lasts 4 semesters
       specialtyRule({ specialty_specifier: bi, track_specifier: lbc, start_year_specifier: 2, duration_semesters: 4, populations: [
-        populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B','C','D','E','F') }),
-        populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B','C','D') })
+        populationsForYear({ year_specifier: y2, groups: groupsWithTwoCohorts('A','B','C','D','E','F') }),
+        populationsForYear({ year_specifier: y3, groups: groupsWithTwoCohorts('A','B','C','D') })
       ]}),
       // EB starts at year 3 (semester 5), lasts 2 semesters
       specialtyRule({ specialty_specifier: eb, track_specifier: lbc, start_year_specifier: 3, duration_semesters: 2, populations: [
-        populationsForYear({ year_specifier: y3, sections: sectionsWithNoCohorts('A') })
+        populationsForYear({ year_specifier: y3, groups: groupsWithNoCohorts('A') })
       ]}),
       // LCE specialties: IoT & IRS start at year 2 (semester 3), last 4 semesters
       specialtyRule({ specialty_specifier: iot, track_specifier: lce, start_year_specifier: 2, duration_semesters: 4, populations: [
-        populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B') }),
-        populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B') })
+        populationsForYear({ year_specifier: y2, groups: groupsWithTwoCohorts('A','B') }),
+        populationsForYear({ year_specifier: y3, groups: groupsWithTwoCohorts('A','B') })
       ]}),
       specialtyRule({ specialty_specifier: irs, track_specifier: lce, start_year_specifier: 2, duration_semesters: 4, populations: [
-        populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B') }),
-        populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B') })
+        populationsForYear({ year_specifier: y2, groups: groupsWithTwoCohorts('A','B') }),
+        populationsForYear({ year_specifier: y3, groups: groupsWithTwoCohorts('A','B') })
       ]}),
       // LCS specialty: GLSI starts at year 2 (semester 3), lasts exactly 3 semesters (GLSI3, GLSI4, GLSI5 - sem 6 is PFE)
       specialtyRule({ specialty_specifier: glsi, track_specifier: lcs, start_year_specifier: 2, duration_semesters: 3, populations: [
-        populationsForYear({ year_specifier: y2, sections: sectionsWithTwoCohorts('A','B','C','D') }),
-        populationsForYear({ year_specifier: y3, sections: sectionsWithTwoCohorts('A','B','C','D') })
+        populationsForYear({ year_specifier: y2, groups: groupsWithTwoCohorts('A','B','C','D') }),
+        populationsForYear({ year_specifier: y3, groups: groupsWithTwoCohorts('A','B','C','D') })
       ]}),
       // MP specialties: EXR & SD start at year 1 (semester 1), last 3 semesters (courses during S1, S2, S3 - S4 is master thesis)
       specialtyRule({ specialty_specifier: exr, track_specifier: mp, start_year_specifier: 1, duration_semesters: 3, populations: [
-        populationsForYear({ year_specifier: y1, sections: [] }),
-        populationsForYear({ year_specifier: y2, sections: [] })
+        populationsForYear({ year_specifier: y1, groups: [] }),
+        populationsForYear({ year_specifier: y2, groups: [] })
       ]}),
       specialtyRule({ specialty_specifier: sd, track_specifier: mp, start_year_specifier: 1, duration_semesters: 3, populations: [
-        populationsForYear({ year_specifier: y1, sections: [] }),
-        populationsForYear({ year_specifier: y2, sections: sectionsWithNoCohorts('A','B') })
+        populationsForYear({ year_specifier: y1, groups: [] }),
+        populationsForYear({ year_specifier: y2, groups: groupsWithNoCohorts('A','B') })
       ]})
     ],
     commonSpecialtyRules: [
-      commonSpecialtyRule({ track_specifier: lbc, year_specifier: y1, sections: sectionsWithTwoCohorts('A','B','C','D','E','F','G','H') }),
-      commonSpecialtyRule({ track_specifier: lce, year_specifier: y1, sections: sectionsWithTwoCohorts('A','B','C','D','E','F') }),
-      commonSpecialtyRule({ track_specifier: lcs, year_specifier: y1, sections: sectionsWithTwoCohorts('A','B','C','D','E') })
+      commonSpecialtyRule({ track_specifier: lbc, year_specifier: y1, groups: groupsWithTwoCohorts('A','B','C','D','E','F','G','H') }),
+      commonSpecialtyRule({ track_specifier: lce, year_specifier: y1, groups: groupsWithTwoCohorts('A','B','C','D','E','F') }),
+      commonSpecialtyRule({ track_specifier: lcs, year_specifier: y1, groups: groupsWithTwoCohorts('A','B','C','D','E') })
     ],
     records
   });

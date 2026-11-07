@@ -42,13 +42,13 @@ lives in `catalogue.js`, next to it but separate from the grammar engine.
 ### Vocabulary and rules
 
 ```js
-commonSpecialtyRule({ track_specifier, year_specifier, sections });
+commonSpecialtyRule({ track_specifier, year_specifier, groups });
 specialtyRule({
   specialty_specifier,
   track_specifier,
   start_year_specifier,
   duration_semesters,
-  populations: [populationsForYear({ year_specifier, sections })]
+  populations: [populationsForYear({ year_specifier, groups })]
 });
 ```
 
@@ -69,11 +69,11 @@ specialtyRule({
 - Populations stay attached to their specialty rule, so the derived trunk and the
   population mappings cannot drift apart.
 
-Section population helpers:
+Group population helpers:
 
 ```js
-sectionsWithTwoCohorts('A', 'B', 'C');
-sectionsWithNoCohorts('A', 'B');
+groupsWithTwoCohorts('A', 'B', 'C');
+groupsWithNoCohorts('A', 'B');
 // singleton class population: []
 ```
 
@@ -85,7 +85,7 @@ Constructors receive the catalogue and validate against the grammar:
 const y = year(catalogue, { track_specifier: trackSpecifier('LCS'), year_specifier: yearSpecifier(3) });
 const common = commonSpecialty(catalogue, { track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1) });
 const node = specialty(catalogue, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(3), year_semester_specifier: yearSemesterSpecifier(1) });
-const cls = classPopulation(catalogue, { specialty: node, section_specifier: 'A', cohort_specifier: 1 });
+const cls = classPopulation(catalogue, { specialty: node, group_specifier: 'A', cohort_specifier: 1 });
 ```
 
 - `year` validates the couple of a track specifier and year specifier against the
@@ -94,10 +94,10 @@ const cls = classPopulation(catalogue, { specialty: node, section_specifier: 'A'
 - `specialty` derives the owning track specifier, forms its concrete prefix `year`,
   and derives the specialty semester; rejects year specifiers outside the declared duration.
 - `classPopulation` derives the allowed population shape from the specialty rule;
-  cohorts are only allowed for cohort-partitioned sections.
+  cohorts are only allowed for cohort-partitioned groups.
 
 There is no "singleton track": `MP1-EXR` is a specialty (EXR)
-whose population for that year has no sections, producing a singleton class
+whose population for that year has no groups, producing a singleton class
 population.
 
 ## References

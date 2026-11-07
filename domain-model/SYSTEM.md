@@ -44,14 +44,14 @@ to students.
 
 **Relational definition.** A PDF page belongs to one PDF and contains one
 timetable grid. It may name a class directly or inherit the class context from
-the preceding page. A page for a specialty with no sections represents that specialty's
+the preceding page. A page for a specialty with no groups represents that specialty's
 singleton class. The page identity of included pages is retained as provenance
 on normalized records.
 
 **Editorial definition.** A PDF page is one timetable sheet. A cohort-divided
 class contributes a combined page followed by `Groupe 1` and `Groupe 2`
 pages; a class without cohorts contributes one page. A specialty with no
-sections contributes the page for its singleton class.
+groups contributes the page for its singleton class.
 
 **Alternative terms.** timetable sheet; schedule page; source page.
 

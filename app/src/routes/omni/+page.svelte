@@ -413,7 +413,7 @@
 		></button>
 		<h1>Omni Timetable</h1>
 		<p class="author-credit">
-			<span>By </span><a href="https://github.com/adem482p" target="_blank" rel="noopener"
+			<span>By</span>&nbsp;<a href="https://github.com/adem482p" target="_blank" rel="noopener"
 				>Adem Moussa</a
 			>
 		</p>

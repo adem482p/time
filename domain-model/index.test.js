@@ -4,11 +4,11 @@ import { createCatalogue } from './catalogue.js';
 import {
   Type, DAYS, SLOTS, SESSION_KIND_SCOPES,
   trackSpecifier, yearSpecifier, specialtySpecifier,
-  yearSemesterSpecifier, specialtySemesterSpecifier, sectionSpecifier, cohortSpecifier,
+  yearSemesterSpecifier, specialtySemesterSpecifier, groupSpecifier, cohortSpecifier,
   year, commonSpecialty, specialty, classPopulation,
   parseReference, populationReference, sessionKind, sessionSpecifier,
   weekPatternSpecifier, fromCsvRecord, specialtySemesterFor,
-  twoCohorts, noCohorts, sectionsWithTwoCohorts, sectionsWithNoCohorts,
+  twoCohorts, noCohorts, groupsWithTwoCohorts, groupsWithNoCohorts,
   populationsForYear, commonSpecialtyRule, specialtyRule,
   querySpecialties, queryClasses, queryRecords,
   Catalogue
@@ -78,13 +78,13 @@ test('common specialty construction', () => {
 
 test('class population shapes', () => {
   const node = specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(2), year_semester_specifier: yearSemesterSpecifier(1) });
-  const cls = classPopulation(cat, { specialty: node, section_specifier: 'A', cohort_specifier: 1 });
+  const cls = classPopulation(cat, { specialty: node, group_specifier: 'A', cohort_specifier: 1 });
   assert.equal(cls.type, Type.COHORT_CLASS);
   assert.equal(cls.identifier, 'GLSI1 A1');
   const singletonSpecialty = specialty(cat, { specialty_specifier: specialtySpecifier('EXR'), year_specifier: yearSpecifier(1), year_semester_specifier: yearSemesterSpecifier(1) });
   const single = classPopulation(cat, { specialty: singletonSpecialty });
   assert.equal(single.type, Type.SINGLETON_CLASS);
-  assert.throws(() => classPopulation(cat, { specialty: singletonSpecialty, section_specifier: 'A' }), /Invalid section/);
+  assert.throws(() => classPopulation(cat, { specialty: singletonSpecialty, group_specifier: 'A' }), /Invalid group/);
 });
 
 test('specialty semester calculation', () => {
@@ -117,8 +117,8 @@ test('parseReference catalogue-aware', () => {
 test('population references', () => {
   const specialtyPopulation = populationReference({ reference: 'LCS1', session_kind: 'specialty-lecture', catalogue: cat });
   assert.equal(specialtyPopulation.type, Type.SPECIALTY_POPULATION);
-  const sp = populationReference({ reference: 'LCS1 A', session_kind: 'section-seminar', catalogue: cat });
-  assert.equal(sp.type, Type.SECTION_POPULATION);
+  const sp = populationReference({ reference: 'LCS1 A', session_kind: 'group-seminar', catalogue: cat });
+  assert.equal(sp.type, Type.GROUP_POPULATION);
   const cp = populationReference({ reference: 'LCS1 A1', session_kind: 'cohort-lab-work', catalogue: cat });
   assert.equal(cp.type, Type.COHORT_POPULATION);
   assert.throws(() => populationReference({ reference: 'LCS1 A', session_kind: 'specialty-lecture', catalogue: cat }));
@@ -152,7 +152,7 @@ test('CSV conversion', () => {
   // EB starts at year 3, duration 2. LBC3 = year 3 = EB semester 1
   const section = fromCsvRecord(row('LBC3-EB_A'), { catalogue: cat });
   assert.equal(section.reference, 'EB1 A');
-  assert.equal(section.population.type, Type.SECTION_POPULATION);
+  assert.equal(section.population.type, Type.GROUP_POPULATION);
 
   // MP specialties start at year 1. MP1 = year 1 = semester 1
   const singleton = fromCsvRecord(row('MP1-SD'), { catalogue: cat });
@@ -184,7 +184,7 @@ test('generation', () => {
 
 test('queries', () => {
   assert.equal(querySpecialties(cat, (v) => v.identifier === 'LCS1').length, 1);
-  assert.equal(queryClasses(cat, (v) => v.type === Type.SECTION_CLASS).length > 0, true);
+  assert.equal(queryClasses(cat, (v) => v.type === Type.GROUP_CLASS).length > 0, true);
   assert.equal(queryRecords([{ day: 'LUNDI' }, { day: 'MARDI' }], { day: 'LUNDI' }).length, 1);
 });
 

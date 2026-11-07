@@ -195,7 +195,7 @@ export function classShortcut(cls) {
 			? `${cls.specialty.year.track_specifier.value}${cls.specialty.year.year_specifier.value}`
 			: `${cls.specialty?.specialty_specifier?.value || ''}${cls.specialty?.specialty_semester_specifier?.value || ''}`;
 
-	const sec = cls.section_specifier?.value;
+	const sec = cls.group_specifier?.value;
 	const coh = cls.cohort_specifier?.value;
 
 	if (sec && coh) {
@@ -267,7 +267,7 @@ export function buildOmniStore(csvText) {
 				track,
 				year: yr,
 				specialty,
-				section: c.section_specifier?.value || '',
+				section: c.group_specifier?.value || '',
 				cohort: c.cohort_specifier?.value != null ? String(c.cohort_specifier.value) : ''
 			});
 		}
@@ -645,7 +645,7 @@ export function getClassDetail(omniStore, classIdentifier, now) {
 		cls.specialty?.type === dm.Type.COMMON_SPECIALTY
 			? `${track}${yr}`
 			: `${cls.specialty?.specialty_specifier?.value || ''}${cls.specialty?.specialty_semester_specifier?.value || ''}`;
-	const section = cls.section_specifier?.value || '';
+	const section = cls.group_specifier?.value || '';
 	const cohort = cls.cohort_specifier?.value != null ? String(cls.cohort_specifier.value) : '';
 	const groupe = section ? (cohort ? `${section}<sub>${cohort}</sub>` : section) : cohort || '';
 
