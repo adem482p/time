@@ -240,6 +240,19 @@
 		if (searchEl) searchEl.blur();
 	}
 
+	// Toggle between cohort variants of the selected class (e.g. A1 <-> A2)
+	// by switching to the sibling class entry that shares the same section
+	// but carries a different cohort specifier.
+	function toggleCohort() {
+		if (!selectedClass || !omniStore) return;
+		const current = omniStore.classes.find((c) => c.identifier === selectedClass);
+		if (!current || !current.cohort) return;
+		const sibling = omniStore.classes.find(
+			(c) => c.section === current.section && c.cohort !== '' && c.cohort !== current.cohort
+		);
+		if (sibling) selectClass(sibling.identifier);
+	}
+
 	function showEmpty() {
 		selectedTeacher = null;
 		selectedClass = null;
@@ -776,7 +789,7 @@
 			<!-- Hierarchy facts -->
 			<dl class="class-facts">
 				{#each currentClassDetail.facts as f (f.name)}
-					<div class="fact-card">
+					<div class="fact-card" class:clickable={f.name === 'Groupe'} onclick={f.name === 'Groupe' ? toggleCohort : null}>
 						<dt class="fact-name">{f.name}</dt>
 						<dd class="fact-value">{@html f.raw ? f.value : esc(f.value)}</dd>
 					</div>
@@ -1004,5 +1017,9 @@
 			display: flex;
 			margin: 0.4rem 0;
 		}
+	}
+
+	.fact-card.clickable {
+		cursor: pointer;
 	}
 </style>
