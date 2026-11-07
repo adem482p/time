@@ -6,4 +6,4 @@ export const trailingSlash = 'always';
 export const ssr = true;
 // No hydration: each prerendered index.html is the whole page, and the
 // runtime adds nothing beyond what the inline app.html scripts already do.
-export const hydrate = false;
+export const csr = false;
