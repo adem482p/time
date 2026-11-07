@@ -5,7 +5,7 @@
 // Ported off the legacy js/libgroups.js suite: plain ESM imports replace the
 // require shim; every behavior pin is unchanged.
 //
-// The grouping library is exercised against the real emplois.csv (the single
+// The grouping library is exercised against the real time.csv (the single
 // source of truth), so these tests double as a data contract: if the parser
 // emits a class we cannot model, something here fails.
 
@@ -20,7 +20,7 @@ import * as Groups from '../app/src/lib/libgroups.js';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
 
-const CSV_PATH = path.join(ROOT, 'emplois.csv');
+const CSV_PATH = path.join(ROOT, 'time.csv');
 const SOURCE_PATH = path.join(ROOT, 'app', 'src', 'lib', 'libgroups.js');
 
 // Minimal RFC 4180 reader: the CSV has quoted fields that contain commas
@@ -97,7 +97,7 @@ test('every raw field round-trips through its leaf', function () {
 // heading: it splits a full field name into the plain head and the cohort
 // (rendered by the page as a real <sub> — `LCS3-GLSI_D Groupe 2` displays as
 // `GLSI3 D<sub>2</sub>`). Table over the documented shapes, a sweep over
-// every distinct field actually in emplois.csv, then the null fallbacks.
+// every distinct field actually in time.csv, then the null fallbacks.
 
 test('shortcutOf maps the documented shapes (issue 075)', function () {
   const t = [

@@ -5,7 +5,7 @@
 // drives the real lib computations (app/src/lib/model.js fuseSessions /
 // nextSessionIdx / isCurrentSession / startFromToday / availability — the
 // exact derivations the teachers page runs) directly against the real
-// emplois.csv with fixed Dates, and the rendering shape is pinned
+// time.csv with fixed Dates, and the rendering shape is pinned
 // structurally on app/src/routes/teachers/+page.svelte and the shared
 // stylesheet (app/static/app.css). No component runner, no vm DOM stubs.
 

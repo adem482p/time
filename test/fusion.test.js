@@ -4,7 +4,7 @@
 //
 // Ported off the legacy js/*.js vm-loader suite: the app's ESM libs
 // (app/src/lib/*.js) are imported directly — same behavior pins, real
-// emplois.csv all the same.
+// time.csv all the same.
 
 import test from 'node:test';
 import assert from 'node:assert';
@@ -20,7 +20,7 @@ import * as Groups from '../app/src/lib/libgroups.js';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
 
-const CSV_PATH = path.join(ROOT, 'emplois.csv');
+const CSV_PATH = path.join(ROOT, 'time.csv');
 
 const store = data.createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 const modelObjs = model.buildAll(store);

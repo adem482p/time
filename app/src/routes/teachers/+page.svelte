@@ -477,10 +477,10 @@
 </script>
 
 <svelte:head>
-	<title>Teachers — Emplois</title>
+	<title>Teachers — Time</title>
 	<meta
 		name="description"
-		content="Emplois — the ISIM Mahdia timetable, searchable by teacher, class or subject."
+		content="Time — the ISIM Mahdia timetable, searchable by teacher, class or subject."
 	/>
 	<meta name="theme-color" content="#0b4da2" />
 	<link rel="icon" href={`${base}/assets/icon-192.png`} sizes="192x192" type="image/png" />
@@ -582,9 +582,9 @@
 			</ul>
 		</div>
 		<p id="status" class={!!(query || selectedTeacher) ? 'count-away' : ''}>
-			{#if loadError}Failed to load emplois.csv: {loadError}{:else if store}{store.size} sessions · {store
+			{#if loadError}Failed to load time.csv: {loadError}{:else if store}{store.size} sessions · {store
 				.teachers
-				.length} teachers{:else}Loading emplois.csv…{/if}
+				.length} teachers{:else}Loading time.csv…{/if}
 		</p>
 		<ul id="teacherList">
 			{#if res && !listTotal}

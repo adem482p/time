@@ -10,7 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const app = join(here, '..'); // app/
 const root = join(app, '..'); // the repository root: data pipeline output
 
-cpSync(join(root, 'emplois.csv'), join(app, 'static', 'emplois.csv'));
+cpSync(join(root, 'time.csv'), join(app, 'static', 'time.csv'));
 // assets/ is synced by rm + fresh copy (not a merged cpSync): the removed-file
 // staleness a merged copy carries would resurrect deleted files every build.
 // Everything is copied EXCEPT the README screenshots (assets/screens/ and
@@ -46,4 +46,4 @@ for (const [src, rel] of assetsFiles(assetsSrc, assetsSrc)) {
 if (existsSync(join(root, 'classes.html'))) {
 	cpSync(join(root, 'classes.html'), join(app, 'static', 'classes.html'));
 }
-console.log('[sync-static] emplois.csv, assets/ -> app/static/');
+console.log('[sync-static] time.csv, assets/ -> app/static/');

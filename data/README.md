@@ -7,10 +7,10 @@ Source material and extractor for the timetable site.
 - `extract.py` — the parser. Flattens every PDF into a single flat CSV:
 
 ```sh
-python3 data/extract.py [--pdfs data/pdfs] [--out emplois.csv]
+python3 data/extract.py [--pdfs data/pdfs] [--out time.csv]
 ```
 
-Run from the repo root. `--out` defaults to `emplois.csv` at the root, where
+Run from the repo root. `--out` defaults to `time.csv` at the root, where
 the site fetches it; the site reads that file and nothing else, so
 re-running the extractor updates the site with no build step.
 

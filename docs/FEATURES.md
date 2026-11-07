@@ -11,7 +11,7 @@ with it.
 
 ## Material: what the site models
 
-All four pages read `emplois.csv` and nothing else. On top of the raw rows, the model layer builds
+All four pages read `time.csv` and nothing else. On top of the raw rows, the model layer builds
 the material the views are drawn from:
 
 - **Session fusion** — the same teacher, day and slot in different rooms (or the
@@ -183,8 +183,8 @@ answer behind it.
 
 Cache Storage and IndexedDB are per-origin, shared between the two workers, so
 every name is namespaced per app: the runtime cache families
-`emplois-teachers-snapshot-` and `emplois-classes-snapshot-` and the status
-databases `emplois-teachers-status` and `emplois-classes-status`.
+`time-teachers-snapshot-` and `time-classes-snapshot-` and the status
+databases `time-teachers-status` and `time-classes-status`.
 
 - **Online, the network wins.** Every request is fetched with `cache: 'no-cache'`
   so an HTTP-cache hit can never fake connectivity, and a successful response is
@@ -208,7 +208,7 @@ databases `emplois-teachers-status` and `emplois-classes-status`.
   `…-v-<digest>` snapshot generations from the old model, stale runtime entries
   of a superseded worker), keeps the current runtime cache, and — in the
   teachers worker only — deletes the legacy pre-split root snapshot
-  `emplois-snapshot-v1` by exact name, which no surviving worker would
+  `time-snapshot-v1` by exact name, which no surviving worker would
   otherwise clean up.
 - **The utility pages and the landing are online-only** (issues 072, 073): navigations
   to `/`, `/at/`, `/all/` and the `classes.html` redirect stub
@@ -229,8 +229,8 @@ reload report (issue 067).
 ## Installable app
 
 Two apps, each owning the manifest of its own directory (issue 072), but only
-one of them installable by default: "Emplois — Classes" (launcher label
-"Classes") at `/classes/` links its manifest statically, while "Emplois —
+one of them installable by default: "Time — Classes" (launcher label
+"Classes") at `/classes/` links its manifest statically, while "Time —
 Enseignants" ("Enseignants") at `/teachers/` links none — its manifest link is
 injected only under an explicit `?install=1` opt-in (issue 078), so the
 teachers page no longer offers itself for installation during a visit. Both are
@@ -249,7 +249,7 @@ installed afresh.)
 ## Remembering the last class
 
 The classes app (`/classes/`) remembers the last selected class across
-loads: the committed selection is mirrored under the `emplois-class`
+loads: the committed selection is mirrored under the `time-class`
 `localStorage` key, and a reload lands on the same detail a fresh selection
 produces. An explicit deselect forgets it, so a deliberately cleared page still
 boots empty (issue 065).

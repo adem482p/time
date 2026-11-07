@@ -2,7 +2,7 @@
 // `node --test test/classes.test.js`.
 //
 // The pure, DOM-free parts of the page (model.classWeek, model.dayCursor,
-// searchClasses.searchClasses) are exercised against the real emplois.csv, exactly like
+// searchClasses.searchClasses) are exercised against the real time.csv, exactly like
 // test/libgroups.test.js exercises the grouping library. The page itself is
 // checked structurally (Svelte markup / CSS shape) since no browser is
 // available — plus behaviorally for the DOM-free derivations the markup
@@ -509,7 +509,7 @@ test('the classes page component carries the app-page structure, module imports 
   assert.ok(html.indexOf('https://github.com/adem482p') !== -1, 'missing author link');
   // SEO head: the page title and description travel with the component
   // (canonical/theme-color live on the built shell, not the page)
-  assert.ok(html.indexOf('<title>Classes — Emplois</title>') !== -1, 'missing page title');
+  assert.ok(html.indexOf('<title>Classes — Time</title>') !== -1, 'missing page title');
   assert.ok(html.indexOf('name="description"') !== -1, 'missing meta description');
   ['id="searchWrap"', 'id="search"', 'id="classList"',
    'id="detail"', 'id="status"', 'id="themeCycle"',

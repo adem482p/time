@@ -1,4 +1,4 @@
-# Teacher Time
+# Time
 
 See the complete timetable of any teacher, find teachers by name, subjects they teach and their classes of students.
 Data is scraped from student timetables on the official university website.

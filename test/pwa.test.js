@@ -263,9 +263,9 @@ test('the two manifests declare distinct installed-app identities with the chose
   var t = readManifest(APPS[0]);
   var c = readManifest(APPS[1]);
   // Exact user-chosen names (issue 072).
-  assert.strictEqual(t.name, 'Emplois — Enseignants');
+  assert.strictEqual(t.name, 'Time — Enseignants');
   assert.strictEqual(t.short_name, 'Enseignants');
-  assert.strictEqual(c.name, 'Emplois — Classes');
+  assert.strictEqual(c.name, 'Time — Classes');
   assert.strictEqual(c.short_name, 'Classes');
   // id defaults to start_url, but declare it: './' resolves against each
   // manifest's OWN directory, so the two ids are two different URLs — two

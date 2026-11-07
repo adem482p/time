@@ -115,7 +115,7 @@ import { teacherName } from '$lib/display.js';
 </script>
 
 <svelte:head>
-	<title>Time — Emplois</title>
+	<title>Time</title>
 	<link rel="icon" href={`${base}/assets/icon-192.png`} sizes="192x192" type="image/png" />
 	<link rel="apple-touch-icon" href={`${base}/assets/apple-touch-icon.png`} />
 </svelte:head>
@@ -123,7 +123,7 @@ import { teacherName } from '$lib/display.js';
 <button type="button" id="themeCycle" title="Cycle color preset" aria-label="Cycle color preset"></button>
 <h1>Who teaches when</h1>
 <p id="status">
-	{#if loadError}Failed to load emplois.csv: {loadError}{:else if store}{store.size} sessions · {store.teachers.length} teachers{:else}Loading emplois.csv…{/if}
+	{#if loadError}Failed to load time.csv: {loadError}{:else if store}{store.size} sessions · {store.teachers.length} teachers{:else}Loading time.csv…{/if}
 </p>
 {#if store}
 	<ul id="slotList" bind:this={slotListEl}>

@@ -108,9 +108,9 @@ The main agent coordinates; subagents do the work in parallel.
 - **One message, separated calls.** Dispatch every independent subagent in a
   SINGLE assistant message, with a line of plain text between delegation
   calls ("Delegating to the NNN implementer …"). Without the separators the
-  harness waits for ALL of the batch before delivering any notification —
-  nothing wakes you until the slowest subagent finishes, which stalls the
-  loop. With separators, each completion notifies on its own.
+  notification pipeline may hold several completions at once and deliver none
+  until the slowest subagent finishes, which stalls the loop. With separators,
+  each completion notifies on its own.
 - **Act on each completion as it arrives.** Merge or audit finished work in
   the wake-up that reports it; don't sit on completed work waiting for the
   rest of the batch — later rebases need the freshest main anyway.

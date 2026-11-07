@@ -738,7 +738,7 @@ const snapPalette = (hex, list) => {
  * 8. DOM: apply + init                                          *
  * ============================================================= */
 
-const STORAGE_KEY = 'emplois-theme';
+const STORAGE_KEY = 'time-theme';
 
 const current = {
   primary: null, secondary: null, tertiary: null, error: null,

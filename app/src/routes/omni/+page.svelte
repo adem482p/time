@@ -44,8 +44,8 @@
 	let noMatch = $state('');
 
 	// Remember the last selection (teacher or class) across reloads.
-	const TEACHER_STORE_KEY = 'emplois-omni-teacher';
-	const CLASS_STORE_KEY = 'emplois-omni-class';
+	const TEACHER_STORE_KEY = 'time-omni-teacher';
+	const CLASS_STORE_KEY = 'time-omni-class';
 
 	function readStoredTeacher() {
 		try {
@@ -129,7 +129,7 @@
 	onMount(() => {
 		let unsub = null;
 		registerApp();
-		fetch(`${base}/emplois.csv`)
+		fetch(`${base}/time.csv`)
 			.then((res) => {
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				return res.text();
@@ -360,7 +360,7 @@
 </script>
 
 <svelte:head>
-	<title>Omni Timetable — Emplois</title>
+	<title>Omni Timetable — Time</title>
 	<meta
 		name="description"
 		content="Omni Timetable — ISIM Mahdia teachers and classes schedules in one place."
@@ -694,7 +694,7 @@
 		{#if noMatch}
 			<p class="nomatch">No match for "{noMatch}".</p>
 		{:else if selectedTeacher && currentTeacherDetail}
-			<!-- Teacher Timetable View -->
+			<!-- Time View -->
 			<h2>{@html teacherName(currentTeacherDetail.name)}</h2>
 			<dl class="class-facts teacher-facts">
 				<div class="fact-card">

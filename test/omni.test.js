@@ -31,8 +31,8 @@ test('omni page does not import old modeling code (libgroups.js or model.js)', (
 	);
 });
 
-test('omni store builds from emplois.csv with 132 teachers and 94 active classes', () => {
-	const csvText = fs.readFileSync(path.join(ROOT, 'emplois.csv'), 'utf8');
+test('omni store builds from time.csv with 132 teachers and 94 active classes', () => {
+	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
 	const store = buildOmniStore(csvText);
 
 	assert.strictEqual(store.teachers.length, 132, 'exactly 132 teachers');
@@ -41,7 +41,7 @@ test('omni store builds from emplois.csv with 132 teachers and 94 active classes
 });
 
 test('polished filter matching and highlighting on teachers and classes', () => {
-	const csvText = fs.readFileSync(path.join(ROOT, 'emplois.csv'), 'utf8');
+	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
 	const store = buildOmniStore(csvText);
 
 	// 1. Searching "machi" finds Marrakchi and highlights Ma and chi

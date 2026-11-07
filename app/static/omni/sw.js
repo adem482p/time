@@ -24,7 +24,7 @@
 // IndexedDB — a worker has no localStorage — so the offline -> online
 // transitions are logged and recorded even after this worker has been
 // terminated and relaunched.
-// Shared assets (app.css, _app/, vendor/, assets/, emplois.csv) live at the
+// Shared assets (app.css, _app/, vendor/, assets/, time.csv) live at the
 // site root and are referenced here relative to this script (../…):
 // subresource requests of a controlled page reach THIS worker whatever their
 // URL (Handle Fetch routes subresources to the client's controller), so the
@@ -37,7 +37,7 @@
 // gets in the way (browser console):
 //   navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
 //   caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
-var CACHE = 'emplois-omni-snapshot-';
+var CACHE = 'time-omni-snapshot-';
 
 // A successful network fetch: record 'online'. On the offline -> online
 // transition (persisted record says offline — warm worker OR freshly
@@ -83,7 +83,7 @@ function noteOffline() {
 var status = readStatus();
 
 // --- last online status (issue 070, kept verbatim in behaviour): persisted in
-// IndexedDB, NOT in a cache. db 'emplois-omni-status', store 'kv', key
+// IndexedDB, NOT in a cache. db 'time-omni-status', store 'kv', key
 // 'last-online' -> 'online' | 'offline'. Storage errors resolve (best-effort)
 // so the chain never wedges: opens and transaction use are guarded, and the
 // connection is closed on every path. Version 2: onupgradeneeded also runs on an
@@ -92,7 +92,7 @@ var status = readStatus();
 function readStatus() {
   return new Promise(function (resolve) {
     try {
-      var req = indexedDB.open('emplois-omni-status', 2);
+      var req = indexedDB.open('time-omni-status', 2);
       req.onupgradeneeded = function () {
         if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv');
       };
@@ -114,7 +114,7 @@ function readStatus() {
 function writeStatus(value) {
   return new Promise(function (resolve) {
     try {
-      var req = indexedDB.open('emplois-omni-status', 2);
+      var req = indexedDB.open('time-omni-status', 2);
       req.onupgradeneeded = function () {
         if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv');
       };

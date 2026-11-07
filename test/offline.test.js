@@ -53,10 +53,10 @@ test('the worker template declares both app families and the full lifecycle (iss
   assert.ok(tmpl.indexOf('__LEGACY_ROOT_CLAUSE__') !== -1,
     "sw-template.js must carry the teachers-only legacy root snapshot teardown clause token");
   // The cache family name uses the __APP__ token
-  assert.ok(tmpl.indexOf("CACHE = 'emplois-__APP__-snapshot-'") !== -1,
+  assert.ok(tmpl.indexOf("CACHE = 'time-__APP__-snapshot-'") !== -1,
     "sw-template.js must declare the runtime cache family name with __APP__ token");
   // The status database name uses the __APP__ token
-  assert.ok(tmpl.indexOf("'emplois-__APP__-status'") !== -1,
+  assert.ok(tmpl.indexOf("'time-__APP__-status'") !== -1,
     "sw-template.js must declare the status database name with __APP__ token");
 });
 
@@ -72,7 +72,7 @@ test('gen-sw.mjs writes per-app runtime-cache workers from the template (issue 0
   assert.ok(gen.indexOf('walkFiles') === -1,
     'gen-sw.mjs must not walk the build tree for a snapshot list any more (issue 087)');
   // The legacy-root clause is ONLY injected for teachers
-  assert.ok(gen.indexOf("emplois-snapshot-v1") !== -1,
+  assert.ok(gen.indexOf("time-snapshot-v1") !== -1,
     'gen-sw.mjs must inject the legacy root snapshot teardown for teachers');
   // The sibling name is the other app's directory
   assert.ok(gen.indexOf("'classes'") !== -1 && gen.indexOf("'teachers'") !== -1,
@@ -103,12 +103,12 @@ test('the worker runtime-caches successful responses instead of snapshotting a b
 
 test('load.js fetches the CSV from the site root (issue 072)', async function () {
   // In the SvelteKit build, loadStore is called with the base path from $app/paths
-  // The CSV is at the site root: /emplois.csv
+  // The CSV is at the site root: /time.csv
   var src = readSrc('app/src/lib/load.js');
-  assert.ok(src.indexOf('emplois.csv') !== -1, 'load.js must reference emplois.csv');
+  assert.ok(src.indexOf('time.csv') !== -1, 'load.js must reference time.csv');
   // The loadStore function takes a base path and constructs the CSV URL
   assert.ok(src.indexOf('loadStore') !== -1, 'load.js must export loadStore');
-  assert.ok(src.indexOf('/emplois.csv') !== -1 || src.indexOf('emplois.csv') !== -1,
+  assert.ok(src.indexOf('/time.csv') !== -1 || src.indexOf('time.csv') !== -1,
     'load.js must fetch CSV from site root');
 });
 
@@ -174,7 +174,7 @@ test('old caches are destroyed on activate and the fetch is network-first runtim
 test('the last online status is persisted per app in IndexedDB and logged on transitions (issues 070, 072)', function () {
   var tmpl = readSrc('app/scripts/sw-template.js');
   // The template uses the __APP__ token for the DB name
-  assert.ok(tmpl.indexOf("'emplois-__APP__-status'") !== -1,
+  assert.ok(tmpl.indexOf("'time-__APP__-status'") !== -1,
     'template must carry the status database name with __APP__ token');
   // The template has the persistence logic with readStatus/writeStatus
   ["readStatus", "writeStatus", "'last-online'", "writeStatus('online')",
@@ -221,7 +221,7 @@ test('the runtime cache is written per successful response, never patched entry 
 test('the vocabulary is the runtime cache, not the legacy precache one (issues 070, 087)', function () {
   var tmpl = readSrc('app/scripts/sw-template.js');
   var reg = readSrc('app/src/lib/register.js');
-  ['var PRECACHE', "'emplois-v1'"].forEach(function (tok) {
+  ['var PRECACHE', "'time-v1'"].forEach(function (tok) {
     assert.ok(tmpl.indexOf(tok) === -1, 'sw-template.js must not carry the legacy precache vocabulary: ' + tok);
     assert.ok(reg.indexOf(tok) === -1, 'register.js must not carry the legacy precache vocabulary: ' + tok);
   });
@@ -239,16 +239,16 @@ test('the two workers own disjoint cache families and status databases (issue 07
   // We verify the generator produces the right per-app values.
   var gen = readSrc('app/scripts/gen-sw.mjs');
   // cache families: each worker never names, let alone tears down, the sibling's
-  // The template has 'emplois-__APP__-snapshot-' which gen-sw.mjs expands per app
+  // The template has 'time-__APP__-snapshot-' which gen-sw.mjs expands per app
   // by replacing __APP__. The generator source only has the token replacement logic.
   assert.ok(gen.indexOf('__APP__') !== -1,
     'gen-sw.mjs must replace __APP__ token to expand cache families');
-  // status databases: same - the template has 'emplois-__APP__-status' which gen-sw.mjs expands
+  // status databases: same - the template has 'time-__APP__-status' which gen-sw.mjs expands
   // by replacing __APP__. The generator source only has the token replacement logic.
   assert.ok(gen.indexOf('__APP__') !== -1,
     'gen-sw.mjs must replace __APP__ token to expand status DB names');
   // The legacy pre-split root snapshot: teardown target of the teachers worker only
-  assert.ok(gen.indexOf("emplois-snapshot-v1") !== -1,
+  assert.ok(gen.indexOf("time-snapshot-v1") !== -1,
     'gen-sw.mjs carries the legacy root snapshot teardown for teachers');
   // distinct families, both start at v1 (suffix is computed at build time)
   // The generator produces distinct families by replacing __APP__ with each app name
@@ -259,10 +259,10 @@ test('the two workers own disjoint cache families and status databases (issue 07
 test('the runtime cache is family-scoped per app and never lists pages outside its own app (issues 072, 087)', function () {
   // The template is shared; gen-sw.mjs produces per-app instances. With runtime
   // caching there is no snapshot URL list left to scope — the per-app family name
-  // (CACHE = 'emplois-__APP__-snapshot-') does the scoping, and the teardown keeps
+  // (CACHE = 'time-__APP__-snapshot-') does the scoping, and the teardown keeps
   // only the app's own family.
   var tmpl = readSrc('app/scripts/sw-template.js');
-  assert.ok(tmpl.indexOf("CACHE = 'emplois-__APP__-snapshot-'") !== -1,
+  assert.ok(tmpl.indexOf("CACHE = 'time-__APP__-snapshot-'") !== -1,
     'the runtime cache is family-namespaced per app (issue 087)');
   var gen = readSrc('app/scripts/gen-sw.mjs');
   APPS.forEach(function (app) {

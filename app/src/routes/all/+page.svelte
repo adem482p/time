@@ -47,17 +47,17 @@ import { teacherName } from '$lib/display.js';
 	}
 
 	function statusText() {
-		if (loadError) return 'Failed to load emplois.csv: ' + loadError;
+		if (loadError) return 'Failed to load time.csv: ' + loadError;
 		if (store)
 			return (
 				store.teachers.length + ' teachers × ' + store.slots.length + ' time slots.'
 			);
-		return 'Loading emplois.csv…';
+		return 'Loading time.csv…';
 	}
 </script>
 
 <svelte:head>
-	<title>Timetable matrix — Emplois</title>
+	<title>Timetable matrix — Time</title>
 	<link rel="icon" href={`${base}/assets/icon-192.png`} sizes="192x192" type="image/png" />
 	<link rel="apple-touch-icon" href={`${base}/assets/apple-touch-icon.png`} />
 </svelte:head>

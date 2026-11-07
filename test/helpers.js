@@ -15,7 +15,7 @@ export var ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 // The one canonical CSV path. AGENTS.md: the ROOT file is the single source of
 // truth for every suite — the app/static copy is a build artifact of the site,
 // not a second dataset, so suites must not split between the two.
-export var CSV_PATH = path.join(ROOT, 'emplois.csv');
+export var CSV_PATH = path.join(ROOT, 'time.csv');
 
 // Reads a repo file as utf8 text: readSrc('app', 'src', 'lib', 'data.js').
 // Variadic joins ROOT with the parts; single-string call sites
@@ -45,11 +45,11 @@ export var APPS = [
     name: 'teachers',
     dir: 'teachers',
     page: 'app/src/routes/teachers/+page.svelte',
-    family: 'emplois-teachers-snapshot-',
-    db: 'emplois-teachers-status',
+    family: 'time-teachers-snapshot-',
+    db: 'time-teachers-status',
     registerScript: 'app/src/lib/register.js',
     manifest: 'app/static/teachers/manifest.json',
-    nameStr: 'Emplois — Enseignants',
+    nameStr: 'Time — Enseignants',
     shortName: 'Enseignants',
     manifestMode: 'opt-in'
   },
@@ -57,11 +57,11 @@ export var APPS = [
     name: 'classes',
     dir: 'classes',
     page: 'app/src/routes/classes/+page.svelte',
-    family: 'emplois-classes-snapshot-',
-    db: 'emplois-classes-status',
+    family: 'time-classes-snapshot-',
+    db: 'time-classes-status',
     registerScript: 'app/src/lib/register.js',
     manifest: 'app/static/classes/manifest.json',
-    nameStr: 'Emplois — Classes',
+    nameStr: 'Time — Classes',
     shortName: 'Classes',
     manifestMode: 'static'
   }

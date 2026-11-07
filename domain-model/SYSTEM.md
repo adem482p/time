@@ -189,7 +189,7 @@ truth. The parser is the controlled transformation between them, and the web
 application reads the CSV rather than the PDFs.
 
 **Editorial definition.** “Source of truth” must be scoped: PDFs are the
-official source; `emplois.csv` is the application's canonical dataset.
+official source; `time.csv` is the application's canonical dataset.
 
 **Alternative terms.** authoritative source; canonical dataset; reference
 dataset.
@@ -203,7 +203,7 @@ It removes `S1` as a semester source label and never stores it as a
 week-pattern specifier.
 
 **Editorial definition.** The parser is `data/extract.py`, which flattens the
-PDF publications into `emplois.csv`.
+PDF publications into `time.csv`.
 
 **Alternative terms.** document parser; data extractor; ingestion process.
 

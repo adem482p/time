@@ -12,7 +12,7 @@
 			   star-slash inside this comment — it would terminate it early.) */
 			(function () {
 				try {
-					var s = JSON.parse(localStorage.getItem('emplois-theme') || 'null');
+					var s = JSON.parse(localStorage.getItem('time-theme') || 'null');
 					if (!s || !s.vars) return;             /* first visit / old shape: CSS defaults */
 					var d = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
 					var v = s.vars[d ? 'dark' : 'light'];

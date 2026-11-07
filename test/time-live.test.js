@@ -2,7 +2,7 @@
 // `node --test test/`. ESM/SvelteKit retarget of the legacy page tests: the
 // behavioral battery drives the real lib computations the at page runs
 // (isCurrentSession, slotMinutes, fuseSessions — model.js/data.js) directly
-// against the real emplois.csv with fixed Dates, and the rendering shape is
+// against the real time.csv with fixed Dates, and the rendering shape is
 // pinned structurally on app/src/routes/at/+page.svelte (the matrix page
 // stays time-blind, also structurally). No component runner, no vm DOM stubs.
 // The file name stays clear of issue #054's future app.test.js.

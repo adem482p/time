@@ -88,14 +88,14 @@
 	});
 
 	// ---- last selected class (issue 065) ------------------------------------
-	// The page mirrors its selection fact under 'emplois-class' — localStorage,
+	// The page mirrors its selection fact under 'time-class' — localStorage,
 	// not sessionStorage: "remember the last class" spans browser sessions,
 	// like the theme does. The value is the raw ref selectClass received.
 	// One write site per funnel and nowhere else, so fact and storage can
 	// never diverge; every access is wrapped like theme.js's readState/
 	// writeState — private mode, quota exceptions, or a context without
 	// localStorage degrade to today's no-memory behavior and never break boot.
-	const CLASS_STORE_KEY = 'emplois-class';
+	const CLASS_STORE_KEY = 'time-class';
 
 	function readStoredClass() {
 		try {
@@ -501,10 +501,10 @@
 </script>
 
 <svelte:head>
-	<title>Classes — Emplois</title>
+	<title>Classes — Time</title>
 	<meta
 		name="description"
-		content="Emplois — the ISIM Mahdia timetable, searchable by class or subject."
+		content="Time — the ISIM Mahdia timetable, searchable by class or subject."
 	/>
 	<meta name="theme-color" content="#0b4da2" />
 	<link rel="manifest" href="manifest.json" />
@@ -598,9 +598,9 @@
 			</div>
 		</div>
 		<p id="status" class={!!(query || selectedClass !== null) ? 'count-away' : ''}>
-			{#if loadError}Failed to load emplois.csv: {loadError}{:else if store}{store.size} sessions · {groups
+			{#if loadError}Failed to load time.csv: {loadError}{:else if store}{store.size} sessions · {groups
 				.leaves
-				.length} classes{:else}Loading emplois.csv…{/if}
+				.length} classes{:else}Loading time.csv…{/if}
 		</p>
 		<ul id="classList">
 			{#if index && !rows.length}

@@ -27,7 +27,7 @@
   <circle cx="90" cy="600" r="180" fill="#ffffff" fill-opacity="0.05"/>
 
   <!-- left: wordmark + tagline -->
-  <text x="80" y="214" fill="#ffffff" font-size="104" font-weight="bold" letter-spacing="-2">Emplois</text>
+  <text x="80" y="214" fill="#ffffff" font-size="104" font-weight="bold" letter-spacing="-2">Time</text>
   <rect x="82" y="242" width="122" height="8" rx="4" fill="#7fb2ff"/>
   <text x="80" y="314" fill="#dce8fb" font-size="30">The 2026–2027 timetable for</text>
   <text x="80" y="358" fill="#ffffff" font-size="42" font-weight="bold">ISIM Mahdia</text>

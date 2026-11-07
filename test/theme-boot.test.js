@@ -9,7 +9,7 @@
 //      stored per-scheme output maps before first paint, plus the
 //      <meta name="color-scheme" content="light dark"> next to the viewport
 //      meta that lets the UA paint the right scheme;
-//   2. app/src/lib/theme.js persisting those maps under `emplois-theme` on
+//   2. app/src/lib/theme.js persisting those maps under `time-theme` on
 //      every applyState, via the single writer varsFor, so the replay and the
 //      apply are the same values (double-apply is a no-op). The legacy
 //      DOMContentLoaded auto-init is gone — the layout component calls
@@ -72,7 +72,7 @@ test('app.html carries the inline replay snippet immediately before the styleshe
 		const src = readSrc(p);
 		assert.strictEqual(src.indexOf('/* Issue 066:'), -1,
 			p + ' has no inline replay of its own');
-		assert.strictEqual(src.indexOf("localStorage.getItem('emplois-theme')"), -1,
+		assert.strictEqual(src.indexOf("localStorage.getItem('time-theme')"), -1,
 			p + ' never re-reads the theme store');
 	});
 });
@@ -168,7 +168,7 @@ const THEME_VM_SRC = themeModuleSource();
 
 function bootTheme(seedStorage, dark) {
 	const store = {};
-	if (seedStorage !== undefined) store['emplois-theme'] = seedStorage;
+	if (seedStorage !== undefined) store['time-theme'] = seedStorage;
 	const writes = {};   // documentElement.style.setProperty calls, in order
 	const btnAttrs = {}; // attributes written on the #themeCycle stub (issue 059)
 	const sandbox = {
@@ -226,7 +226,7 @@ function presetOpts(theme, name, dark) {
 test('applyState persists both schemes’ 41-key output maps equal to the engine (Ember + Monochrome variant path)', () => {
 	['Ember', 'Monochrome'].forEach((name) => {
 		const boot = bootTheme(JSON.stringify({ preset: name }), false); // light scheme
-		const saved = JSON.parse(boot.store['emplois-theme']);
+		const saved = JSON.parse(boot.store['time-theme']);
 		assert.strictEqual(saved.preset, name, name + ': the preset stays stored');
 		['light', 'dark'].forEach((scheme) => {
 			const vars = saved.vars && saved.vars[scheme];
@@ -265,7 +265,7 @@ test('readState stays backward compatible: the old shape restores and upgrades, 
 	const oldBoot = bootTheme(JSON.stringify({ preset: 'Ember' }), true); // dark scheme
 	assert.strictEqual(oldBoot.theme.current.preset, 'Ember',
 		'the old shape still resolves the preset');
-	const upgraded = JSON.parse(oldBoot.store['emplois-theme']);
+	const upgraded = JSON.parse(oldBoot.store['time-theme']);
 	assert.ok(upgraded.vars && upgraded.vars.light && upgraded.vars.dark,
 		'the old shape is upgraded to the new one on the first apply');
 	assert.strictEqual(Object.keys(upgraded.vars.light).length, 41, 'upgraded light map is complete');
@@ -281,7 +281,7 @@ test('readState stays backward compatible: the old shape restores and upgrades, 
 	}), false);
 	assert.strictEqual(newBoot.theme.current.preset, 'Monochrome',
 		'the new shape still resolves the preset');
-	const saved = JSON.parse(newBoot.store['emplois-theme']);
+	const saved = JSON.parse(newBoot.store['time-theme']);
 	assert.strictEqual(saved.preset, 'Monochrome');
 	assert.strictEqual(Object.keys(saved.vars.light).length, 41, 'the light map is re-persisted intact');
 	assert.strictEqual(Object.keys(saved.vars.dark).length, 41, 'the dark map is re-persisted intact');

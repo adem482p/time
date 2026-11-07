@@ -24,7 +24,7 @@
 // IndexedDB — a worker has no localStorage — so the offline -> online
 // transitions are logged and recorded even after this worker has been
 // terminated and relaunched.
-// Shared assets (app.css, _app/, vendor/, assets/, emplois.csv) live at the
+// Shared assets (app.css, _app/, vendor/, assets/, time.csv) live at the
 // site root and are referenced here relative to this script (../…):
 // subresource requests of a controlled page reach THIS worker whatever their
 // URL (Handle Fetch routes subresources to the client's controller), so the
@@ -37,7 +37,7 @@
 // gets in the way (browser console):
 //   navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
 //   caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
-var CACHE = 'emplois-teachers-snapshot-';
+var CACHE = 'time-teachers-snapshot-';
 
 // A successful network fetch: record 'online'. On the offline -> online
 // transition (persisted record says offline — warm worker OR freshly
@@ -83,7 +83,7 @@ function noteOffline() {
 var status = readStatus();
 
 // --- last online status (issue 070, kept verbatim in behaviour): persisted in
-// IndexedDB, NOT in a cache. db 'emplois-teachers-status', store 'kv', key
+// IndexedDB, NOT in a cache. db 'time-teachers-status', store 'kv', key
 // 'last-online' -> 'online' | 'offline'. Storage errors resolve (best-effort)
 // so the chain never wedges: opens and transaction use are guarded, and the
 // connection is closed on every path. Version 2: onupgradeneeded also runs on an
@@ -92,7 +92,7 @@ var status = readStatus();
 function readStatus() {
   return new Promise(function (resolve) {
     try {
-      var req = indexedDB.open('emplois-teachers-status', 2);
+      var req = indexedDB.open('time-teachers-status', 2);
       req.onupgradeneeded = function () {
         if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv');
       };
@@ -114,7 +114,7 @@ function readStatus() {
 function writeStatus(value) {
   return new Promise(function (resolve) {
     try {
-      var req = indexedDB.open('emplois-teachers-status', 2);
+      var req = indexedDB.open('time-teachers-status', 2);
       req.onupgradeneeded = function () {
         if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv');
       };
@@ -146,12 +146,12 @@ self.addEventListener('activate', function (event) {
   // responses, which a returning online session simply overwrites.
   //
   // Teachers worker only: the legacy pre-split root snapshot
-  // 'emplois-snapshot-v1' is deleted by exact name — existing installs
+  // 'time-snapshot-v1' is deleted by exact name — existing installs
   // carry it and no root worker survives to clean it (issue 072).
   event.waitUntil(
     caches.keys().then(function (ks) {
       return Promise.all(ks.filter(function (k) {
-        return (k.indexOf(CACHE) === 0 && k !== CACHE) || k === 'emplois-snapshot-v1';
+        return (k.indexOf(CACHE) === 0 && k !== CACHE) || k === 'time-snapshot-v1';
       }).map(function (k) { return caches.delete(k); }));
     }).then(function () { return self.clients.claim(); })
   );

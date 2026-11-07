@@ -14,6 +14,6 @@
 </script>
 
 <svelte:head>
-	<title>Emplois — ISIM Mahdia Timetable</title>
+	<title>Time — ISIM Mahdia Timetable</title>
 	<meta http-equiv="refresh" content="0; url=teachers/" />
 </svelte:head>
