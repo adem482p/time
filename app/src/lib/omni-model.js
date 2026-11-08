@@ -195,13 +195,13 @@ export function classShortcut(cls) {
 			? `${cls.specialty.year.track_specifier.value}${cls.specialty.year.year_specifier.value}`
 			: `${cls.specialty?.specialty_specifier?.value || ''}${cls.specialty?.specialty_semester_specifier?.value || ''}`;
 
-	const sec = cls.group_specifier?.value;
+	const grp = cls.group_specifier?.value;
 	const coh = cls.cohort_specifier?.value;
 
-	if (sec && coh) {
-		return { head: `${spec} ${sec}`, sub: String(coh) };
-	} else if (sec) {
-		return { head: `${spec} ${sec}`, sub: '' };
+	if (grp && coh) {
+		return { head: `${spec} ${grp}`, sub: String(coh) };
+	} else if (grp) {
+		return { head: `${spec} ${grp}`, sub: '' };
 	} else {
 		return { head: spec, sub: '' };
 	}
@@ -267,7 +267,7 @@ export function buildOmniStore(csvText) {
 				track,
 				year: yr,
 				specialty,
-				section: c.group_specifier?.value || '',
+				group: c.group_specifier?.value || '',
 				cohort: c.cohort_specifier?.value != null ? String(c.cohort_specifier.value) : ''
 			});
 		}
@@ -595,7 +595,7 @@ export function getTeacherDetail(omniStore, teacherName, now) {
  */
 export function getClassDetail(omniStore, classIdentifier, now) {
 	if (!omniStore || !classIdentifier) return null;
-	const resolution = omniStore.catalogue.resolve(classIdentifier);
+	const resolution = omniStore.catalogue.resolve(classIdentifier, { expected: 'class' });
 	if (resolution.type !== dm.Type.UNIQUE_MATCH) return null;
 	if (resolution.publication.type !== dm.Type.RECORDS) return null;
 
@@ -645,9 +645,9 @@ export function getClassDetail(omniStore, classIdentifier, now) {
 		cls.specialty?.type === dm.Type.COMMON_SPECIALTY
 			? `${track}${yr}`
 			: `${cls.specialty?.specialty_specifier?.value || ''}${cls.specialty?.specialty_semester_specifier?.value || ''}`;
-	const section = cls.group_specifier?.value || '';
+	const group = cls.group_specifier?.value || '';
 	const cohort = cls.cohort_specifier?.value != null ? String(cls.cohort_specifier.value) : '';
-	const groupe = section ? (cohort ? `${section}<sub>${cohort}</sub>` : section) : cohort || '';
+	const groupe = group ? (cohort ? `${group}<sub>${cohort}</sub>` : group) : cohort || '';
 
 	const facts = [];
 	if (track) facts.push({ name: 'Track', value: track, raw: false });

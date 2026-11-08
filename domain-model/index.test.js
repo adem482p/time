@@ -23,7 +23,7 @@ test('exports unique symbol discriminators', () => {
 });
 
 test('grammar rules expose their type symbols', () => {
-  const commonRule = commonSpecialtyRule({ track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1), sections: [] });
+  const commonRule = commonSpecialtyRule({ track_specifier: trackSpecifier('LBC'), year_specifier: yearSpecifier(1), groups: [] });
   assert.equal(commonRule.type, Type.COMMON_SPECIALTY_RULE);
   const specialtyRuleValue = specialtyRule({
     specialty_specifier: specialtySpecifier('GLSI'),
@@ -79,11 +79,15 @@ test('common specialty construction', () => {
 test('class population shapes', () => {
   const node = specialty(cat, { specialty_specifier: specialtySpecifier('GLSI'), year_specifier: yearSpecifier(2), year_semester_specifier: yearSemesterSpecifier(1) });
   const cls = classPopulation(cat, { specialty: node, group_specifier: 'A', cohort_specifier: 1 });
-  assert.equal(cls.type, Type.COHORT_CLASS);
+  assert.equal(cls.type, Type.CLASS);
+  assert.equal(cls.group_specifier.value, 'A');
+  assert.equal(cls.cohort_specifier.value, 1);
   assert.equal(cls.identifier, 'GLSI1 A1');
   const singletonSpecialty = specialty(cat, { specialty_specifier: specialtySpecifier('EXR'), year_specifier: yearSpecifier(1), year_semester_specifier: yearSemesterSpecifier(1) });
   const single = classPopulation(cat, { specialty: singletonSpecialty });
-  assert.equal(single.type, Type.SINGLETON_CLASS);
+  assert.equal(single.type, Type.CLASS);
+  assert.equal(single.group_specifier, undefined);
+  assert.equal(single.cohort_specifier, undefined);
   assert.throws(() => classPopulation(cat, { specialty: singletonSpecialty, group_specifier: 'A' }), /Invalid group/);
 });
 
@@ -112,6 +116,10 @@ test('parseReference catalogue-aware', () => {
   const mp = parseReference('MP1-EXR', { catalogue: cat, expected: 'specialty' });
   assert.equal(mp.type, Type.SPECIALTY_REFERENCE);
   assert.equal(mp.specialty.specialty_specifier.value, 'EXR');
+  const singletonClass = parseReference('MP1-EXR', { catalogue: cat, expected: 'class' });
+  assert.equal(singletonClass.type, Type.CLASS_REFERENCE);
+  assert.equal(singletonClass.class.identifier, 'EXR1');
+  assert.equal(singletonClass.class.group_specifier, undefined);
 });
 
 test('population references', () => {
@@ -121,6 +129,8 @@ test('population references', () => {
   assert.equal(sp.type, Type.GROUP_POPULATION);
   const cp = populationReference({ reference: 'LCS1 A1', session_kind: 'cohort-lab-work', catalogue: cat });
   assert.equal(cp.type, Type.COHORT_POPULATION);
+  assert.equal(cp.class.cohort_specifier.value, 1);
+  assert.throws(() => populationReference({ reference: 'LCS1 A1', session_kind: 'group-seminar', catalogue: cat }));
   assert.throws(() => populationReference({ reference: 'LCS1 A', session_kind: 'specialty-lecture', catalogue: cat }));
 });
 
@@ -179,12 +189,13 @@ test('generation', () => {
   // GLSI4 does not exist because duration is 3 semesters
   assert.equal(cat.specialties.some((node) => node.identifier === 'GLSI4'), false);
   assert.ok(cat.classes.some((c) => c.identifier === 'LCS1 A1'));
-  assert.ok(cat.classes.some((c) => c.type === Type.SINGLETON_CLASS && c.identifier === 'EXR1'));
+  assert.ok(cat.classes.some((c) => c.type === Type.CLASS && c.identifier === 'EXR1' && !c.group_specifier && !c.cohort_specifier));
+  assert.equal(cat.classes.every((c) => c.type === Type.CLASS), true);
 });
 
 test('queries', () => {
   assert.equal(querySpecialties(cat, (v) => v.identifier === 'LCS1').length, 1);
-  assert.equal(queryClasses(cat, (v) => v.type === Type.GROUP_CLASS).length > 0, true);
+  assert.equal(queryClasses(cat, (v) => v.type === Type.CLASS && !!v.group_specifier && !v.cohort_specifier).length > 0, true);
   assert.equal(queryRecords([{ day: 'LUNDI' }, { day: 'MARDI' }], { day: 'LUNDI' }).length, 1);
 });
 
@@ -200,7 +211,7 @@ test('strict tree divergence and trunk derivation invariant enforcement', () => 
           track_specifier: 'TST',
           start_year_specifier: 2,
           duration_semesters: 2,
-          populations: [populationsForYear({ year_specifier: 2, sections: [] })]
+          populations: [populationsForYear({ year_specifier: 2, groups: [] })]
         })
       ],
       commonSpecialtyRules: [] // Missing year 1 commonSpecialtyRule!
@@ -219,12 +230,12 @@ test('strict tree divergence and trunk derivation invariant enforcement', () => 
           track_specifier: 'TST',
           start_year_specifier: 2,
           duration_semesters: 2,
-          populations: [populationsForYear({ year_specifier: 2, sections: [] })]
+          populations: [populationsForYear({ year_specifier: 2, groups: [] })]
         })
       ],
       commonSpecialtyRules: [
-        commonSpecialtyRule({ track_specifier: 'TST', year_specifier: 1, sections: [] }),
-        commonSpecialtyRule({ track_specifier: 'TST', year_specifier: 2, sections: [] }) // Invalid! Year 2 is already diverged
+        commonSpecialtyRule({ track_specifier: 'TST', year_specifier: 1, groups: [] }),
+        commonSpecialtyRule({ track_specifier: 'TST', year_specifier: 2, groups: [] }) // Invalid! Year 2 is already diverged
       ]
     }),
     /diverged before year specifier 2/

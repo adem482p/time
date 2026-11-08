@@ -31,9 +31,7 @@ export const Type = Object.freeze({
   YEAR: Symbol('year'),
   COMMON_SPECIALTY: Symbol('common-specialty'),
   SPECIALTY: Symbol('specialty'),
-  GROUP_CLASS: Symbol('group-class'),
-  COHORT_CLASS: Symbol('cohort-class'),
-  SINGLETON_CLASS: Symbol('singleton-class'),
+  CLASS: Symbol('class'),
   INVALID_REFERENCE: Symbol('invalid-reference'),
   TRACK_SPECIFIER_REFERENCE: Symbol('track-specifier-reference'),
   SPECIALTY_SPECIFIER_REFERENCE: Symbol('specialty-specifier-reference'),
@@ -83,13 +81,8 @@ export const Type = Object.freeze({
  * @typedef {{type: symbol, year: Year, identifier: string}} CommonSpecialty
  * Specialty — constructed by `specialty(...)`; structure {specialty specifier, specialty-semester specifier, year, identifier}.
  * @typedef {{type: symbol, specialty_specifier: SpecialtySpecifier, specialty_semester_specifier: SpecialtySemesterSpecifier, year: Year, identifier: string}} Specialty
- * Group class — constructed by `classPopulation(...)`; structure {specialty, group specifier, identifier}.
- * @typedef {{type: symbol, specialty: (Specialty|CommonSpecialty), group_specifier: GroupSpecifier, identifier: string}} GroupClass
- * Cohort class — constructed by `classPopulation(...)`; structure {specialty, group specifier, cohort specifier, identifier}.
- * @typedef {{type: symbol, specialty: (Specialty|CommonSpecialty), group_specifier: GroupSpecifier, cohort_specifier: CohortSpecifier, identifier: string}} CohortClass
- * Singleton class — constructed by `classPopulation(...)`; structure {specialty, identifier}.
- * @typedef {{type: symbol, specialty: (Specialty|CommonSpecialty), identifier: string}} SingletonClass
- * @typedef {GroupClass|CohortClass|SingletonClass} ClassNode
+ * Class — constructed by `classPopulation(...)`; structure {specialty, group specifier, cohort specifier, identifier}; both specifiers are optional and absent on a singleton class.
+ * @typedef {{type: symbol, specialty: (Specialty|CommonSpecialty), group_specifier?: GroupSpecifier, cohort_specifier?: CohortSpecifier, identifier: string}} Class
  *
  * Group descriptor — constructed by `groupsWithTwoCohorts(...)` or `groupsWithNoCohorts(...)`; structure {group specifier, cohorting}, or a bare group letter (single uppercase letter).
  * @typedef {({group_specifier: (GroupSpecifier|string), cohorting: string}|string)} GroupDescriptor
@@ -111,15 +104,15 @@ export const Type = Object.freeze({
  * Specialty reference — constructed by `parseReference(...)`; structure {notation, specialty}.
  * @typedef {{type: symbol, notation: string, specialty: (Specialty|CommonSpecialty)}} SpecialtyReference
  * Class reference — constructed by `parseReference(...)`; structure {notation, class}.
- * @typedef {{type: symbol, notation: string, class: ClassNode}} ClassReference
+ * @typedef {{type: symbol, notation: string, class: Class}} ClassReference
  * @typedef {InvalidReference|TrackSpecifierReference|SpecialtySpecifierReference|YearReference|SpecialtyReference|ClassReference} Reference
  *
  * Specialty population — constructed by `populationReference(...)`; structure {specialty}.
  * @typedef {{type: symbol, specialty: (Specialty|CommonSpecialty)}} SpecialtyPopulation
- * Group population — constructed by `populationReference(...)`; structure {class}.
- * @typedef {{type: symbol, class: GroupClass}} GroupPopulation
- * Cohort population — constructed by `populationReference(...)`; structure {class}.
- * @typedef {{type: symbol, class: CohortClass}} CohortPopulation
+ * Group population — constructed by `populationReference(...)`; structure {class}; the class carries a group specifier and no cohort specifier.
+ * @typedef {{type: symbol, class: Class}} GroupPopulation
+ * Cohort population — constructed by `populationReference(...)`; structure {class}; the class carries a group and a cohort specifier.
+ * @typedef {{type: symbol, class: Class}} CohortPopulation
  * @typedef {SpecialtyPopulation|GroupPopulation|CohortPopulation} Population
  *
  * Week-pattern specifier — constructed by `weekPatternSpecifier(...)`; structure {'SA' | 'SB' | ''}.
@@ -148,9 +141,9 @@ export const Type = Object.freeze({
  * Not-found resolution — constructed by `Catalogue.resolve(...)`; structure {syntax, catalogue, publication}.
  * @typedef {{type: symbol, syntax: Reference, catalogue: {type: Type.NOT_FOUND}, publication: {type: Type.NOT_APPLICABLE|Type.NO_RECORDS|Type.RECORDS, records?: Array<PartialSessionRecord>}}} NotFoundResolution
  * Unique-match resolution — constructed by `Catalogue.resolve(...)`; structure {syntax, catalogue, publication}.
- * @typedef {{type: symbol, syntax: Reference, catalogue: {type: Type.UNIQUE_MATCH, match: (Year|Specialty|CommonSpecialty|ClassNode)}, publication: {type: Type.UNIQUE_MATCH|Type.NO_RECORDS|Type.RECORDS, records?: Array<PartialSessionRecord>}}} UniqueMatchResolution
+ * @typedef {{type: symbol, syntax: Reference, catalogue: {type: Type.UNIQUE_MATCH, match: (Year|Specialty|CommonSpecialty|Class)}, publication: {type: Type.UNIQUE_MATCH|Type.NO_RECORDS|Type.RECORDS, records?: Array<PartialSessionRecord>}}} UniqueMatchResolution
  * Ambiguous-match resolution — constructed by `Catalogue.resolve(...)`; structure {syntax, catalogue, publication}.
- * @typedef {{type: symbol, syntax: Reference, catalogue: {type: Type.AMBIGUOUS_MATCH, matches: Array<(Year|Specialty|CommonSpecialty|ClassNode)>}, publication: {type: Type.AMBIGUOUS_MATCH|Type.NO_RECORDS|Type.RECORDS, records?: Array<PartialSessionRecord>}}} AmbiguousMatchResolution
+ * @typedef {{type: symbol, syntax: Reference, catalogue: {type: Type.AMBIGUOUS_MATCH, matches: Array<(Year|Specialty|CommonSpecialty|Class)>}, publication: {type: Type.AMBIGUOUS_MATCH|Type.NO_RECORDS|Type.RECORDS, records?: Array<PartialSessionRecord>}}} AmbiguousMatchResolution
  * @typedef {InvalidResolution|NotFoundResolution|UniqueMatchResolution|AmbiguousMatchResolution} Resolution
  *
  * Catalogue options — passed to `new Catalogue(...)`; structure {track specifiers, specialty specifiers, specialty rules, common specialty rules, records}.
@@ -427,10 +420,10 @@ function populationForParsed(parsed, sessionKindValue) {
       if (parsed.type !== Type.SPECIALTY_REFERENCE) throw new Error('Specialty population must be a specialty');
       return freeze({ type: Type.SPECIALTY_POPULATION, specialty: parsed.specialty });
     case 'group':
-      if (parsed.type !== Type.CLASS_REFERENCE || parsed.class.type !== Type.GROUP_CLASS) throw new Error('Group population must be a group class');
+      if (parsed.type !== Type.CLASS_REFERENCE || !parsed.class.group_specifier || parsed.class.cohort_specifier) throw new Error('Group population must be a class with a group specifier and no cohort specifier');
       return freeze({ type: Type.GROUP_POPULATION, class: parsed.class });
     case 'cohort':
-      if (parsed.type !== Type.CLASS_REFERENCE || parsed.class.type !== Type.COHORT_CLASS) throw new Error('Cohort population must be a cohort class');
+      if (parsed.type !== Type.CLASS_REFERENCE || !parsed.class.group_specifier || !parsed.class.cohort_specifier) throw new Error('Cohort population must be a class with a group and a cohort specifier');
       return freeze({ type: Type.COHORT_POPULATION, class: parsed.class });
     default:
       break;
@@ -439,14 +432,9 @@ function populationForParsed(parsed, sessionKindValue) {
     case Type.SPECIALTY_REFERENCE:
       return freeze({ type: Type.SPECIALTY_POPULATION, specialty: parsed.specialty });
     case Type.CLASS_REFERENCE:
-      switch (parsed.class.type) {
-        case Type.GROUP_CLASS:
-          return freeze({ type: Type.GROUP_POPULATION, class: parsed.class });
-        case Type.COHORT_CLASS:
-          return freeze({ type: Type.COHORT_POPULATION, class: parsed.class });
-        default:
-          throw new Error('Singleton classes require specialty scope');
-      }
+      if (parsed.class.cohort_specifier) return freeze({ type: Type.COHORT_POPULATION, class: parsed.class });
+      if (parsed.class.group_specifier) return freeze({ type: Type.GROUP_POPULATION, class: parsed.class });
+      throw new Error('A class without a group specifier requires specialty scope');
     default:
       throw new Error('Invalid population reference');
   }
@@ -729,7 +717,7 @@ export class Catalogue {
    */
   get specialties() { return this._buildCache().specialties; }
   /**
-   * Derived section, cohort and singleton classes.
+   * Derived classes, from singleton to cohort specificity.
    */
   get classes() { return this._buildCache().classes; }
 
@@ -887,7 +875,7 @@ export function specialty(catalogue, { specialty_specifier, year_specifier, year
 }
 
 /**
- * Construct the singleton, group or cohort class of a specialty.
+ * Construct the class of a specialty, optionally qualified by a group and a cohort specifier.
  */
 export function classPopulation(catalogue, { specialty: specialtyValue, group_specifier, cohort_specifier } = {}) {
   // accept string specialty reference
@@ -915,15 +903,15 @@ export function classPopulation(catalogue, { specialty: specialtyValue, group_sp
   if (groups == null) throw new Error('No population rule for specialty');
 
   if (group_specifier === undefined) {
-    if (groups.length !== 0) throw new Error('Singleton class only allowed where no groups');
-    return freeze({ type: Type.SINGLETON_CLASS, specialty: node, identifier: node.identifier });
+    if (groups.length !== 0) throw new Error('A class without a group specifier requires a specialty with no groups');
+    return freeze({ type: Type.CLASS, specialty: node, identifier: node.identifier });
   }
   const grpSpec = groupSpecifierValue(group_specifier);
   const groupDescriptor = groups.find((g) => groupSpecifierValue(g.group_specifier).value === grpSpec.value);
   if (!groupDescriptor) throw new Error(`Invalid group: ${grpSpec.value}`);
   if (cohort_specifier === undefined) {
     return freeze({
-      type: Type.GROUP_CLASS,
+      type: Type.CLASS,
       specialty: node,
       group_specifier: grpSpec,
       identifier: `${node.identifier} ${grpSpec.value}`
@@ -933,7 +921,7 @@ export function classPopulation(catalogue, { specialty: specialtyValue, group_sp
   if (groupDescriptor.cohorting !== twoCohorts) throw new Error('Cohorts not allowed for this group');
   if (coh.value !== 1 && coh.value !== 2) throw new Error('Cohort must be 1 or 2');
   return freeze({
-    type: Type.COHORT_CLASS,
+    type: Type.CLASS,
     specialty: node,
     group_specifier: grpSpec,
     cohort_specifier: coh,
@@ -1160,7 +1148,7 @@ function parseSpecialtyTokens(tokens, options) {
       identifier: y.identifier
     });
   }
-  // unknown single token with digits: rejected (no sectionless fallback)
+  // unknown single token with digits: rejected (no specialty-without-group fallback)
   return undefined;
 }
 
@@ -1170,12 +1158,12 @@ function parseSpecialtyTokens(tokens, options) {
 function classFromSpecialty(specialtyValue, groupValue, cohortValue) {
   const node = specialtyValue;
   if (groupValue === undefined) {
-    return freeze({ type: Type.SINGLETON_CLASS, specialty: node, identifier: node.identifier });
+    return freeze({ type: Type.CLASS, specialty: node, identifier: node.identifier });
   }
   const groupValueObject = groupSpecifierValue(groupValue);
   if (cohortValue === undefined) {
     return freeze({
-      type: Type.GROUP_CLASS,
+      type: Type.CLASS,
       specialty: node,
       group_specifier: groupValueObject,
       identifier: `${node.identifier} ${groupValueObject.value}`
@@ -1183,7 +1171,7 @@ function classFromSpecialty(specialtyValue, groupValue, cohortValue) {
   }
   const cohortValueObject = cohortSpecifierValue(cohortValue);
   return freeze({
-    type: Type.COHORT_CLASS,
+    type: Type.CLASS,
     specialty: node,
     group_specifier: groupValueObject,
     cohort_specifier: cohortValueObject,
@@ -1267,12 +1255,12 @@ function sourceFieldReference(field, catalogue) {
   const parts = rest.match(/^(?:([A-Z][A-Z0-9-]*)_)?([A-Z]+)$/);
   if (!parts) return null;
   let specialtyTag = parts[1];
-  let section = parts[2];
+  let group = parts[2];
   if (specialtyTag === undefined) {
     const rule = catalogue.specialtyRules.get(rest);
     if (rule && rule.track_specifier.value === track) {
       specialtyTag = rest;
-      section = undefined;
+      group = undefined;
     }
   }
   const year = Number(yearText);
@@ -1283,7 +1271,7 @@ function sourceFieldReference(field, catalogue) {
       year_specifier: year,
       year_semester_specifier: 1
     }).identifier;
-  return section === undefined ? specialtyIdentifier : `${specialtyIdentifier} ${section}${cohort ?? ''}`;
+  return group === undefined ? specialtyIdentifier : `${specialtyIdentifier} ${group}${cohort ?? ''}`;
 }
 
 /**

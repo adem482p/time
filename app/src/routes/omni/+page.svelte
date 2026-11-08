@@ -241,14 +241,18 @@
 	}
 
 	// Toggle between cohort variants of the selected class (e.g. A1 <-> A2)
-	// by switching to the sibling class entry that shares the same section
-	// but carries a different cohort specifier.
+	// by switching to the sibling class entry that shares the same group
+	// specifier but carries a different cohort specifier.
 	function toggleCohort() {
 		if (!selectedClass || !omniStore) return;
 		const current = omniStore.classes.find((c) => c.identifier === selectedClass);
 		if (!current || !current.cohort) return;
 		const sibling = omniStore.classes.find(
-			(c) => c.section === current.section && c.cohort !== '' && c.cohort !== current.cohort
+			(c) =>
+				c.specialty === current.specialty &&
+				c.group === current.group &&
+				c.cohort !== '' &&
+				c.cohort !== current.cohort
 		);
 		if (sibling) selectClass(sibling.identifier);
 	}

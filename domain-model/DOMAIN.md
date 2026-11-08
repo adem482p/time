@@ -12,20 +12,19 @@ Each concept has:
 - **Alternative terms** — standard terms that may be used when communicating
   the same idea.
 
-The model uses **specifiers** as primitive abstractions. A specifier is not
+**specifiers** are primitive abstractions. A specifier is not
 intended to stand alone as a complete domain object; it complements another
-specifier or object and further specifies it. The model is therefore built
-bottom up: an abstract track specifier and a year specifier combine to form a
-concrete year. This gives the concrete object the shorter, more frequently
-used name while retaining explicit names for the reusable parts.
+specifier or object and further specifies it. Group and cohort are specifiers
+in exactly this sense: they qualify a class, and neither is a domain object.
 
 The model uses both generic and level-specific terms. A generic term can refer
 to a concept at any level of a hierarchy; a specific term identifies the level
 more precisely. A specialty is a curricular node such as `LCS1` or the
-non-common specialty represented compactly by `GLSI3`; normally a class is a
-specialty together with a section or with a section and cohort. A specialty
-without sections also contains a singleton class. Thus `GLSI3 A` and `GLSI3 A1`
-identify classes at different levels of specificity.
+non-common specialty represented compactly by `GLSI3`; a class is a specialty
+together with an optional group specifier and an optional cohort specifier. A
+specialty without groups also contains a singleton class, which carries neither
+specifier. Thus `GLSI3 A` and `GLSI3 A1` identify classes at different levels
+of specificity.
 
 The hierarchy is described from three complementary perspectives:
 
@@ -33,8 +32,10 @@ The hierarchy is described from three complementary perspectives:
 2. Its **prefix** is the path of preceding levels by which that targeted node
    is reached.
 3. Its **children** are the child nodes into which it divides. A specialty
-   does not itself have section or cohort children: once a specialty is
-   followed by a section, the result is a class.
+   does not itself have group or cohort children: once a group specifier is
+   attached to a specialty, the result is a class. Group and cohort specifiers
+   are not hierarchy nodes at all; they are properties of the class that owns
+   them.
 
 ## Curricular Tree Progression and Non-Convergence
 
@@ -184,14 +185,14 @@ must begin at year specifier 1 and end before or at the emergence of specialties
 Once a curriculum divides into specialties, common specialties cease permanently
 for that track specifier because specialties never merge back.
 A specialty is not
-subdivided into groups or cohorts as a specialty object; the combination of a
-specialty and group is a class. From the perspective of that class, the specialty
-is its prefix.
+subdivided into groups or cohorts as a specialty object; a specialty combined
+with a group specifier, and optionally a cohort specifier, is a class. From the
+perspective of that class, the specialty is its prefix.
 
 **Editorial definition.** A specialty is a curriculum subdivision such as `LCS1`
 or `GLSI3`. `LCS1` is itself the complete common specialty; `LCS1 A2` is a
 class below that specialty, not a specialty. Specialty is not a synonym for a
-group, cohort, or class.
+class, and it owns no group or cohort objects.
 
 **Alternative terms.** study stream; study pathway; curriculum specialty;
 specialty name; specialty identifier.
@@ -212,77 +213,89 @@ verbosely as `LCS3 GLSI3`.
 
 ## Class
 
-**Relational definition.** Normally, a class is exactly a specialty plus a
-group, or a specialty plus a group and cohort. Its specialty is the prefix by
-which the class is reached. A group class such as `GLSI3 A` and a cohort
-class such as `GLSI3 A1` are both classes; the latter is more specific, but
-neither is a specialty. If a specialty has no group subdivision, it contains a
-singleton class whose identifier is the same as the specialty identifier.
+**Relational definition.** A class is a specialty together with an optional
+group specifier and an optional cohort specifier. Its
+specialty is the prefix by which the class is reached. The specifiers are
+properties of the class, not objects of their own: `GLSI3 A` is a class carrying
+group specifier `A`, while `GLSI3 A1` is a class carrying group specifier `A`
+and cohort specifier `1`. The second is more specific than
+the first, but both are the same kind of object and neither is a specialty. If
+a specialty has no group subdivision, it contains a singleton class that
+carries neither specifier and whose identifier is the same as the specialty
+identifier.
 
-**Editorial definition.** A class is a defined student group that follows a
-timetable and a planned set of courses. It normally has a specialty and group,
-and may also have a cohort. A specialty without groups is represented as a
-singleton class for timetable purposes.
+**Editorial definition.** A class is a defined population of students that
+follows a timetable and a planned set of courses. It normally has a specialty
+and a group specifier, and may also have a cohort specifier. A specialty
+without groups is represented as a singleton class for timetable purposes.
+Qualifying a class as a group class or a cohort class describes how specific
+it is, not a distinct kind of object: in both cases the object is a class.
 
-**Alternative terms.** student group; teaching group.
+**Alternative terms.** student population; teaching group.
 
 ## Singleton class
 
 **Relational definition.** A singleton class is the class entry produced for a
-specialty whose specialty rule for the relevant year declares no groups. It
-is a class-population shape, not a specialty kind: the specialty remains a
-non-common (or common) specialty, and its identifier may differ from the
-class identifier's source notation. Its class identifier/reference is equal
-to the specialty identifier/reference.
+specialty whose specialty rule for the relevant year declares no groups. It is
+a class, not a specialty kind: the specialty remains a non-common (or common)
+specialty, and its identifier may differ from the class identifier's source
+notation. It carries no group specifier and no cohort specifier, and its class
+identifier/reference is equal to the specialty identifier/reference.
 
 **Editorial definition.** A singleton class is a catalogue class entry whose
 specialty has no group subdivision for that year, such as the master entries
 `MP1-EXR`, `MP1-SD`, and `MP2-EXR` present in the current parsed data.
 
-**Alternative terms.** undivided class; single-group class; specialty-level
+**Alternative terms.** undivided class; whole-specialty class; specialty-level
 class.
 
-## Group
+## Group specifier
 
-**Relational definition.** A group is the group component of a class. Its
-letter is scoped to its specialty prefix: `LCE2-IoT A` and `LCE2-IRS A` are
-different classes. A group specifier is the reusable letter component; a
-group class combines it with a specialty. A group may be followed by a cohort
-specifier, producing a more specific class.
+**Relational definition.** A group specifier is a reusable letter that qualifies
+a class by naming the group of students it covers. It never stands alone: a
+group is not a domain object, and there is no group node in the curriculum
+hierarchy. Its letter is scoped to the class's specialty prefix, so `LCE2-IoT A`
+and `LCE2-IRS A` are different classes that happen to carry the same group
+specifier. A class that carries a group specifier may also carry a cohort
+specifier, making it more specific.
 
-**Editorial definition.** A group is a lettered component of a class, such
-as `A` or `E`. The group specifier is not a class by itself.
+**Editorial definition.** A group specifier is a lettered component of a class,
+such as `A` or `E`. Attaching it to a specialty produces a class; the specifier
+is not a class by itself.
 
-**Alternative terms.** group specifier; class group; group division.
+**Alternative terms.** group letter; class group; group division.
 
-## Cohort
+## Cohort specifier
 
-**Relational definition.** A cohort is the cohort component of a class after
-its specialty and group. It is the deepest level where the source divides a
-group into `Groupe 1` and `Groupe 2`. A cohort specifier is the reusable
-numbered component; a cohort class combines it with a group class.
+**Relational definition.** A cohort specifier is a reusable number that further
+qualifies a class after its specialty and group specifier. It is the deepest
+level at which the source divides a class into `Groupe 1` and `Groupe 2`. Like
+the group specifier it is not an object: it is a property of the class that
+carries it, and it never identifies a class by itself.
 
-**Editorial definition.** A cohort is a numbered subgroup inside a group,
-usually `1` or `2`. In this project it means the source's teaching subgroup,
-not a year-of-entry population. The cohort specifier is not a class by
-itself.
+**Editorial definition.** A cohort specifier is a numbered component of a class,
+usually `1` or `2`. In this project it means the source's teaching subgroup, not
+a year-of-entry population.
 
-**Alternative terms.** cohort specifier; teaching group; subgroup; lab group.
+**Alternative terms.** cohort number; teaching subgroup; subgroup; lab group.
 
 ## Population reference
 
 **Relational definition.** A population reference is the generic audience
-notation attached to a session specifier. It may identify a specialty or a class,
-depending on the session kind. A specialty-lecture population reference addresses
-a specialty; a group-seminar reference addresses a group; and a cohort-lab-work
-reference addresses a cohort.
+notation attached to a session specifier. It addresses a specialty or a class,
+depending on the session kind; when the session kind implies group or cohort
+scope, the reference names the class at that specificity. A specialty-lecture
+population reference addresses a specialty; a group-seminar reference addresses
+a class at group specificity, carrying a group specifier and no cohort
+specifier; and a cohort-lab-work reference addresses a class at cohort
+specificity, carrying a group specifier and a cohort specifier.
 
 **Editorial definition.** A population reference identifies the student
 population to which a session applies without requiring every session to be
 addressed at the same population specificity.
 
-**Alternative terms.** audience reference; attendance reference; group
-reference.
+**Alternative terms.** audience reference; attendance reference; population
+notation.
 
 ## Session specifier
 
@@ -303,8 +316,8 @@ record.
 **Relational definition.** A session kind combines instructional format and
 population scope. The canonical values are `specialty-lecture`,
 `group-seminar`, and `cohort-lab-work`; each maps to exactly one population
-scope. Lectures apply to specialties, seminars to groups, and lab work to
-cohorts.
+scope. Lectures apply to specialties; seminars apply to classes at group
+specificity; and lab work applies to classes at cohort specificity.
 The source currently writes the kinds with the prefixes `C_`, `TD_`, and
 `TP_`, but those spellings are publication conventions rather than domain
 invariants.
@@ -402,9 +415,10 @@ organized by day and time for a selected class, teacher, or other filter.
 
 **Relational definition.** A name is a notation for a domain concept. A
 source-facing name may preserve the publication's hierarchy, while a class
-identifier encodes a specialty, specialty-semester specifier, group, and
-cohort. The same object may be written with different levels of verbosity;
-these are notation variants, not a separate alias concept.
+identifier encodes a specialty, a specialty-semester specifier, a group
+specifier, and optionally a cohort specifier. The same object may be written
+with different levels of verbosity; these are notation variants, not a
+separate alias concept.
 
 **Editorial definition.** A name is a human-readable or machine-readable
 designation for a track, specialty, class, or other concept.
@@ -443,14 +457,15 @@ which object interpretation it needs.
 ## Class identifier
 
 **Relational definition.** A class identifier is the canonical identifier of a
-class below a specialty. It writes a specialty, a space, a group, and optionally a cohort:
-`GLSI3 A` or `GLSI3 A1`. A verbose non-common form may make the implied prefix
-explicit, as in `LCS3 GLSI3 A2`. The parser may also accept compact input such
-as `GLSI3A2`.
+class below a specialty. It writes a specialty, a space, a group specifier, and
+optionally a cohort specifier: `GLSI3 A` or `GLSI3 A1`. A verbose non-common
+form may make the implied prefix explicit, as in `LCS3 GLSI3 A2`. The parser
+may also accept compact input such as `GLSI3A2`.
 
 **Editorial definition.** A class identifier may be broad or specific.
-`LCS1 A` and `GLSI3 A` are broad identifiers because they omit the cohort;
-`LCS1 A2` and `GLSI3 A1` are specific identifiers because they include it.
+`LCS1 A` and `GLSI3 A` are broad identifiers because they omit the cohort
+specifier; `LCS1 A2` and `GLSI3 A1` are specific identifiers because they carry
+it.
 
 **Alternative terms.** class reference; class notation; class designation.
 
@@ -473,9 +488,10 @@ current timetable data.
 ## Syntactical validity
 
 **Relational definition.** Syntactical validity describes whether a specialty or
-class reference follows the notation rules for tracks, specialties, groups, and
-cohorts. It is independent of whether the reference names anything in the
-catalogue or appears in the current publication.
+class reference follows the notation rules for tracks, specialties, and the
+group and cohort specifiers that qualify a class. It is independent of whether
+the reference names anything in the catalogue or appears in the current
+publication.
 
 **Editorial definition.** A reference is syntactically valid when its written
 form can be parsed according to the class notation.
@@ -510,8 +526,8 @@ normalized timetable data contains the referenced element.
 
 **Relational definition.** The catalogue describes the available track specifiers,
 specialties, years, and class populations associated with
-them through groups and cohorts. It is not itself treated as a hierarchy of
-domain objects. Its structure is fixed by the model, while its field values are
+them through group and cohort specifiers. It is not itself treated as a
+hierarchy of domain objects. Its structure is fixed by the model, while its field values are
 populated by a union of raw timetable evidence and editorial corrections,
 normalization, or additions.
 
