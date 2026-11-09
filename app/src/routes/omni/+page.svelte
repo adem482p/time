@@ -704,8 +704,11 @@
 			}}
 			onFocus={(e) => {
 				searchFocused = true;
-				if (!query.trim() && lastViewKind) query = `type:${lastViewKind}`;
-				else caret = e.currentTarget.selectionStart ?? query.length;
+				if (!query.trim() && lastViewKind) {
+					query = `type:${lastViewKind} `;
+					caret = query.length;
+					restoreCaret();
+				} else caret = e.currentTarget.selectionStart ?? query.length;
 			}}
 			onBlur={() => {
 				searchFocused = false;
@@ -726,8 +729,11 @@
 			}}
 			onOpenList={() => {
 				// Re-enter editing from the selected bar, prefilled with
-				// the selected entity's type. Remember the timetable so
-				// the mobile back button can dismiss back to it.
+				// the selected entity's type. Atomic (query, caret): trailing
+				// space + caret past it (fresh position), so the next
+				// completion is predicates, not a re-pinned type menu.
+				// Remember the timetable so the mobile back button can
+				// dismiss back to it.
 				if (selectedTeacher) returnTo = { kind: 'teacher', name: selectedTeacher };
 				else if (selectedClass) returnTo = { kind: 'class', identifier: selectedClass };
 				else returnTo = null;
@@ -735,10 +741,11 @@
 				selectedTeacher = null;
 				selectedClass = null;
 				lastViewKind = kind;
-				query = `type:${kind}`;
+				query = `type:${kind} `;
+				caret = query.length;
 				hovered = null;
 				searchFocused = true;
-				searchEl?.focus();
+				restoreCaret();
 			}}
 			onDismiss={() => {
 				dismissSearch();
