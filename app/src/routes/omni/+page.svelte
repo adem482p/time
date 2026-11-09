@@ -17,7 +17,7 @@
 		isCurrentSession
 	} from '$lib/omni-model.js';
 	import { formatWeekPattern } from '../../../../domain-model/print.js';
-	import { parseSearchQuery } from '$lib/search.js';
+	import { parseSearchQuery, tokenAt, completeTypeAt, completePredicateValueAt, addPredicateAt } from '$lib/search.js';
 	import * as color from '$lib/color.js';
 	import { esc } from '$lib/data.js';
 	import { headingHTML, teacherName, highlightHTML, highlightClassLabel } from '$lib/display.js';
@@ -27,54 +27,47 @@
 	let omniStore = $state(null);
 	let loadError = $state('');
 
-	// Filter query. Desktop starts with a bare `type:*` so the completion
-	// tabs show; mobile stays empty (hint visible) until the first tap,
-	// when the focus handler initializes it lazily. Clearing the box
-	// returns to the hint.
-	let query = $state(
-		typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches ? '' : 'type:*'
-	);
-	let cursorPos = $state(query.length);
+	// Filter query. Starts EMPTY on every viewport: an empty query (by the
+	// parser — no type, terms, or filters) IS the type-selection state.
+	let query = $state('');
+	// Caret position: read-only detection state (which token the caret is
+	// inside/touching). Edits are pure token replacements at this position.
+	let caret = $state(0);
 
 	// Browse mode tab: 'teachers' | 'classes' (no "all")
 	let browseTab = $state('teachers');
 
 	const parsedQuery = $derived(parseSearchQuery(query));
-	const searchTerms = $derived(parsedQuery.terms.join(' '));
 
 	// Result-type filter: derived from a `type:` predicate in the query
 	// (type:teacher / type:classes), so the chips and the query stay in sync.
 	const wantTeachers = $derived(!parsedQuery.type || parsedQuery.type === 'teacher');
 	const wantClasses = $derived(!parsedQuery.type || parsedQuery.type === 'class');
 
-	// Complete the `type:` token under the cursor with the chosen value.
 	function completeTypePredicate(kind) {
-		const before = query.slice(0, cursorPos);
-		const m = /(\S*)$/.exec(before);
-		const token = m ? m[1] : '';
-		const start = cursorPos - token.length;
-		query = query.slice(0, start) + `type:${kind} ` + query.slice(cursorPos);
-		cursorPos = start + `type:${kind} `.length;
+		const r = completeTypeAt(query, kind, caret);
+		query = r.query;
+		caret = r.caret;
 		searchEl?.focus();
-		searchEl?.setSelectionRange(cursorPos, cursorPos);
+		searchEl?.setSelectionRange(caret, caret);
 	}
 
-	// Completion tabs show while the token under the cursor is a bare or
-	// partial `type:` (the input is pre-written with `type:` by default).
-	const completingType = $derived(
-		/^type:(\*|[a-z]*)$/i.test(query.slice(0, cursorPos).split(/\s+/).pop() ?? '')
+	// Completion state derives from the token the caret is inside or
+	// touching (tokenAt) — including mid-query, so placing the caret
+	// beside `type:class` reopens the menu to switch values. An entirely
+	// empty query (no type/terms/filters per the parser) is the
+	// type-selection state itself.
+	const isEmptyQuery = $derived(
+		parsedQuery.type === null && parsedQuery.terms.length === 0 && parsedQuery.filters.length === 0
 	);
-	// Cursor inside any `type:` node (bare or complete) -> type tabs.
-	const insideTypeNode = $derived(/^type:/i.test(query.slice(0, cursorPos).split(/\s+/).pop() ?? ''));
-	// Cursor inside another predicate's value -> no completion UI.
-	const insidePredicateNode = $derived.by(() => {
-		const tok = query.slice(0, cursorPos).split(/\s+/).pop() ?? '';
-		return /^(subject|room|teacher|day|cohort|group):/i.test(tok);
-	});
-	// Partial `type:` value under the cursor ('' when not completing).
+	const caretToken = $derived(tokenAt(query, caret));
+	const completingType = $derived(isEmptyQuery || (caretToken ? /^type:(\*|[a-z]*)$/i.test(caretToken.token) : false));
+	const insideTypeNode = $derived(caretToken ? /^type:/i.test(caretToken.token) : false);
+	const insidePredicateNode = $derived.by(() =>
+		caretToken ? /^(subject|room|teacher|day|cohort|group|track|year|specialty):/i.test(caretToken.token) : false
+	);
 	const typePartial = $derived.by(() => {
-		const tok = query.slice(0, cursorPos).split(/\s+/).pop() ?? '';
-		const m = /^type:(\*|[a-z]*)$/i.exec(tok);
+		const m = caretToken && /^type:(\*|[a-z]*)$/i.exec(caretToken.token);
 		return m ? m[1].toLowerCase().replace('*', '') : '';
 	});
 
@@ -88,16 +81,17 @@
 	// Where the user came from: prefill the search predicate to match.
 	let lastViewKind = $state(null); // 'teacher' | 'class' | null
 	let hoveredType = $state(null); // completion tab under the mouse
-	// Ghost preview of the hovered completion (shadow text in the filter box).
-	// Ghost overlay paints ABOVE the input, so the completion replaces the
-	// `*` (or partial value) instead of appending after it.
+	// Hover preview, derived from query + hovered kind only. The overlay
+	// renders the whole line (input text is transparent), so preview and
+	// model can never diverge.
 	const ghostPreview = $derived.by(() => {
-		if (!hoveredType) return null;
-		const before = query.slice(0, cursorPos);
-		const m = /(\S*)$/.exec(before);
-		if (!m || !/^type:(\*|[a-z]*)$/i.test(m[1])) return null;
-		const start = cursorPos - m[1].length;
-		return { prefix: query.slice(0, start) + 'type:', rest: hoveredType, suffix: query.slice(cursorPos) };
+		if (!hoveredType || !caretToken) return null;
+		if (!/^type:(\*|[a-z]*)$/i.test(caretToken.token)) return null;
+		return {
+			prefix: query.slice(0, caretToken.start) + 'type:',
+			rest: hoveredType,
+			suffix: query.slice(caretToken.end)
+		};
 	});
 
 	// Remember the last selection (teacher or class) across reloads.
@@ -258,7 +252,7 @@
 	// The token being typed, if it prefixes a filter key (e.g. `subj`),
 	// narrows the suggestion list to the matching keys.
 	const keyPrefix = $derived.by(() => {
-		const tok = query.slice(0, cursorPos).split(/\s+/).pop() ?? '';
+		const tok = caretToken?.token ?? '';
 		return /^[a-z]+$/i.test(tok) ? tok.toLowerCase() : '';
 	});
 	const visibleSuggestions = $derived(
@@ -270,8 +264,8 @@
 	// Values menu: while inside a predicate value, list contextual values —
 	// distinct session values across current results, narrowed by the partial.
 	const valueMenu = $derived.by(() => {
-		const tok = query.slice(0, cursorPos).split(/\s+/).pop() ?? '';
-		const m = /^(subject|room|teacher|day|cohort|group):(.*)$/i.exec(tok);
+		const tok = caretToken?.token ?? '';
+		const m = /^(subject|room|teacher|day|cohort|group|track|year|specialty):(.*)$/i.exec(tok);
 		if (!m) return null;
 		const key = m[1].toLowerCase();
 		const partial = m[2].toLowerCase();
@@ -281,8 +275,9 @@
 		];
 		const counts = new Map();
 		for (const item of pool) {
+			// Identity predicates read the item's own field (like the filter).
 			const vals =
-				key === 'cohort' || key === 'group'
+				['cohort', 'group', 'track', 'year', 'specialty'].includes(key)
 					? [item[key]]
 					: item.filterSets?.[key] ?? [];
 			for (const v of new Set(vals)) {
@@ -298,37 +293,20 @@
 		return { key, values };
 	});
 
-	// Complete the predicate value under the cursor and move past it.
 	function completePredicateValue(value) {
-		const before = query.slice(0, cursorPos);
-		const m = /(\S*)$/.exec(before);
-		const token = m ? m[1] : '';
-		const start = cursorPos - token.length;
-		const key = /^([a-z]+):/i.exec(token)?.[1] ?? '';
-		const done = value.includes(' ') ? `${key}:"${value}" ` : `${key}:${value} `;
-		query = query.slice(0, start) + done + query.slice(cursorPos);
-		cursorPos = start + done.length;
+		const r = completePredicateValueAt(query, value, caret);
+		query = r.query;
+		caret = r.caret;
 		searchEl?.focus();
-		searchEl?.setSelectionRange(cursorPos, cursorPos);
+		searchEl?.setSelectionRange(caret, caret);
 	}
 
-	// Insert a suggested predicate at the cursor (ends inside the node).
-	// A partial token being typed (`roo`) is completed, not appended to.
 	function addPredicate(key) {
-		const tail = query.slice(cursorPos);
-		const before = query.slice(0, cursorPos);
-		const m = /(\S*)$/.exec(before);
-		const token = m ? m[1] : '';
-		if (token && !token.includes(':') && key.startsWith(token.toLowerCase())) {
-			const start = cursorPos - token.length;
-			query = query.slice(0, start) + `${key}:` + tail;
-			cursorPos = start + `${key}:`.length;
-		} else {
-			query = before + (before && !before.endsWith(' ') ? ' ' : '') + `${key}:` + tail;
-			cursorPos = before.length + (before && !before.endsWith(' ') ? 1 : 0) + `${key}:`.length;
-		}
+		const r = addPredicateAt(query, key, caret);
+		query = r.query;
+		caret = r.caret;
 		searchEl?.focus();
-		searchEl?.setSelectionRange(cursorPos, cursorPos);
+		searchEl?.setSelectionRange(caret, caret);
 	}
 
 	const searchMode = $derived(query.trim().length > 0);
@@ -411,7 +389,6 @@
 		selectedClass = null;
 		noMatch = '';
 		query = '';
-		cursorPos = 0;
 		// Closing a timetable forgets it: no origin state for prefill.
 		lastViewKind = null;
 		writeStoredTeacher(null);
@@ -603,39 +580,42 @@
 		</p>
 
 		<div id="searchWrap">
+			<div id="ghost" aria-hidden="true"><span>{ghostPreview ? ghostPreview.prefix : query}</span>{#if ghostPreview}<span class="ghost-pre">{ghostPreview.rest}</span><span>{ghostPreview.suffix}</span>{/if}</div>
 			<input
 				id="search"
 				type="search"
 				placeholder="Search teacher, class, or subject…"
 				autocomplete="off"
-				value={ghostPreview ? ghostPreview.prefix + ghostPreview.rest + ghostPreview.suffix : query}
+				value={query}
 				bind:this={searchEl}
 				oninput={(e) => {
 					query = e.currentTarget.value;
-					cursorPos = e.currentTarget.selectionStart ?? query.length;
+					caret = e.currentTarget.selectionStart ?? query.length;
 					if (!query.trim()) showEmpty();
 				}}
 				onkeydown={onKeydown}
 				onfocus={(e) => {
-					// Prefill from where the user came from.
-					if (!query.trim()) {
-						query = lastViewKind ? `type:${lastViewKind}` : 'type:*';
-						cursorPos = query.length;
-						e.currentTarget.setSelectionRange(cursorPos, cursorPos);
+					// Prefill a COMPLETE value from where the user came from.
+					// An empty box needs no prefill — it is already the
+					// type-selection state.
+					if (!query.trim() && lastViewKind) {
+						query = `type:${lastViewKind}`;
+						caret = query.length;
+						e.currentTarget.setSelectionRange(caret, caret);
 					} else {
-						cursorPos = e.currentTarget.selectionStart ?? query.length;
+						caret = e.currentTarget.selectionStart ?? query.length;
 					}
 					openMenu();
 				}}
 				onclick={(e) => {
-					cursorPos = e.currentTarget.selectionStart ?? query.length;
+					caret = e.currentTarget.selectionStart ?? query.length;
 					openMenu();
 				}}
 				onselect={(e) => {
-					cursorPos = e.currentTarget.selectionStart ?? query.length;
+					caret = e.currentTarget.selectionStart ?? query.length;
 				}}
 				onkeyup={(e) => {
-					cursorPos = e.currentTarget.selectionStart ?? query.length;
+					caret = e.currentTarget.selectionStart ?? query.length;
 				}}
 			/>
 			<button type="button" id="searchBack" aria-label="Back" onclick={() => { closeMenu(); showEmpty(); }}>
@@ -710,7 +690,7 @@
 		<div class="omni-subrow">
 			<!-- One completion slot: type tabs inside a `type:` node, else
 			     next-predicate suggestions, else the status line. -->
-			{#if insideTypeNode}
+			{#if completingType}
 			<div class="omni-tabs" role="tablist" aria-label="Result types">
 				<button
 					type="button"

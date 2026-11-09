@@ -160,9 +160,9 @@ the input paints over it; the shadow completion and
 #ghost > span{ flex: 0 0 auto; }#search{
   position: relative; z-index: 1; width: 100%; border: 0; outline: none;
   padding: .45rem .6rem; font: inherit; line-height: 1.5;
-  /* the prefix hint (ghost) pushes the real text origin + caret right */
-  padding-left: calc(.6rem + var(--ghost-pre, 0px));
-  background: transparent; color: inherit;
+  /* the overlay renders the text; the input only carries the caret */
+  background: transparent; color: transparent;
+  caret-color: var(--md-on-surface, #1b1b1b);
 }/* monospace search (issue 001): input + ghost share one fixed-width stack so
    the overlay,
 the typed text and the caret stay aligned on every keystroke
@@ -214,8 +214,42 @@ at base */
 #search::-webkit-search-decoration{
   -webkit-appearance: none; appearance: none; display: none;
 }/* mobile nav chrome (issue 056): desktop never shows it; the narrow block may */
-#searchBack{ display: none; }#searchOverlay{ display: none; }/* JS sets [hidden] while the filter is empty; the id rules above (flex +
-   absolute geometry) would otherwise outrank the UA [hidden] default. */
+#searchBack{ display: none; }
+/* The selection overlay covers the box on every viewport once a timetable
+   is selected; [hidden] alone can't hide it (id rules outrank the UA
+   default), so the :not([hidden]) selector carries the geometry. */
+#searchOverlay:not([hidden]){
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; align-items: center;
+  background: var(--md-surface-container-high, #eceef4);
+  border-radius: 8px;
+  padding: .45rem .6rem; cursor: pointer;
+}
+#searchOverlay[hidden]{ display: none; }
+/* decorative chevron sizing must hold outside the mobile media query too */
+.overlay-drop{
+  flex: 0 0 auto; width: 1.5rem; height: 1.5rem;
+  fill: none; stroke: var(--md-on-surface-variant, #555); stroke-width: 2.4;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+/* while the overlay is the box, hide the input text underneath it */
+#searchWrap:has(#searchOverlay:not([hidden])) #search{ visibility: hidden; }
+/* desktop overlay chrome: the toggle covers the surface; the clear X sits left */
+#overlayToggle{
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  border: 0; padding: 0; margin: 0; background: transparent;
+  color: inherit; font: inherit; cursor: pointer; border-radius: 8px;
+}
+#overlayToggle:hover{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent); }
+#overlayToggle:active{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent); }
+#overlayClear{
+  position: relative; z-index: 2;
+  flex: 0 0 auto; width: 2.7rem; align-self: stretch;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
+  cursor: pointer;
+}
+#overlayClear svg{ width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 #searchClear[hidden]{ display: none; }#searchDeselect[hidden]{ display: none; }#suggest{
   position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
   list-style: none; margin: 0; padding: 0;
@@ -1098,7 +1132,7 @@ table.week .week-pill {
   font-family: "Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   line-height: 1.5;
 }
-#ghost .ghost-typed{ color: transparent; }
+#ghost .ghost-typed{ color: inherit; }
 #ghost .ghost-pre{ color: var(--md-tertiary, #b58900); font-style: italic; }
 @media (max-width: 700px){
   /* mobile shows the cards; the tables are desktop-only. */

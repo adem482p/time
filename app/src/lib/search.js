@@ -36,8 +36,12 @@ export function parseSearchQuery(q) {
 				let v = value.toLowerCase();
 				if (v === 'classes') v = 'class';
 				if (v === 'teachers') v = 'teacher';
-				if (v === 'class' || v === 'teacher') {
-					type = v;
+				// Partial values behave like their completion: `type:c`
+				// already filters to classes (and stays in completion mode).
+				const asType = ['class', 'teacher'].find((t) => t.startsWith(v));
+				if (asType) {
+					type = asType;
+					if (v.length < asType.length) completing = true;
 					continue;
 				}
 			}
@@ -49,6 +53,142 @@ export function parseSearchQuery(q) {
 		terms.push(tok);
 	}
 	return { type, filters, terms, completing };
+}
+
+// ---- Query edits (pure, idempotent) ----
+// Completions operate on the LAST token only — never on cursor offsets.
+// Invariants (tested): complete(complete(q)) === complete(q), and
+// parseSearchQuery(complete(q)) round-trips. No edit can produce a token
+// the parser cannot read back identically (e.g. `type:type:teacher`).
+
+function splitTail(query) {
+	const trimmed = String(query ?? '').trimEnd();
+	const m = /(\S*)$/.exec(trimmed);
+	return { head: trimmed.slice(0, trimmed.length - (m?.[1]?.length ?? 0)), token: m?.[1] ?? '' };
+}
+
+function replaceTail(query, token) {
+	const { head } = splitTail(query);
+	return head + token;
+}
+
+/** Complete the trailing `type:`-node with a value. Idempotent. */
+export function completeType(query, kind) {
+	let k = String(kind ?? '').toLowerCase();
+	if (k === 'classes') k = 'class';
+	if (k === 'teachers') k = 'teacher';
+	if (k !== 'class' && k !== 'teacher') throw new Error(`Invalid type value: ${kind}`);
+	const done = `type:${k}`;
+	const { token } = splitTail(query);
+	if (token === done) return query; // already complete: no-op
+	if (/^type:/i.test(token)) return replaceTail(query, done + ' ');
+	// An earlier complete `type:` anywhere is replaced, never duplicated —
+	// there is exactly one type predicate in a query.
+	const tokens = String(query ?? '').split(/\s+/).filter(Boolean);
+	const idx = tokens.findIndex((t) => /^type:(class|teacher)$/i.test(t));
+	if (idx >= 0) {
+		tokens[idx] = done;
+		return tokens.join(' ') + ' ';
+	}
+	return replaceTail(query, token ? token + ' ' : '') + done + ' ';
+}
+
+/** Complete the trailing `predicate:`-node with a value. Idempotent. */
+export function completePredicateValue(query, value) {
+	const v = String(value ?? '');
+	const { token } = splitTail(query);
+	const m = /^([a-z]+):/i.exec(token);
+	if (!m) return query;
+	const key = m[1].toLowerCase();
+	const done = v.includes(' ') ? `${key}:"${v}" ` : `${key}:${v} `;
+	if (token === done.trimEnd()) return query;
+	return replaceTail(query, done);
+}
+
+/** Insert a predicate node at the tail, completing a key prefix. Idempotent. */
+export function addPredicate(query, key) {
+	const k = String(key ?? '').toLowerCase();
+	const { token } = splitTail(query);
+	if (token === `${k}:`) return query; // already present: no-op
+	if (token && !token.includes(':') && k.startsWith(token.toLowerCase())) {
+		return replaceTail(query, `${k}:`);
+	}
+	return replaceTail(query, token ? token + ' ' : '') + `${k}:`;
+}
+
+/** The last whitespace-delimited token ('' at a fresh position). */
+export function lastToken(query) {
+	return splitTail(query).token;
+}
+
+/**
+ * Token spanning position `pos` (the token the caret is inside or touching).
+ * Returns null at a fresh position (caret on whitespace/boundary).
+ * Pure read-only detection — never used to compute edits asynchronously.
+ */
+export function tokenAt(query, pos) {
+	const q = String(query ?? '');
+	const p = Math.min(Math.max(pos ?? q.length, 0), q.length);
+	// Expand left over non-whitespace.
+	let start = p;
+	while (start > 0 && !/\s/.test(q[start - 1])) start--;
+	// Expand right over non-whitespace.
+	let end = p;
+	while (end < q.length && !/\s/.test(q[end])) end++;
+	if (start === end) return null; // fresh position between tokens
+	return { start, end, token: q.slice(start, end) };
+}
+
+/**
+ * Replace the token spanning `pos`. Pure + idempotent per token content.
+ * Returns {query, caret} with the caret after the new token.
+ */
+export function replaceTokenAt(query, pos, newToken) {
+	const q = String(query ?? '');
+	const at = tokenAt(q, pos);
+	if (!at) {
+		// Fresh position: insert with a separating space when needed.
+		const before = q.slice(0, Math.min(pos ?? q.length, q.length));
+		const sep = before && !before.endsWith(' ') ? ' ' : '';
+		return { query: before + sep + newToken + q.slice(before.length), caret: before.length + sep.length + newToken.length };
+	}
+	return { query: q.slice(0, at.start) + newToken + q.slice(at.end), caret: at.start + newToken.length };
+}
+
+// ---- Cursor-position edit variants (default pos = end of query) ----
+
+export function completeTypeAt(query, kind, pos) {
+	const k0 = String(kind ?? '').toLowerCase();
+	const k = k0 === 'classes' ? 'class' : k0 === 'teachers' ? 'teacher' : k0;
+	if (k !== 'class' && k !== 'teacher') throw new Error(`Invalid type value: ${kind}`);
+	const done = `type:${k}`;
+	const at = tokenAt(query, pos ?? String(query ?? '').length);
+	if (at?.token === done) return { query, caret: at.end };
+	// Replace an existing type: token at the caret, else insert fresh.
+	return replaceTokenAt(query, pos ?? String(query ?? '').length, done);
+}
+
+export function addPredicateAt(query, key, pos) {
+	const k = String(key ?? '').toLowerCase();
+	const p = pos ?? String(query ?? '').length;
+	const at = tokenAt(query, p);
+	if (at?.token === `${k}:`) return { query, caret: at.end };
+	if (at && !at.token.includes(':') && k.startsWith(at.token.toLowerCase())) {
+		return replaceTokenAt(query, p, `${k}:`);
+	}
+	return replaceTokenAt(query, p, `${k}:`);
+}
+
+export function completePredicateValueAt(query, value, pos) {
+	const v = String(value ?? '');
+	const p = pos ?? String(query ?? '').length;
+	const at = tokenAt(query, p);
+	const m = at && /^([a-z]+):/i.exec(at.token);
+	if (!m) return { query, caret: p };
+	const key = m[1].toLowerCase();
+	const done = v.includes(' ') ? `${key}:"${v}"` : `${key}:${v}`;
+	if (at.token === done) return { query, caret: at.end };
+	return replaceTokenAt(query, p, done);
 }
 
 export function normStr(s) {

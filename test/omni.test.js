@@ -13,7 +13,7 @@ import {
 	startFromToday
 } from '../app/src/lib/omni-model.js';
 import { teacherName, highlightHTML, highlightClassLabel } from '../app/src/lib/display.js';
-import { parseSearchQuery } from '../app/src/lib/search.js';
+import { parseSearchQuery, completeType, completePredicateValue, addPredicate, lastToken, tokenAt, replaceTokenAt, completeTypeAt } from '../app/src/lib/search.js';
 
 test('omni page does not import old modeling code (libgroups.js or model.js)', () => {
 	const src = readSrc('app/src/routes/omni/+page.svelte');
@@ -117,6 +117,12 @@ test('parseSearchQuery extracts type predicates and keeps terms', () => {
 	// A bare `type:` / `type:*` flags completion and is not a search term.
 	assert.deepStrictEqual(parseSearchQuery('type:'), { type: null, filters: [], terms: [], completing: true });
 	assert.deepStrictEqual(parseSearchQuery('type:*'), { type: null, filters: [], terms: [], completing: true });
+	// Partial type values filter like their completion (and stay completing).
+	assert.deepStrictEqual(parseSearchQuery('type:c'), { type: 'class', filters: [], terms: [], completing: true });
+	assert.deepStrictEqual(parseSearchQuery('type:t'), { type: 'teacher', filters: [], terms: [], completing: true });
+	// Empty query == empty AST (the page treats it as type-selection state).
+	assert.deepStrictEqual(parseSearchQuery(''), { type: null, filters: [], terms: [], completing: false });
+	assert.deepStrictEqual(parseSearchQuery('   '), { type: null, filters: [], terms: [], completing: false });
 });
 
 test('multiple predicates filter within the type before fuzzy search', () => {
@@ -168,6 +174,59 @@ test('multiple predicates filter within the type before fuzzy search', () => {
 	assert.deepStrictEqual(parseSearchQuery('subject:"machine learning"').filters, [
 		{ key: 'subject', value: 'machine learning' }
 	]);
+});
+
+test('query edits are pure, idempotent, and round-trip through the parser', () => {
+	// Completion replaces the last token — never appends inside it.
+	assert.strictEqual(completeType('type:', 'teacher'), 'type:teacher ');
+	assert.strictEqual(completeType('type:*', 'class'), 'type:class ');
+	assert.strictEqual(completeType('type:te', 'teacher'), 'type:teacher ');
+	assert.strictEqual(completeType('glsi type:', 'class'), 'glsi type:class ');
+	assert.strictEqual(completeType('type:teacher glsi', 'class'), 'type:class glsi '); // replaces, never duplicates
+	assert.strictEqual(completeType('glsi', 'teacher'), 'glsi type:teacher ');
+	assert.strictEqual(completeType('', 'teacher'), 'type:teacher ');
+	// Switching a completed type replaces it.
+	assert.strictEqual(completeType('type:teacher ', 'class'), 'type:class ');
+	// Idempotent: the whole `type:type:...` class of bug is unrepresentable.
+	for (const q of ['type:', 'glsi type:te', 'type:*', 'type:teacher ']) {
+		const once = completeType(q, 'teacher');
+		assert.strictEqual(completeType(once, 'teacher'), once);
+		assert.doesNotMatch(once, /type:type:/i);
+	}
+	// Round-trip: the parser reads back exactly what was written.
+	assert.deepStrictEqual(parseSearchQuery(completeType('type:', 'teacher')).type, 'teacher');
+	assert.deepStrictEqual(parseSearchQuery(completeType('type:*', 'class')).type, 'class');
+
+	assert.strictEqual(completePredicateValue('subject:', 'machine learning'), 'subject:"machine learning" ');
+	assert.strictEqual(completePredicateValue('subject:py', 'python'), 'subject:python ');
+	for (const q of ['subject:', 'subject:py']) {
+		const once = completePredicateValue(q, 'python');
+		assert.strictEqual(completePredicateValue(once, 'python'), once);
+	}
+
+	// Key prefixes complete; other tokens cause an append.
+	assert.strictEqual(addPredicate('roo', 'room'), 'room:');
+	assert.strictEqual(addPredicate('glsi', 'room'), 'glsi room:');
+	assert.strictEqual(addPredicate('', 'subject'), 'subject:');
+	assert.strictEqual(addPredicate('room:', 'room'), 'room:'); // idempotent
+	assert.strictEqual(lastToken('a b c'), 'c');
+	assert.strictEqual(lastToken('a b '), 'b');
+});
+
+test('mid-string token edits replace the touched token', () => {
+	// tokenAt: caret inside or touching a token finds it; whitespace = null.
+	assert.deepStrictEqual(tokenAt('type:class glsi', 2), { start: 0, end: 10, token: 'type:class' });
+	assert.deepStrictEqual(tokenAt('type:class glsi', 0), { start: 0, end: 10, token: 'type:class' });
+	// Touching a token's edge still counts as inside it.
+	assert.deepStrictEqual(tokenAt('type:class glsi', 10), { start: 0, end: 10, token: 'type:class' });
+	assert.strictEqual(tokenAt('a  b', 2), null); // mid-whitespace-run: fresh
+	// Switching a complete value mid-query replaces in place, rest preserved.
+	const r = completeTypeAt('type:class glsi', 'teacher', 5);
+	assert.strictEqual(r.query, 'type:teacher glsi');
+	assert.strictEqual(r.caret, 12);
+	// Idempotent mid-string too.
+	assert.strictEqual(completeTypeAt(r.query, 'teacher', r.caret).query, r.query);
+	assert.deepStrictEqual(replaceTokenAt('a b c', 4, 'z'), { query: 'a b z', caret: 5 });
 });
 
 test('class matches in teacher search carry ranges and highlight', () => {
