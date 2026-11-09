@@ -87,6 +87,10 @@
 	let noMatch = $state('');
 	// Where the user came from: prefill the search predicate to match.
 	let lastViewKind = $state(null); // 'teacher' | 'class' | null
+	// Selection to restore when dismissing search entered from a timetable.
+	// Entering search clears `selection` (so mode derives to editing);
+	// without this snapshot the back button would land on browse.
+	let returnTo = $state(null); // {kind:'teacher',name} | {kind:'class',identifier} | null
 	let hovered = $state(null); // the hovered completion item (one var)
 
 	// Single selection shape + single mode — derived, never separately stored.
@@ -376,6 +380,7 @@
 		selectedTeacher = name;
 		selectedClass = null;
 		lastViewKind = 'teacher';
+		returnTo = null;
 		query = '';
 		hovered = null;
 		searchFocused = false;
@@ -389,6 +394,7 @@
 		selectedClass = identifier;
 		selectedTeacher = null;
 		lastViewKind = 'class';
+		returnTo = null;
 		query = '';
 		hovered = null;
 		searchFocused = false;
@@ -422,6 +428,7 @@
 		query = '';
 		hovered = null;
 		searchFocused = false;
+		returnTo = null;
 		// Closing a timetable forgets it: no origin state for prefill.
 		lastViewKind = null;
 		writeStoredTeacher(null);
@@ -436,10 +443,32 @@
 
 	let searchEl = $state(null);
 
+	function dismissSearch() {
+		searchFocused = false;
+		query = '';
+		hovered = null;
+		// Dismissing search returns to the timetable we came from.
+		if (returnTo) {
+			if (returnTo.kind === 'teacher') {
+				selectedTeacher = returnTo.name;
+				selectedClass = null;
+				writeStoredTeacher(returnTo.name);
+				writeStoredClass(null);
+			} else {
+				selectedClass = returnTo.identifier;
+				selectedTeacher = null;
+				writeStoredClass(returnTo.identifier);
+				writeStoredTeacher(null);
+			}
+			returnTo = null;
+			searchEl?.blur();
+		}
+	}
+
 	function onKeydown(e) {
 		if (e.key === 'Escape') {
 			e.preventDefault();
-			searchFocused = false;
+			dismissSearch();
 			if (searchEl) searchEl.blur();
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
@@ -613,7 +642,12 @@
 				hovered = null;
 				query = v;
 				caret = searchEl?.selectionStart ?? query.length;
-				if (!query.trim()) showEmpty();
+				// Clearing text is not a dismiss: keep returnTo/lastViewKind
+				// so the mobile back button can still restore the timetable.
+				if (!query.trim()) {
+					hovered = null;
+					noMatch = '';
+				}
 			}}
 			onFocus={(e) => {
 				searchFocused = true;
@@ -639,8 +673,11 @@
 			}}
 			onOpenList={() => {
 				// Re-enter editing from the selected bar, prefilled with
-				// the selected entity's type (selection cleared so mode
-				// derives to editing).
+				// the selected entity's type. Remember the timetable so
+				// the mobile back button can dismiss back to it.
+				if (selectedTeacher) returnTo = { kind: 'teacher', name: selectedTeacher };
+				else if (selectedClass) returnTo = { kind: 'class', identifier: selectedClass };
+				else returnTo = null;
 				const kind = selection?.kind ?? lastViewKind ?? 'teacher';
 				selectedTeacher = null;
 				selectedClass = null;
@@ -648,14 +685,10 @@
 				query = `type:${kind}`;
 				hovered = null;
 				searchFocused = true;
-				writeStoredTeacher(null);
-				writeStoredClass(null);
 				searchEl?.focus();
 			}}
 			onDismiss={() => {
-				searchFocused = false;
-				query = '';
-				hovered = null;
+				dismissSearch();
 			}}
 		/>
 
