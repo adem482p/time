@@ -16,6 +16,7 @@
 		hoursLabel,
 		isCurrentSession
 	} from '$lib/omni-model.js';
+	import { formatWeekPattern } from '../../../../domain-model/print.js';
 	import * as color from '$lib/color.js';
 	import { esc } from '$lib/data.js';
 	import { headingHTML, teacherName, highlightHTML } from '$lib/display.js';
@@ -817,8 +818,8 @@
 							<tr><th></th><th>Time</th><th>Teacher</th><th>Subject</th><th>Room</th></tr>
 							{#each g.sessions as s, i (i)}
 								{@const c = currentClassDetail.cursor}
-								{@const isNow = isCurrentSession(s.day, s.time, now)}
-								{@const isNext = !isNow && !!c && c.visible && s.day === c.today && s.time === c.next}
+								{@const isNow = isCurrentSession(s.day, s.slot, now)}
+								{@const isNext = !isNow && !!c && c.visible && s.day === c.today && s.slot === c.next}
 								<tr class={rowClasses(isNow, isNext)}>
 									<td>
 										{#if isNow}
@@ -832,7 +833,7 @@
 											</span>
 										{/if}
 									</td>
-									<td class="c-time">{s.time}</td>
+									<td class="c-time">{s.slot}</td>
 									<td class="c-teacher">{@html teacherName(s.teacher, '—')}</td>
 									<td class="c-subject">{s.subject}</td>
 									<td class="c-room">{s.room || '—'}</td>
@@ -869,13 +870,13 @@
 								{#each DAYS as d (d)}
 									{@const cell = weekCell(d, slot, currentClassDetail)}
 									<td class={cell.classes.join(' ')}>
-										{#each cell.sessions as s (s.reference + s.subject + s.room)}
-											<div class="session" style={s.provenance?.color ? `--fill: ${s.provenance.color}` : ''}>
+										{#each cell.sessions as s (s.population?.label + s.subject + s.room)}
+											<div class="session" style={s.color ? `--fill: ${s.color}` : ''}>
 												<div class="s-subject">{s.subject}</div>
 												<span class="s-teacher">{@html teacherName(s.teacher, '—')}</span>
 												<div class="s-room">{s.room || '—'}</div>
-												{#if s.week_pattern_specifier}
-													<span class="week-pill">{s.week_pattern_specifier}</span>
+												{#if formatWeekPattern(s.weekPattern)}
+													<span class="week-pill">{formatWeekPattern(s.weekPattern)}</span>
 												{/if}
 											</div>
 										{/each}

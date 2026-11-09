@@ -5,6 +5,6 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "node --test index.test.js"
+    "test": "node --test model.test.js"
   }
 }

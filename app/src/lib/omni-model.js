@@ -1,21 +1,18 @@
 // app/src/lib/omni-model.js — Domain model integration and timetable derivations for the omni app.
-// Uses the new data modeling library in domain-model/ ($domain).
-import { createCatalogue } from '../../../domain-model/catalogue.js';
-import * as dm from '../../../domain-model/index.js';
+// Uses the domain-model library in domain-model/ ($domain).
+import { catalogue as baseCatalog } from '../../../domain-model/catalogue.js';
+import { catalogFromCsv } from '../../../domain-model/csv.js';
+import { DAYS, SLOTS, trackOf, yearOf } from '../../../domain-model/objects.js';
+import { formatWeekPattern } from '../../../domain-model/print.js';
+import { resolve, sessionsFor } from '../../../domain-model/query.js';
 import { normStr, tokenize, fuzzyRanges, scoreMatch, mergeRanges } from './search.js';
 
-export const DAYS = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
-export const SLOTS = [
-	'08h15-09h45',
-	'10h00-11h30',
-	'11h40-13h10',
-	'13h20-14h50',
-	'15h00-16h30',
-	'16h45-18h15'
-];
-export const HOURS_PER_SESSION = 1.5;
-export const JS_DAY = ['DIMANCHE', 'LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
-export const DAY_IDX = { LUNDI: 1, MARDI: 2, MERCREDI: 3, JEUDI: 4, VENDREDI: 5, SAMEDI: 6 };
+// Day/slot sets come from the library — single source of truth.
+export { DAYS, SLOTS };
+
+const HOURS_PER_SESSION = 1.5;
+const JS_DAY = ['DIMANCHE', 'LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
+const DAY_IDX = { LUNDI: 1, MARDI: 2, MERCREDI: 3, JEUDI: 4, VENDREDI: 5, SAMEDI: 6 };
 
 /**
  * French day names display lowercase (lundi..samedi); data stays uppercase.
@@ -123,8 +120,11 @@ function anchorDay(sessions, now) {
 	const mins = now.getHours() * 60 + now.getMinutes();
 	const today = JS_DAY[now.getDay()];
 	const ss = sessions || [];
-	if (ss.some((s) => s.day === today && slotMinutes(s.time)[1] > mins)) return today;
-	const start = DAY_IDX[today] - 1;
+	// Sessions carry their slot as `slot` (domain) or `time` (fused view).
+	const slotOf = (s) => s.time ?? s.slot;
+	if (ss.some((s) => s.day === today && slotMinutes(slotOf(s))[1] > mins)) return today;
+	// Sunday is not in DAYS: the week wraps to Monday (start = end-of-week).
+	const start = DAY_IDX[today] === undefined ? 5 : DAY_IDX[today] - 1;
 	for (let k = 1; k <= 6; k++) {
 		const d = DAYS[(((start + k) % 6) + 6) % 6];
 		if (ss.some((s) => s.day === d)) return d;
@@ -144,95 +144,40 @@ export function startFromToday(days, sessions, now) {
 }
 
 /**
- * Parse CSV text into row objects.
- */
-export function parseCsvRows(text) {
-	const rows = [];
-	let row = [],
-		cur = '',
-		inQ = false;
-	for (let i = 0; i < text.length; i++) {
-		const c = text[i];
-		if (inQ) {
-			if (c === '"') {
-				if (text[i + 1] === '"') {
-					cur += '"';
-					i++;
-				} else inQ = false;
-			} else cur += c;
-		} else if (c === '"') inQ = true;
-		else if (c === ',') {
-			row.push(cur);
-			cur = '';
-		} else if (c === '\n' || c === '\r') {
-			if (c === '\r' && text[i + 1] === '\n') i++;
-			row.push(cur);
-			cur = '';
-			if (row.length > 1 || row[0] !== '') rows.push(row);
-			row = [];
-		} else cur += c;
-	}
-	if (cur !== '' || row.length) {
-		row.push(cur);
-		rows.push(row);
-	}
-	const head = rows.shift() || [];
-	return rows.map((r) => {
-		const o = {};
-		head.forEach((h, j) => {
-			o[h] = (r[j] || '').trim();
-		});
-		return o;
-	});
-}
-
-/**
- * Format class shortcut representation.
+ * Format class shortcut representation: head carries the label without the
+ * cohort digit, sub carries the cohort (rendered as <sub> by the page).
  */
 export function classShortcut(cls) {
-	const spec =
-		cls.specialty?.type === dm.Type.COMMON_SPECIALTY
-			? `${cls.specialty.year.track_specifier.value}${cls.specialty.year.year_specifier.value}`
-			: `${cls.specialty?.specialty_specifier?.value || ''}${cls.specialty?.specialty_semester_specifier?.value || ''}`;
-
-	const grp = cls.group_specifier?.value;
-	const coh = cls.cohort_specifier?.value;
-
-	if (grp && coh) {
-		return { head: `${spec} ${grp}`, sub: String(coh) };
-	} else if (grp) {
-		return { head: `${spec} ${grp}`, sub: '' };
-	} else {
-		return { head: spec, sub: '' };
+	if (cls.cohort != null) {
+		return { head: cls.label.slice(0, -1), sub: String(cls.cohort) };
 	}
+	return { head: cls.label, sub: '' };
 }
 
 /**
  * Build the omni store from CSV text using the domain model library.
  */
 export function buildOmniStore(csvText) {
-	const rawRows = parseCsvRows(csvText);
-	const baseCat = createCatalogue();
+	// The CSV reader constructs the catalog's sessions from the CSV data.
+	// Rows that cannot be converted are reported, not silently dropped.
+	const { catalog: catalogue, sessions: validRecords, rejected } = catalogFromCsv({
+		text: csvText,
+		catalog: baseCatalog
+	});
+	const rawRows = validRecords.length + rejected.length;
 
-	const validRecords = [];
-	for (const r of rawRows) {
-		const rec = dm.fromCsvRecord(r, { catalogue: baseCat });
-		if (rec.type === dm.Type.PARTIAL_SESSION_RECORD) {
-			validRecords.push(rec);
-		}
-	}
-
-	const catalogue = createCatalogue(validRecords);
-
-	// Collect unique teachers, session counts, subjects and classes
+	// Collect unique teachers, session counts, subjects and classes.
+	// Sessions with no teacher (teacher === null) are valid rows, but they
+	// belong to no teacher, so they are skipped here.
 	const teacherStats = {};
 	for (const r of validRecords) {
+		if (r.teacher == null) continue;
 		if (!teacherStats[r.teacher]) {
 			teacherStats[r.teacher] = { count: 0, subjects: new Set(), classes: new Set() };
 		}
 		teacherStats[r.teacher].count += 1;
 		if (r.subject) teacherStats[r.teacher].subjects.add(r.subject);
-		if (r.reference) teacherStats[r.teacher].classes.add(r.reference);
+		if (r.population?.label) teacherStats[r.teacher].classes.add(r.population.label);
 	}
 
 	const teachers = Object.keys(teacherStats)
@@ -245,30 +190,25 @@ export function buildOmniStore(csvText) {
 		}));
 
 	// Collect publication classes present in the CSV
-	const publicationClasses = new Set(validRecords.map((r) => r.reference));
+	const publicationClasses = new Set(validRecords.map((r) => r.population?.label));
 
 	// Match active leaf classes from catalogue.classes
 	const classes = [];
 	for (const c of catalogue.classes) {
-		if (publicationClasses.has(c.identifier)) {
+		if (publicationClasses.has(c.label)) {
 			const sc = classShortcut(c);
-			const track = c.specialty?.year?.track_specifier?.value || '';
-			const yr = c.specialty?.year?.year_specifier?.value || '';
-			const specialty =
-				c.specialty?.type === dm.Type.COMMON_SPECIALTY
-					? `${track}${yr}`
-					: `${c.specialty?.specialty_specifier?.value || ''}${c.specialty?.specialty_semester_specifier?.value || ''}`;
+			const track = trackOf(c) || '';
+			const yr = yearOf(c)?.number ?? '';
 
 			classes.push({
-				identifier: c.identifier,
-				type: c.type,
+				identifier: c.label,
 				classObj: c,
 				shortcut: sc,
 				track,
 				year: yr,
-				specialty,
-				group: c.group_specifier?.value || '',
-				cohort: c.cohort_specifier?.value != null ? String(c.cohort_specifier.value) : ''
+				specialty: c.semester?.label || '',
+				group: c.group || '',
+				cohort: c.cohort != null ? String(c.cohort) : ''
 			});
 		}
 	}
@@ -279,10 +219,11 @@ export function buildOmniStore(csvText) {
 	return {
 		catalogue,
 		records: validRecords,
+		rejected,
 		teachers,
 		classes,
 		size: validRecords.length,
-		rawSize: rawRows.length
+		rawSize: rawRows
 	};
 }
 
@@ -479,7 +420,7 @@ export function searchOmniClasses(classes, query) {
 export function fuseTeacherSessions(sessions) {
 	const slotGroups = {};
 	for (const s of sessions) {
-		const k = `${s.day}|${s.time}`;
+		const k = `${s.day}|${s.slot}`;
 		if (!slotGroups[k]) {
 			slotGroups[k] = [];
 		}
@@ -492,13 +433,13 @@ export function fuseTeacherSessions(sessions) {
 		const first = list[0];
 		const rooms = Array.from(new Set(list.map((s) => s.room).filter(Boolean))).sort();
 		const subjects = Array.from(new Set(list.map((s) => s.subject).filter(Boolean))).sort();
-		const pills = Array.from(new Set(list.map((s) => s.reference).filter(Boolean))).sort();
-		const weeks = Array.from(new Set(list.map((s) => s.week_pattern_specifier).filter(Boolean)));
-		const week = weeks.length === 1 ? weeks[0] : '';
+		const pills = Array.from(new Set(list.map((s) => s.population?.label).filter(Boolean))).sort();
+		const weeks = Array.from(new Set(list.map((s) => s.weekPattern).filter(Boolean)));
+		const week = weeks.length === 1 ? formatWeekPattern(weeks[0]) : '';
 
 		fused.push({
 			day: first.day,
-			time: first.time,
+			time: first.slot,
 			room: rooms.join(' or ') || '—',
 			subject: subjects.join(' or '),
 			pills,
@@ -516,6 +457,41 @@ export function fuseTeacherSessions(sessions) {
 	});
 
 	return fused;
+}
+
+/**
+ * Group already-sorted sessions by day, rotated to start from today.
+ * Returns {dayOrder, byDay} where byDay[day] holds {s, i} entries.
+ */
+function groupByDay(sortedSessions, now) {
+	const byDay = {};
+	let dayOrder = [];
+	sortedSessions.forEach((s, i) => {
+		if (!byDay[s.day]) {
+			byDay[s.day] = [];
+			dayOrder.push(s.day);
+		}
+		byDay[s.day].push({ s, i });
+	});
+	// The day list is Monday-first by construction; rotation only moves the
+	// anchor (today / next teaching day) to the front. On Sunday the anchor
+	// is the first teaching day from Monday, so Monday stays first.
+	dayOrder.sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b));
+	dayOrder = startFromToday(dayOrder, sortedSessions, now);
+	return { dayOrder, byDay };
+}
+
+/** Rank counts of a key function into [{name, sessions, share}], desc. */
+function rankBy(items, keyFn) {
+	const counts = {};
+	for (const item of items) {
+		const k = keyFn(item);
+		counts[k] = (counts[k] || 0) + 1;
+	}
+	const total = items.length;
+	return Object.keys(counts)
+		.sort((a, b) => counts[b] - counts[a] || a.localeCompare(b))
+		.map((name) => ({ name, sessions: counts[name], share: total ? counts[name] / total : 0 }));
 }
 
 /**
@@ -538,42 +514,10 @@ export function getTeacherDetail(omniStore, teacherName, now) {
 		}
 	});
 
-	let dayOrder = [];
-	const byDay = {};
-	fusedSessions.forEach((s, i) => {
-		if (!byDay[s.day]) {
-			byDay[s.day] = [];
-			dayOrder.push(s.day);
-		}
-		byDay[s.day].push({ s, i });
-	});
-	dayOrder = startFromToday(dayOrder, fusedSessions, now2);
-
-	const subjectCounts = {};
-	for (const s of teacherSessions) {
-		subjectCounts[s.subject] = (subjectCounts[s.subject] || 0) + 1;
-	}
+	const { dayOrder, byDay } = groupByDay(fusedSessions, now2);
 	const totalSessions = teacherSessions.length;
-	const rankedSubjects = Object.keys(subjectCounts)
-		.sort((a, b) => subjectCounts[b] - subjectCounts[a] || a.localeCompare(b))
-		.map((sub) => ({
-			name: sub,
-			sessions: subjectCounts[sub],
-			share: totalSessions ? subjectCounts[sub] / totalSessions : 0
-		}));
-
-	const classCounts = {};
-	for (const s of teacherSessions) {
-		const ref = s.reference || 'Other';
-		classCounts[ref] = (classCounts[ref] || 0) + 1;
-	}
-	const rankedClasses = Object.keys(classCounts)
-		.sort((a, b) => classCounts[b] - classCounts[a] || a.localeCompare(b))
-		.map((cls) => ({
-			name: cls,
-			sessions: classCounts[cls],
-			share: totalSessions ? classCounts[cls] / totalSessions : 0
-		}));
+	const rankedSubjects = rankBy(teacherSessions, (s) => s.subject);
+	const rankedClasses = rankBy(teacherSessions, (s) => s.population?.label || 'Other');
 
 	return {
 		name: teacherName,
@@ -595,17 +539,18 @@ export function getTeacherDetail(omniStore, teacherName, now) {
  */
 export function getClassDetail(omniStore, classIdentifier, now) {
 	if (!omniStore || !classIdentifier) return null;
-	const resolution = omniStore.catalogue.resolve(classIdentifier, { expected: 'class' });
-	if (resolution.type !== dm.Type.UNIQUE_MATCH) return null;
-	if (resolution.publication.type !== dm.Type.RECORDS) return null;
+	const resolution = resolve(omniStore.catalogue, classIdentifier, { as: 'class' });
+	if (resolution.type !== 'found') return null;
 
-	const cls = resolution.syntax.class;
-	const sessions = resolution.publication.records;
+	const cls = resolution.object;
+	const sessions = sessionsFor(omniStore.catalogue, cls);
+	if (!sessions.length) return null;
 
+	// Domain sessions are returned as-is; the page reads slot/weekPattern directly.
 	const sortedSessions = sessions.slice().sort((a, b) => {
 		const dDiff = DAYS.indexOf(a.day) - DAYS.indexOf(b.day);
 		if (dDiff !== 0) return dDiff;
-		return SLOTS.indexOf(a.time) - SLOTS.indexOf(b.time);
+		return SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot);
 	});
 
 	const now2 = now || new Date();
@@ -614,39 +559,27 @@ export function getClassDetail(omniStore, classIdentifier, now) {
 	const liveDays = {};
 	sortedSessions.forEach((s) => {
 		if (
-			isCurrentSession(s.day, s.time, now2) ||
-			(cursor && cursor.visible && s.day === cursor.today && s.time === cursor.next)
+			isCurrentSession(s.day, s.slot, now2) ||
+			(cursor && cursor.visible && s.day === cursor.today && s.slot === cursor.next)
 		) {
 			liveDays[s.day] = true;
 		}
 	});
 
-	let dayOrder = [];
-	const byDay = {};
-	sortedSessions.forEach((s) => {
-		if (!byDay[s.day]) {
-			byDay[s.day] = [];
-			dayOrder.push(s.day);
-		}
-		byDay[s.day].push(s);
-	});
-	dayOrder = startFromToday(dayOrder, sortedSessions, now2);
-	const dayGroups = dayOrder.map((day) => ({ day, sessions: byDay[day] }));
+	const { dayOrder, byDay } = groupByDay(sortedSessions, now2);
+	const dayGroups = dayOrder.map((day) => ({ day, sessions: byDay[day].map((e) => e.s) }));
 
 	const byDaySlot = {};
 	sortedSessions.forEach((s) => {
-		const k = `${s.day}|${s.time}`;
+		const k = `${s.day}|${s.slot}`;
 		(byDaySlot[k] = byDaySlot[k] || []).push(s);
 	});
 
-	const track = cls.specialty?.year?.track_specifier?.value || '';
-	const yr = cls.specialty?.year?.year_specifier?.value || '';
-	const specialty =
-		cls.specialty?.type === dm.Type.COMMON_SPECIALTY
-			? `${track}${yr}`
-			: `${cls.specialty?.specialty_specifier?.value || ''}${cls.specialty?.specialty_semester_specifier?.value || ''}`;
-	const group = cls.group_specifier?.value || '';
-	const cohort = cls.cohort_specifier?.value != null ? String(cls.cohort_specifier.value) : '';
+	const track = trackOf(cls) || '';
+	const yr = yearOf(cls)?.number ?? '';
+	const specialty = cls.semester?.label || '';
+	const group = cls.group || '';
+	const cohort = cls.cohort != null ? String(cls.cohort) : '';
 	const groupe = group ? (cohort ? `${group}<sub>${cohort}</sub>` : group) : cohort || '';
 
 	const facts = [];

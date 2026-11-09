@@ -9,7 +9,8 @@ import {
 	getTeacherDetail,
 	getClassDetail,
 	searchOmniTeachers,
-	searchOmniClasses
+	searchOmniClasses,
+	startFromToday
 } from '../app/src/lib/omni-model.js';
 import { teacherName, highlightHTML } from '../app/src/lib/display.js';
 
@@ -37,7 +38,7 @@ test('omni store builds from time.csv with 132 teachers and 94 active classes', 
 
 	assert.strictEqual(store.teachers.length, 132, 'exactly 132 teachers');
 	assert.strictEqual(store.classes.length, 94, 'exactly 94 published leaf classes');
-	assert.strictEqual(store.size, 2089, '2089 valid partial session records');
+	assert.strictEqual(store.size, 2093, '2093 valid session records (incl. 4 with null teacher)');
 });
 
 test('polished filter matching and highlighting on teachers and classes', () => {
@@ -79,6 +80,44 @@ test('polished filter matching and highlighting on teachers and classes', () => 
 	const trackMatch = lcsHit.attributeMatches.find((a) => a.name === 'Track');
 	assert.ok(trackMatch, 'has Track attribute match');
 	assert.strictEqual(highlightHTML(trackMatch.value, trackMatch.ranges), '<mark>LCS</mark>');
+});
+
+test('day rotation on Sunday keeps Monday first (regression)', () => {
+	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const store = buildOmniStore(csvText);
+	// 2026-11-08 is a Sunday.
+	const sunday = new Date(2026, 10, 8, 12, 0);
+	assert.strictEqual(sunday.getDay(), 0, 'fixture is a Sunday');
+
+	// startFromToday anchors on the first teaching day from Monday,
+	// for both session shapes (fused `time` and domain `slot`).
+	const days = ['LUNDI', 'MARDI', 'MERCREDI'];
+	const fused = [{ day: 'LUNDI', time: '08h15-09h45' }, { day: 'MERCREDI', time: '10h00-11h30' }];
+	const domain = [{ day: 'LUNDI', slot: '08h15-09h45' }, { day: 'MERCREDI', slot: '10h00-11h30' }];
+	assert.deepStrictEqual(startFromToday(days, fused, sunday), ['LUNDI', 'MARDI', 'MERCREDI']);
+	assert.deepStrictEqual(startFromToday(days, domain, sunday), ['LUNDI', 'MARDI', 'MERCREDI']);
+
+	// Detail views: entities teaching on Monday start with LUNDI on Sunday,
+	// at any hour (morning, mid-day, evening).
+	for (const hour of [0, 9, 12, 18, 23]) {
+		const at = new Date(2026, 10, 8, hour, 0);
+		for (const cls of store.classes) {
+			const d = getClassDetail(store, cls.identifier, at);
+			if (!d) continue;
+			const present = [...new Set(d.sessions.map((s) => s.day))];
+			if (present.includes('LUNDI')) {
+				assert.strictEqual(d.dayGroups[0].day, 'LUNDI', `${cls.identifier} at ${hour}h`);
+			}
+		}
+		for (const t of store.teachers) {
+			const d = getTeacherDetail(store, t.name, at);
+			if (!d) continue;
+			const present = [...new Set(d.fusedSessions.map((s) => s.day))];
+			if (present.includes('LUNDI')) {
+				assert.strictEqual(d.dayOrder[0], 'LUNDI', `${t.name} at ${hour}h`);
+			}
+		}
+	}
 });
 
 test('tabs are placed under the filter box and obey mobile visibility rules', () => {
