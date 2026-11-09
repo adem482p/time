@@ -918,8 +918,8 @@
 							{@const entry = item}
 							{@const isNow = isCurrentSession(entry.s.day, entry.s.time, now)}
 							{@const isNext = !isNow && currentTeacherDetail.upcoming.has(entry.i)}
+							{@const [start, end] = slotRange(entry.s.time || item.slot)}
 							<article class="msession {rowClasses(isNow, isNext)}">
-								{@const [start, end] = slotRange(entry.s.time || item.slot)}
 								<span class="msession-leading msession-time-circle" aria-label="{start}–{end}">
 									<span class="msession-time-start">{start}</span>
 									<span class="msession-time-end">{end}</span>
@@ -1049,8 +1049,8 @@
 							{@const c = currentClassDetail.cursor}
 							{@const isNow = isCurrentSession(s.day, s.slot, now)}
 							{@const isNext = !isNow && !!c && c.visible && s.day === c.today && s.slot === c.next}
+							{@const [cs, ce] = slotRange(s.slot)}
 							<article class="msession {rowClasses(isNow, isNext)}">
-								{@const[cs,ce]=slotRange(s.slot)}
 								<span class="msession-leading msession-time-circle" aria-label="{cs}–{ce}">
 									<span class="msession-time-start">{cs}</span>
 									<span class="msession-time-end">{ce}</span>
