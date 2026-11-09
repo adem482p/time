@@ -870,6 +870,13 @@
 						</tbody>
 					</table>
 					{#each splitGroups(currentTeacherDetail.byDay[day], (item) => item.kind === 'break' || isCurrentSession(item.s?.day, item.s?.time, now) || (item.i !== undefined && currentTeacherDetail.upcoming.has(item.i))) as grp}
+					{#if grp.length === 1 && grp[0].kind === 'break'}
+						<div class="msession-break" role="separator" aria-label="Break {grp[0].slot}">
+							<span class="msession-leading">
+								<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v16M14 4v16M5 8h14M5 16h14" /></svg>
+							</span>
+						</div>
+					{:else}
 					<div class="msession-list">
 						{#each grp as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i)}
 							{#if item.kind === 'break'}
@@ -916,6 +923,7 @@
 							{/if}
 						{/each}
 					</div>
+					{/if}
 					{/each}
 				</section>
 			{/each}
@@ -995,6 +1003,13 @@
 						</tbody>
 					</table>
 					{#each splitGroups(g.items, (item) => item.kind === 'break' || isCurrentSession(item.s?.day, item.s?.slot, now) || (!!currentClassDetail.cursor && currentClassDetail.cursor.visible && item.s?.day === currentClassDetail.cursor.today && item.s?.slot === currentClassDetail.cursor.next)) as grp}
+					{#if grp.length === 1 && grp[0].kind === 'break'}
+						<div class="msession-break" role="separator" aria-label="Break {grp[0].slot}">
+							<span class="msession-leading">
+								<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v16M14 4v16M5 8h14M5 16h14" /></svg>
+							</span>
+						</div>
+					{:else}
 					<div class="msession-list">
 						{#each grp as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i + item.s.subject)}
 							{#if item.kind === 'break'}
@@ -1043,6 +1058,7 @@
 							{/if}
 						{/each}
 					</div>
+					{/if}
 					{/each}
 				</section>
 			{/each}
