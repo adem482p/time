@@ -583,7 +583,7 @@
 	</span>
 {/snippet}
 
-<div id="layout" class={mode === 'selected' || mode === 'editing' ? 'is-list' : ''}>
+<div id="layout" class={mode === 'editing' ? 'is-list' : ''}>
 	<div id="listPane">
 		<button
 			type="button"

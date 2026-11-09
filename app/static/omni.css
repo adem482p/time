@@ -973,7 +973,7 @@ table.week .week-pill {
 }
 /* selected state: one bar per viewport, CSS picks the chrome */
 #layout .sbox-selected{
-  display:flex; align-items:stretch; max-width:40rem; margin:.8rem 0;
+  display:flex; flex-direction:row; align-items:stretch; max-width:40rem; margin:.8rem 0;
   border-radius:8px;
   background:color-mix(in srgb, var(--md-primary, #0b4da2) 22%, transparent);
   color:var(--md-on-primary-container, #201047);
