@@ -892,7 +892,7 @@ table.week .week-pill {
    the input, so every control is clickable by construction. ---- */
 #layout .sbox{ display:flex; flex-direction:column; }
 #layout .sbox-row{
-  display:flex; align-items:stretch; max-width:40rem; margin:.8rem 0;
+  display:flex; align-items:stretch; width:100%; max-width:40rem; height:2.75rem; box-sizing:border-box; margin:.8rem 0;
   border:1px solid var(--md-outline-variant, #ccc); border-radius:8px;
   background:var(--md-surface-container-high, #eceef4);
 }
@@ -923,15 +923,15 @@ table.week .week-pill {
 }
 #layout .sbox-clear svg{ width:1.5rem; height:1.5rem; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
 #layout .sbox-sub{
-  min-height:2.75rem; display:flex; align-items:center; justify-content:center;
+  min-height:2rem; display:flex; align-items:center; justify-content:center;
   margin:0 0 .4rem;
 }
 #layout .sbox-tabs{
-  display:flex; gap:0; border:1px solid var(--md-outline-variant, #ccc);
+  display:flex; gap:0; height:2rem; box-sizing:border-box; border:1px solid var(--md-outline-variant, #ccc);
   border-radius:999px; overflow:hidden; background:var(--md-surface, #fff);
 }
 #layout .sbox-tab{
-  flex:1; font-family:inherit; font-size:.82rem; padding:.5rem 1rem;
+  flex:1; height:2rem; box-sizing:border-box; font-family:inherit; font-size:.82rem; padding:.5rem 1rem;
   border:0; border-radius:0; background:transparent;
   color:var(--md-on-surface-variant, #555); cursor:pointer;
   font-weight:500; text-align:center;
@@ -956,7 +956,7 @@ table.week .week-pill {
   background:var(--md-outline-variant, #ccc);
 }
 #layout .sbox-suggest{
-  display:flex; gap:0; border:1px solid var(--md-outline-variant, #ccc);
+  display:flex; gap:0; height:2rem; box-sizing:border-box; border:1px solid var(--md-outline-variant, #ccc);
   border-radius:999px; overflow:hidden; background:var(--md-surface, #fff);
 }
 #layout .sbox-value{
@@ -969,7 +969,7 @@ table.week .week-pill {
 }
 #layout .sbox-chip{
   flex:1; display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
-  height:2rem; padding:.5rem 1rem; border:0; border-radius:0;
+  height:2rem; box-sizing:border-box; padding:.5rem 1rem; border:0; border-radius:0;
   background:transparent; color:var(--md-on-surface, #1b1b1b);
   font-size:.875rem; font-weight:500; line-height:1; cursor:pointer; text-align:center;
 }
@@ -984,12 +984,12 @@ table.week .week-pill {
   background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent);
 }
 #layout .sbox-status{
-  margin:0; width:100%; text-align:center;
+  margin:0; width:100%; height:2rem; line-height:2rem; text-align:center;
   font-size:.85em; color:var(--md-on-surface-variant, #555);
 }
 /* selected state: one bar per viewport, CSS picks the chrome */
 #layout .sbox-selected{
-  display:flex; flex-direction:row; align-items:stretch; max-width:40rem; margin:.8rem 0;
+  display:flex; flex-direction:row; align-items:stretch; width:100%; max-width:40rem; height:2.75rem; box-sizing:border-box; margin:.8rem 0;
   border-radius:8px;
   background:color-mix(in srgb, var(--md-primary, #0b4da2) 22%, transparent);
   color:var(--md-on-primary-container, #201047);
@@ -997,7 +997,7 @@ table.week .week-pill {
 }
 #layout .sbox-selected-arrow{
   display:flex; align-items:center; justify-content:center;
-  width:100%; min-height:2.375rem;
+  width:100%; height:100%; min-height:0;
   background:transparent; color:inherit; border:0; border-radius:8px;
   cursor:pointer; font:inherit;
 }
