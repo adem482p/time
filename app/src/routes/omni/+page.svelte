@@ -17,9 +17,10 @@
 		isCurrentSession
 	} from '$lib/omni-model.js';
 	import { formatWeekPattern } from '../../../../domain-model/print.js';
+	import { parseSearchQuery } from '$lib/search.js';
 	import * as color from '$lib/color.js';
 	import { esc } from '$lib/data.js';
-	import { headingHTML, teacherName, highlightHTML } from '$lib/display.js';
+	import { headingHTML, teacherName, highlightHTML, highlightClassLabel } from '$lib/display.js';
 	import { clock } from '$lib/clock.js';
 	import * as kaomoji from '$lib/kaomoji.js';
 	import { registerApp } from '$lib/register.js';
@@ -32,9 +33,22 @@
 	// Browse mode tab: 'teachers' | 'classes' (no "all")
 	let browseTab = $state('teachers');
 
-	// Search mode type filters
-	let filterTeachers = $state(true);
-	let filterClasses = $state(true);
+	const parsedQuery = $derived(parseSearchQuery(query));
+	const searchTerms = $derived(parsedQuery.terms.join(' '));
+
+	// Result-type filter: derived from a `type:` predicate in the query
+	// (type:teacher / type:classes), so the chips and the query stay in sync.
+	const wantTeachers = $derived(!parsedQuery.type || parsedQuery.type === 'teacher');
+	const wantClasses = $derived(!parsedQuery.type || parsedQuery.type === 'class');
+
+	// Rewrite the query with a `type:` predicate (or without, for both).
+	function setTypePredicate(kind) {
+		const rest = query
+			.split(/\s+/)
+			.filter((t) => t && !/^type:(class|classes|teacher|teachers)$/i.test(t))
+			.join(' ');
+		query = kind ? (rest ? `${rest} type:${kind}` : `type:${kind}`) : rest;
+	}
 
 	// Mobile navigation state: menuOpen controls .is-list on #layout
 	let menuOpen = $state(false);
@@ -162,27 +176,27 @@
 
 	// Polished search results
 	const filteredTeachers = $derived(
-		omniStore ? searchOmniTeachers(omniStore.teachers, query) : []
+		omniStore ? searchOmniTeachers(omniStore.teachers, searchTerms) : []
 	);
 
 	const filteredClasses = $derived(
-		omniStore ? searchOmniClasses(omniStore.classes, query) : []
+		omniStore ? searchOmniClasses(omniStore.classes, searchTerms) : []
 	);
 
 	const searchMode = $derived(query.trim().length > 0);
 
 	// Which lists are visible
-	const showTeachers = $derived(searchMode ? filterTeachers : browseTab === 'teachers');
-	const showClasses = $derived(searchMode ? filterClasses : browseTab === 'classes');
+	const showTeachers = $derived(searchMode ? wantTeachers : browseTab === 'teachers');
+	const showClasses = $derived(searchMode ? wantClasses : browseTab === 'classes');
 
 	// Unified, score-sorted results in search mode
 	const searchResults = $derived.by(() => {
 		if (!searchMode) return [];
 		const items = [];
-		if (filterTeachers) {
+		if (wantTeachers) {
 			filteredTeachers.forEach((t) => items.push({ kind: 'teacher', score: t.score, data: t }));
 		}
-		if (filterClasses) {
+		if (wantClasses) {
 			filteredClasses.forEach((c) => items.push({ kind: 'class', score: c.score, data: c }));
 		}
 		return items.sort((a, b) => b.score - a.score || String(a.data.name || a.data.identifier).localeCompare(String(b.data.name || b.data.identifier)));
@@ -193,29 +207,13 @@
 		searchMode ? searchResults.length : (showTeachers ? filteredTeachers.length : 0) + (showClasses ? filteredClasses.length : 0)
 	);
 
-	// Transition browse <-> search
+	// Leaving search: restore the browse tab from the active predicate.
 	let prevQuery = $state('');
 	$effect(() => {
 		const q = query.trim();
-		if (q && !prevQuery.trim()) {
-			// entering search: seed filters from browse tab
-			if (browseTab === 'teachers') {
-				filterTeachers = true;
-				filterClasses = false;
-			} else {
-				filterTeachers = false;
-				filterClasses = true;
-			}
-		} else if (!q && prevQuery.trim()) {
-			// leaving search: restore browse tab from filters
-			if (filterTeachers && !filterClasses) browseTab = 'teachers';
-			else if (filterClasses && !filterTeachers) browseTab = 'classes';
-			else browseTab = 'teachers';
-		}
-		// ensure at least one filter active
-		if (searchMode && !filterTeachers && !filterClasses) {
-			filterTeachers = true;
-			filterClasses = true;
+		if (!q && prevQuery.trim()) {
+			if (parsedQuery.type === 'teacher') browseTab = 'teachers';
+			else if (parsedQuery.type === 'class') browseTab = 'classes';
 		}
 		prevQuery = query;
 	});
@@ -298,29 +296,30 @@
 			const q = query.trim().toLowerCase();
 			if (!q) return;
 
-			// Exact teacher hit wins
-			const exactT = filteredTeachers.find((t) => t.name.toLowerCase() === q);
+			// Exact hit wins, respecting any type: predicate.
+			const exactT = wantTeachers && filteredTeachers.find((t) => t.name.toLowerCase() === q);
 			if (exactT) {
 				selectTeacher(exactT.name);
 				return;
 			}
-			// Exact class hit wins
-			const exactC = filteredClasses.find(
-				(c) =>
-					c.identifier.toLowerCase() === q ||
-					c.shortcut.head.toLowerCase() === q ||
-					`${c.shortcut.head}${c.shortcut.sub}`.toLowerCase() === q
-			);
+			const exactC =
+				wantClasses &&
+				filteredClasses.find(
+					(c) =>
+						c.identifier.toLowerCase() === q ||
+						c.shortcut.head.toLowerCase() === q ||
+						`${c.shortcut.head}${c.shortcut.sub}`.toLowerCase() === q
+				);
 			if (exactC) {
 				selectClass(exactC.identifier);
 				return;
 			}
 			// Lone hit auto-jump
-			if (filteredTeachers.length === 1 && filteredClasses.length === 0) {
+			if (wantTeachers && !wantClasses && filteredTeachers.length === 1) {
 				selectTeacher(filteredTeachers[0].name);
 				return;
 			}
-			if (filteredClasses.length === 1 && filteredTeachers.length === 0) {
+			if (wantClasses && !wantTeachers && filteredClasses.length === 1) {
 				selectClass(filteredClasses[0].identifier);
 				return;
 			}
@@ -427,6 +426,12 @@
 	<link rel="icon" href={`${base}/assets/icon-192.png`} sizes="192x192" type="image/png" />
 	<link rel="apple-touch-icon" href={`${base}/assets/apple-touch-icon.png`} />
 </svelte:head>
+
+{#snippet matchLine(kind, m)}
+	<span class={kind === 'class' ? 'cmatch' : 'fmatch'}>
+		<b>{kind === 'class' ? 'Class' : 'Subject'}:</b> {@html kind === 'class' ? highlightClassLabel(m.label, m.ranges) : highlightHTML(m.label, m.ranges)}
+	</span>
+{/snippet}
 
 <div id="layout" class={menuOpen ? 'is-list' : ''}>
 	<div id="listPane">
@@ -553,14 +558,11 @@
 					<button
 						type="button"
 						class="omni-chip"
-						class:active={filterTeachers}
-						aria-pressed={filterTeachers}
-						onclick={() => {
-							if (filterTeachers && !filterClasses) return;
-							filterTeachers = !filterTeachers;
-						}}
+						class:active={wantTeachers}
+						aria-pressed={wantTeachers}
+						onclick={() => setTypePredicate(parsedQuery.type === 'teacher' ? null : 'teacher')}
 					>
-						<span class="omni-chip-check" aria-hidden="true">{filterTeachers ? '✓' : ''}</span>
+						<span class="omni-chip-check" aria-hidden="true">{wantTeachers ? '✓' : ''}</span>
 						Teachers
 					</button>
 				{/if}
@@ -568,14 +570,11 @@
 					<button
 						type="button"
 						class="omni-chip"
-						class:active={filterClasses}
-						aria-pressed={filterClasses}
-						onclick={() => {
-							if (filterClasses && !filterTeachers) return;
-							filterClasses = !filterClasses;
-						}}
+						class:active={wantClasses}
+						aria-pressed={wantClasses}
+						onclick={() => setTypePredicate(parsedQuery.type === 'class' ? null : 'class')}
 					>
-						<span class="omni-chip-check" aria-hidden="true">{filterClasses ? '✓' : ''}</span>
+						<span class="omni-chip-check" aria-hidden="true">{wantClasses ? '✓' : ''}</span>
 						Classes
 					</button>
 				{/if}
@@ -619,16 +618,8 @@
 									onclick={() => selectTeacher(t.name)}
 								>
 									{@html teacherName(t.name, t.nameRanges)}
-									{#each t.subjectMatches.slice(0, 3) as sm}
-										<span class="fmatch">
-											<b>Subject:</b> {@html highlightHTML(sm.label, sm.ranges)}
-										</span>
-									{/each}
-									{#each t.classMatches.slice(0, 3) as cm}
-										<span class="cmatch">
-											<b>Class:</b> {@html headingHTML(cm.label)}
-										</span>
-									{/each}
+									{#each t.subjectMatches.slice(0, 3) as sm}{@render matchLine('subject', sm)}{/each}
+									{#each t.classMatches.slice(0, 3) as cm}{@render matchLine('class', cm)}{/each}
 								</button>
 							</li>
 						{:else}
@@ -672,16 +663,8 @@
 								onclick={() => selectTeacher(t.name)}
 							>
 								{@html teacherName(t.name, t.nameRanges)}
-								{#each t.subjectMatches.slice(0, 3) as sm}
-									<span class="fmatch">
-										<b>Subject:</b> {@html highlightHTML(sm.label, sm.ranges)}
-									</span>
-								{/each}
-								{#each t.classMatches.slice(0, 3) as cm}
-									<span class="cmatch">
-										<b>Class:</b> {@html headingHTML(cm.label)}
-									</span>
-								{/each}
+								{#each t.subjectMatches.slice(0, 3) as sm}{@render matchLine('subject', sm)}{/each}
+								{#each t.classMatches.slice(0, 3) as cm}{@render matchLine('class', cm)}{/each}
 							</button>
 						</li>
 					{/each}
@@ -735,11 +718,13 @@
 
 			{#each currentTeacherDetail.dayOrder as day (day)}
 				<h3 class="day-head">{frDay(day)}</h3>
-				<section class="day-group{currentTeacherDetail.liveDays[day] ? '' : ' dim'}">
-					<table class="t-sessions">
+				<section class="day-group">
+					<table class="t-sessions desktop-sessions">
 						<tbody>
 							<tr><th></th><th>Time</th><th>Room</th><th>Subject</th><th>Class</th></tr>
-							{#each currentTeacherDetail.byDay[day] as entry (entry.i)}
+							{#each currentTeacherDetail.byDay[day] as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i)}
+								{#if item.kind === 'session'}
+								{@const entry = item}
 								{@const isNow = isCurrentSession(entry.s.day, entry.s.time, now)}
 								{@const isNext = !isNow && currentTeacherDetail.upcoming.has(entry.i)}
 								<tr class={rowClasses(isNow, isNext)}>
@@ -764,9 +749,56 @@
 										{/each}
 									</td>
 								</tr>
+								{/if}
 							{/each}
 						</tbody>
 					</table>
+					<div class="msession-list">
+						{#each currentTeacherDetail.byDay[day] as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i)}
+							{#if item.kind === 'break'}
+								<article class="msession break">
+									<span class="msession-leading">
+										<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v16M14 4v16M5 8h14M5 16h14" /></svg>
+									</span>
+									<div class="msession-body">
+										<h4 class="msession-subject">Break</h4>
+										<p class="msession-meta"><span class="msession-time">{item.slot}</span></p>
+									</div>
+								</article>
+							{:else}
+							{@const entry = item}
+							{@const isNow = isCurrentSession(entry.s.day, entry.s.time, now)}
+							{@const isNext = !isNow && currentTeacherDetail.upcoming.has(entry.i)}
+							<article class="msession {rowClasses(isNow, isNext)}">
+								<span class="msession-leading">
+									<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+								</span>
+								<div class="msession-body">
+									<div class="msession-head">
+										<h4 class="msession-subject">{entry.s.subject}</h4>
+										{#if isNow}
+											<span class="msession-flag now">● NOW</span>
+										{:else if isNext}
+											<span class="msession-flag next">
+											<svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true">
+												<path d="M4 12h14M12 6l6 6-6 6" />
+											</svg>
+											NEXT
+										</span>
+										{/if}
+									</div>
+									<p class="msession-room">{entry.s.room}</p>
+									<p class="msession-meta">
+										<span class="msession-time">{entry.s.time}</span>
+										{#each entry.s.pills as p (p)}
+											<span class="pill">{@html headingHTML(p)}</span>
+										{/each}
+									</p>
+								</div>
+							</article>
+							{/if}
+						{/each}
+					</div>
 				</section>
 			{/each}
 
@@ -809,14 +841,16 @@
 				{/each}
 			</dl>
 
-			<!-- Mobile Day-group session cards -->
+			<!-- Session cards, grouped by day (Material 3) -->
 			{#each currentClassDetail.dayGroups as g (g.day)}
 				<h3 class="day-head">{frDay(g.day)}</h3>
-				<section class="day-group{currentClassDetail.liveDays[g.day] ? '' : ' dim'}">
-					<table class="c-sessions">
+				<section class="day-group">
+					<table class="c-sessions desktop-sessions">
 						<tbody>
 							<tr><th></th><th>Time</th><th>Teacher</th><th>Subject</th><th>Room</th></tr>
-							{#each g.sessions as s, i (i)}
+							{#each g.items as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i + item.s.subject)}
+								{#if item.kind === 'session'}
+								{@const s = item.s}
 								{@const c = currentClassDetail.cursor}
 								{@const isNow = isCurrentSession(s.day, s.slot, now)}
 								{@const isNext = !isNow && !!c && c.visible && s.day === c.today && s.slot === c.next}
@@ -838,9 +872,58 @@
 									<td class="c-subject">{s.subject}</td>
 									<td class="c-room">{s.room || '—'}</td>
 								</tr>
+								{/if}
 							{/each}
 						</tbody>
 					</table>
+					<div class="msession-list">
+						{#each g.items as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i + item.s.subject)}
+							{#if item.kind === 'break'}
+								<article class="msession break">
+									<span class="msession-leading">
+										<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v16M14 4v16M5 8h14M5 16h14" /></svg>
+									</span>
+									<div class="msession-body">
+										<h4 class="msession-subject">Break</h4>
+										<p class="msession-meta"><span class="msession-time">{item.slot}</span></p>
+									</div>
+								</article>
+							{:else}
+							{@const s = item.s}
+							{@const c = currentClassDetail.cursor}
+							{@const isNow = isCurrentSession(s.day, s.slot, now)}
+							{@const isNext = !isNow && !!c && c.visible && s.day === c.today && s.slot === c.next}
+							<article class="msession {rowClasses(isNow, isNext)}">
+								<span class="msession-leading">
+									<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+								</span>
+								<div class="msession-body">
+									<div class="msession-head">
+										<h4 class="msession-subject">{s.subject}</h4>
+										{#if isNow}
+											<span class="msession-flag now">● NOW</span>
+									{:else if isNext}
+											<span class="msession-flag next">
+											<svg class="nextarrow" viewBox="0 0 24 24" aria-hidden="true">
+												<path d="M4 12h14M12 6l6 6-6 6" />
+											</svg>
+											NEXT
+										</span>
+									{/if}
+									</div>
+									<p class="msession-room">{s.room || '—'}</p>
+									<p class="msession-meta">
+										<span class="msession-time">{s.slot}</span>
+										<span class="msession-teacher">{@html teacherName(s.teacher, '—')}</span>
+										{#if formatWeekPattern(s.weekPattern)}
+											<span class="week-pill">{formatWeekPattern(s.weekPattern)}</span>
+										{/if}
+									</p>
+								</div>
+							</article>
+							{/if}
+						{/each}
+					</div>
 				</section>
 			{/each}
 

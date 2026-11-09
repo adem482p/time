@@ -42,6 +42,25 @@ export function headingHTML(name) {
 }
 
 /**
+ * Highlighted class label: shortcut head/sub form AND match ranges.
+ * Ranges are offsets into the full label; they are split at the head/sub
+ * boundary so highlighting works on the same string headingHTML renders.
+ *
+ * @param {string} label — canonical class label (e.g. `GLSI3 A1`)
+ * @param {Array<[number,number]>} ranges — merged highlight ranges
+ * @returns {string} safe HTML
+ */
+export function highlightClassLabel(label, ranges) {
+	const sc = shortcutOf(label);
+	if (!sc) return highlightHTML(label, ranges);
+	const headLen = sc.head.length;
+	const rs = ranges || [];
+	const headRanges = rs.filter((r) => r[0] < headLen).map((r) => [r[0], Math.min(r[1], headLen)]);
+	const subRanges = rs.filter((r) => r[1] > headLen).map((r) => [Math.max(r[0], headLen) - headLen, r[1] - headLen]);
+	return highlightHTML(sc.head, headRanges) + (sc.sub ? '<sub>' + highlightHTML(sc.sub, subRanges) + '</sub>' : '');
+}
+
+/**
  * Render a teacher name for display, with optional highlight ranges.
  * Handles redaction mode (?redact=1) by delegating to data layer.
  * Supports optional alt fallback for empty names (like data.nameHTML).

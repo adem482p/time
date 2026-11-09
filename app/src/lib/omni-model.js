@@ -334,37 +334,29 @@ export function searchOmniClasses(classes, query) {
 	classes.forEach((c) => {
 		let ok = true;
 		let score = 0;
-		const headRanges = [];
-		const subRanges = [];
+		// Ranges are computed on the FULL identifier (the one string that
+		// contains every part), then split at the head/sub boundary for
+		// rendering. Per-fragment matching can never highlight a token
+		// like "D2" that straddles head ('D') and sub ('2').
+		const idRanges = [];
 		const attributeMatches = {};
 
 		tokens.forEach((tok) => {
 			let matched = false;
 			let best = -1;
 
-			const hr = fuzzyRanges(c.shortcut.head, tok);
-			if (hr) {
+			const ir = fuzzyRanges(c.identifier, tok);
+			if (ir) {
 				matched = true;
-				const sc = scoreMatch(c.shortcut.head, tok);
+				const sc = scoreMatch(c.identifier, tok);
 				if (sc > best) best = sc;
-				headRanges.push(...hr);
-			}
-
-			if (c.shortcut.sub) {
-				const sr = fuzzyRanges(c.shortcut.sub, tok);
-				if (sr) {
-					matched = true;
-					const sc = scoreMatch(c.shortcut.sub, tok);
-					if (sc > best) best = sc;
-					subRanges.push(...sr);
-				}
+				idRanges.push(...ir);
 			}
 
 			const attrs = [
 				['Track', c.track],
 				['Specialty', c.specialty],
-				['Year', c.year],
-				['Identifier', c.identifier]
+				['Year', c.year]
 			];
 			attrs.forEach(([attrName, attrVal]) => {
 				if (!attrVal) return;
@@ -373,12 +365,10 @@ export function searchOmniClasses(classes, query) {
 					matched = true;
 					const sc = scoreMatch(String(attrVal), tok);
 					if (sc > best) best = sc;
-					if (attrName !== 'Identifier') {
-						if (!attributeMatches[attrName]) {
-							attributeMatches[attrName] = { name: attrName, value: String(attrVal), ranges: [] };
-						}
-						attributeMatches[attrName].ranges.push(...ar);
+					if (!attributeMatches[attrName]) {
+						attributeMatches[attrName] = { name: attrName, value: String(attrVal), ranges: [] };
 					}
+					attributeMatches[attrName].ranges.push(...ar);
 				}
 			});
 
@@ -388,6 +378,12 @@ export function searchOmniClasses(classes, query) {
 			}
 			score += Math.max(best, 0);
 		});
+
+		// Split identifier ranges into head/sub ranges the page renders.
+		const headLen = c.shortcut.head.length;
+		const merged = mergeRanges(idRanges);
+		const headRanges = merged.filter((r) => r[0] < headLen).map((r) => [r[0], Math.min(r[1], headLen)]);
+		const subRanges = merged.filter((r) => r[1] > headLen).map((r) => [Math.max(r[0], headLen) - headLen, r[1] - headLen]);
 
 		if (!ok) return;
 
@@ -481,6 +477,29 @@ function groupByDay(sortedSessions, now) {
 	return { dayOrder, byDay };
 }
 
+/**
+ * Interleave empty time slots ("breaks") between a day's first and last
+ * session slots. Entries are {s, i} (groupByDay shape); result items are
+ * {kind:'session', s, i} | {kind:'break', slot}. Multiple sessions in one
+ * slot stay grouped (no break markers between them).
+ */
+export function withBreaks(entries, slotOf) {
+	const present = new Set(entries.map((e) => slotOf(e.s)));
+	let lo = Infinity, hi = -Infinity;
+	for (const slot of present) {
+		const i = SLOTS.indexOf(slot);
+		if (i >= 0) { lo = Math.min(lo, i); hi = Math.max(hi, i); }
+	}
+	const items = [];
+	for (let i = lo; i <= hi; i++) {
+		const slot = SLOTS[i];
+		const inSlot = entries.filter((e) => slotOf(e.s) === slot);
+		if (!inSlot.length) items.push({ kind: 'break', slot });
+		else for (const e of inSlot) items.push({ kind: 'session', s: e.s, i: e.i });
+	}
+	return items;
+}
+
 /** Rank counts of a key function into [{name, sessions, share}], desc. */
 function rankBy(items, keyFn) {
 	const counts = {};
@@ -507,14 +526,12 @@ export function getTeacherDetail(omniStore, teacherName, now) {
 	const now2 = now || new Date();
 	const next = nextSessionIdx(fusedSessions, now2);
 
-	const liveDays = {};
-	fusedSessions.forEach((s, i) => {
-		if (isCurrentSession(s.day, s.time, now2) || next.has(i)) {
-			liveDays[s.day] = true;
-		}
-	});
 
-	const { dayOrder, byDay } = groupByDay(fusedSessions, now2);
+	const grouped = groupByDay(fusedSessions, now2);
+	const dayOrder = grouped.dayOrder;
+	const byDay = Object.fromEntries(
+		Object.entries(grouped.byDay).map(([day, entries]) => [day, withBreaks(entries, (s) => s.time)])
+	);
 	const totalSessions = teacherSessions.length;
 	const rankedSubjects = rankBy(teacherSessions, (s) => s.subject);
 	const rankedClasses = rankBy(teacherSessions, (s) => s.population?.label || 'Other');
@@ -528,7 +545,6 @@ export function getTeacherDetail(omniStore, teacherName, now) {
 		rankedClasses,
 		fusedSessions,
 		upcoming: next,
-		liveDays,
 		dayOrder,
 		byDay
 	};
@@ -556,18 +572,10 @@ export function getClassDetail(omniStore, classIdentifier, now) {
 	const now2 = now || new Date();
 	const cursor = dayCursor(now2, SLOTS);
 
-	const liveDays = {};
-	sortedSessions.forEach((s) => {
-		if (
-			isCurrentSession(s.day, s.slot, now2) ||
-			(cursor && cursor.visible && s.day === cursor.today && s.slot === cursor.next)
-		) {
-			liveDays[s.day] = true;
-		}
-	});
 
-	const { dayOrder, byDay } = groupByDay(sortedSessions, now2);
-	const dayGroups = dayOrder.map((day) => ({ day, sessions: byDay[day].map((e) => e.s) }));
+	const grouped = groupByDay(sortedSessions, now2);
+	const dayOrder = grouped.dayOrder;
+	const dayGroups = dayOrder.map((day) => ({ day, items: withBreaks(grouped.byDay[day], (s) => s.slot) }));
 
 	const byDaySlot = {};
 	sortedSessions.forEach((s) => {
@@ -583,8 +591,8 @@ export function getClassDetail(omniStore, classIdentifier, now) {
 	const groupe = group ? (cohort ? `${group}<sub>${cohort}</sub>` : group) : cohort || '';
 
 	const facts = [];
-	if (track) facts.push({ name: 'Track', value: track, raw: false });
-	if (yr) facts.push({ name: 'Year', value: String(yr), raw: false });
+	// Track + year number merge into the year designator (LCS3).
+	if (track && yr) facts.push({ name: 'Year', value: `${track}${yr}`, raw: false });
 	if (specialty) facts.push({ name: 'Specialty', value: specialty, raw: false });
 	if (groupe) facts.push({ name: 'Groupe', value: groupe, raw: true });
 
@@ -598,7 +606,6 @@ export function getClassDetail(omniStore, classIdentifier, now) {
 		sessions: sortedSessions,
 		dayGroups,
 		byDaySlot,
-		cursor,
-		liveDays
+		cursor
 	};
 }

@@ -12,7 +12,8 @@ import {
 	searchOmniClasses,
 	startFromToday
 } from '../app/src/lib/omni-model.js';
-import { teacherName, highlightHTML } from '../app/src/lib/display.js';
+import { teacherName, highlightHTML, highlightClassLabel } from '../app/src/lib/display.js';
+import { parseSearchQuery } from '../app/src/lib/search.js';
 
 test('omni page does not import old modeling code (libgroups.js or model.js)', () => {
 	const src = readSrc('app/src/routes/omni/+page.svelte');
@@ -82,6 +83,52 @@ test('polished filter matching and highlighting on teachers and classes', () => 
 	assert.strictEqual(highlightHTML(trackMatch.value, trackMatch.ranges), '<mark>LCS</mark>');
 });
 
+test('cohort token straddling head/sub highlights both parts', () => {
+	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const store = buildOmniStore(csvText);
+	// "D2" straddles the shortcut split: 'D' is in the head, '2' in the sub.
+	// Ranges must be computed on the full identifier and split, not per part.
+	const hits = searchOmniClasses(store.classes, 'GLSI3 D2');
+	const hit = hits.find((c) => c.identifier === 'GLSI3 D2');
+	assert.ok(hit, 'GLSI3 D2 matches');
+	assert.ok(hit.headRanges && hit.headRanges.some(([a, b]) => a <= 6 && b >= 7), 'D highlighted in head');
+	assert.ok(hit.subRanges && hit.subRanges.some(([a, b]) => a <= 0 && b >= 1), '2 highlighted in sub');
+	const head = highlightHTML(hit.shortcut.head, hit.headRanges);
+	const sub = highlightHTML(hit.shortcut.sub, hit.subRanges);
+	assert.strictEqual(head, '<mark>GLSI3</mark> <mark>D</mark>');
+	assert.strictEqual(sub, '<mark>2</mark>');
+});
+
+test('parseSearchQuery extracts type predicates and keeps terms', () => {
+	assert.deepStrictEqual(parseSearchQuery('GLSI3 D2'), { type: null, filters: [], terms: ['glsi3', 'd2'] });
+	assert.deepStrictEqual(parseSearchQuery('type:class GLSI'), { type: 'class', filters: [], terms: ['glsi'] });
+	assert.deepStrictEqual(parseSearchQuery('GLSI type:teachers'), { type: 'teacher', filters: [], terms: ['glsi'] });
+	// Last type: wins; unknown values/keys fall back to literal text.
+	assert.strictEqual(parseSearchQuery('type:class type:teacher').type, 'teacher');
+	assert.deepStrictEqual(parseSearchQuery('type:xyz'), { type: null, filters: [], terms: ['type:xyz'] });
+	assert.deepStrictEqual(parseSearchQuery('foo:bar'), { type: null, filters: [], terms: ['foo:bar'] });
+	// Field predicates are parsed (evaluation is a later step).
+	assert.deepStrictEqual(parseSearchQuery('room:B1 subject:python'), {
+		type: null,
+		filters: [{ key: 'room', value: 'b1' }, { key: 'subject', value: 'python' }],
+		terms: []
+	});
+});
+
+test('class matches in teacher search carry ranges and highlight', () => {
+	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const store = buildOmniStore(csvText);
+	const hits = searchOmniTeachers(store.teachers, 'glsi');
+	assert.ok(hits.length > 0, 'GLSI finds teachers');
+	const withClass = hits.find((t) => t.classMatches.length > 0);
+	assert.ok(withClass, 'at least one teacher has class matches');
+	const cm = withClass.classMatches[0];
+	assert.ok(cm.ranges && cm.ranges.length > 0, 'class match carries highlight ranges');
+	// The GLSI token must land inside a <mark> in the rendered label.
+	const html = highlightClassLabel(cm.label, cm.ranges);
+	assert.ok(html.includes('<mark>GLSI</mark>'), 'GLSI is highlighted: ' + html);
+});
+
 test('day rotation on Sunday keeps Monday first (regression)', () => {
 	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
 	const store = buildOmniStore(csvText);
@@ -118,6 +165,37 @@ test('day rotation on Sunday keeps Monday first (regression)', () => {
 			}
 		}
 	}
+});
+
+test('empty timeslots render as breaks between a day\'s sessions', () => {
+	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const store = buildOmniStore(csvText);
+	const now = new Date(2026, 10, 8, 12, 0);
+
+	// BI1 A1 on LUNDI has a gap at 13h20-14h50 between its sessions.
+	const d = getClassDetail(store, 'BI1 A1', now);
+	assert.ok(d, 'class detail exists');
+	const lundi = d.dayGroups.find((g) => g.day === 'LUNDI');
+	assert.ok(lundi, 'has a LUNDI group');
+	const kinds = lundi.items.map((it) => (it.kind === 'break' ? `break:${it.slot}` : `session:${it.s.slot}`));
+	assert.ok(kinds.includes('break:13h20-14h50'), 'gap slot is a break: ' + kinds.join(', '));
+	// No breaks outside the day's first/last session slots.
+	const first = kinds[0];
+	const last = kinds[kinds.length - 1];
+	assert.ok(first.startsWith('session:'), 'starts with a session, not a break');
+	assert.ok(last.startsWith('session:'), 'ends with a session, not a break');
+
+	// Teacher view (fused, `time` shape) gets the same treatment.
+	let foundTeacherBreak = false;
+	for (const t of store.teachers) {
+		const td = getTeacherDetail(store, t.name, now);
+		if (!td) continue;
+		for (const day of td.dayOrder) {
+			if (td.byDay[day].some((it) => it.kind === 'break')) { foundTeacherBreak = true; break; }
+		}
+		if (foundTeacherBreak) break;
+	}
+	assert.ok(foundTeacherBreak, 'some teacher day contains a break');
 });
 
 test('tabs are placed under the filter box and obey mobile visibility rules', () => {

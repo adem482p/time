@@ -1,5 +1,40 @@
 // app/src/lib/search.js — pure matching/scoring logic.
 // No display concerns (escaping, highlighting, redaction) — those live in display.js.
+/**
+ * Parse a search query into predicates + free-text terms.
+ * `type:class` / `type:teacher` (plurals + case-insensitive) restrict the
+ * result kind; unknown `key:value` tokens fall back to literal text.
+ * Returns { type: 'class'|'teacher'|null, filters: [{key, value}], terms: [] }.
+ * Predicate tokens are excluded from terms, so they never highlight.
+ */
+export function parseSearchQuery(q) {
+	const filters = [];
+	let type = null;
+	const terms = [];
+	for (const tok of tokenize(q ?? '')) {
+		const m = /^([a-z]+):(.+)$/i.exec(tok);
+		if (m) {
+			const key = m[1].toLowerCase();
+			const value = m[2];
+			if (key === 'type') {
+				let v = value.toLowerCase();
+				if (v === 'classes') v = 'class';
+				if (v === 'teachers') v = 'teacher';
+				if (v === 'class' || v === 'teacher') {
+					type = v;
+					continue;
+				}
+			}
+			if (['subject', 'room', 'teacher', 'day', 'cohort', 'group'].includes(key)) {
+				filters.push({ key, value });
+				continue;
+			}
+		}
+		terms.push(tok);
+	}
+	return { type, filters, terms };
+}
+
 export function normStr(s) {
   return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }

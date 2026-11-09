@@ -407,8 +407,7 @@ slight squash on landing. Global scale() adds
 so the neighbouring marked cell's own border wins the
    collapsed-border conflict and the main grid edge stays continuous). */
 #detail td:empty,
-#detail th:empty{ border: none; padding: 0; background: transparent; }#detail tr.now td{ background: var(--md-primary-container, #fff3b0); color: var(--md-on-primary-container, #201047); }#detail tr.next td{ background: var(--md-tertiary-container, #d6e9ff); color: var(--md-on-tertiary-container, #201047); }/* dim the whole row (not just the cells) so its border dims with the content */
-#detail tr.dim{ opacity: .58; }#detail tr.dim td{ color: var(--md-on-surface, inherit); }#detail tr.daystart td + td{ border-top: 2px solid var(--md-outline, #888); }#detail .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#detail .nexttag{
+#detail th:empty{ border: none; padding: 0; background: transparent; }#detail tr.now td{ background: var(--md-primary-container, #fff3b0); color: var(--md-on-primary-container, #201047); }#detail tr.next td{ background: var(--md-tertiary-container, #d6e9ff); color: var(--md-on-tertiary-container, #201047); }#detail tr.daystart td + td{ border-top: 2px solid var(--md-outline, #888); }#detail .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#detail .nexttag{
   display: inline-flex; align-items: center; gap: .3em;
   color: var(--md-on-tertiary-container, #0b4da2); font-weight: bold; white-space: nowrap;
 }/* the "next" arrow is an inline SVG so it always renders and tints with the tag */
@@ -416,20 +415,22 @@ so the neighbouring marked cell's own border wins the
   width: 1.1em; height: 1.1em; flex: none;
   fill: none; stroke: currentColor; stroke-width: 2.6;
   stroke-linecap: round; stroke-linejoin: round;
-}#detail .pill{
-  display: inline-block; border: 1px solid var(--md-outline-variant, #bbb); border-radius: 999px;
-  padding: 0 .45em; margin: .05em .15em .05em 0;
-  background: var(--md-secondary-container, #f0f4ff);
+}/* Tonal chip derived from the surface it sits on: the card's container
+   token deepened 20% toward its text token. Opaque color-mix of two
+   tokens — a deterministic extra tone step below the card, so contrast
+   never depends on backdrops or alpha compositing. */
+#detail .pill{
+  display: inline-flex; align-items: center; height: 2rem;
+  padding: 0 .9rem; border: 0; border-radius: 8px;
+  background: var(--md-secondary-container, #eef4ff);
   color: var(--md-on-secondary-container, #1b1b1b);
-  font-size: .75em; white-space: nowrap;
+  font-size: .875rem; font-weight: 500; line-height: 1; white-space: nowrap;
 }/* the pill reads the surface it sits on: on a now/next row (or mobile card)
-   it flips to that row's accent color instead of the default container grey */
+   it flips to that row's filled role instead of the default secondary */
 #detail tr.now .pill{
-  background: var(--md-primary, #0b4da2); color: var(--md-on-primary, #fff);
-  border-color: transparent;
+  background: color-mix(in srgb, var(--md-primary-container, #fff3b0) 65%, var(--md-primary, #0b4da2) 35%); color: var(--md-on-primary-container, #201047);
 }#detail tr.next .pill{
-  background: var(--md-tertiary, #7c5260); color: var(--md-on-tertiary, #fff);
-  border-color: transparent;
+  background: color-mix(in srgb, var(--md-tertiary-container, #d6e9ff) 65%, var(--md-tertiary, #7c5260) 35%); color: var(--md-on-tertiary-container, #201047);
 }#detail .subjlist,
 #detail .ctree{ font-size: .9em; }#detail .ctree ul{ margin: .1rem 0 .1rem 1.2rem; padding: 0; }#detail .ctree li{ margin: .1rem 0; }#detail .hours{ color: var(--md-on-surface-variant, #555); font-size: .85em; }/* ---- teacher day groups (one section per weekday,
 shared DOM) ----
@@ -461,8 +462,7 @@ issue 078). The 1rem margins stay in flow. */
   padding: 1rem 0;
   position: sticky; top: 0; z-index: 2;
   background: var(--md-surface, #fff);
-}/* dim the whole group (not just the rows) so its border dims with the content */
-#detail .day-group.dim{ opacity: .58; }/* Keep the theme color below the fold on pages whose body is exactly one
+}/* Keep the theme color below the fold on pages whose body is exactly one
    viewport tall with taller content overflowing visibly (desktop
    teachers/classes below): the body background only covers the viewport,
 so the canvas carries the same color further down. */
@@ -971,4 +971,75 @@ table.week .week-pill {
 @media (max-width: 700px) {
   #omniList li.group-head,
   #omniList li.empty { padding: .5rem var(--mpad); }
+}
+
+/* ---- session cards (Material 3 filled cards) ----
+   Filled tonal cards, flat (no shadow, no accent bar): surface-container-high
+   on surface, 16px card padding, 12px radius. M3 type scale:
+   subject = title-medium, room = body-medium semibold, time/teacher =
+   label-medium on-surface-variant. Leading 40dp tonal icon container. */
+.msession-list{ display: grid; gap: .75rem; }
+.msession{
+  display: flex; align-items: flex-start; gap: .9rem;
+  background: var(--md-surface-container, #f1f1f5);
+  border-radius: 12px; padding: 1rem;
+}
+.msession.now{ background: var(--md-primary-container, #fff3b0); }
+.msession.next{ background: var(--md-tertiary-container, #d6e9ff); }
+/* empty timeslot: outlined placeholder, surface base, muted label. */
+.msession.break{
+  background: var(--md-surface, #fff);
+  border: 1px dashed var(--md-outline-variant, #ccc);
+}
+.msession.break .msession-leading{
+  background: transparent; color: var(--md-on-surface-variant, #666);
+  border: 1px solid var(--md-outline-variant, #ccc);
+}
+.msession.break .msession-subject{ color: var(--md-on-surface-variant, #666); font-weight: 500; }
+.msession-leading{
+  flex: 0 0 auto; width: 2.5rem; height: 2.5rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--md-secondary, #4b5f7d);
+  color: var(--md-on-secondary, #fff);
+}
+.msession.now .msession-leading{ background: var(--md-primary, #0b4da2); color: var(--md-on-primary, #fff); }
+.msession.next .msession-leading{ background: var(--md-tertiary, #7c5260); color: var(--md-on-tertiary, #fff); }
+.msession-body{ flex: 1 1 auto; min-width: 0; }
+.msession-head{ display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+.msession-subject{
+  margin: 0; font-size: 1rem; line-height: 1.5; font-weight: 500;
+  color: var(--md-on-surface, #1b1b1b);
+}
+.msession-flag{
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: .3rem;
+  height: 1.75rem; box-sizing: border-box;
+  font-size: .6875rem; line-height: 1; font-weight: 500;
+  letter-spacing: .03125em; padding: 0 .6rem; border-radius: 8px;
+}
+.msession-flag .nextarrow{ width: 1.65em; height: 1.65em; stroke-width: 2.6; }
+.msession-flag.now{ background: var(--md-primary, #0b4da2); color: var(--md-on-primary, #fff); }
+.msession-flag.next{ background: var(--md-tertiary, #7c5260); color: var(--md-on-tertiary, #fff); }
+.msession-room{
+  margin: .15rem 0 0; font-size: .875rem; line-height: 1.43; font-weight: 500;
+  color: var(--md-on-surface, #1b1b1b);
+}
+.msession-meta{
+  margin: .35rem 0 0; font-size: .75rem; line-height: 1.33; font-weight: 500;
+  letter-spacing: .03125em; color: var(--md-on-surface-variant, #666);
+}
+.msession-time, .msession-teacher{ display: inline-flex; align-items: center; gap: .3rem; }
+.msession-icon{ width: 1.1em; height: 1.1em; flex: 0 0 auto; }
+.msession-leading .msession-icon{ width: 1.25rem; height: 1.25rem; }
+.msession .pill{ margin: 0; }
+@media (min-width: 701px){
+  /* desktop shows the normal tables; the cards are mobile-only. */
+  .msession-list{ display: none; }
+}
+@media (max-width: 700px){
+  /* mobile shows the cards; the tables are desktop-only. */
+  #detail table.desktop-sessions{ display: none; }
+  /* the cards carry the chrome now: drop the section card frame. */
+  #detail .day-group{ border: 0; padding: 0; overflow: visible; }
+  #detail .msession.now .pill{ background: color-mix(in srgb, var(--md-primary-container, #fff3b0) 65%, var(--md-primary, #0b4da2) 35%); color: var(--md-on-primary-container, #201047); }
+  #detail .msession.next .pill{ background: color-mix(in srgb, var(--md-tertiary-container, #d6e9ff) 65%, var(--md-tertiary, #7c5260) 35%); color: var(--md-on-tertiary-container, #201047); }
 }
