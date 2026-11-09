@@ -46,13 +46,18 @@
 	const wantTeachers = $derived(!parsedQuery.type || parsedQuery.type === 'teacher');
 	const wantClasses = $derived(!parsedQuery.type || parsedQuery.type === 'class');
 
-	// Completions write to the query; the browser puts the caret in the
-	// natural place. No selection management anywhere.
+	// Completions write query+caret atomically; we restore the native
+	// selection after Svelte re-applies `value` so the browser doesn't
+	// snap the caret back onto the token edge.
+	function restoreCaret() {
+		try { searchEl?.setSelectionRange(caret, caret); } catch {}
+		searchEl?.focus();
+	}
 	function completeTypePredicate(kind) {
 		const r = completeTypeAt(query, kind, caret);
 		query = r.query;
 		caret = r.caret;
-		searchEl?.focus();
+		restoreCaret();
 	}
 
 	// Completion state derives from the token the caret is inside or
@@ -347,14 +352,14 @@
 		const r = completePredicateValueAt(query, value, caret);
 		query = r.query;
 		caret = r.caret;
-		searchEl?.focus();
+		restoreCaret();
 	}
 
 	function addPredicate(key) {
 		const r = addPredicateAt(query, key, caret);
 		query = r.query;
 		caret = r.caret;
-		searchEl?.focus();
+		restoreCaret();
 	}
 
 	const searchMode = $derived(query.trim().length > 0);

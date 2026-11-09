@@ -107,8 +107,6 @@
 				onfocus={onFocus}
 				onclick={onFocus}
 				onblur={(e) => onBlur?.(e)}
-				onselect={(e) => onCaret?.(e.currentTarget.selectionStart ?? query.length)}
-				onkeyup={(e) => onCaret?.(e.currentTarget.selectionStart ?? query.length)}
 			/>
 			{#if query}
 				<button

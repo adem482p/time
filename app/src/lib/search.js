@@ -163,9 +163,17 @@ export function completeTypeAt(query, kind, pos) {
 	if (k !== 'class' && k !== 'teacher') throw new Error(`Invalid type value: ${kind}`);
 	const done = `type:${k}`;
 	const at = tokenAt(query, pos ?? String(query ?? '').length);
-	if (at?.token === done) return { query, caret: at.end };
-	// Replace an existing type: token at the caret, else insert fresh.
-	return replaceTokenAt(query, pos ?? String(query ?? '').length, done);
+	if (at?.token === done) {
+		// Already complete: still park the caret past the token (fresh).
+		const q = String(query ?? '');
+		const after = at.end < q.length && q[at.end] === ' ' ? at.end + 1 : at.end;
+		return { query, caret: after };
+	}
+	const r = replaceTokenAt(query, pos ?? String(query ?? '').length, done);
+	// Only tail completions move to a fresh position (trailing space);
+	// mid-query replacements keep the caret at the token end.
+	if (r.caret === r.query.length) return { query: r.query + ' ', caret: r.caret + 1 };
+	return r;
 }
 
 export function addPredicateAt(query, key, pos) {
