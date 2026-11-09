@@ -524,10 +524,7 @@ the list flattens ---- */
     letter-spacing: .05em;
     text-transform: uppercase;
   }#detail .class-facts .fact-name::after{ content: ""; }#detail .teacher-facts{
-    grid-template-columns: 1fr;
-  }#detail .teacher-facts .fact-card:first-child{
-    grid-column: 1 / -1;
-    order: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }/* Four facts need a little more room than the narrowest phones provide.
      Keep the three more specific cards together on the first row and move
      Track below them as a full-width card. Fewer-fact classes keep one row. */
@@ -537,7 +534,7 @@ the list flattens ---- */
       grid-column: 1 / -1;
       order: 4;
     }#detail .teacher-facts{
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }#themeCycle{ top: .8rem; right: .8rem; }/* one column; the list is temporary (search UI) and cards are the default.
      Flex column keeps the full-height chain alive instead of breaking it at
