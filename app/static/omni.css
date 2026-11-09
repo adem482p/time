@@ -821,7 +821,7 @@ table.week .week-pill {
 .msession-time-range .msession-time-start,
 .msession-time-range .msession-time-end{
   font-family: "Tiny5", "DejaVu Sans", system-ui, sans-serif;
-  font-size: .85rem; line-height: 1.2; letter-spacing: .03em;
+  font-size: 1.2rem; line-height: 1.2; letter-spacing: .03em;
 }
 .msession-time-range .msession-time-end{ color: var(--md-on-surface-variant, #666); }
 .msession-break .msession-leading{
@@ -875,8 +875,8 @@ table.week .week-pill {
 .msession-flag.now{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }
 .msession-flag.next{ background: var(--md-tertiary-container, #fbd7fc); color: var(--md-on-tertiary-container, #31101d); }
 .msession-room{
-  margin: .15rem 0 0; font-size: .875rem; line-height: 1.43; font-weight: 500;
-  color: var(--md-on-surface, #1b1b1b);
+  margin: .35rem 0 0; font-size: .75rem; line-height: 1.33; font-weight: 500;
+  letter-spacing: .03125em; color: var(--md-on-surface-variant, #666);
 }
 .msession-meta{
   margin: .35rem 0 0; font-size: .75rem; line-height: 1.33; font-weight: 500;
