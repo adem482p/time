@@ -522,6 +522,23 @@
 		return color.sessionRow({ isNow, isNext, dimIdle: false }).join(' ');
 	}
 
+	// now/next/break split the flat list into separate containers:
+	// each state item is its own singleton group, plain sessions run together.
+	function splitGroups(items, isState) {
+		const groups = [];
+		let run = [];
+		for (const item of items) {
+			if (isState(item)) {
+				if (run.length) { groups.push(run); run = []; }
+				groups.push([item]);
+			} else {
+				run.push(item);
+			}
+		}
+		if (run.length) groups.push(run);
+		return groups;
+	}
+
 	// Grid element references for cursor positioning
 	let weekWrapEl = $state(null);
 	let cursorLineEl = $state(null);
@@ -852,8 +869,9 @@
 							{/each}
 						</tbody>
 					</table>
+					{#each splitGroups(currentTeacherDetail.byDay[day], (item) => item.kind === 'break' || isCurrentSession(item.s?.day, item.s?.time, now) || (item.i !== undefined && currentTeacherDetail.upcoming.has(item.i))) as grp}
 					<div class="msession-list">
-						{#each currentTeacherDetail.byDay[day] as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i)}
+						{#each grp as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i)}
 							{#if item.kind === 'break'}
 								<article class="msession break">
 									<span class="msession-leading">
@@ -898,6 +916,7 @@
 							{/if}
 						{/each}
 					</div>
+					{/each}
 				</section>
 			{/each}
 
@@ -975,8 +994,9 @@
 							{/each}
 						</tbody>
 					</table>
+					{#each splitGroups(g.items, (item) => item.kind === 'break' || isCurrentSession(item.s?.day, item.s?.slot, now) || (!!currentClassDetail.cursor && currentClassDetail.cursor.visible && item.s?.day === currentClassDetail.cursor.today && item.s?.slot === currentClassDetail.cursor.next)) as grp}
 					<div class="msession-list">
-						{#each g.items as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i + item.s.subject)}
+						{#each grp as item (item.kind === 'break' ? 'b' + item.slot : 's' + item.i + item.s.subject)}
 							{#if item.kind === 'break'}
 								<article class="msession break">
 									<span class="msession-leading">
@@ -1023,6 +1043,7 @@
 							{/if}
 						{/each}
 					</div>
+					{/each}
 				</section>
 			{/each}
 
