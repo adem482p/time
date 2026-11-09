@@ -898,7 +898,7 @@ table.week .week-pill {
 #layout .sbox-row{
   display:flex; align-items:stretch; width:100%; max-width:40rem; height:2.75rem; box-sizing:border-box; margin:.8rem 0;
   border:1px solid var(--md-outline-variant, #ccc); border-radius:8px;
-  background:var(--md-surface-container-high, #e8e7ee);
+  background:var(--md-secondary-container, #d6e3fd); color:var(--md-on-secondary-container, #111c2b);
 }
 #layout .sbox-row:focus-within{
   border-color:var(--md-primary, #0b4da2);
@@ -907,7 +907,7 @@ table.week .week-pill {
 #layout .sbox-input{
   flex:1 1 auto; min-width:0; width:100%; height:100%; box-sizing:border-box; border:0; outline:none;
   padding:0 .6rem; font:inherit; line-height:1.5;
-  background:var(--md-secondary-container, #d6e3fd); color:var(--md-on-secondary-container, #111c2b); border-radius:8px;
+  background:transparent; color:inherit; border-radius:8px;
   font-family:"Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 #layout .sbox-input.previewing{ color:var(--md-tertiary, #7c5260); font-style:italic; }
