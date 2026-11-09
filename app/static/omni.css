@@ -824,11 +824,11 @@ table.week .week-pill {
   border-radius: 0; padding: 10px 16px; min-height: 5rem;
 }
 .msession:last-child{ border-bottom: 0; }
-.msession.now{ background: var(--md-primary-container, #d8e2ff); }
-.msession.next{ background: var(--md-tertiary-container, #fbd7fc); }
+.msession.now{ background: var(--md-primary-container, #d8e2ff); margin: 8px; border-radius: 16px; border-bottom: 0; }
+.msession.next{ background: var(--md-tertiary-container, #fbd7fc); margin: 8px; border-radius: 16px; border-bottom: 0; }
 /* empty timeslot: outlined placeholder, surface base, muted label. */
 .msession.break{
-  background: transparent;
+  background: transparent; margin: 8px; border-radius: 16px; border: 1px dashed var(--md-outline-variant, #ccc); border-bottom-color: var(--md-outline-variant, #ccc);
 }
 .msession.break .msession-leading{
   background: transparent; color: var(--md-on-surface-variant, #666);
