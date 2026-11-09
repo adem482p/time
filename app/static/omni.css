@@ -139,137 +139,7 @@ so without JS the box never forms and the static
   font: 400 .8rem/1.3 system-ui, sans-serif;
   background: var(--md-inverse-surface, #303030);
   color: var(--md-inverse-on-surface, #f5f5f5);
-}@media (hover: hover){#themeCycle:hover::after{ visibility: visible; } }#themeCycle:focus-visible::after{ visibility: visible; }/* ---- search + ghost text + autocomplete ---- */
-#searchWrap{
-  position: relative; max-width: 40rem; margin: .8rem 0;
-  border: 1px solid var(--md-outline-variant, #ccc); border-radius: 8px;
-  background: var(--md-surface-container-high, #eceef4);
-}#searchWrap:focus-within{
-  border-color: var(--md-primary, #0b4da2);
-  box-shadow: 0 0 0 2px var(--md-primary-container, #d6e9ff);
-}/* ghost layer sits behind the (transparent) input: typed text is
-   transparent here,
-the input paints over it; the shadow completion and
-   prefix hint render in gray. */
-#ghost{
-  position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 0;
-  display: flex; align-items: center; padding: .45rem .6rem;
-  font: inherit; line-height: 1.5; white-space: pre; overflow: hidden;
-  pointer-events: none;
-}#ghost[hidden]{ display: none; }#ghostTyped{ color: transparent; white-space: pre; }#ghostPre{ color: var(--md-tertiary, #b58900); font-style: italic; white-space: pre; }#ghostRest{ color: var(--md-on-surface-variant, #999); white-space: pre; }/* keep the runs at their natural widths so the measured pre inset stays exact */
-#ghost > span{ flex: 0 0 auto; }#search{
-  position: relative; z-index: 1; width: 100%; border: 0; outline: none;
-  padding: .45rem .6rem; font: inherit; line-height: 1.5;
-  background: transparent; color: inherit;
-}
-/* hover-preview mode: the shown text is uncommitted — tinted + italic
-   until the user types (commit) or leaves (revert). */
-#search.previewing{
-  color: var(--md-tertiary, #7c5260);
-  font-style: italic;
-}/* monospace search (issue 001): input + ghost share one fixed-width stack so
-   the overlay,
-the typed text and the caret stay aligned on every keystroke
-   (space included). Placed after the #search/#ghost blocks because their
-   `font: inherit` shorthand would otherwise reset the family. Scoped to
-   #search/#ghost — not #searchWrap — so the suggestion dropdown keeps the
-   page's proportional type. */
-#search,
-#ghost{
-  font-family: "Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-}/* the X slot (issue 060): the input text and the ghost completion both clear
-   the clear-button gutter on every viewport. Kept as its own exact lines
-   (the #search one is a pinned literal). */
-#search{ padding-right: 2.7rem; }#ghost{ padding-right: 2.7rem; }/* the clear X (issue 060),
-every viewport: shown only while the filter holds
-   text — JS toggles the [hidden] attribute,
-and the [hidden] rule below beats
-   this id rule. It erases the filter only (eraseFilter); it never deselects. */
-#searchClear{
-  display: flex; align-items: center; justify-content: center;
-  position: absolute; right: 0; top: 0; bottom: 0; width: 2.7rem;
-  border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
-  cursor: pointer; z-index: 2;
-}#searchClear:active{ color: var(--md-primary, #0b4da2); }#searchClear svg{
-  width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
-  stroke-linecap: round; stroke-linejoin: round;
-}/* the deselect back arrow (issues 060,
-064): while a teacher/class is
-   selected and the filter is empty,
-the whole box becomes this button — a
-   mirrored NEXT_ARROW (arrow-left),
-opaque with the wrap's 8px radius
-   (issue 057's lesson: the overlay takes the wrap's chrome over a square
-   patch). Narrow never renders it: #overlayClear is the narrow chrome. */
-#searchDeselect{
-  position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--md-surface-container-lowest, #fff); border: 0;
-  border-radius: 8px; color: var(--md-on-surface-variant, #555);
-  cursor: pointer;
-}#searchDeselect:active{ color: var(--md-primary, #0b4da2); }#searchDeselect svg{
-  width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
-  stroke-linecap: round; stroke-linejoin: round;
-}/* exactly one cancel affordance on every viewport: the app owns the X — the
-   engine's native cancel/decoration is suppressed here,
-once,
-at base */
-#search::-webkit-search-cancel-button,
-#search::-webkit-search-decoration{
-  -webkit-appearance: none; appearance: none; display: none;
-}/* mobile nav chrome (issue 056): desktop never shows it; the narrow block may */
-#searchBack{ display: none; }
-/* The selection overlay covers the box on every viewport once a timetable
-   is selected; [hidden] alone can't hide it (id rules outrank the UA
-   default), so the :not([hidden]) selector carries the geometry. */
-#searchOverlay:not([hidden]){
-  position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3;
-  display: flex; align-items: center;
-  background: var(--md-surface-container-high, #eceef4);
-  border-radius: 8px;
-  padding: .45rem .6rem; cursor: pointer;
-}
-#searchOverlay[hidden]{ display: none; }
-/* decorative chevron sizing must hold outside the mobile media query too */
-.overlay-drop{
-  flex: 0 0 auto; width: 1.5rem; height: 1.5rem;
-  fill: none; stroke: var(--md-on-surface-variant, #555); stroke-width: 2.4;
-  stroke-linecap: round; stroke-linejoin: round;
-}
-/* while the overlay is the box, hide the input text underneath it */
-#searchWrap:has(#searchOverlay:not([hidden])) #search{ visibility: hidden; }
-/* desktop overlay chrome: the toggle covers the surface; the clear X sits left */
-#overlayToggle{
-  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
-  border: 0; padding: 0; margin: 0; background: transparent;
-  color: inherit; font: inherit; cursor: pointer; border-radius: 8px;
-}
-#overlayToggle:hover{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent); }
-#overlayToggle:active{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent); }
-#overlayClear{
-  position: relative; z-index: 2;
-  flex: 0 0 auto; width: 2.7rem; align-self: stretch;
-  display: flex; align-items: center; justify-content: center;
-  border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
-  cursor: pointer;
-}
-#overlayClear svg{ width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-#searchClear[hidden]{ display: none; }#searchDeselect[hidden]{ display: none; }#suggest{
-  position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
-  list-style: none; margin: 0; padding: 0;
-  background: var(--md-surface-container, #fff);
-  border: 1px solid var(--md-outline-variant, #ccc); border-top: 0;
-  border-radius: 0 0 8px 8px;
-  max-height: 50vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,.12);
-}#suggest[hidden]{ display: none; }#suggest li{ padding: .35rem .6rem; cursor: pointer; border-bottom: 1px solid var(--md-outline-variant, #eee); }#suggest li:hover,
-#suggest li.active{
-  background: var(--md-secondary-container, #eef4ff);
-  color: var(--md-on-secondary-container, #1b1b1b);
-}#suggest .kind{
-  display: inline-block; font-size: .72em; color: var(--md-on-primary, #fff);
-  background: var(--md-primary, #666);
-  border-radius: 4px; padding: 0 .35em; margin-right: .4em; text-transform: uppercase;
-}#suggest .kind-class{ background: var(--md-primary, #0b4da2); color: var(--md-on-primary, #fff); }#suggest .kind-subject{ background: var(--md-secondary, #6a3fa0); color: var(--md-on-secondary, #fff); }#suggest .kind-teacher{ background: var(--md-tertiary, #0b6e2f); color: var(--md-on-tertiary, #fff); }#suggest .alias{ color: var(--md-on-surface-variant, #555); font-size: .82em; }/* ---- teacher list (single list,
+}@media (hover: hover){#themeCycle:hover::after{ visibility: visible; } }#themeCycle:focus-visible::after{ visibility: visible; }/* ---- teacher list (single list,
 identical on all viewports) ---- */
 #omniList{
   list-style: none; margin: 0; padding: 0; max-height: 60vh; overflow-y: auto;
@@ -288,8 +158,7 @@ never matched by the li hover/active rules. */
   background: var(--md-surface-container, #f4f4f4);
   border-top: 1px solid var(--md-outline-variant, #ccc);
 }#omniList .fmatch,
-#omniList .cmatch{ display: block; color: var(--md-on-surface-variant, #333); font-size: .82em; }#omniList mark,
-#suggest mark{
+#omniList .cmatch{ display: block; color: var(--md-on-surface-variant, #333); font-size: .82em; }#omniList mark{
   background: var(--md-tertiary-container, #ffeb3b);
   color: var(--md-on-tertiary-container, #1b1b1b);
 }/* issue 086: a row that accepts taps is a real <button> stretched over its
@@ -322,7 +191,7 @@ hence -2rem (dvh behind vh for the mobile
   min-height: calc(100vh - 2rem);
   min-height: calc(100dvh - 2rem);
 }/* keep the picker narrow so the session table gets the room it needs */
-#layout > #listPane{ flex: 0 1 22rem; min-width: 0; max-width: 22rem; }#layout > #detail{ flex: 1 1 0; min-width: 0; margin-top: 0; overflow-x: auto; }/* The empty state is #detail's only child when present,
+#layout > #listPane{ flex: 0 1 30%; min-width: 18rem; max-width: 26rem; }#layout > #detail{ flex: 1 1 0; min-width: 0; margin-top: 0; overflow-x: auto; }/* The empty state is #detail's only child when present,
 so scope a flex
    container to exactly that case: .empty-state then stretches down the column
    the layout chain above keeps viewport-tall. Scoped with :has() so the
@@ -708,63 +577,7 @@ body[data-page="omni"] #status.count-away{ display: none; }/* the whole page scr
 never focus-gated,
 so an outside-tap
      blur leaves the list with a visible way back; it hides with the menu. */
-  #layout.is-list #searchBack{
-    display: flex; align-items: center; justify-content: center;
-    position: absolute; left: 0; top: 0; bottom: 0; width: 2.7rem;
-    border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
-    cursor: pointer; z-index: 2;
-  }#layout.is-list #searchBack:active{ color: var(--md-primary, #0b4da2); }#layout.is-list #searchBack svg{
-    width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
-    stroke-linecap: round; stroke-linejoin: round;
-  }/* the input text and the ghost completion clear the back-arrow slot
-     while the list is open (composing with the --ghost-pre inset) */
-  #layout.is-list #search{ padding-left: calc(2.7rem + .6rem + var(--ghost-pre, 0px)); }#layout.is-list #ghost{ padding-left: calc(2.7rem + .6rem); }/* state=teacher: the overlay IS the box — deselect X left,
-centered name,
-decorative chevron right; the whole surface is one click target that
-     reopens the list */
-  #searchOverlay:not([hidden]){
-    position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3;
-    display: flex; align-items: center;
-    background: var(--md-surface-container-high, #eceef4);
-    border-radius: 8px;
-    padding: .45rem .6rem; cursor: pointer;
-  }/* issue 057: while the overlay is the box,
-the input under it is invisible — keyed on the overlay's attribute,
-never on focus */
-  #searchWrap:has(#searchOverlay:not([hidden])) #search{ visibility: hidden; }/* issue 086: the reopen tap becomes a real button stretched over the pane;
-     it may not grab the X,
-so #overlayClear lifts itself above the stretch */
-  #overlayToggle{
-    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
-    border: 0; padding: 0; margin: 0; background: transparent;
-    color: inherit; font: inherit; cursor: pointer; border-radius: 8px;
-  }/* M3 state layers on the clickable surface */
-  #overlayToggle:hover{
-    background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
-  }#overlayToggle:active{
-    background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent);
-  }/* the deselect X reuses the #searchClear slot look,
-at the overlay's left */
-  #overlayClear{
-    position: relative; z-index: 2;
-    flex: 0 0 auto; width: 2.7rem; align-self: stretch;
-    display: flex; align-items: center; justify-content: center;
-    border: 0; background: transparent; color: var(--md-on-surface-variant, #555);
-    cursor: pointer;
-  }#overlayClear:active{ color: var(--md-primary, #0b4da2); }#overlayClear svg{
-    width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2.4;
-    stroke-linecap: round; stroke-linejoin: round;
-  }#overlayName{
-    flex: 1 1 auto; text-align: center;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }.overlay-drop{
-    flex: 0 0 auto; width: 1.5rem; height: 1.5rem;
-    fill: none; stroke: var(--md-on-surface-variant, #555); stroke-width: 2.4;
-    stroke-linecap: round; stroke-linejoin: round;
-  }/* the desktop deselect back arrow (issues 060,
-064) never renders on
-     narrow: the deselect chrome here is #overlayClear (state=teacher/class) */
-  #searchDeselect{ display: none; }#omniList{ max-width: none; max-height: none; border: 0; overflow: visible; }/* flattened rows: simple line separators,
+#omniList{ max-width: none; max-height: none; border: 0; overflow: visible; }/* flattened rows: simple line separators,
 not self-enclosed cards.
      Negative side margins + matching padding make each separator run
      edge-to-edge across the viewport (cancelling body's .8rem padding);
@@ -944,12 +757,7 @@ table.week .week-pill {
   color: var(--md-on-secondary-container, #333);
 }
 
-/* omni: reserve the clear-button gutter only while a button is actually visible */
-#search { padding-right: .6rem; }
-#searchWrap:has(#searchClear:not([hidden])) #search,
-#searchWrap:has(#searchDeselect:not([hidden])) #search {
-  padding-right: 2.7rem;
-}
+
 
 
 /* omni: avoid doubled borders while keeping the (fixed) container border.
@@ -1078,66 +886,139 @@ table.week .week-pill {
   /* desktop shows the normal tables; the cards are mobile-only. */
   .msession-list{ display: none; }
 }
-/* ---- search sub-row: browse tabs, completion tabs, or the status line —
-   one fixed slot so the lists below never shift. */
-.omni-subrow{
-  min-height: 2.75rem; display: flex; align-items: center; justify-content: center;
-  margin: 0 0 .4rem;
+/* ---- omni search box (issue 102): one component, flex-row, CSS decides
+   viewport chrome. Scoped under #layout so legacy pages are unaffected.
+   No z-index, no [hidden], no :has() — controls are flex siblings after
+   the input, so every control is clickable by construction. ---- */
+#layout .sbox{ display:flex; flex-direction:column; }
+#layout .sbox-row{
+  display:flex; align-items:stretch; max-width:40rem; margin:.8rem 0;
+  border:1px solid var(--md-outline-variant, #ccc); border-radius:8px;
+  background:var(--md-surface-container-high, #eceef4);
 }
-.omni-subrow .omni-tabs{ margin: 0; }
-.omni-substatus{
-  margin: 0; width: 100%; text-align: center;
-  font-size: .85em; color: var(--md-on-surface-variant, #555);
+#layout .sbox-row:focus-within{
+  border-color:var(--md-primary, #0b4da2);
+  box-shadow:0 0 0 2px var(--md-primary-container, #d6e9ff);
 }
-/* ---- contextual predicate suggestions: assist chips ---- */
-.predicate-row{
-  display: flex; flex-wrap: wrap; align-items: center; gap: .45rem;
-  margin: 0 0 .5rem;
+#layout .sbox-input{
+  flex:1 1 auto; min-width:0; width:100%; border:0; outline:none;
+  padding:.45rem .6rem; font:inherit; line-height:1.5;
+  background:transparent; color:inherit; border-radius:8px;
+  font-family:"Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
-.predicate-hint{
-  font-size: .78rem; font-weight: 500; letter-spacing: .03125em;
-  color: var(--md-on-surface-variant, #555);
+#layout .sbox-input.previewing{ color:var(--md-tertiary, #7c5260); font-style:italic; }
+#layout .sbox-input::-webkit-search-cancel-button,
+#layout .sbox-input::-webkit-search-decoration{ -webkit-appearance:none; appearance:none; display:none; }
+#layout .sbox-back{
+  display:none; flex:0 0 auto; width:2.7rem; align-items:center; justify-content:center;
+  border:0; border-right:1px solid var(--md-outline-variant, #ccc);
+  border-radius:8px 0 0 8px; background:var(--md-surface-container-high, #eceef4);
+  color:var(--md-on-surface-variant, #555); cursor:pointer; font:inherit;
 }
-.predicate-chip{
-  display: inline-flex; align-items: center; gap: .35rem; height: 2rem;
-  padding: 0 .9rem; border: 1px solid var(--md-outline-variant, #ccc);
-  border-radius: 8px; background: var(--md-surface, #fff);
-  color: var(--md-on-surface, #1b1b1b);
-  font-size: .875rem; font-weight: 500; line-height: 1; cursor: pointer;
+#layout .sbox-back svg{ width:1.5rem; height:1.5rem; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+#layout .sbox-clear{
+  flex:0 0 auto; width:2.7rem; display:flex; align-items:center; justify-content:center;
+  border:0; background:transparent; color:var(--md-on-surface-variant, #555);
+  cursor:pointer; font:inherit;
 }
-.predicate-chip b{ font-weight: 600; color: var(--md-on-surface-variant, #555); }
-/* ---- contextual value menu: height-limited, scrolls ---- */
-.value-menu{
-  display: flex; flex-wrap: wrap; gap: .45rem;
-  max-height: 8.5rem; overflow-y: auto; padding: .15rem .1rem;
-  scrollbar-width: thin;
+#layout .sbox-clear svg{ width:1.5rem; height:1.5rem; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+#layout .sbox-sub{
+  min-height:2.75rem; display:flex; align-items:center; justify-content:center;
+  margin:0 0 .4rem;
 }
-.value-chip{
-  display: inline-flex; align-items: center; gap: .35rem; height: 2rem;
-  padding: 0 .9rem; border: 1px solid var(--md-outline-variant, #ccc);
-  border-radius: 8px; background: var(--md-surface, #fff);
-  color: var(--md-on-surface, #1b1b1b);
-  font-size: .875rem; font-weight: 500; line-height: 1; cursor: pointer;
+#layout .sbox-tabs{
+  display:flex; gap:0; border:1px solid var(--md-outline-variant, #ccc);
+  border-radius:999px; overflow:hidden; background:var(--md-surface, #fff);
 }
-.value-chip b{ font-weight: 600; color: var(--md-on-surface-variant, #555); }
-@media (hover: hover) {
-  .value-chip:hover{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent); }
+#layout .sbox-tab{
+  flex:1; font-family:inherit; font-size:.82rem; padding:.5rem 1rem;
+  border:0; border-radius:0; background:transparent;
+  color:var(--md-on-surface-variant, #555); cursor:pointer;
+  font-weight:500; text-align:center;
+  transition:background .15s ease, color .15s ease;
 }
-.value-chip:active{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent); }
-@media (hover: hover) {
-  .predicate-chip:hover{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent); }
+#layout .sbox-tab + #layout .sbox-tab{ border-left:1px solid var(--md-outline-variant, #ccc); }
+#layout .sbox-tab.active{
+  background:var(--md-secondary-container, #eef4ff);
+  color:var(--md-on-secondary-container, #1b1b1b);
 }
-.predicate-chip:active{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent); }
-/* ---- hover ghost preview inside the filter box ---- */
-#searchWrap #ghost{
-  position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 2;
-  display: flex; align-items: center; padding: .45rem .6rem;
-  white-space: pre; overflow: hidden; pointer-events: none;
-  font-family: "Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  line-height: 1.5;
+@media (hover: hover){
+  #layout .sbox-tab:hover{
+    background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
+    color:var(--md-on-surface, #222);
+  }
 }
-#ghost .ghost-typed{ color: inherit; }
-#ghost .ghost-pre{ color: var(--md-tertiary, #b58900); font-style: italic; }
+#layout .sbox-values, #layout .sbox-suggest{
+  display:flex; flex-wrap:wrap; gap:.45rem; max-height:8.5rem; overflow-y:auto;
+}
+#layout .sbox-value, #layout .sbox-chip{
+  display:inline-flex; align-items:center; gap:.35rem; height:2rem;
+  padding:0 .9rem; border:1px solid var(--md-outline-variant, #ccc);
+  border-radius:8px; background:var(--md-surface, #fff);
+  color:var(--md-on-surface, #1b1b1b);
+  font-size:.875rem; font-weight:500; line-height:1; cursor:pointer;
+}
+#layout .sbox-value b{ font-weight:600; color:var(--md-on-surface-variant, #555); }
+@media (hover: hover){
+  #layout .sbox-value:hover, #layout .sbox-chip:hover{
+    background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
+  }
+}
+#layout .sbox-value:active, #layout .sbox-chip:active{
+  background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent);
+}
+#layout .sbox-status{
+  margin:0; width:100%; text-align:center;
+  font-size:.85em; color:var(--md-on-surface-variant, #555);
+}
+/* selected state: one bar per viewport, CSS picks the chrome */
+#layout .sbox-selected{
+  display:flex; align-items:stretch; max-width:40rem; margin:.8rem 0;
+  border-radius:8px;
+  background:color-mix(in srgb, var(--md-primary, #0b4da2) 22%, transparent);
+  color:var(--md-on-primary-container, #201047);
+  border:1px solid var(--md-outline-variant, #ccc);
+}
+#layout .sbox-selected-arrow{
+  display:flex; align-items:center; justify-content:center;
+  width:100%; min-height:2.375rem;
+  background:transparent; color:inherit; border:0; border-radius:8px;
+  cursor:pointer; font:inherit;
+}
+#layout .sbox-selected-arrow svg{
+  width:1.5rem; height:1.5rem; fill:none; stroke:currentColor;
+  stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;
+}
+@media (hover: hover){
+  #layout .sbox-selected-arrow:hover{
+    background:color-mix(in srgb, var(--md-primary, #0b4da2) 30%, transparent);
+  }
+}
+#layout .sbox-selected-x, #layout .sbox-selected-name{
+  border:0; background:transparent; color:inherit; cursor:pointer; font:inherit;
+}
+#layout .sbox-selected-x{ display:flex; align-items:center; padding:0 .6rem; }
+#layout .sbox-selected-x svg{ width:1.5rem; height:1.5rem; fill:none; stroke:currentColor; stroke-width:2.4; }
+#layout .sbox-selected-name{
+  flex:1; display:flex; align-items:center; justify-content:center;
+  gap:.5rem; padding:.5rem .3rem; font-weight:600; text-align:center;
+}
+#layout .sbox-selected-text{
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#layout .sbox-selected-drop{
+  width:1.25rem; height:1.25rem; flex:0 0 auto;
+  fill:none; stroke:currentColor; stroke-width:2.4;
+}
+@media (min-width: 701px){
+  #layout .sbox-selected-x, #layout .sbox-selected-name{ display:none; }
+}
+@media (max-width: 700px){
+  #layout .sbox-selected-arrow{ display:none; }
+  #layout .sbox[data-mode="editing"] .sbox-back{ display:flex; }
+  #layout .sbox[data-mode="editing"] .sbox-input{ border-radius:0 8px 8px 0; }
+  #layout .sbox[data-mode="browse"] .sbox-sub{ display:none; }
+}
 @media (max-width: 700px){
   /* mobile shows the cards; the tables are desktop-only. */
   #detail table.desktop-sessions{ display: none; }

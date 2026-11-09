@@ -312,29 +312,63 @@ test('empty timeslots render as breaks between a day\'s sessions', () => {
 	assert.ok(foundTeacherBreak, 'some teacher day contains a break');
 });
 
-test('tabs are placed under the filter box and obey mobile visibility rules', () => {
-	const html = readSrc('app/src/routes/omni/+page.svelte');
+test('omni search box is a single isolated component', () => {
+	const page = readSrc('app/src/routes/omni/+page.svelte');
+	const box = fs.readFileSync(path.join(ROOT, 'app/src/lib/components/SearchBox.svelte'), 'utf8');
 
-	// Verify markup order: #searchWrap, then .omni-tabs, then #status
-	const wrapIdx = html.indexOf('<div id="searchWrap">');
-	const tabsIdx = html.indexOf('<div class="omni-tabs"');
-	const statusIdx = html.indexOf('omni-substatus');
+	// One box, no JS viewport fork, no triple.
+	assert.ok(page.includes('SearchBox'), 'page renders the single search box');
+	assert.ok(!page.includes('isMobile'), 'page has no JS viewport fork');
+	assert.ok(!page.includes('let editing'), 'no editing boolean fork');
+	assert.ok(!page.includes('let menuOpen'), 'no menuOpen state');
+	assert.ok(!page.includes('DesktopSearch') && !page.includes('MobileSearch') && !page.includes('SearchEditor'), 'search triple removed from page');
+	for (const gone of ['DesktopSearch.svelte', 'MobileSearch.svelte', 'SearchEditor.svelte']) {
+		assert.ok(!fs.existsSync(path.join(ROOT, 'app/src/lib/components', gone)), gone + ' deleted');
+	}
 
-	assert.ok(wrapIdx !== -1, 'has #searchWrap');
-	assert.ok(tabsIdx !== -1, 'has .omni-tabs');
-	assert.ok(statusIdx !== -1, 'has #status');
-	assert.ok(wrapIdx < tabsIdx, 'tabs must be placed under the filter box');
-	assert.ok(tabsIdx < statusIdx, 'tabs sit above status and the list');
+	// Rendered-DOM: exactly one input, no legacy id, no component style block.
+	const inputs = box.match(/<input\b/g) || [];
+	assert.strictEqual(inputs.length, 1, 'exactly one input renders (one input max)');
+	assert.ok(!box.includes('id="search"'), 'no legacy id="search"');
+	assert.ok(!box.includes('<style>'), 'no component <style> block');
+	// Flex siblings (back/clear beside the input), never overlaid.
+	assert.ok(box.includes('sbox-row') && box.includes('sbox-back') && box.includes('sbox-clear'), 'back/clear are flex siblings');
+	// Sub-row switches on completion.node: tabs / values / chips / status.
+	assert.ok(box.includes("completion?.node === 'type'"), 'type node renders tabs');
+	assert.ok(box.includes("completion?.node === 'value'"), 'value node renders values');
+	assert.ok(box.includes('sbox-suggest'), 'chips branch for free text');
+	assert.ok(box.includes('sbox-status'), 'status branch when no completion applies');
+	// Single selection shape, no selected/selectedName variants.
+	assert.ok(box.includes('selection'), 'single selection prop');
+	assert.ok(!box.includes('selectedName') && !box.includes('selected={'), 'no selected/selectedName variants');
+	// Mode decides siblings (no second boolean).
+	assert.ok(box.includes('mode'), 'mode prop decides mounting');
+	assert.ok(!box.includes('showBack') && !box.includes('showClear'), 'no showBack/showClear booleans');
 
-	// Verify mobile visibility styling
-	assert.ok(
-		html.includes(':global(#layout:not(.is-list)) .omni-tabs'),
-		'tabs hide on mobile when not .is-list'
-	);
-	assert.ok(
-		html.includes(':global(#layout.is-list) .omni-tabs'),
-		'tabs show on mobile when .is-list'
-	);
+	// Page derives selection + mode (selected? 'selected' : query||focus ? 'editing' : 'browse').
+	assert.ok(page.includes('searchFocused'), 'single searchFocused boolean');
+	assert.ok(page.includes("mode = $derived(selection ? 'selected'"), 'mode derives from selection first');
+	assert.ok(page.includes("'editing' : 'browse'"), 'mode falls through to browse');
+	assert.ok(page.includes('selection={selection}'), 'page passes the single selection');
+	assert.ok(!page.includes('.omni-tab-btn') && !page.includes('.omni-chip') && !page.includes('.omni-filters') && !page.includes('.omni-tabs'), 'page search styles removed');
+	// select*/showEmpty clear query + hovered (state model: editing→selected discards query).
+	for (const fn of ['function selectTeacher', 'function selectClass', 'function showEmpty']) {
+		const body = page.slice(page.indexOf(fn), page.indexOf(fn) + 500);
+		assert.ok(body.includes('query = '), fn + ' clears query');
+		assert.ok(body.includes('hovered = null'), fn + ' clears hovered');
+	}
+	// Completion gating must not regress: type:class subject:machi → 17 class hits.
+	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const store = buildOmniStore(csvText);
+	assert.strictEqual(searchOmniClasses(store.classes, parseSearchQuery('type:class subject:machi')).length, 17, 'type:class subject:machi keeps 17 class hits');
+	// Styling ownership: omni.css owns .sbox* (no id selectors, no z-index/:has() in the section).
+	const css = fs.readFileSync(path.join(ROOT, 'app/static/omni.css'), 'utf8');
+	assert.ok(css.includes('#layout .sbox'), 'omni.css owns the .sbox* section');
+	const sboxCss = css.slice(css.indexOf('#layout .sbox'), css.indexOf('#layout .sbox') + 7000);
+	assert.ok(!sboxCss.includes('z-index'), '.sbox section has no z-index');
+	assert.ok(!sboxCss.includes('[hidden]'), '.sbox section has no [hidden] rules');
+	assert.ok(!sboxCss.includes(':has('), '.sbox section has no :has() stacking');
+	assert.ok(!css.includes('#searchWrap{') && !css.includes('#suggest{'), 'legacy id rules deleted from omni.css');
 });
 
 test('port the animation for the emoticons and include font loading', () => {

@@ -18,6 +18,7 @@
 	} from '$lib/omni-model.js';
 	import { formatWeekPattern } from '../../../../domain-model/print.js';
 	import { parseSearchQuery, tokenAt, completeTypeAt, completePredicateValueAt, addPredicateAt } from '$lib/search.js';
+	import SearchBox from '$lib/components/SearchBox.svelte';
 	import * as color from '$lib/color.js';
 	import { esc } from '$lib/data.js';
 	import { headingHTML, teacherName, highlightHTML, highlightClassLabel } from '$lib/display.js';
@@ -47,7 +48,9 @@
 	// Completions write to the query; the browser puts the caret in the
 	// natural place. No selection management anywhere.
 	function completeTypePredicate(kind) {
-		query = completeTypeAt(query, kind, caret).query;
+		const r = completeTypeAt(query, kind, caret);
+		query = r.query;
+		caret = r.caret;
 		searchEl?.focus();
 	}
 
@@ -60,18 +63,23 @@
 		parsedQuery.type === null && parsedQuery.terms.length === 0 && parsedQuery.filters.length === 0
 	);
 	const caretToken = $derived(tokenAt(query, caret));
-	const completingType = $derived(isEmptyQuery || (caretToken ? /^type:(\*|[a-z]*)$/i.test(caretToken.token) : false));
-	const insideTypeNode = $derived(caretToken ? /^type:/i.test(caretToken.token) : false);
-	const insidePredicateNode = $derived.by(() =>
-		caretToken ? /^(subject|room|teacher|day|cohort|group|track|year|specialty):/i.test(caretToken.token) : false
-	);
-	const typePartial = $derived.by(() => {
-		const m = caretToken && /^type:(\*|[a-z]*)$/i.exec(caretToken.token);
-		return m ? m[1].toLowerCase().replace('*', '') : '';
+	// THE completion state: one derivation — which node (if any) owns the
+	// completion UI, and the data for it. Everything else derives from it.
+	const completion = $derived.by(() => {
+		const tok = caretToken?.token ?? '';
+		if (isEmptyQuery || /^type:(\*|[a-z]*)$/i.test(tok)) {
+			return { node: 'type', partial: /^type:(\*|[a-z]*)$/i.exec(tok)?.[1]?.toLowerCase().replace('*', '') ?? '' };
+		}
+		if (/^type:/i.test(tok)) return { node: 'type', partial: '' };
+		const pm = /^(subject|room|teacher|day|cohort|group|track|year|specialty):(.*)$/i.exec(tok);
+		if (pm) return { node: 'value', key: pm[1].toLowerCase(), partial: pm[2].toLowerCase() };
+		return { node: 'none' };
 	});
+	const insideTypeNode = $derived(caretToken ? /^type:/i.test(caretToken.token) : false);
+	const insidePredicateNode = $derived(completion.node === 'value');
 
-	// Mobile navigation state: menuOpen controls .is-list on #layout
-	let menuOpen = $state(false);
+	// Focus: the box has content expected of editing, or focus with a pending type.
+	let searchFocused = $state(false);
 
 	// Selection state
 	let selectedTeacher = $state(null);
@@ -79,22 +87,36 @@
 	let noMatch = $state('');
 	// Where the user came from: prefill the search predicate to match.
 	let lastViewKind = $state(null); // 'teacher' | 'class' | null
-	let hoveredType = $state(null); // completion tab under the mouse
-	// Hover preview, derived from query + hovered kind only. The overlay
-	// renders the whole line (input text is transparent), so preview and
-	// model can never diverge.
+	let hovered = $state(null); // the hovered completion item (one var)
+
+	// Single selection shape + single mode — derived, never separately stored.
+	const selection = $derived(
+		selectedTeacher
+			? { kind: 'teacher', name: selectedTeacher }
+			: selectedClass
+				? { kind: 'class', name: selectedClass }
+				: null
+	);
+	const mode = $derived(selection ? 'selected' : query.trim() || searchFocused ? 'editing' : 'browse');
+	// Hover preview: the displayed text while hovering a completion item.
+	// Typing commits it into the query and clears hover.
 	const ghostPreview = $derived.by(() => {
-		if (!hoveredType || !caretToken) return null;
-		if (!/^type:(\*|[a-z]*)$/i.test(caretToken.token)) return null;
-		return {
-			prefix: query.slice(0, caretToken.start) + 'type:',
-			rest: hoveredType,
-			suffix: query.slice(caretToken.end)
-		};
+		if (!hovered || !caretToken) return null;
+		const tok = caretToken.token;
+		if (/^type:(\*|[a-z]*)$/i.test(tok)) {
+			return query.slice(0, caretToken.start) + `type:${hovered}` + query.slice(caretToken.end);
+		}
+		const pm = /^(subject|room|teacher|day|cohort|group|track|year|specialty):(.*)$/i.exec(tok);
+		if (pm) {
+			const key = pm[1].toLowerCase();
+			const done = hovered.includes(' ') ? `${key}:"${hovered}"` : `${key}:${hovered}`;
+			return query.slice(0, caretToken.start) + done + query.slice(caretToken.end);
+		}
+		return null;
 	});
 
-	const previewEnter = (kind) => (hoveredType = kind);
-	const previewLeave = () => (hoveredType = null);
+	// (hovered is the single preview state; tabs, values, and keys all
+	// write to it, the preview derives from the caret's token.)
 
 	// Remember the last selection (teacher or class) across reloads.
 	const TEACHER_STORE_KEY = 'time-omni-teacher';
@@ -312,12 +334,16 @@
 	});
 
 	function completePredicateValue(value) {
-		query = completePredicateValueAt(query, value, caret).query;
+		const r = completePredicateValueAt(query, value, caret);
+		query = r.query;
+		caret = r.caret;
 		searchEl?.focus();
 	}
 
 	function addPredicate(key) {
-		query = addPredicateAt(query, key, caret).query;
+		const r = addPredicateAt(query, key, caret);
+		query = r.query;
+		caret = r.caret;
 		searchEl?.focus();
 	}
 
@@ -345,26 +371,17 @@
 		searchMode ? searchResults.length : (showTeachers ? filteredTeachers.length : 0) + (showClasses ? filteredClasses.length : 0)
 	);
 
-	// Leaving search: restore the browse tab from the active predicate.
-	let prevQuery = $state('');
-	$effect(() => {
-		const q = query.trim();
-		if (!q && prevQuery.trim()) {
-			if (parsedQuery.type === 'teacher') browseTab = 'teachers';
-			else if (parsedQuery.type === 'class') browseTab = 'classes';
-		}
-		prevQuery = query;
-	});
-
-	// Selection funnels
+	// Selection funnels: entering selected discards query + hover + focus.
 	function selectTeacher(name) {
 		selectedTeacher = name;
 		selectedClass = null;
 		lastViewKind = 'teacher';
+		query = '';
+		hovered = null;
+		searchFocused = false;
 		noMatch = '';
 		writeStoredTeacher(name);
 		writeStoredClass(null);
-		menuOpen = false;
 		if (searchEl) searchEl.blur();
 	}
 
@@ -372,10 +389,12 @@
 		selectedClass = identifier;
 		selectedTeacher = null;
 		lastViewKind = 'class';
+		query = '';
+		hovered = null;
+		searchFocused = false;
 		noMatch = '';
 		writeStoredClass(identifier);
 		writeStoredTeacher(null);
-		menuOpen = false;
 		if (searchEl) searchEl.blur();
 	}
 
@@ -401,6 +420,8 @@
 		selectedClass = null;
 		noMatch = '';
 		query = '';
+		hovered = null;
+		searchFocused = false;
 		// Closing a timetable forgets it: no origin state for prefill.
 		lastViewKind = null;
 		writeStoredTeacher(null);
@@ -409,31 +430,17 @@
 
 	function eraseFilter() {
 		query = '';
+		hovered = null;
 		noMatch = '';
 	}
-
-	function openMenu() {
-		menuOpen = true;
-	}
-
-	function closeMenu() {
-		menuOpen = false;
-		if (searchEl) searchEl.blur();
-	}
-
-	// Focus search input after menu opens (runs after DOM update)
-	$effect(() => {
-		if (menuOpen && (selectedTeacher !== null || selectedClass !== null) && searchEl) {
-			searchEl.focus();
-		}
-	});
 
 	let searchEl = $state(null);
 
 	function onKeydown(e) {
 		if (e.key === 'Escape') {
 			e.preventDefault();
-			closeMenu();
+			searchFocused = false;
+			if (searchEl) searchEl.blur();
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
 			const q = query.trim().toLowerCase();
@@ -576,7 +583,7 @@
 	</span>
 {/snippet}
 
-<div id="layout" class={menuOpen ? 'is-list' : ''}>
+<div id="layout" class={mode === 'selected' || mode === 'editing' ? 'is-list' : ''}>
 	<div id="listPane">
 		<button
 			type="button"
@@ -591,184 +598,68 @@
 			>
 		</p>
 
-		<div id="searchWrap">
-			<input
-				id="search"
-				type="search"
-				placeholder="Search teacher, class, or subject…"
-				autocomplete="off"
-				value={ghostPreview ? ghostPreview.prefix + ghostPreview.rest + ghostPreview.suffix : query}
-				bind:this={searchEl}
-				oninput={(e) => {
-					// Writing commits the displayed text and leaves hover mode.
-					hoveredType = null;
-					query = e.currentTarget.value;
-					caret = e.currentTarget.selectionStart ?? query.length;
-					if (!query.trim()) showEmpty();
-				}}
-				class:previewing={!!ghostPreview}
-				onkeydown={onKeydown}
-				onfocus={(e) => {
-					// Prefill a COMPLETE value from where the user came from.
-					// An empty box needs no prefill — it is already the
-					// type-selection state.
-					if (!query.trim() && lastViewKind) {
-						query = `type:${lastViewKind}`;
-					} else {
-						caret = e.currentTarget.selectionStart ?? query.length;
-					}
-					openMenu();
-				}}
-				onclick={(e) => {
-					caret = e.currentTarget.selectionStart ?? query.length;
-					openMenu();
-				}}
-				onselect={(e) => {
-					caret = e.currentTarget.selectionStart ?? query.length;
-				}}
-				onkeyup={(e) => {
-					caret = e.currentTarget.selectionStart ?? query.length;
-				}}
-			/>
-			<button type="button" id="searchBack" aria-label="Back" onclick={() => { closeMenu(); showEmpty(); }}>
-				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
-			</button>
-			<button
-				type="button"
-				id="searchClear"
-				aria-label="Clear the search"
-				hidden={!query}
-				onmousedown={(e) => e.preventDefault()}
-				onclick={eraseFilter}
-			>
-				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-			</button>
-			<button
-				type="button"
-				id="searchDeselect"
-				aria-label="Back to selection"
-				hidden={!((selectedTeacher !== null || selectedClass !== null) && query === '')}
-				onmousedown={(e) => e.preventDefault()}
-				onclick={showEmpty}
-			>
-				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12h-14M12 6l-7 6 7 6" /></svg>
-			</button>
+		<SearchBox
+			mode={mode}
+			query={query}
+			completion={completion}
+			values={valueMenu?.values ?? []}
+			suggestions={visibleSuggestions}
+			statusText={loadError ? `Failed to load data: ${loadError}` : omniStore ? `${omniStore.size} sessions · ${omniStore.teachers.length} teachers · ${omniStore.classes.length} classes` : 'Loading timetable data…'}
+			previewText={ghostPreview}
+			selection={selection}
+			focused={searchFocused}
+			onReady={(el) => (searchEl = el)}
+			onQuery={(v) => {
+				hovered = null;
+				query = v;
+				caret = searchEl?.selectionStart ?? query.length;
+				if (!query.trim()) showEmpty();
+			}}
+			onFocus={(e) => {
+				searchFocused = true;
+				if (!query.trim() && lastViewKind) query = `type:${lastViewKind}`;
+				else caret = e.currentTarget.selectionStart ?? query.length;
+			}}
+			onBlur={() => {
+				searchFocused = false;
+			}}
+			onCaret={(p) => {
+				caret = p;
+			}}
+			onKeydown={onKeydown}
+			onClear={eraseFilter}
+			onCompleteType={(k) => completeTypePredicate(k)}
+			onEnterValue={(v) => completePredicateValue(v)}
+			onAddPredicate={(k) => addPredicate(k)}
+			onHoverKind={(id) => {
+				hovered = id;
+			}}
+			onBack={() => {
+				showEmpty();
+			}}
+			onOpenList={() => {
+				// Re-enter editing from the selected bar, prefilled with
+				// the selected entity's type (selection cleared so mode
+				// derives to editing).
+				const kind = selection?.kind ?? lastViewKind ?? 'teacher';
+				selectedTeacher = null;
+				selectedClass = null;
+				lastViewKind = kind;
+				query = `type:${kind}`;
+				hovered = null;
+				searchFocused = true;
+				writeStoredTeacher(null);
+				writeStoredClass(null);
+				searchEl?.focus();
+			}}
+			onDismiss={() => {
+				searchFocused = false;
+				query = '';
+				hovered = null;
+			}}
+		/>
 
-			<!-- Selection overlay -->
-			<div
-				id="searchOverlay"
-				hidden={(selectedTeacher === null && selectedClass === null) || menuOpen}
-			>
-				<button
-					type="button"
-					id="overlayToggle"
-					aria-label="Open menu"
-					onmousedown={(e) => e.preventDefault()}
-					onclick={() => {
-						openMenu();
-						if (searchEl) searchEl.focus();
-					}}
-				></button>
-				<button
-					type="button"
-					id="overlayClear"
-					aria-label="Clear selection"
-					onmousedown={(e) => e.preventDefault()}
-					onclick={(e) => {
-						e.stopPropagation();
-						showEmpty();
-					}}
-				>
-					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-				</button>
-				{#if selectedTeacher !== null}
-					<span id="overlayName">
-						{@html teacherName(selectedTeacher)}
-					</span>
-				{:else if selectedClass !== null && currentClassDetail}
-					<span id="overlayName">
-						{@html headingHTML(currentClassDetail.shortcut.head)}{#if currentClassDetail.shortcut.sub}<sub>{currentClassDetail.shortcut.sub}</sub>{/if}
-					</span>
-				{/if}
-				<svg class="overlay-drop" viewBox="0 0 24 24" aria-hidden="true"
-					><path d="M6 9l6 6 6-6" /></svg
-				>
-			</div>
-		</div>
-
-		<!-- Sub-row: completion UI or status — one fixed slot. Hidden only
-		     while a timetable detail is shown (not while filtering it). -->
-		{#if !((selectedTeacher || selectedClass) && !menuOpen)}
-		<div class="omni-subrow">
-			<!-- One completion slot: type tabs inside a `type:` node, else
-			     next-predicate suggestions, else the status line. -->
-			{#if completingType}
-			<div class="omni-tabs" role="tablist" aria-label="Result types">
-				<button
-					type="button"
-					class="omni-tab-btn"
-					class:active={parsedQuery.type === 'teacher' || (typePartial !== '' && 'teacher'.startsWith(typePartial))}
-					onmouseenter={() => previewEnter('teacher')}
-					onmouseleave={() => previewLeave()}
-					onmousedown={(e) => e.preventDefault()}
-					onclick={() => completeTypePredicate('teacher')}
-				>
-					Teachers
-				</button>
-				<button
-					type="button"
-					class="omni-tab-btn"
-					class:active={parsedQuery.type === 'class' || (typePartial !== '' && 'class'.startsWith(typePartial))}
-					onmouseenter={() => previewEnter('class')}
-					onmouseleave={() => previewLeave()}
-					onmousedown={(e) => e.preventDefault()}
-					onclick={() => completeTypePredicate('class')}
-				>
-					Classes
-				</button>
-			</div>
-			{:else if valueMenu && valueMenu.values.length}
-			<div class="value-menu" role="listbox" aria-label="Values">
-				{#each valueMenu.values.slice(0, 12) as v (v.value)}
-				<button
-					type="button"
-					class="value-chip"
-					onmousedown={(e) => e.preventDefault()}
-					onclick={() => completePredicateValue(v.value)}
-				>
-					{v.value} <b>{v.count}</b>
-				</button>
-				{/each}
-			</div>
-			{:else if visibleSuggestions.length}
-			<div class="predicate-row" role="group" aria-label="Filter by">
-				<span class="predicate-hint">Filter by</span>
-				{#each visibleSuggestions as p (p.key)}
-				<button
-					type="button"
-					class="predicate-chip"
-					onmousedown={(e) => e.preventDefault()}
-					onclick={() => addPredicate(p.key)}
-				>
-					{p.label}: <b>{p.count}</b>
-				</button>
-				{/each}
-			</div>
-			{:else}
-			<p class="omni-substatus">
-				{#if loadError}
-					Failed to load data: {loadError}
-				{:else if omniStore}
-					{omniStore.size} sessions · {omniStore.teachers.length} teachers · {omniStore.classes.length} classes
-				{:else}
-					Loading timetable data…
-				{/if}
-			</p>
-			{/if}
-		</div>
-		{/if}
-
-		<!-- Lists container -->
+		<!-- Lists container: mobile browse hides it via #layout:not(.is-list). -->
 		<div class="omni-lists">
 			<div class="omni-lists-scroll">
 				<ul id="omniList">
@@ -1178,51 +1069,6 @@
 		src: url('/vendor/dynapuff.ttf') format('truetype');
 	}
 
-	/* Tabs positioned directly under the search box */
-	/* Segmented button group (M3): one connected control, shared outer
-	   border, hairline divider, selected segment tonally filled. */
-	.omni-tabs {
-		display: flex;
-		gap: 0;
-		margin: 0.4rem 0 0.5rem;
-		border: 1px solid var(--md-outline-variant, #ccc);
-		border-radius: 999px;
-		overflow: hidden;
-		flex-shrink: 0;
-		background: var(--md-surface, #fff);
-	}
-
-	.omni-tab-btn {
-		flex: 1;
-		font-family: inherit;
-		font-size: 0.82rem;
-		padding: 0.5rem 1rem;
-		border: 0;
-		border-radius: 0;
-		background: transparent;
-		color: var(--md-on-surface-variant, #555);
-		cursor: pointer;
-		font-weight: 500;
-		text-align: center;
-		transition: background 0.15s ease, color 0.15s ease;
-	}
-
-	.omni-tab-btn + .omni-tab-btn {
-		border-left: 1px solid var(--md-outline-variant, #ccc);
-	}
-
-	@media (hover: hover) {
-		.omni-tab-btn:hover {
-			background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
-			color: var(--md-on-surface, #222);
-		}
-	}
-
-	.omni-tab-btn.active {
-		background: var(--md-secondary-container, #eef4ff);
-		color: var(--md-on-secondary-container, #1b1b1b);
-	}
-
 	.omni-lists-scroll {
 		flex: 1 1 auto;
 		min-height: 0;
@@ -1233,70 +1079,6 @@
 		list-style: none;
 		padding: 0;
 		margin: 0;
-	}
-
-	.omni-filters {
-		display: flex;
-		gap: 0.4rem;
-		margin: 0.4rem 0 0.5rem;
-		flex-shrink: 0;
-		flex-wrap: wrap;
-	}
-
-	.omni-chip {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.3rem;
-		font-family: inherit;
-		font-size: 0.82rem;
-		font-weight: 500;
-		padding: 0.3rem 0.75rem 0.3rem 0.55rem;
-		border: 1px solid var(--md-outline, #8e9099);
-		border-radius: 999px;
-		background: transparent;
-		color: var(--md-on-surface-variant, #555);
-		cursor: pointer;
-		transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-	}
-
-	.omni-chip:hover {
-		color: var(--md-on-surface, #222);
-	}
-
-	.omni-chip.active {
-		background: var(--md-secondary-container, #eef4ff);
-		color: var(--md-on-secondary-container, #1b1b1b);
-		border-color: transparent;
-	}
-
-	.omni-chip-check {
-		font-size: 0.9em;
-		line-height: 1;
-		min-width: 0.9em;
-	}
-
-	@media (max-width: 700px) {
-		:global(#layout:not(.is-list)) .omni-filters {
-			display: none;
-		}
-
-		:global(#layout.is-list) .omni-filters {
-			display: flex;
-			margin: 0.4rem 0;
-			gap: 0.4rem;
-		}
-	}
-
-	/* On mobile, tabs visibility mirrors the list: hidden unless .is-list */
-	@media (max-width: 700px) {
-		:global(#layout:not(.is-list)) .omni-tabs {
-			display: none;
-		}
-
-		:global(#layout.is-list) .omni-tabs {
-			display: flex;
-			margin: 0.4rem 0;
-		}
 	}
 
 	.fact-card.clickable {
