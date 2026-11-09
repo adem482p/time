@@ -58,6 +58,8 @@
 		</button>
 		<button type="button" class="sbox-selected-name" onclick={onOpenList}>
 			<span class="sbox-selected-text">{selection?.name}</span>
+		</button>
+		<button type="button" class="sbox-selected-drop-btn" aria-label="Open list" onclick={onOpenList}>
 			<svg class="sbox-selected-drop" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
 		</button>
 	</div>
