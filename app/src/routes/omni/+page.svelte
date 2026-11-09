@@ -66,12 +66,17 @@
 	const caretToken = $derived(tokenAt(query, caret));
 	// THE completion state: one derivation — which node (if any) owns the
 	// completion UI, and the data for it. Everything else derives from it.
+	// Only a *parsable* type token opens the type node: an unknown value
+	// like `type:foo` is a literal term (search.js falls back), so after a
+	// space — or even with the caret touching the token edge — the tabs
+	// must not stick; predicates show instead. Placing the caret beside a
+	// complete `type:class` still reopens the menu (parsedQuery.type set).
 	const completion = $derived.by(() => {
 		const tok = caretToken?.token ?? '';
-		if (isEmptyQuery || /^type:(\*|[a-z]*)$/i.test(tok)) {
+		if (isEmptyQuery || (/^type:(\*|[a-z]*)$/i.test(tok) && (parsedQuery.type !== null || parsedQuery.completing))) {
 			return { node: 'type', partial: /^type:(\*|[a-z]*)$/i.exec(tok)?.[1]?.toLowerCase().replace('*', '') ?? '' };
 		}
-		if (/^type:/i.test(tok)) return { node: 'type', partial: '' };
+		if (/^type:/i.test(tok) && parsedQuery.type !== null) return { node: 'type', partial: '' };
 		const pm = /^(subject|room|teacher|day|cohort|group|track|year|specialty):(.*)$/i.exec(tok);
 		if (pm) return { node: 'value', key: pm[1].toLowerCase(), partial: pm[2].toLowerCase() };
 		return { node: 'none' };
