@@ -920,7 +920,7 @@
 							{@const isNext = !isNow && currentTeacherDetail.upcoming.has(entry.i)}
 							{@const [start, end] = slotRange(entry.s.time || item.slot)}
 							<article class="msession {rowClasses(isNow, isNext)}">
-								<span class="msession-leading msession-time-circle" aria-label="{start}–{end}">
+								<span class="msession-time-range">
 									<span class="msession-time-start">{start}</span>
 									<span class="msession-time-end">{end}</span>
 								</span>
@@ -939,9 +939,6 @@
 										{/if}
 									</div>
 									<p class="msession-room">{entry.s.room} {#each entry.s.pills as p (p)}<span class="pill">{@html headingHTML(p)}</span>{/each}</p>
-									<p class="msession-meta">
-										<span class="msession-time">{entry.s.time}</span>
-									</p>
 								</div>
 							</article>
 							{/if}
@@ -1051,7 +1048,7 @@
 							{@const isNext = !isNow && !!c && c.visible && s.day === c.today && s.slot === c.next}
 							{@const [cs, ce] = slotRange(s.slot)}
 							<article class="msession {rowClasses(isNow, isNext)}">
-								<span class="msession-leading msession-time-circle" aria-label="{cs}–{ce}">
+								<span class="msession-time-range">
 									<span class="msession-time-start">{cs}</span>
 									<span class="msession-time-end">{ce}</span>
 								</span>
@@ -1070,9 +1067,6 @@
 									{/if}
 									</div>
 									<p class="msession-room">{s.room || '—'} · <span class="msession-teacher">{@html teacherName(s.teacher, '—')}</span>{#if formatWeekPattern(s.weekPattern)} <span class="week-pill">{formatWeekPattern(s.weekPattern)}</span>{/if}</p>
-									<p class="msession-meta">
-										<span class="msession-time">{s.slot}</span>
-									</p>
 								</div>
 							</article>
 							{/if}
