@@ -191,7 +191,7 @@ hence -2rem (dvh behind vh for the mobile
   min-height: calc(100vh - 2rem);
   min-height: calc(100dvh - 2rem);
 }/* keep the picker narrow so the session table gets the room it needs */
-#layout > #listPane{ flex: 0 1 30%; min-width: 18rem; max-width: 26rem; }#layout > #detail{ flex: 1 1 0; min-width: 0; margin-top: 0; overflow-x: auto; }/* The empty state is #detail's only child when present,
+#layout > #listPane{ display:flex; flex-direction:column; flex: 0 1 30%; min-width: 18rem; max-width: 26rem; }#layout > #detail{ flex: 1 1 0; min-width: 0; margin-top: 0; overflow-x: auto; }/* The empty state is #detail's only child when present,
 so scope a flex
    container to exactly that case: .empty-state then stretches down the column
    the layout chain above keeps viewport-tall. Scoped with :has() so the
