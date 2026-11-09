@@ -132,6 +132,7 @@
 						<button
 							type="button"
 							class="sbox-value"
+							class:is-long={v.value && v.value.length > 16}
 							onmouseenter={() => onHoverKind(v.value)}
 							onmouseleave={() => onHoverKind(null)}
 							onmousedown={(e) => e.preventDefault()}

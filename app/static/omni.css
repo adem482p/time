@@ -901,8 +901,8 @@ table.week .week-pill {
   box-shadow:0 0 0 2px var(--md-primary-container, #d6e9ff);
 }
 #layout .sbox-input{
-  flex:1 1 auto; min-width:0; width:100%; border:0; outline:none;
-  padding:.45rem .6rem; font:inherit; line-height:1.5;
+  flex:1 1 auto; min-width:0; width:100%; height:100%; box-sizing:border-box; border:0; outline:none;
+  padding:0 .6rem; font:inherit; line-height:1.5;
   background:transparent; color:inherit; border-radius:8px;
   font-family:"Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
@@ -931,7 +931,7 @@ table.week .week-pill {
   border-radius:999px; overflow:hidden; background:var(--md-surface, #fff);
 }
 #layout .sbox-tab{
-  flex:1; height:2rem; box-sizing:border-box; font-family:inherit; font-size:.82rem; padding:.5rem 1rem;
+  flex:1; display:flex; align-items:center; justify-content:center; height:2rem; box-sizing:border-box; font-family:inherit; font-size:.82rem; padding:0 1rem;
   border:0; border-radius:0; background:transparent;
   color:var(--md-on-surface-variant, #555); cursor:pointer;
   font-weight:500; text-align:center;
@@ -949,12 +949,13 @@ table.week .week-pill {
   }
 }
 #layout .sbox-values{
-  display:grid; grid-template-columns:repeat(auto-fill, minmax(6.5rem, 1fr));
+  display:grid; grid-auto-flow:dense; grid-template-columns:repeat(auto-fill, minmax(6.5rem, 1fr));
   grid-auto-rows:2rem; gap:1px; width:100%; max-width:40rem;
   max-height:calc(3 * 2rem + 2px); overflow:hidden;
   border:1px solid var(--md-outline-variant, #ccc); border-radius:8px;
   background:var(--md-outline-variant, #ccc);
 }
+#layout .sbox-values .sbox-value.is-long{ grid-column:1 / -1; }
 #layout .sbox-suggest{
   display:flex; gap:0; height:2rem; box-sizing:border-box; border:1px solid var(--md-outline-variant, #ccc);
   border-radius:999px; overflow:hidden; background:var(--md-surface, #fff);
@@ -984,7 +985,7 @@ table.week .week-pill {
   background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent);
 }
 #layout .sbox-status{
-  margin:0; width:100%; height:2rem; line-height:2rem; text-align:center;
+  margin:0; width:100%; height:2rem; display:flex; align-items:center; justify-content:center;
   font-size:.85em; color:var(--md-on-surface-variant, #555);
 }
 /* selected state: one bar per viewport, CSS picks the chrome */
