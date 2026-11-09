@@ -492,8 +492,8 @@ so the hanging now/next
 #matrix td:first-child{ position: sticky; left: 0; background: var(--md-surface-container, #f4f4f4); white-space: nowrap; }#matrix td .cell{ margin-bottom: .25rem; }#matrix td .room{ font-weight: bold; }#matrix td .day{ color: var(--md-on-surface-variant, #555); font-size: .85em; }/* ---- narrow screens: the session table becomes cards,
 the list flattens ---- */
 @media (max-width: 700px){body{ padding: .8rem; --mpad: .8rem; }#detail .day-head{ text-align: center; margin: 0; padding: 1rem 0; }#detail > h2{ display: none; }#detail .class-facts{
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: .25rem;
     margin: 0 0 .5rem;
     padding: 0;
@@ -501,7 +501,9 @@ the list flattens ---- */
     color: var(--md-on-surface-variant, #666);
   }#detail .class-facts .fact-card{
     display: flex;
-    min-width: 0;
+    flex: 1 1 7rem;
+    min-width: 7rem;
+    max-width: 100%;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -523,20 +525,10 @@ the list flattens ---- */
     font-size: .65rem;
     letter-spacing: .05em;
     text-transform: uppercase;
-  }#detail .class-facts .fact-name::after{ content: ""; }#detail .teacher-facts{
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }/* Four facts need a little more room than the narrowest phones provide.
+  }#detail .class-facts .fact-name::after{ content: ""; }/* Four facts need a little more room than the narrowest phones provide.
      Keep the three more specific cards together on the first row and move
      Track below them as a full-width card. Fewer-fact classes keep one row. */
-  @media (max-width: 400px){#detail .class-facts{
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }#detail .class-facts:has(.fact-card:nth-child(4)) .fact-card:first-child{
-      grid-column: 1 / -1;
-      order: 4;
-    }#detail .teacher-facts{
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }#themeCycle{ top: .8rem; right: .8rem; }/* one column; the list is temporary (search UI) and cards are the default.
+#themeCycle{ top: .8rem; right: .8rem; }/* one column; the list is temporary (search UI) and cards are the default.
      Flex column keeps the full-height chain alive instead of breaking it at
      the layout root: #detail (flex: 1 1 0 from the base rule) grows to fill
      the leftover height. Body padding on mobile is .8rem + .8rem = 1.6rem. */
