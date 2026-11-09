@@ -27,14 +27,14 @@ which CSS requires
     --md-on-primary: #102F60;
     --md-primary-container: #2B4678;
     --md-on-primary-container: #D8E2FF;
-    --md-secondary: #BCC7DC;
-    --md-on-secondary: #263141;
-    --md-secondary-container: #3D4758;
-    --md-on-secondary-container: #D8E3F8;
-    --md-tertiary: #EFB8C9;
-    --md-on-tertiary: #492532;
-    --md-tertiary-container: #633B49;
-    --md-on-tertiary-container: #FFD9E3;
+    --md-secondary: #BFC6DC;
+    --md-on-secondary: #293041;
+    --md-secondary-container: #3F4759;
+    --md-on-secondary-container: #DBE2F9;
+    --md-tertiary: #DEBCDF;
+    --md-on-tertiary: #402843;
+    --md-tertiary-container: #583E5B;
+    --md-on-tertiary-container: #FBD7FC;
     --md-surface: #111318;
     --md-on-surface: #E2E2E9;
     --md-on-surface-variant: #C4C6D0;
@@ -146,7 +146,7 @@ identical on all viewports) ---- */
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
 }#omniList li{ padding: 0; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }#omniList li:last-child{ border-bottom: 0; }#omniList li:not(.group-head):hover,
 #omniList li:not(.group-head).active{
-  background: var(--md-secondary-container, #d8e3f8);
+  background: var(--md-secondary-container, #dbe2f9);
   color: var(--md-on-secondary-container, #111c2b);
 }#omniList li.empty{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#omniList .relevant{ color: var(--md-on-surface-variant, #666); font-size: .85em; }/* grouped-list section header rows (inserted by JS between teacher rows):
    non-clickable labels,
@@ -314,7 +314,7 @@ slight squash on landing. Global scale() adds
 so the neighbouring marked cell's own border wins the
    collapsed-border conflict and the main grid edge stays continuous). */
 #detail td:empty,
-#detail th:empty{ border: none; padding: 0; background: transparent; }#detail tr.now td{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }#detail tr.next td{ background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d); }#detail tr.daystart td + td{ border-top: 2px solid var(--md-outline, #888); }#detail .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#detail .nexttag{
+#detail th:empty{ border: none; padding: 0; background: transparent; }#detail tr.now td{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }#detail tr.next td{ background: var(--md-tertiary-container, #fbd7fc); color: var(--md-on-tertiary-container, #31101d); }#detail tr.daystart td + td{ border-top: 2px solid var(--md-outline, #888); }#detail .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#detail .nexttag{
   display: inline-flex; align-items: center; gap: .3em;
   color: var(--md-on-tertiary-container, #0b4da2); font-weight: bold; white-space: nowrap;
 }/* the "next" arrow is an inline SVG so it always renders and tints with the tag */
@@ -327,7 +327,7 @@ so the neighbouring marked cell's own border wins the
 #detail .pill{
   display: inline-flex; align-items: center; height: 2rem;
   padding: 0 .9rem; border: 0; border-radius: 8px;
-  background: var(--md-secondary-container, #d8e3f8);
+  background: var(--md-secondary-container, #dbe2f9);
   color: var(--md-on-secondary-container, #111c2b);
   font-size: .875rem; font-weight: 500; line-height: 1; white-space: nowrap;
 }/* the pill reads the surface it sits on: on a now/next row (or mobile card)
@@ -335,7 +335,7 @@ so the neighbouring marked cell's own border wins the
 #detail tr.now .pill{
   background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41);
 }#detail tr.next .pill{
-  background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d);
+  background: var(--md-tertiary-container, #fbd7fc); color: var(--md-on-tertiary-container, #31101d);
 }#detail .subjlist,
 #detail .ctree{ font-size: .9em; }#detail .ctree ul{ margin: .1rem 0 .1rem 1.2rem; padding: 0; }#detail .ctree li{ margin: .1rem 0; }#detail .hours{ color: var(--md-on-surface-variant, #555); font-size: .85em; }/* ---- teacher day groups (one section per weekday,
 shared DOM) ----
@@ -478,9 +478,9 @@ so the hanging now/next
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px;
 }#slotList li{ padding: .3rem .6rem; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }#slotList li:hover,
 #slotList li.active{
-  background: var(--md-secondary-container, #d8e3f8);
+  background: var(--md-secondary-container, #dbe2f9);
   color: var(--md-on-secondary-container, #111c2b);
-}#slotList li.bucket{ background: var(--md-surface-container, #f4f4f4); font-weight: bold; cursor: default; }#slotList li.bucket.today{ background: var(--md-surface-container-high, #e8eefb); }#slotList li.dim{ color: var(--md-on-surface, inherit); opacity: .58; }#slotList li.info{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#slotList li.now{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }#slotList li.next{ background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d); }#slotList .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#slotList .nexttag{
+}#slotList li.bucket{ background: var(--md-surface-container, #f4f4f4); font-weight: bold; cursor: default; }#slotList li.bucket.today{ background: var(--md-surface-container-high, #e8eefb); }#slotList li.dim{ color: var(--md-on-surface, inherit); opacity: .58; }#slotList li.info{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#slotList li.now{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }#slotList li.next{ background: var(--md-tertiary-container, #fbd7fc); color: var(--md-on-tertiary-container, #31101d); }#slotList .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#slotList .nexttag{
   display: inline-flex; align-items: center; gap: .3em;
   color: var(--md-on-tertiary-container, #0b4da2); font-weight: bold; white-space: nowrap;
 }#slotList ~ #detail table{ border-collapse: collapse; width: 100%; margin-top: .5rem; }#slotList ~ #detail th,
@@ -583,7 +583,7 @@ not self-enclosed cards.
     display: flex; flex-wrap: wrap; gap: 0 .5rem;
     border: 1px solid var(--md-outline-variant, #ccc); border-radius: 8px;
     margin: 0 0 .6rem; padding: .5rem .7rem;
-  }#detail tr.now:has(td){ background: var(--md-primary-container, #d8e2ff); }#detail tr.next:has(td){ background: var(--md-tertiary-container, #ffd9e3); }#detail tr.now td,
+  }#detail tr.now:has(td){ background: var(--md-primary-container, #d8e2ff); }#detail tr.next:has(td){ background: var(--md-tertiary-container, #fbd7fc); }#detail tr.now td,
 #detail tr.next td{ background: transparent; }#detail td{ display: block; border: none; padding: .12rem 0; }#detail td:empty,
 #detail th:empty{ display: none; }/* cards separate by margin,
 not the collapsed-grid day separator */
@@ -667,7 +667,7 @@ its arrowhead resting in the narrow gutter beside the time column. */
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
 }#omniList li{ padding: 0; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }#omniList li:last-child{ border-bottom: 0; }#omniList li:hover,
 #omniList li.active{
-  background: var(--md-secondary-container, #d8e3f8);
+  background: var(--md-secondary-container, #dbe2f9);
   color: var(--md-on-secondary-container, #111c2b);
 }#omniList li.empty{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#omniList .alias{ color: var(--md-on-surface-variant, #555); font-size: .82em; }#omniList .class-track{
   display: block;
@@ -690,7 +690,7 @@ table.week td.cgutter{ width: 1.4rem; border: none; padding: 0; background: tran
 table.week td.c-time{ white-space: nowrap; font-weight: 600; }table.week th.today{ background: var(--md-surface-container-high, #e8eefb); }/* tint the whole current-day column the same fill as the header above it;
    placed before the now/next cell rules so now/next still win on equal
    specificity */
-table.week td.c-cell.today{ background: var(--md-surface-container-high, #e8eefb); }table.week td.c-cell.now{ background: var(--md-primary-container, #d8e2ff); }table.week td.c-cell.next{ background: var(--md-tertiary-container, #ffd9e3); }table.week .sess{ margin-bottom: .25rem; }table.week .s-subject{ font-weight: 600; }table.week .s-teacher,
+table.week td.c-cell.today{ background: var(--md-surface-container-high, #e8eefb); }table.week td.c-cell.now{ background: var(--md-primary-container, #d8e2ff); }table.week td.c-cell.next{ background: var(--md-tertiary-container, #fbd7fc); }table.week .sess{ margin-bottom: .25rem; }table.week .s-subject{ font-weight: 600; }table.week .s-teacher,
 table.week .s-room{ color: var(--md-on-surface-variant, #555); }/* the red cursor: a semi-transparent line crossing the grid at the current
    time,
 with a right-pointing arrowhead in the gutter */
@@ -823,7 +823,7 @@ table.week .week-pill {
   border-radius: 12px; padding: 1rem;
 }
 .msession.now{ background: var(--md-primary-container, #d8e2ff); }
-.msession.next{ background: var(--md-tertiary-container, #ffd9e3); }
+.msession.next{ background: var(--md-tertiary-container, #fbd7fc); }
 /* empty timeslot: outlined placeholder, surface base, muted label. */
 .msession.break{
   background: var(--md-surface, #fff);
@@ -837,12 +837,11 @@ table.week .week-pill {
 .msession-leading{
   flex: 0 0 auto; width: 2.5rem; height: 2.5rem; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--md-secondary-container, #d8e3f8);
+  background: var(--md-secondary-container, #dbe2f9);
   color: var(--md-on-secondary-container, #111c2b);
-  border: 1px solid var(--md-outline-variant, #ccc);
 }
-.msession.now .msession-leading{ background: var(--md-secondary-container, #d8e3f8); color: var(--md-on-secondary-container, #111c2b); }
-.msession.next .msession-leading{ background: var(--md-secondary-container, #d8e3f8); color: var(--md-on-secondary-container, #111c2b); }
+.msession.now .msession-leading{ background: var(--md-secondary-container, #dbe2f9); color: var(--md-on-secondary-container, #111c2b); }
+.msession.next .msession-leading{ background: var(--md-secondary-container, #dbe2f9); color: var(--md-on-secondary-container, #111c2b); }
 .msession-body{ flex: 1 1 auto; min-width: 0; }
 .msession-head{ display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
 .msession-subject{
@@ -857,7 +856,7 @@ table.week .week-pill {
 }
 .msession-flag .nextarrow{ width: 1.65em; height: 1.65em; stroke-width: 2.6; }
 .msession-flag.now{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }
-.msession-flag.next{ background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d); }
+.msession-flag.next{ background: var(--md-tertiary-container, #fbd7fc); color: var(--md-on-tertiary-container, #31101d); }
 .msession-room{
   margin: .15rem 0 0; font-size: .875rem; line-height: 1.43; font-weight: 500;
   color: var(--md-on-surface, #1b1b1b);
@@ -927,7 +926,7 @@ table.week .week-pill {
 }
 #layout .sbox-tabs .sbox-tab + .sbox-tab{ border-left:1px solid var(--md-outline-variant, #ccc); }
 #layout .sbox-tab.active{
-  background:var(--md-secondary-container, #d8e3f8);
+  background:var(--md-secondary-container, #dbe2f9);
   color:var(--md-on-secondary-container, #111c2b);
 }
 @media (hover: hover){
@@ -978,7 +977,7 @@ table.week .week-pill {
 #layout .sbox-selected{
   display:flex; flex-direction:row; align-items:stretch; width:100%; max-width:40rem; height:2.75rem; box-sizing:border-box; margin:.8rem 0;
   border-radius:8px;
-  background:var(--md-secondary-container, #d8e3f8);
+  background:var(--md-secondary-container, #dbe2f9);
   color:var(--md-on-secondary-container, #111c2b);
   border:1px solid var(--md-outline-variant, #ccc);
 }
@@ -1032,5 +1031,5 @@ table.week .week-pill {
   /* the cards carry the chrome now: drop the section card frame. */
   #detail .day-group{ border: 0; padding: 0; overflow: visible; }
   #detail .msession.now .pill{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }
-  #detail .msession.next .pill{ background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d); }
+  #detail .msession.next .pill{ background: var(--md-tertiary-container, #fbd7fc); color: var(--md-on-tertiary-container, #31101d); }
 }

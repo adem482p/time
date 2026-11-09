@@ -476,9 +476,9 @@ const buildPalettes = (opts) => {
   const spec = (VARIANTS[variant] || VARIANTS.tonalSpot)(pHct.h);
   const out = {};
   for (const k in spec) if (spec.hasOwnProperty(k)) out[k] = tonalPalette(spec[k][0], spec[k][1]);
-  // Explicit keys still override the seed's hue (kept for API compatibility).
-  if (opts.secondary) out.S = tonalPalette(hctFromArgb(opts.secondary).h, spec.S[1]);
-  if (opts.tertiary) out.T = tonalPalette(hctFromArgb(opts.tertiary).h, spec.T[1]);
+  // M3 TonalSpot: secondary/tertiary derive from the primary hue (spec
+  // hues win). Explicit secondary/tertiary seeds do NOT override hue —
+  // they only bias variant selection upstream. (error still derives.)
   if (opts.error) out.E = tonalPalette(hctFromArgb(opts.error).h, spec.E[1]);
   return out;
 };
