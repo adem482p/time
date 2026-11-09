@@ -839,6 +839,7 @@ table.week .week-pill {
   display: flex; align-items: center; justify-content: center;
   background: var(--md-secondary-container, #d8e3f8);
   color: var(--md-on-secondary-container, #111c2b);
+  border: 1px solid var(--md-outline-variant, #ccc);
 }
 .msession.now .msession-leading{ background: var(--md-secondary-container, #d8e3f8); color: var(--md-on-secondary-container, #111c2b); }
 .msession.next .msession-leading{ background: var(--md-secondary-container, #d8e3f8); color: var(--md-on-secondary-container, #111c2b); }
