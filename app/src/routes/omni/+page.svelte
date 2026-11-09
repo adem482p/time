@@ -522,20 +522,29 @@
 		return color.sessionRow({ isNow, isNext, dimIdle: false }).join(' ');
 	}
 
-	// now/next/break split the flat list into separate containers:
-	// each state item is its own singleton group, plain sessions run together.
+	// now/next/break split the flat list into separate containers.
+	// Breaks merge: consecutive breaks form one singleton group (one circle).
 	function splitGroups(items, isState) {
 		const groups = [];
 		let run = [];
+		let breakRun = null;
+		const flushRun = () => { if (run.length) { groups.push(run); run = []; } };
 		for (const item of items) {
+			if (item.kind === 'break') {
+				breakRun = breakRun ?? [];
+				breakRun.push(item);
+				continue;
+			}
+			if (breakRun) { flushRun(); groups.push(breakRun); breakRun = null; }
 			if (isState(item)) {
-				if (run.length) { groups.push(run); run = []; }
+				flushRun();
 				groups.push([item]);
 			} else {
 				run.push(item);
 			}
 		}
-		if (run.length) groups.push(run);
+		flushRun();
+		if (breakRun) groups.push(breakRun);
 		return groups;
 	}
 
@@ -870,8 +879,8 @@
 						</tbody>
 					</table>
 					{#each splitGroups(currentTeacherDetail.byDay[day], (item) => item.kind === 'break' || isCurrentSession(item.s?.day, item.s?.time, now) || (item.i !== undefined && currentTeacherDetail.upcoming.has(item.i))) as grp}
-					{#if grp.length === 1 && grp[0].kind === 'break'}
-						<div class="msession-break" role="separator" aria-label="Break {grp[0].slot}">
+					{#if grp[0].kind === 'break'}
+						<div class="msession-break" role="separator" aria-label="Break {grp.map((g) => g.slot).join(', ')}">
 							<span class="msession-leading">
 								<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v16M14 4v16M5 8h14M5 16h14" /></svg>
 							</span>
@@ -1003,8 +1012,8 @@
 						</tbody>
 					</table>
 					{#each splitGroups(g.items, (item) => item.kind === 'break' || isCurrentSession(item.s?.day, item.s?.slot, now) || (!!currentClassDetail.cursor && currentClassDetail.cursor.visible && item.s?.day === currentClassDetail.cursor.today && item.s?.slot === currentClassDetail.cursor.next)) as grp}
-					{#if grp.length === 1 && grp[0].kind === 'break'}
-						<div class="msession-break" role="separator" aria-label="Break {grp[0].slot}">
+					{#if grp[0].kind === 'break'}
+						<div class="msession-break" role="separator" aria-label="Break {grp.map((g) => g.slot).join(', ')}">
 							<span class="msession-leading">
 								<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v16M14 4v16M5 8h14M5 16h14" /></svg>
 							</span>
