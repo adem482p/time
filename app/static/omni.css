@@ -493,8 +493,8 @@ so the hanging now/next
 the list flattens ---- */
 @media (max-width: 700px){body{ padding: .8rem; --mpad: .8rem; }#detail .day-head{ text-align: center; margin: 0; padding: 1rem 0; }#detail > h2{ display: none; }#detail .class-facts{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
-    gap: .5rem;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: .25rem;
     margin: 0 0 .5rem;
     padding: 0;
     border: 0;
@@ -506,7 +506,7 @@ the list flattens ---- */
     align-items: center;
     justify-content: center;
     gap: .12rem;
-    padding: .5rem .35rem .4rem;
+    padding: .35rem .25rem .3rem;
     border-radius: .5rem;
     background: color-mix(in srgb, var(--md-primary, #0b4da2) 8%, transparent);
     text-align: center;
