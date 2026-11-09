@@ -831,7 +831,7 @@ table.week .week-pill {
 }
 .msession.break .msession-leading{
   background: transparent; color: var(--md-on-surface-variant, #666);
-  border: 1px solid var(--md-outline-variant, #ccc);
+  border: 1px dashed var(--md-outline-variant, #ccc);
 }
 .msession.break .msession-subject{ color: var(--md-on-surface-variant, #666); font-weight: 500; }
 .msession-leading{
