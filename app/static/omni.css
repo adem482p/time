@@ -890,7 +890,7 @@ table.week .week-pill {
    viewport chrome. Scoped under #layout so legacy pages are unaffected.
    No z-index, no [hidden], no :has() — controls are flex siblings after
    the input, so every control is clickable by construction. ---- */
-#layout .sbox{ display:flex; flex-direction:column; }
+#layout .sbox{ display:flex; flex-direction:column; flex:none; }
 #layout .sbox-row{
   display:flex; align-items:stretch; width:100%; max-width:40rem; height:2.75rem; box-sizing:border-box; margin:.8rem 0;
   border:1px solid var(--md-outline-variant, #ccc); border-radius:8px;
