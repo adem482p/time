@@ -333,10 +333,10 @@ test('omni search box is a single isolated component', () => {
 	assert.ok(!box.includes('<style>'), 'no component <style> block');
 	// Flex siblings (back/clear beside the input), never overlaid.
 	assert.ok(box.includes('sbox-row') && box.includes('sbox-back') && box.includes('sbox-clear'), 'back/clear are flex siblings');
-	// Sub-row switches on completion.node: tabs / values / chips / status.
+	// Sub-row switches on completion.node: tabs / unified options / status.
 	assert.ok(box.includes("completion?.node === 'type'"), 'type node renders tabs');
-	assert.ok(box.includes("completion?.node === 'value'"), 'value node renders values');
-	assert.ok(box.includes('sbox-suggest'), 'chips branch for free text');
+	assert.ok(box.includes('sbox-options'), 'unified options container for predicates + values');
+	assert.ok(box.includes('is-row') && box.includes('is-grid'), 'JS picks row vs grid layout');
 	assert.ok(box.includes('sbox-status'), 'status branch when no completion applies');
 	// Single selection shape, no selected/selectedName variants.
 	assert.ok(box.includes('selection'), 'single selection prop');

@@ -948,39 +948,38 @@ table.week .week-pill {
     color:var(--md-on-surface, #222);
   }
 }
-#layout .sbox-values{
+/* Unified predicate options: JS picks is-row vs is-grid (see SearchBox). */
+#layout .sbox-options{
+  width:100%; max-width:40rem; box-sizing:border-box;
+  border:1px solid var(--md-outline-variant, #ccc);
+}
+#layout .sbox-options.is-row{
+  display:flex; gap:0; height:2rem; border-radius:999px; overflow:hidden;
+  background:var(--md-surface, #fff);
+}
+#layout .sbox-options.is-grid{
   display:grid; grid-auto-flow:dense; grid-template-columns:repeat(auto-fill, minmax(6.5rem, 1fr));
-  grid-auto-rows:2rem; gap:1px; width:100%; max-width:40rem;
-  max-height:calc(3 * 2rem + 2px); overflow:hidden;
-  border:1px solid var(--md-outline-variant, #ccc); border-radius:8px;
-  background:var(--md-outline-variant, #ccc);
+  grid-auto-rows:2rem; gap:1px; max-height:calc(3 * 2rem + 2px); overflow:hidden;
+  border-radius:8px; background:var(--md-outline-variant, #ccc);
 }
-#layout .sbox-values .sbox-value.is-long{ grid-column:1 / -1; }
-#layout .sbox-suggest{
-  display:flex; gap:0; height:2rem; box-sizing:border-box; border:1px solid var(--md-outline-variant, #ccc);
-  border-radius:999px; overflow:hidden; background:var(--md-surface, #fff);
-}
-#layout .sbox-value{
+#layout .sbox-options.is-grid .sbox-option.is-long{ grid-column:1 / -1; }
+#layout .sbox-option{
   display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
-  min-width:0; height:2rem;
-  padding:0 .5rem; border:0; border-radius:0;
-  background:var(--md-surface, #fff); color:var(--md-on-surface, #1b1b1b);
-  font-size:.875rem; font-weight:500; line-height:1; cursor:pointer;
+  min-width:0; height:2rem; box-sizing:border-box;
+  padding:0 .9rem; border:0; border-radius:0; background:transparent;
+  color:var(--md-on-surface, #1b1b1b);
+  font-size:.875rem; font-weight:500; line-height:1; cursor:pointer; text-align:center;
   overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
 }
-#layout .sbox-chip{
-  flex:1; display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
-  height:2rem; box-sizing:border-box; padding:.5rem 1rem; border:0; border-radius:0;
-  background:transparent; color:var(--md-on-surface, #1b1b1b);
-  font-size:.875rem; font-weight:500; line-height:1; cursor:pointer; text-align:center;
-}
-#layout .sbox-suggest .sbox-chip + .sbox-chip{ border-left:1px solid var(--md-outline-variant, #ccc); }
+#layout .sbox-options.is-row .sbox-option{ flex:1; padding:0 1rem; }
+#layout .sbox-options.is-grid .sbox-option{ background:var(--md-surface, #fff); }
+#layout .sbox-options.is-row .sbox-option + .sbox-option{ border-left:1px solid var(--md-outline-variant, #ccc); }
 @media (hover: hover){
-  #layout .sbox-value:hover, #layout .sbox-chip:hover{
+  #layout .sbox-option:hover{
     background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
   }
 }
-#layout .sbox-value:active, #layout .sbox-chip:active{
+#layout .sbox-option:active{
   background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent);
 }
 #layout .sbox-status{
