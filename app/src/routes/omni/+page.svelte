@@ -633,7 +633,7 @@
 			completion={completion}
 			values={valueMenu?.values ?? []}
 			suggestions={visibleSuggestions}
-			statusText={loadError ? `Failed to load data: ${loadError}` : omniStore ? `${omniStore.size} sessions · ${omniStore.teachers.length} teachers · ${omniStore.classes.length} classes` : 'Loading timetable data…'}
+			statusText={loadError ? `Failed to load data: ${loadError}` : omniStore ? 'ISIM Mahdia timetables' : 'Loading timetable data…'}
 			previewText={ghostPreview}
 			selection={selection}
 			focused={searchFocused}

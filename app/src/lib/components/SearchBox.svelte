@@ -138,7 +138,7 @@
 							onmousedown={(e) => e.preventDefault()}
 							onclick={() => onEnterValue(v.value)}
 						>
-							{v.value} <b>{v.count}</b>
+							{v.value}
 						</button>
 					{/each}
 				</div>

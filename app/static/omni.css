@@ -975,7 +975,6 @@ table.week .week-pill {
   font-size:.875rem; font-weight:500; line-height:1; cursor:pointer; text-align:center;
 }
 #layout .sbox-suggest .sbox-chip + .sbox-chip{ border-left:1px solid var(--md-outline-variant, #ccc); }
-#layout .sbox-value b{ font-weight:600; color:var(--md-on-surface-variant, #555); }
 @media (hover: hover){
   #layout .sbox-value:hover, #layout .sbox-chip:hover{
     background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
