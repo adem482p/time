@@ -549,14 +549,13 @@
 		return groups;
 	}
 
-	// Merged break duration ("1h", "1.5h", "2h") from summed slot minutes.
+	// Merged break duration ("1.0h", "1.5h", "3.0h") from summed slot minutes.
 	function breakHours(grp) {
 		const mins = grp.reduce((a, g) => {
 			const [s, e] = slotMinutes(g.slot);
 			return a + (e - s);
 		}, 0);
-		const h = Math.round((mins / 60) * 100) / 100;
-		return String(h) + 'h';
+		return (Math.round((mins / 60) * 10) / 10).toFixed(1) + 'h';
 	}
 
 	// "08h15-09h45" -> ["8:15", "9:45"] for the leading time circle.

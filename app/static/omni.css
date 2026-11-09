@@ -827,7 +827,7 @@ table.week .week-pill {
 .msession-break .msession-leading{
   width: 3.25rem; height: 3.25rem;
   font-family: "Montserrat", "DejaVu Sans", system-ui, sans-serif;
-  font-size: 1.1rem; font-weight: 900; line-height: 1;
+  font-size: 16px; font-weight: 900; line-height: 1;
   letter-spacing: .06em;
 }
 .msession-break .msession-leading{ border: 1px dashed var(--md-outline-variant, #ccc); }
