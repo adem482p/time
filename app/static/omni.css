@@ -907,7 +907,7 @@ table.week .week-pill {
 #layout .sbox-input{
   flex:1 1 auto; min-width:0; width:100%; height:100%; box-sizing:border-box; border:0; outline:none;
   padding:0 .6rem; font:inherit; line-height:1.5;
-  background:transparent; color:inherit; border-radius:8px;
+  background:var(--md-secondary-container, #d6e3fd); color:var(--md-on-secondary-container, #111c2b); border-radius:8px;
   font-family:"Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 #layout .sbox-input.previewing{ color:var(--md-tertiary, #7c5260); font-style:italic; }
@@ -1009,7 +1009,7 @@ table.week .week-pill {
 }
 @media (hover: hover){
   #layout .sbox-selected-arrow:hover{
-    background:var(--md-secondary, #545f71); color:var(--md-on-secondary, #ffffff);
+    background:var(--md-surface-container-high, #e8e8ec); color:var(--md-on-secondary-container, #111c2b);
   }
 }
 #layout .sbox-selected-x, #layout .sbox-selected-name, #layout .sbox-selected-drop-btn{
