@@ -27,8 +27,14 @@
 	let omniStore = $state(null);
 	let loadError = $state('');
 
-	// Filter query
-	let query = $state('');
+	// Filter query. Desktop starts with a bare `type:*` so the completion
+	// tabs show; mobile stays empty (hint visible) until the first tap,
+	// when the focus handler initializes it lazily. Clearing the box
+	// returns to the hint.
+	let query = $state(
+		typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches ? '' : 'type:*'
+	);
+	let cursorPos = $state(query.length);
 
 	// Browse mode tab: 'teachers' | 'classes' (no "all")
 	let browseTab = $state('teachers');
@@ -41,14 +47,36 @@
 	const wantTeachers = $derived(!parsedQuery.type || parsedQuery.type === 'teacher');
 	const wantClasses = $derived(!parsedQuery.type || parsedQuery.type === 'class');
 
-	// Rewrite the query with a `type:` predicate (or without, for both).
-	function setTypePredicate(kind) {
-		const rest = query
-			.split(/\s+/)
-			.filter((t) => t && !/^type:(class|classes|teacher|teachers)$/i.test(t))
-			.join(' ');
-		query = kind ? (rest ? `${rest} type:${kind}` : `type:${kind}`) : rest;
+	// Complete the `type:` token under the cursor with the chosen value.
+	function completeTypePredicate(kind) {
+		const before = query.slice(0, cursorPos);
+		const m = /(\S*)$/.exec(before);
+		const token = m ? m[1] : '';
+		const start = cursorPos - token.length;
+		query = query.slice(0, start) + `type:${kind} ` + query.slice(cursorPos);
+		cursorPos = start + `type:${kind} `.length;
+		searchEl?.focus();
+		searchEl?.setSelectionRange(cursorPos, cursorPos);
 	}
+
+	// Completion tabs show while the token under the cursor is a bare or
+	// partial `type:` (the input is pre-written with `type:` by default).
+	const completingType = $derived(
+		/^type:(\*|[a-z]*)$/i.test(query.slice(0, cursorPos).split(/\s+/).pop() ?? '')
+	);
+	// Cursor inside any `type:` node (bare or complete) -> type tabs.
+	const insideTypeNode = $derived(/^type:/i.test(query.slice(0, cursorPos).split(/\s+/).pop() ?? ''));
+	// Cursor inside another predicate's value -> no completion UI.
+	const insidePredicateNode = $derived.by(() => {
+		const tok = query.slice(0, cursorPos).split(/\s+/).pop() ?? '';
+		return /^(subject|room|teacher|day|cohort|group):/i.test(tok);
+	});
+	// Partial `type:` value under the cursor ('' when not completing).
+	const typePartial = $derived.by(() => {
+		const tok = query.slice(0, cursorPos).split(/\s+/).pop() ?? '';
+		const m = /^type:(\*|[a-z]*)$/i.exec(tok);
+		return m ? m[1].toLowerCase().replace('*', '') : '';
+	});
 
 	// Mobile navigation state: menuOpen controls .is-list on #layout
 	let menuOpen = $state(false);
@@ -57,6 +85,20 @@
 	let selectedTeacher = $state(null);
 	let selectedClass = $state(null);
 	let noMatch = $state('');
+	// Where the user came from: prefill the search predicate to match.
+	let lastViewKind = $state(null); // 'teacher' | 'class' | null
+	let hoveredType = $state(null); // completion tab under the mouse
+	// Ghost preview of the hovered completion (shadow text in the filter box).
+	// Ghost overlay paints ABOVE the input, so the completion replaces the
+	// `*` (or partial value) instead of appending after it.
+	const ghostPreview = $derived.by(() => {
+		if (!hoveredType) return null;
+		const before = query.slice(0, cursorPos);
+		const m = /(\S*)$/.exec(before);
+		if (!m || !/^type:(\*|[a-z]*)$/i.test(m[1])) return null;
+		const start = cursorPos - m[1].length;
+		return { prefix: query.slice(0, start) + 'type:', rest: hoveredType, suffix: query.slice(cursorPos) };
+	});
 
 	// Remember the last selection (teacher or class) across reloads.
 	const TEACHER_STORE_KEY = 'time-omni-teacher';
@@ -156,9 +198,13 @@
 				const rc = readStoredClass();
 				if (rt && omniStore.teachers.some((t) => t.name === rt)) {
 					selectedTeacher = rt;
+					lastViewKind = 'teacher';
 				} else if (rc) {
 					try {
-						if (getClassDetail(omniStore, rc, new Date())) selectedClass = rc;
+						if (getClassDetail(omniStore, rc, new Date())) {
+							selectedClass = rc;
+							lastViewKind = 'class';
+						}
 					} catch (e) {}
 				}
 				unsub = clock((t) => {
@@ -176,12 +222,114 @@
 
 	// Polished search results
 	const filteredTeachers = $derived(
-		omniStore ? searchOmniTeachers(omniStore.teachers, searchTerms) : []
+		omniStore ? searchOmniTeachers(omniStore.teachers, parsedQuery) : []
 	);
 
 	const filteredClasses = $derived(
-		omniStore ? searchOmniClasses(omniStore.classes, searchTerms) : []
+		omniStore ? searchOmniClasses(omniStore.classes, parsedQuery) : []
 	);
+
+	// Contextual predicate suggestions: keys that can still narrow the
+	// current results (with counts), shown when NOT completing `type:`.
+	const predicateSuggestions = $derived.by(() => {
+		if (!searchMode || insideTypeNode || insidePredicateNode) return [];
+		// Only predicates that make sense for the current result kind are
+		// suggested (classes: their identity; teachers: what they teach).
+		// Anything else still works when typed explicitly.
+		const candidates = [];
+		if (wantClasses && filteredClasses.length) {
+			candidates.push(
+				{ key: 'track', label: 'Track', pool: filteredClasses },
+				{ key: 'year', label: 'Year', pool: filteredClasses },
+				{ key: 'specialty', label: 'Specialty', pool: filteredClasses }
+			);
+		}
+		if (wantTeachers && filteredTeachers.length) {
+			candidates.push({ key: 'subject', label: 'Subject', pool: filteredTeachers });
+		}
+		const out = [];
+		for (const { key, label, pool } of candidates) {
+			if (parsedQuery.filters.some((f) => f.key === key)) continue;
+			out.push({ key, label, count: pool.length });
+		}
+		return out;
+	});
+
+	// The token being typed, if it prefixes a filter key (e.g. `subj`),
+	// narrows the suggestion list to the matching keys.
+	const keyPrefix = $derived.by(() => {
+		const tok = query.slice(0, cursorPos).split(/\s+/).pop() ?? '';
+		return /^[a-z]+$/i.test(tok) ? tok.toLowerCase() : '';
+	});
+	const visibleSuggestions = $derived(
+		keyPrefix
+			? predicateSuggestions.filter((p) => p.key.startsWith(keyPrefix))
+			: predicateSuggestions
+	);
+
+	// Values menu: while inside a predicate value, list contextual values —
+	// distinct session values across current results, narrowed by the partial.
+	const valueMenu = $derived.by(() => {
+		const tok = query.slice(0, cursorPos).split(/\s+/).pop() ?? '';
+		const m = /^(subject|room|teacher|day|cohort|group):(.*)$/i.exec(tok);
+		if (!m) return null;
+		const key = m[1].toLowerCase();
+		const partial = m[2].toLowerCase();
+		const pool = [
+			...(wantTeachers ? filteredTeachers : []),
+			...(wantClasses ? filteredClasses : [])
+		];
+		const counts = new Map();
+		for (const item of pool) {
+			const vals =
+				key === 'cohort' || key === 'group'
+					? [item[key]]
+					: item.filterSets?.[key] ?? [];
+			for (const v of new Set(vals)) {
+				if (!v) continue;
+				const sv = String(v);
+				if (partial && !sv.toLowerCase().includes(partial)) continue;
+				counts.set(sv, (counts.get(sv) ?? 0) + 1);
+			}
+		}
+		const values = [...counts.entries()]
+			.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+			.map(([value, count]) => ({ value, count }));
+		return { key, values };
+	});
+
+	// Complete the predicate value under the cursor and move past it.
+	function completePredicateValue(value) {
+		const before = query.slice(0, cursorPos);
+		const m = /(\S*)$/.exec(before);
+		const token = m ? m[1] : '';
+		const start = cursorPos - token.length;
+		const key = /^([a-z]+):/i.exec(token)?.[1] ?? '';
+		const done = value.includes(' ') ? `${key}:"${value}" ` : `${key}:${value} `;
+		query = query.slice(0, start) + done + query.slice(cursorPos);
+		cursorPos = start + done.length;
+		searchEl?.focus();
+		searchEl?.setSelectionRange(cursorPos, cursorPos);
+	}
+
+	// Insert a suggested predicate at the cursor (ends inside the node).
+	// A partial token being typed (`roo`) is completed, not appended to.
+	function addPredicate(key) {
+		const tail = query.slice(cursorPos);
+		const before = query.slice(0, cursorPos);
+		const m = /(\S*)$/.exec(before);
+		const token = m ? m[1] : '';
+		if (token && !token.includes(':') && key.startsWith(token.toLowerCase())) {
+			const start = cursorPos - token.length;
+			query = query.slice(0, start) + `${key}:` + tail;
+			cursorPos = start + `${key}:`.length;
+		} else {
+			query = before + (before && !before.endsWith(' ') ? ' ' : '') + `${key}:` + tail;
+			cursorPos = before.length + (before && !before.endsWith(' ') ? 1 : 0) + `${key}:`.length;
+		}
+		searchEl?.focus();
+		searchEl?.setSelectionRange(cursorPos, cursorPos);
+	}
 
 	const searchMode = $derived(query.trim().length > 0);
 
@@ -222,6 +370,7 @@
 	function selectTeacher(name) {
 		selectedTeacher = name;
 		selectedClass = null;
+		lastViewKind = 'teacher';
 		noMatch = '';
 		writeStoredTeacher(name);
 		writeStoredClass(null);
@@ -232,6 +381,7 @@
 	function selectClass(identifier) {
 		selectedClass = identifier;
 		selectedTeacher = null;
+		lastViewKind = 'class';
 		noMatch = '';
 		writeStoredClass(identifier);
 		writeStoredTeacher(null);
@@ -260,6 +410,10 @@
 		selectedTeacher = null;
 		selectedClass = null;
 		noMatch = '';
+		query = '';
+		cursorPos = 0;
+		// Closing a timetable forgets it: no origin state for prefill.
+		lastViewKind = null;
 		writeStoredTeacher(null);
 		writeStoredClass(null);
 	}
@@ -454,17 +608,37 @@
 				type="search"
 				placeholder="Search teacher, class, or subject…"
 				autocomplete="off"
-				value={query}
+				value={ghostPreview ? ghostPreview.prefix + ghostPreview.rest + ghostPreview.suffix : query}
 				bind:this={searchEl}
 				oninput={(e) => {
 					query = e.currentTarget.value;
+					cursorPos = e.currentTarget.selectionStart ?? query.length;
 					if (!query.trim()) showEmpty();
 				}}
 				onkeydown={onKeydown}
-				onfocus={openMenu}
-				onclick={openMenu}
+				onfocus={(e) => {
+					// Prefill from where the user came from.
+					if (!query.trim()) {
+						query = lastViewKind ? `type:${lastViewKind}` : 'type:*';
+						cursorPos = query.length;
+						e.currentTarget.setSelectionRange(cursorPos, cursorPos);
+					} else {
+						cursorPos = e.currentTarget.selectionStart ?? query.length;
+					}
+					openMenu();
+				}}
+				onclick={(e) => {
+					cursorPos = e.currentTarget.selectionStart ?? query.length;
+					openMenu();
+				}}
+				onselect={(e) => {
+					cursorPos = e.currentTarget.selectionStart ?? query.length;
+				}}
+				onkeyup={(e) => {
+					cursorPos = e.currentTarget.selectionStart ?? query.length;
+				}}
 			/>
-			<button type="button" id="searchBack" aria-label="Back" onclick={closeMenu}>
+			<button type="button" id="searchBack" aria-label="Back" onclick={() => { closeMenu(); showEmpty(); }}>
 				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
 			</button>
 			<button
@@ -530,68 +704,77 @@
 			</div>
 		</div>
 
-		<!-- Browse mode tabs -->
-		{#if !searchMode}
-			<div class="omni-tabs" role="tablist">
+		<!-- Sub-row: type-completion tabs or the status line — one fixed slot.
+		     Hidden while a timetable is selected. -->
+		{#if !(selectedTeacher || selectedClass)}
+		<div class="omni-subrow">
+			<!-- One completion slot: type tabs inside a `type:` node, else
+			     next-predicate suggestions, else the status line. -->
+			{#if insideTypeNode}
+			<div class="omni-tabs" role="tablist" aria-label="Result types">
 				<button
 					type="button"
 					class="omni-tab-btn"
-					class:active={browseTab === 'teachers'}
-					onclick={() => (browseTab = 'teachers')}
+					class:active={parsedQuery.type === 'teacher' || (typePartial !== '' && 'teacher'.startsWith(typePartial))}
+					onmouseenter={() => (hoveredType = 'teacher')}
+					onmouseleave={() => (hoveredType = null)}
+					onmousedown={(e) => e.preventDefault()}
+					onclick={() => completeTypePredicate('teacher')}
 				>
 					Teachers
 				</button>
 				<button
 					type="button"
 					class="omni-tab-btn"
-					class:active={browseTab === 'classes'}
-					onclick={() => (browseTab = 'classes')}
+					class:active={parsedQuery.type === 'class' || (typePartial !== '' && 'class'.startsWith(typePartial))}
+					onmouseenter={() => (hoveredType = 'class')}
+					onmouseleave={() => (hoveredType = null)}
+					onmousedown={(e) => e.preventDefault()}
+					onclick={() => completeTypePredicate('class')}
 				>
 					Classes
 				</button>
 			</div>
-		{:else}
-			<!-- Search mode: type filters -->
-			{#if (filteredTeachers.length > 0 ? 1 : 0) + (filteredClasses.length > 0 ? 1 : 0) > 1}
-			<div class="omni-filters" role="group" aria-label="Result types">
-				{#if filteredTeachers.length > 0}
-					<button
-						type="button"
-						class="omni-chip"
-						class:active={wantTeachers}
-						aria-pressed={wantTeachers}
-						onclick={() => setTypePredicate(parsedQuery.type === 'teacher' ? null : 'teacher')}
-					>
-						<span class="omni-chip-check" aria-hidden="true">{wantTeachers ? '✓' : ''}</span>
-						Teachers
-					</button>
-				{/if}
-				{#if filteredClasses.length > 0}
-					<button
-						type="button"
-						class="omni-chip"
-						class:active={wantClasses}
-						aria-pressed={wantClasses}
-						onclick={() => setTypePredicate(parsedQuery.type === 'class' ? null : 'class')}
-					>
-						<span class="omni-chip-check" aria-hidden="true">{wantClasses ? '✓' : ''}</span>
-						Classes
-					</button>
-				{/if}
+			{:else if valueMenu && valueMenu.values.length}
+			<div class="value-menu" role="listbox" aria-label="Values">
+				{#each valueMenu.values.slice(0, 12) as v (v.value)}
+				<button
+					type="button"
+					class="value-chip"
+					onmousedown={(e) => e.preventDefault()}
+					onclick={() => completePredicateValue(v.value)}
+				>
+					{v.value} <b>{v.count}</b>
+				</button>
+				{/each}
 			</div>
-			{/if}
-		{/if}
-
-		<p id="status" class={query || selectedTeacher || selectedClass ? 'count-away' : ''}>
-			{#if loadError}
-				Failed to load data: {loadError}
-			{:else if omniStore}
-				{omniStore.size} sessions · {omniStore.teachers.length} teachers · {omniStore.classes
-					.length} classes
+			{:else if visibleSuggestions.length}
+			<div class="predicate-row" role="group" aria-label="Filter by">
+				<span class="predicate-hint">Filter by</span>
+				{#each visibleSuggestions as p (p.key)}
+				<button
+					type="button"
+					class="predicate-chip"
+					onmousedown={(e) => e.preventDefault()}
+					onclick={() => addPredicate(p.key)}
+				>
+					{p.label}: <b>{p.count}</b>
+				</button>
+				{/each}
+			</div>
 			{:else}
-				Loading timetable data…
+			<p class="omni-substatus">
+				{#if loadError}
+					Failed to load data: {loadError}
+				{:else if omniStore}
+					{omniStore.size} sessions · {omniStore.teachers.length} teachers · {omniStore.classes.length} classes
+				{:else}
+					Loading timetable data…
+				{/if}
+			</p>
 			{/if}
-		</p>
+		</div>
+		{/if}
 
 		<!-- Lists container -->
 		<div class="omni-lists">
@@ -979,7 +1162,7 @@
 				onclick={onEmptyClick}
 				onanimationend={onEmptyAnimEnd}
 			>
-				<div class="no-teacher-selected no-class-selected">No Teacher or Class Selected</div>
+				<div class="no-teacher-selected no-class-selected">Nothing is selected</div>
 				<div class="empty-face">{emptyFace}</div>
 			</div>
 		{/if}
@@ -1117,5 +1300,13 @@
 
 	.fact-card.clickable {
 		cursor: pointer;
+	}
+	@media (hover: hover) {
+		.fact-card.clickable:hover {
+			background: color-mix(in srgb, var(--md-primary, #0b4da2) 16%, var(--md-surface, #fff));
+		}
+	}
+	.fact-card.clickable:active {
+		background: color-mix(in srgb, var(--md-primary, #0b4da2) 22%, var(--md-surface, #fff));
 	}
 </style>

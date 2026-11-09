@@ -5,7 +5,37 @@ import { catalogFromCsv } from '../../../domain-model/csv.js';
 import { DAYS, SLOTS, trackOf, yearOf } from '../../../domain-model/objects.js';
 import { formatWeekPattern } from '../../../domain-model/print.js';
 import { resolve, sessionsFor } from '../../../domain-model/query.js';
-import { normStr, tokenize, fuzzyRanges, scoreMatch, mergeRanges } from './search.js';
+import { normStr, tokenize, fuzzyRanges, scoreMatch, mergeRanges, parseSearchQuery } from './search.js';
+
+/** Normalize a search input (string or parsed query) to {terms, filters}. */
+function normQuery(query) {
+	if (typeof query === 'string' || query == null) {
+		const parsed = parseSearchQuery(query ?? '');
+		return { terms: parsed.terms.join(' '), filters: parsed.filters };
+	}
+	return { terms: (query.terms ?? []).join(' '), filters: query.filters ?? [] };
+}
+
+const EXACT_FILTER_KEYS = new Set(['day', 'cohort', 'group', 'track', 'year', 'specialty']);
+
+/** Predicate evaluation: every filter must match one of the item's values. */
+export function passesFilters(item, filters) {
+	if (!filters?.length) return true;
+	return filters.every((f) => {
+		// Identity predicates read the item's own fields; session predicates
+		// read its indexed session values.
+		let values;
+		if (['cohort', 'group', 'track', 'year', 'specialty'].includes(f.key)) values = [item[f.key]];
+		else values = item.filterSets?.[f.key] ?? [];
+		const v = String(f.value ?? '').toLowerCase();
+		// `subject:` ≡ `subject:*` ≡ absent: no filtering until a value is typed.
+		if (!v || v === '*') return true;
+		return values.some((x) => {
+			const sx = String(x ?? '').toLowerCase();
+			return EXACT_FILTER_KEYS.has(f.key) ? sx === v : sx.includes(v);
+		});
+	});
+}
 
 // Day/slot sets come from the library — single source of truth.
 export { DAYS, SLOTS };
@@ -170,14 +200,26 @@ export function buildOmniStore(csvText) {
 	// Sessions with no teacher (teacher === null) are valid rows, but they
 	// belong to no teacher, so they are skipped here.
 	const teacherStats = {};
+	const classFilterSets = new Map(); // class label -> predicate-searchable session values
 	for (const r of validRecords) {
+		const lbl = r.population?.label;
+		if (lbl) {
+			let cs = classFilterSets.get(lbl);
+			if (!cs) classFilterSets.set(lbl, (cs = { subject: new Set(), room: new Set(), day: new Set(), teacher: new Set() }));
+			if (r.subject) cs.subject.add(r.subject);
+			if (r.room) cs.room.add(r.room);
+			if (r.day) cs.day.add(r.day);
+			if (r.teacher) cs.teacher.add(r.teacher);
+		}
 		if (r.teacher == null) continue;
 		if (!teacherStats[r.teacher]) {
-			teacherStats[r.teacher] = { count: 0, subjects: new Set(), classes: new Set() };
+			teacherStats[r.teacher] = { count: 0, subjects: new Set(), classes: new Set(), rooms: new Set(), days: new Set() };
 		}
 		teacherStats[r.teacher].count += 1;
 		if (r.subject) teacherStats[r.teacher].subjects.add(r.subject);
-		if (r.population?.label) teacherStats[r.teacher].classes.add(r.population.label);
+		if (lbl) teacherStats[r.teacher].classes.add(lbl);
+		if (r.room) teacherStats[r.teacher].rooms.add(r.room);
+		if (r.day) teacherStats[r.teacher].days.add(r.day);
 	}
 
 	const teachers = Object.keys(teacherStats)
@@ -186,7 +228,12 @@ export function buildOmniStore(csvText) {
 			name,
 			sessionCount: teacherStats[name].count,
 			subjects: Array.from(teacherStats[name].subjects),
-			classes: Array.from(teacherStats[name].classes)
+			classes: Array.from(teacherStats[name].classes),
+			filterSets: {
+				subject: Array.from(teacherStats[name].subjects),
+				room: Array.from(teacherStats[name].rooms),
+				day: Array.from(teacherStats[name].days)
+			}
 		}));
 
 	// Collect publication classes present in the CSV
@@ -200,6 +247,7 @@ export function buildOmniStore(csvText) {
 			const track = trackOf(c) || '';
 			const yr = yearOf(c)?.number ?? '';
 
+			const fs = classFilterSets.get(c.label);
 			classes.push({
 				identifier: c.label,
 				classObj: c,
@@ -208,7 +256,10 @@ export function buildOmniStore(csvText) {
 				year: yr,
 				specialty: c.semester?.label || '',
 				group: c.group || '',
-				cohort: c.cohort != null ? String(c.cohort) : ''
+				cohort: c.cohort != null ? String(c.cohort) : '',
+				filterSets: fs
+					? { subject: Array.from(fs.subject), room: Array.from(fs.room), day: Array.from(fs.day), teacher: Array.from(fs.teacher) }
+					: { subject: [], room: [], day: [], teacher: [] }
 			});
 		}
 	}
@@ -231,9 +282,11 @@ export function buildOmniStore(csvText) {
  * Polished teacher search with fuzzy matching across teacher name, subjects and classes.
  */
 export function searchOmniTeachers(teachers, query) {
-	const q = String(query == null ? '' : query).trim();
+	const { terms, filters } = normQuery(query);
+	const q = terms.trim();
+	const corpus = teachers.filter((t) => passesFilters(t, filters));
 	if (!q) {
-		return teachers
+		return corpus
 			.map((t) => ({
 				...t,
 				exact: false,
@@ -246,10 +299,10 @@ export function searchOmniTeachers(teachers, query) {
 	}
 
 	const tokens = tokenize(q);
-	const normQuery = normStr(q);
+	const normQ = normStr(q);
 	const out = [];
 
-	teachers.forEach((t) => {
+	corpus.forEach((t) => {
 		let ok = true;
 		let score = 0;
 		const nameRanges = [];
@@ -291,7 +344,7 @@ export function searchOmniTeachers(teachers, query) {
 
 		if (!ok) return;
 
-		if (normStr(t.name) === normQuery) score += 10000;
+		if (normStr(t.name) === normQ) score += 10000;
 
 		out.push({
 			...t,
@@ -315,9 +368,11 @@ export function searchOmniTeachers(teachers, query) {
  * Polished class search with fuzzy matching across shortcut, track, specialty, and cohort.
  */
 export function searchOmniClasses(classes, query) {
-	const q = String(query == null ? '' : query).trim();
+	const { terms, filters } = normQuery(query);
+	const q = terms.trim();
+	const corpus = classes.filter((c) => passesFilters(c, filters));
 	if (!q) {
-		return classes
+		return corpus
 			.map((c) => ({
 				...c,
 				score: 0,
@@ -331,7 +386,7 @@ export function searchOmniClasses(classes, query) {
 	const tokens = tokenize(q);
 	const out = [];
 
-	classes.forEach((c) => {
+	corpus.forEach((c) => {
 		let ok = true;
 		let score = 0;
 		// Ranges are computed on the FULL identifier (the one string that

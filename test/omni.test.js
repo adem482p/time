@@ -100,19 +100,74 @@ test('cohort token straddling head/sub highlights both parts', () => {
 });
 
 test('parseSearchQuery extracts type predicates and keeps terms', () => {
-	assert.deepStrictEqual(parseSearchQuery('GLSI3 D2'), { type: null, filters: [], terms: ['glsi3', 'd2'] });
-	assert.deepStrictEqual(parseSearchQuery('type:class GLSI'), { type: 'class', filters: [], terms: ['glsi'] });
-	assert.deepStrictEqual(parseSearchQuery('GLSI type:teachers'), { type: 'teacher', filters: [], terms: ['glsi'] });
+	assert.deepStrictEqual(parseSearchQuery('GLSI3 D2'), { type: null, filters: [], terms: ['glsi3', 'd2'], completing: false });
+	assert.deepStrictEqual(parseSearchQuery('type:class GLSI'), { type: 'class', filters: [], terms: ['glsi'], completing: false });
+	assert.deepStrictEqual(parseSearchQuery('GLSI type:teachers'), { type: 'teacher', filters: [], terms: ['glsi'], completing: false });
 	// Last type: wins; unknown values/keys fall back to literal text.
 	assert.strictEqual(parseSearchQuery('type:class type:teacher').type, 'teacher');
-	assert.deepStrictEqual(parseSearchQuery('type:xyz'), { type: null, filters: [], terms: ['type:xyz'] });
-	assert.deepStrictEqual(parseSearchQuery('foo:bar'), { type: null, filters: [], terms: ['foo:bar'] });
+	assert.deepStrictEqual(parseSearchQuery('type:xyz'), { type: null, filters: [], terms: ['type:xyz'], completing: false });
+	assert.deepStrictEqual(parseSearchQuery('foo:bar'), { type: null, filters: [], terms: ['foo:bar'], completing: false });
 	// Field predicates are parsed (evaluation is a later step).
 	assert.deepStrictEqual(parseSearchQuery('room:B1 subject:python'), {
 		type: null,
 		filters: [{ key: 'room', value: 'b1' }, { key: 'subject', value: 'python' }],
-		terms: []
+		terms: [],
+		completing: false
 	});
+	// A bare `type:` / `type:*` flags completion and is not a search term.
+	assert.deepStrictEqual(parseSearchQuery('type:'), { type: null, filters: [], terms: [], completing: true });
+	assert.deepStrictEqual(parseSearchQuery('type:*'), { type: null, filters: [], terms: [], completing: true });
+});
+
+test('multiple predicates filter within the type before fuzzy search', () => {
+	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const store = buildOmniStore(csvText);
+
+	// cohort:2 narrows classes before any fuzzy text runs.
+	const cohortHits = searchOmniClasses(store.classes, parseSearchQuery('cohort:2'));
+	assert.ok(cohortHits.length > 0);
+	assert.ok(cohortHits.every((c) => c.cohort === '2'));
+
+	// subject: is a substring predicate over session subjects.
+	const subjHits = searchOmniClasses(store.classes, parseSearchQuery('subject:python'));
+	assert.ok(subjHits.length > 0);
+	assert.ok(subjHits.every((c) => c.filterSets.subject.some((s) => s.toLowerCase().includes('python'))));
+
+	// Multiple predicates AND together across a free-text term.
+	const both = searchOmniClasses(store.classes, parseSearchQuery('cohort:1 subject:python'));
+	assert.ok(both.every((c) => c.cohort === '1' && c.filterSets.subject.some((s) => s.toLowerCase().includes('python'))));
+
+	// group:/day: are exact; teacher: + room: work on both result kinds.
+	const dayHits = searchOmniTeachers(store.teachers, parseSearchQuery('day:lundi'));
+	assert.ok(dayHits.length > 0);
+	assert.ok(dayHits.every((t) => t.filterSets.day.includes('LUNDI')));
+
+	// A predicate matching nothing yields nothing (not everything).
+	assert.strictEqual(searchOmniClasses(store.classes, parseSearchQuery('subject:zzzznope')).length, 0);
+
+	// Identity predicates (track/year/specialty) work when typed even though
+	// they are only suggested for classes.
+	const trackHits = searchOmniClasses(store.classes, parseSearchQuery('track:LCS'));
+	assert.ok(trackHits.length > 0 && trackHits.every((c) => c.track === 'LCS'));
+	const yearHits = searchOmniClasses(store.classes, parseSearchQuery('year:3'));
+	assert.ok(yearHits.length > 0 && yearHits.every((c) => c.year === 3));
+	const specHits = searchOmniClasses(store.classes, parseSearchQuery('specialty:GLSI3'));
+	assert.ok(specHits.length > 0 && specHits.every((c) => c.specialty === 'GLSI3'));
+
+	// Bare `key:` ≡ `key:*` ≡ absent: no filtering until a value is typed.
+	assert.strictEqual(
+		searchOmniClasses(store.classes, parseSearchQuery('subject:')).length,
+		searchOmniClasses(store.classes, parseSearchQuery('')).length
+	);
+	assert.strictEqual(
+		searchOmniClasses(store.classes, parseSearchQuery('subject:* cohort:')).length,
+		searchOmniClasses(store.classes, parseSearchQuery('')).length
+	);
+
+	// Quoted multi-word values stay one predicate.
+	assert.deepStrictEqual(parseSearchQuery('subject:"machine learning"').filters, [
+		{ key: 'subject', value: 'machine learning' }
+	]);
 });
 
 test('class matches in teacher search carry ranges and highlight', () => {
@@ -203,8 +258,8 @@ test('tabs are placed under the filter box and obey mobile visibility rules', ()
 
 	// Verify markup order: #searchWrap, then .omni-tabs, then #status
 	const wrapIdx = html.indexOf('<div id="searchWrap">');
-	const tabsIdx = html.indexOf('<div class="omni-tabs" role="tablist">');
-	const statusIdx = html.indexOf('<p id="status"');
+	const tabsIdx = html.indexOf('<div class="omni-tabs"');
+	const statusIdx = html.indexOf('omni-substatus');
 
 	assert.ok(wrapIdx !== -1, 'has #searchWrap');
 	assert.ok(tabsIdx !== -1, 'has .omni-tabs');

@@ -143,7 +143,7 @@ so without JS the box never forms and the static
 #searchWrap{
   position: relative; max-width: 40rem; margin: .8rem 0;
   border: 1px solid var(--md-outline-variant, #ccc); border-radius: 8px;
-  background: var(--md-surface-container-lowest, #fff);
+  background: var(--md-surface-container-high, #eceef4);
 }#searchWrap:focus-within{
   border-color: var(--md-primary, #0b4da2);
   box-shadow: 0 0 0 2px var(--md-primary-container, #d6e9ff);
@@ -687,7 +687,7 @@ decorative chevron right; the whole surface is one click target that
   #searchOverlay:not([hidden]){
     position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3;
     display: flex; align-items: center;
-    background: var(--md-surface-container-lowest, #fff);
+    background: var(--md-surface-container-high, #eceef4);
     border-radius: 8px;
     padding: .45rem .6rem; cursor: pointer;
   }/* issue 057: while the overlay is the box,
@@ -699,7 +699,12 @@ so #overlayClear lifts itself above the stretch */
   #overlayToggle{
     position: absolute; left: 0; top: 0; right: 0; bottom: 0;
     border: 0; padding: 0; margin: 0; background: transparent;
-    color: inherit; font: inherit; cursor: pointer;
+    color: inherit; font: inherit; cursor: pointer; border-radius: 8px;
+  }/* M3 state layers on the clickable surface */
+  #overlayToggle:hover{
+    background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
+  }#overlayToggle:active{
+    background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent);
   }/* the deselect X reuses the #searchClear slot look,
 at the overlay's left */
   #overlayClear{
@@ -1035,6 +1040,66 @@ table.week .week-pill {
   /* desktop shows the normal tables; the cards are mobile-only. */
   .msession-list{ display: none; }
 }
+/* ---- search sub-row: browse tabs, completion tabs, or the status line —
+   one fixed slot so the lists below never shift. */
+.omni-subrow{
+  min-height: 2.75rem; display: flex; align-items: center; justify-content: center;
+  margin: 0 0 .4rem;
+}
+.omni-subrow .omni-tabs{ margin: 0; }
+.omni-substatus{
+  margin: 0; width: 100%; text-align: center;
+  font-size: .85em; color: var(--md-on-surface-variant, #555);
+}
+/* ---- contextual predicate suggestions: assist chips ---- */
+.predicate-row{
+  display: flex; flex-wrap: wrap; align-items: center; gap: .45rem;
+  margin: 0 0 .5rem;
+}
+.predicate-hint{
+  font-size: .78rem; font-weight: 500; letter-spacing: .03125em;
+  color: var(--md-on-surface-variant, #555);
+}
+.predicate-chip{
+  display: inline-flex; align-items: center; gap: .35rem; height: 2rem;
+  padding: 0 .9rem; border: 1px solid var(--md-outline-variant, #ccc);
+  border-radius: 8px; background: var(--md-surface, #fff);
+  color: var(--md-on-surface, #1b1b1b);
+  font-size: .875rem; font-weight: 500; line-height: 1; cursor: pointer;
+}
+.predicate-chip b{ font-weight: 600; color: var(--md-on-surface-variant, #555); }
+/* ---- contextual value menu: height-limited, scrolls ---- */
+.value-menu{
+  display: flex; flex-wrap: wrap; gap: .45rem;
+  max-height: 8.5rem; overflow-y: auto; padding: .15rem .1rem;
+  scrollbar-width: thin;
+}
+.value-chip{
+  display: inline-flex; align-items: center; gap: .35rem; height: 2rem;
+  padding: 0 .9rem; border: 1px solid var(--md-outline-variant, #ccc);
+  border-radius: 8px; background: var(--md-surface, #fff);
+  color: var(--md-on-surface, #1b1b1b);
+  font-size: .875rem; font-weight: 500; line-height: 1; cursor: pointer;
+}
+.value-chip b{ font-weight: 600; color: var(--md-on-surface-variant, #555); }
+@media (hover: hover) {
+  .value-chip:hover{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent); }
+}
+.value-chip:active{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent); }
+@media (hover: hover) {
+  .predicate-chip:hover{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent); }
+}
+.predicate-chip:active{ background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent); }
+/* ---- hover ghost preview inside the filter box ---- */
+#searchWrap #ghost{
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 2;
+  display: flex; align-items: center; padding: .45rem .6rem;
+  white-space: pre; overflow: hidden; pointer-events: none;
+  font-family: "Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.5;
+}
+#ghost .ghost-typed{ color: transparent; }
+#ghost .ghost-pre{ color: var(--md-tertiary, #b58900); font-style: italic; }
 @media (max-width: 700px){
   /* mobile shows the cards; the tables are desktop-only. */
   #detail table.desktop-sessions{ display: none; }

@@ -10,8 +10,24 @@
 export function parseSearchQuery(q) {
 	const filters = [];
 	let type = null;
+	let completing = false; // cursor is inside a bare `type:` being completed
 	const terms = [];
-	for (const tok of tokenize(q ?? '')) {
+	// Quote-aware split: subject:"machine learning" stays one token.
+	const rawTokens = (String(q ?? '').match(/[^\s:]+:"[^"]*"|"[^"]*"|\S+/g) || []).map((t) => {
+		const quoted = /:"([^"]*)"$/.exec(t);
+		return (quoted ? t.slice(0, -quoted[0].length + 1) + quoted[1] : t).toLowerCase();
+	});
+	for (const tok of rawTokens) {
+		if (/^type:(\*|)$/i.test(tok)) {
+			completing = true;
+			continue;
+		}
+		// Bare `key:` (like `key:*`) is an inert filter, not a search term.
+		const bare = /^([a-z]+):(\*|)$/i.exec(tok);
+		if (bare && ['subject', 'room', 'teacher', 'day', 'cohort', 'group', 'track', 'year', 'specialty'].includes(bare[1].toLowerCase())) {
+			filters.push({ key: bare[1].toLowerCase(), value: '' });
+			continue;
+		}
 		const m = /^([a-z]+):(.+)$/i.exec(tok);
 		if (m) {
 			const key = m[1].toLowerCase();
@@ -25,14 +41,14 @@ export function parseSearchQuery(q) {
 					continue;
 				}
 			}
-			if (['subject', 'room', 'teacher', 'day', 'cohort', 'group'].includes(key)) {
+			if (['subject', 'room', 'teacher', 'day', 'cohort', 'group', 'track', 'year', 'specialty'].includes(key)) {
 				filters.push({ key, value });
 				continue;
 			}
 		}
 		terms.push(tok);
 	}
-	return { type, filters, terms };
+	return { type, filters, terms, completing };
 }
 
 export function normStr(s) {
