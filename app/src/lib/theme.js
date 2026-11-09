@@ -458,7 +458,7 @@ const tonalPalette = (hue, chroma) => {
 // because a tonal-spot scheme would still colour secondary/tertiary.
 const VARIANTS = {
   tonalSpot: (h) =>
-    ({ P: [h, 36], S: [h, 16], T: [h + 60, 24], N: [h, 6], NV: [h, 8], E: [25, 84] }),
+    ({ P: [h, 36], S: [h, 19], T: [h + 60, 24], N: [h, 6], NV: [h, 8], E: [25, 84] }),
   neutral: (h) =>
     ({ P: [h, 12], S: [h, 8], T: [h, 16], N: [h, 2], NV: [h, 2], E: [25, 84] }),
   monochrome: (h) =>

@@ -27,10 +27,10 @@ which CSS requires
     --md-on-primary: #102F60;
     --md-primary-container: #2B4678;
     --md-on-primary-container: #D8E2FF;
-    --md-secondary: #BFC6DC;
-    --md-on-secondary: #293041;
-    --md-secondary-container: #3F4759;
-    --md-on-secondary-container: #DBE2F9;
+    --md-secondary: #BCC6E1;
+    --md-on-secondary: #263045;
+    --md-secondary-container: #3D475D;
+    --md-on-secondary-container: #D8E2FE;
     --md-tertiary: #DEBCDF;
     --md-on-tertiary: #402843;
     --md-tertiary-container: #583E5B;
@@ -146,7 +146,7 @@ identical on all viewports) ---- */
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
 }#omniList li{ padding: 0; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }#omniList li:last-child{ border-bottom: 0; }#omniList li:not(.group-head):hover,
 #omniList li:not(.group-head).active{
-  background: var(--md-secondary-container, #dbe2f9);
+  background: var(--md-secondary-container, #d8e2fe);
   color: var(--md-on-secondary-container, #111c2b);
 }#omniList li.empty{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#omniList .relevant{ color: var(--md-on-surface-variant, #666); font-size: .85em; }/* grouped-list section header rows (inserted by JS between teacher rows):
    non-clickable labels,
@@ -327,7 +327,7 @@ so the neighbouring marked cell's own border wins the
 #detail .pill{
   display: inline-flex; align-items: center; height: 2rem;
   padding: 0 .9rem; border: 0; border-radius: 8px;
-  background: var(--md-secondary-container, #dbe2f9);
+  background: var(--md-secondary-container, #d8e2fe);
   color: var(--md-on-secondary-container, #111c2b);
   font-size: .875rem; font-weight: 500; line-height: 1; white-space: nowrap;
 }/* the pill reads the surface it sits on: on a now/next row (or mobile card)
@@ -478,7 +478,7 @@ so the hanging now/next
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px;
 }#slotList li{ padding: .3rem .6rem; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }#slotList li:hover,
 #slotList li.active{
-  background: var(--md-secondary-container, #dbe2f9);
+  background: var(--md-secondary-container, #d8e2fe);
   color: var(--md-on-secondary-container, #111c2b);
 }#slotList li.bucket{ background: var(--md-surface-container, #f4f4f4); font-weight: bold; cursor: default; }#slotList li.bucket.today{ background: var(--md-surface-container-high, #e8eefb); }#slotList li.dim{ color: var(--md-on-surface, inherit); opacity: .58; }#slotList li.info{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#slotList li.now{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }#slotList li.next{ background: var(--md-tertiary-container, #fbd7fc); color: var(--md-on-tertiary-container, #31101d); }#slotList .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#slotList .nexttag{
   display: inline-flex; align-items: center; gap: .3em;
@@ -667,7 +667,7 @@ its arrowhead resting in the narrow gutter beside the time column. */
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
 }#omniList li{ padding: 0; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }#omniList li:last-child{ border-bottom: 0; }#omniList li:hover,
 #omniList li.active{
-  background: var(--md-secondary-container, #dbe2f9);
+  background: var(--md-secondary-container, #d8e2fe);
   color: var(--md-on-secondary-container, #111c2b);
 }#omniList li.empty{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#omniList .alias{ color: var(--md-on-surface-variant, #555); font-size: .82em; }#omniList .class-track{
   display: block;
@@ -925,7 +925,7 @@ table.week .week-pill {
 }
 #layout .sbox-tabs .sbox-tab + .sbox-tab{ border-left:1px solid var(--md-outline-variant, #ccc); }
 #layout .sbox-tab.active{
-  background:var(--md-secondary-container, #dbe2f9);
+  background:var(--md-secondary-container, #d8e2fe);
   color:var(--md-on-secondary-container, #111c2b);
 }
 @media (hover: hover){
@@ -976,7 +976,7 @@ table.week .week-pill {
 #layout .sbox-selected{
   display:flex; flex-direction:row; align-items:stretch; width:100%; max-width:40rem; height:2.75rem; box-sizing:border-box; margin:.8rem 0;
   border-radius:8px;
-  background:var(--md-secondary-container, #dbe2f9);
+  background:var(--md-secondary-container, #d8e2fe);
   color:var(--md-on-secondary-container, #111c2b);
   border:1px solid var(--md-outline-variant, #ccc);
 }
