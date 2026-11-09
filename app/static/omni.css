@@ -949,19 +949,21 @@ table.week .week-pill {
   }
 }
 #layout .sbox-values{
-  display:flex; flex-wrap:wrap; gap:.45rem; max-height:8.5rem; overflow-y:auto;
+  display:flex; gap:0; border:1px solid var(--md-outline-variant, #ccc);
+  border-radius:999px; overflow-x:auto; overflow-y:hidden;
+  background:var(--md-surface, #fff); max-width:100%;
 }
 #layout .sbox-suggest{
   display:flex; gap:0; border:1px solid var(--md-outline-variant, #ccc);
   border-radius:999px; overflow:hidden; background:var(--md-surface, #fff);
 }
 #layout .sbox-value{
-  display:inline-flex; align-items:center; gap:.35rem; height:2rem;
-  padding:0 .9rem; border:1px solid var(--md-outline-variant, #ccc);
-  border-radius:8px; background:var(--md-surface, #fff);
-  color:var(--md-on-surface, #1b1b1b);
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:.35rem; height:2rem;
+  padding:0 .9rem; border:0; border-radius:0;
+  background:transparent; color:var(--md-on-surface, #1b1b1b);
   font-size:.875rem; font-weight:500; line-height:1; cursor:pointer;
 }
+#layout .sbox-values .sbox-value + .sbox-value{ border-left:1px solid var(--md-outline-variant, #ccc); }
 #layout .sbox-chip{
   flex:1; display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
   height:2rem; padding:.5rem 1rem; border:0; border-radius:0;
