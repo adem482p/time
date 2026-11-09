@@ -1039,6 +1039,8 @@ table.week .week-pill {
 @media (max-width: 700px){
   /* mobile shows the cards; the tables are desktop-only. */
   #detail table.desktop-sessions{ display: none; }
+  /* hide class pills on the mobile session cards */
+  #detail .msession .pill{ display: none; }
   /* the cards carry the chrome now: drop the section card frame. */
   #detail .day-group{ border: 0; padding: 0; overflow: visible; }
   #detail .msession.now .pill{ background: color-mix(in srgb, var(--md-primary-container, #fff3b0) 65%, var(--md-primary, #0b4da2) 35%); color: var(--md-on-primary-container, #201047); }
