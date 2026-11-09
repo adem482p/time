@@ -818,7 +818,7 @@ table.week .week-pill {
    label-medium on-surface-variant. Leading 40dp tonal icon container. */
 .msession-list{ display: grid; gap: .75rem; }
 .msession{
-  display: flex; align-items: flex-start; gap: .9rem;
+  display: flex; align-items: center; gap: .9rem;
   background: var(--md-surface-container-highest, #e2e2e9);
   border-radius: 12px; padding: 1rem;
 }
