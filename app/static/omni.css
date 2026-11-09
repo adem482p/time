@@ -837,11 +837,11 @@ table.week .week-pill {
 .msession-leading{
   flex: 0 0 auto; width: 2.5rem; height: 2.5rem; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--md-secondary-container, #dbe2f9);
-  color: var(--md-on-secondary-container, #111c2b);
+  background: transparent;
+  color: var(--md-on-surface-variant, #666);
 }
-.msession.now .msession-leading{ background: var(--md-secondary-container, #dbe2f9); color: var(--md-on-secondary-container, #111c2b); }
-.msession.next .msession-leading{ background: var(--md-secondary-container, #dbe2f9); color: var(--md-on-secondary-container, #111c2b); }
+.msession.now .msession-leading{ background: transparent; color: var(--md-on-primary-container, #001a41); }
+.msession.next .msession-leading{ background: transparent; color: var(--md-on-tertiary-container, #31101d); }
 .msession-body{ flex: 1 1 auto; min-width: 0; }
 .msession-head{ display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
 .msession-subject{
