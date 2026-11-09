@@ -816,7 +816,7 @@ table.week .week-pill {
    on surface, 16px card padding, 12px radius. M3 type scale:
    subject = title-medium, room = body-medium semibold, time/teacher =
    label-medium on-surface-variant. Leading 40dp tonal icon container. */
-.msession-list{ display: flex; flex-direction: column; background: var(--md-surface, #f9f9fe); border-radius: 16px; overflow: hidden; }
+.msession-list{ display: flex; flex-direction: column; background: var(--md-surface, #f9f9fe); border: 1px solid var(--md-outline-variant, #ccc); border-radius: 16px; overflow: hidden; }
 .msession{
   display: flex; align-items: center; gap: 12px;
   background: transparent;
