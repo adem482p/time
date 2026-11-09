@@ -816,17 +816,19 @@ table.week .week-pill {
    on surface, 16px card padding, 12px radius. M3 type scale:
    subject = title-medium, room = body-medium semibold, time/teacher =
    label-medium on-surface-variant. Leading 40dp tonal icon container. */
-.msession-list{ display: flex; flex-direction: column; gap: 16px; background: transparent; }
+.msession-list{ display: flex; flex-direction: column; background: var(--md-surface, #f9f9fe); border-radius: 16px; overflow: hidden; }
 .msession{
   display: flex; align-items: center; gap: 12px;
-  background: var(--md-surface, #f9f9fe);
-  border-radius: 16px; padding: 10px 16px; min-height: 5rem;
+  background: transparent;
+  border-bottom: 1px solid var(--md-outline-variant, #ccc);
+  border-radius: 0; padding: 10px 16px; min-height: 5rem;
 }
-.msession.now{ background: var(--md-primary-container, #d8e2ff); border-radius: 16px; }
-.msession.next{ background: var(--md-tertiary-container, #fbd7fc); border-radius: 16px; }
+.msession:last-child{ border-bottom: 0; }
+.msession.now{ background: var(--md-primary-container, #d8e2ff); }
+.msession.next{ background: var(--md-tertiary-container, #fbd7fc); }
 /* empty timeslot: outlined placeholder, surface base, muted label. */
 .msession.break{
-  background: var(--md-surface, #f9f9fe);
+  background: transparent;
 }
 .msession.break .msession-leading{
   background: transparent; color: var(--md-on-surface-variant, #666);
