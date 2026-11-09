@@ -949,21 +949,24 @@ table.week .week-pill {
   }
 }
 #layout .sbox-values{
-  display:flex; gap:0; border:1px solid var(--md-outline-variant, #ccc);
-  border-radius:999px; overflow-x:auto; overflow-y:hidden;
-  background:var(--md-surface, #fff); max-width:100%;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(6.5rem, 1fr));
+  grid-auto-rows:2rem; gap:1px; width:100%; max-width:40rem;
+  max-height:calc(3 * 2rem + 2px); overflow:hidden;
+  border:1px solid var(--md-outline-variant, #ccc); border-radius:8px;
+  background:var(--md-outline-variant, #ccc);
 }
 #layout .sbox-suggest{
   display:flex; gap:0; border:1px solid var(--md-outline-variant, #ccc);
   border-radius:999px; overflow:hidden; background:var(--md-surface, #fff);
 }
 #layout .sbox-value{
-  flex:0 0 auto; display:inline-flex; align-items:center; gap:.35rem; height:2rem;
-  padding:0 .9rem; border:0; border-radius:0;
-  background:transparent; color:var(--md-on-surface, #1b1b1b);
+  display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
+  min-width:0; height:2rem;
+  padding:0 .5rem; border:0; border-radius:0;
+  background:var(--md-surface, #fff); color:var(--md-on-surface, #1b1b1b);
   font-size:.875rem; font-weight:500; line-height:1; cursor:pointer;
+  overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
 }
-#layout .sbox-values .sbox-value + .sbox-value{ border-left:1px solid var(--md-outline-variant, #ccc); }
 #layout .sbox-chip{
   flex:1; display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
   height:2rem; padding:.5rem 1rem; border:0; border-radius:0;
