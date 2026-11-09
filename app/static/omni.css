@@ -3,7 +3,7 @@
    (js/theme.js) as --md-* custom properties; every var() carries a hex
    fallback so the page still looks right if js/theme.js is absent. No
    page-specific JS styling; state class names come only from TT.color. */
-@import url('https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Tiny5&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Tiny5&family=Montserrat:wght@900&display=swap');
 
 /* ---- dark scheme before js/theme.js runs (issue 066) ------------------
    Until the engine applies at DOMContentLoaded (and always for no-JS
@@ -826,8 +826,8 @@ table.week .week-pill {
 .msession-time-range .msession-time-end{ color: var(--md-on-surface-variant, #666); }
 .msession-break .msession-leading{
   width: 3.25rem; height: 3.25rem;
-  font-family: "Tiny5", "DejaVu Sans", system-ui, sans-serif;
-  font-size: 1.1rem; line-height: 1;
+  font-family: "Montserrat", "DejaVu Sans", system-ui, sans-serif;
+  font-size: 1.1rem; font-weight: 900; line-height: 1;
   letter-spacing: .06em;
 }
 .msession-break .msession-leading{ border: 1px dashed var(--md-outline-variant, #ccc); }
