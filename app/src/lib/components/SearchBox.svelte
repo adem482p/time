@@ -152,7 +152,7 @@
 							onmousedown={(e) => e.preventDefault()}
 							onclick={() => onAddPredicate(p.key)}
 						>
-							{p.label}:
+							{p.label}
 						</button>
 					{/each}
 				</div>
