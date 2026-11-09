@@ -146,8 +146,8 @@ identical on all viewports) ---- */
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
 }#omniList li{ padding: 0; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }#omniList li:last-child{ border-bottom: 0; }#omniList li:not(.group-head):hover,
 #omniList li:not(.group-head).active{
-  background: var(--md-secondary-container, #eef4ff);
-  color: var(--md-on-secondary-container, #1b1b1b);
+  background: var(--md-secondary-container, #d8e3f8);
+  color: var(--md-on-secondary-container, #111c2b);
 }#omniList li.empty{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#omniList .relevant{ color: var(--md-on-surface-variant, #666); font-size: .85em; }/* grouped-list section header rows (inserted by JS between teacher rows):
    non-clickable labels,
 never matched by the li hover/active rules. */
@@ -314,7 +314,7 @@ slight squash on landing. Global scale() adds
 so the neighbouring marked cell's own border wins the
    collapsed-border conflict and the main grid edge stays continuous). */
 #detail td:empty,
-#detail th:empty{ border: none; padding: 0; background: transparent; }#detail tr.now td{ background: var(--md-primary-container, #fff3b0); color: var(--md-on-primary-container, #201047); }#detail tr.next td{ background: var(--md-tertiary-container, #d6e9ff); color: var(--md-on-tertiary-container, #201047); }#detail tr.daystart td + td{ border-top: 2px solid var(--md-outline, #888); }#detail .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#detail .nexttag{
+#detail th:empty{ border: none; padding: 0; background: transparent; }#detail tr.now td{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }#detail tr.next td{ background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d); }#detail tr.daystart td + td{ border-top: 2px solid var(--md-outline, #888); }#detail .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#detail .nexttag{
   display: inline-flex; align-items: center; gap: .3em;
   color: var(--md-on-tertiary-container, #0b4da2); font-weight: bold; white-space: nowrap;
 }/* the "next" arrow is an inline SVG so it always renders and tints with the tag */
@@ -322,22 +322,20 @@ so the neighbouring marked cell's own border wins the
   width: 1.1em; height: 1.1em; flex: none;
   fill: none; stroke: currentColor; stroke-width: 2.6;
   stroke-linecap: round; stroke-linejoin: round;
-}/* Tonal chip derived from the surface it sits on: the card's container
-   token deepened 20% toward its text token. Opaque color-mix of two
-   tokens — a deterministic extra tone step below the card, so contrast
-   never depends on backdrops or alpha compositing. */
+}/* Tonal pill: secondary-container token (no mixes). now/next flip to
+   the row's primary/tertiary container. */
 #detail .pill{
   display: inline-flex; align-items: center; height: 2rem;
   padding: 0 .9rem; border: 0; border-radius: 8px;
-  background: var(--md-secondary-container, #eef4ff);
-  color: var(--md-on-secondary-container, #1b1b1b);
+  background: var(--md-secondary-container, #d8e3f8);
+  color: var(--md-on-secondary-container, #111c2b);
   font-size: .875rem; font-weight: 500; line-height: 1; white-space: nowrap;
 }/* the pill reads the surface it sits on: on a now/next row (or mobile card)
    it flips to that row's filled role instead of the default secondary */
 #detail tr.now .pill{
-  background: color-mix(in srgb, var(--md-primary-container, #fff3b0) 65%, var(--md-primary, #0b4da2) 35%); color: var(--md-on-primary-container, #201047);
+  background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41);
 }#detail tr.next .pill{
-  background: color-mix(in srgb, var(--md-tertiary-container, #d6e9ff) 65%, var(--md-tertiary, #7c5260) 35%); color: var(--md-on-tertiary-container, #201047);
+  background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d);
 }#detail .subjlist,
 #detail .ctree{ font-size: .9em; }#detail .ctree ul{ margin: .1rem 0 .1rem 1.2rem; padding: 0; }#detail .ctree li{ margin: .1rem 0; }#detail .hours{ color: var(--md-on-surface-variant, #555); font-size: .85em; }/* ---- teacher day groups (one section per weekday,
 shared DOM) ----
@@ -480,9 +478,9 @@ so the hanging now/next
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px;
 }#slotList li{ padding: .3rem .6rem; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }#slotList li:hover,
 #slotList li.active{
-  background: var(--md-secondary-container, #eef4ff);
-  color: var(--md-on-secondary-container, #1b1b1b);
-}#slotList li.bucket{ background: var(--md-surface-container, #f4f4f4); font-weight: bold; cursor: default; }#slotList li.bucket.today{ background: var(--md-surface-container-high, #e8eefb); }#slotList li.dim{ color: var(--md-on-surface, inherit); opacity: .58; }#slotList li.info{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#slotList li.now{ background: var(--md-primary-container, #fff3b0); color: var(--md-on-primary-container, #201047); }#slotList li.next{ background: var(--md-tertiary-container, #d6e9ff); color: var(--md-on-tertiary-container, #201047); }#slotList .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#slotList .nexttag{
+  background: var(--md-secondary-container, #d8e3f8);
+  color: var(--md-on-secondary-container, #111c2b);
+}#slotList li.bucket{ background: var(--md-surface-container, #f4f4f4); font-weight: bold; cursor: default; }#slotList li.bucket.today{ background: var(--md-surface-container-high, #e8eefb); }#slotList li.dim{ color: var(--md-on-surface, inherit); opacity: .58; }#slotList li.info{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#slotList li.now{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }#slotList li.next{ background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d); }#slotList .nowtag{ color: var(--md-on-primary-container, #8a6d00); font-weight: bold; white-space: nowrap; }#slotList .nexttag{
   display: inline-flex; align-items: center; gap: .3em;
   color: var(--md-on-tertiary-container, #0b4da2); font-weight: bold; white-space: nowrap;
 }#slotList ~ #detail table{ border-collapse: collapse; width: 100%; margin-top: .5rem; }#slotList ~ #detail th,
@@ -510,7 +508,7 @@ the list flattens ---- */
     gap: .12rem;
     padding: .35rem .25rem .3rem;
     border-radius: .5rem;
-    background: color-mix(in srgb, var(--md-primary, #0b4da2) 8%, transparent);
+    background: var(--md-surface-container-high, #e8e7ee);
     text-align: center;
   }#detail .class-facts .fact-value{
     order: -1;
@@ -585,7 +583,7 @@ not self-enclosed cards.
     display: flex; flex-wrap: wrap; gap: 0 .5rem;
     border: 1px solid var(--md-outline-variant, #ccc); border-radius: 8px;
     margin: 0 0 .6rem; padding: .5rem .7rem;
-  }#detail tr.now:has(td){ background: var(--md-primary-container, #fff3b0); }#detail tr.next:has(td){ background: var(--md-tertiary-container, #d6e9ff); }#detail tr.now td,
+  }#detail tr.now:has(td){ background: var(--md-primary-container, #d8e2ff); }#detail tr.next:has(td){ background: var(--md-tertiary-container, #ffd9e3); }#detail tr.now td,
 #detail tr.next td{ background: transparent; }#detail td{ display: block; border: none; padding: .12rem 0; }#detail td:empty,
 #detail th:empty{ display: none; }/* cards separate by margin,
 not the collapsed-grid day separator */
@@ -669,8 +667,8 @@ its arrowhead resting in the narrow gutter beside the time column. */
   border: 1px solid var(--md-outline-variant, #ddd); border-radius: 8px; max-width: 40rem;
 }#omniList li{ padding: 0; border-bottom: 1px solid var(--md-outline-variant, #eee); cursor: pointer; }#omniList li:last-child{ border-bottom: 0; }#omniList li:hover,
 #omniList li.active{
-  background: var(--md-secondary-container, #eef4ff);
-  color: var(--md-on-secondary-container, #1b1b1b);
+  background: var(--md-secondary-container, #d8e3f8);
+  color: var(--md-on-secondary-container, #111c2b);
 }#omniList li.empty{ cursor: default; color: var(--md-on-surface-variant, #555); font-style: italic; }#omniList .alias{ color: var(--md-on-surface-variant, #555); font-size: .82em; }#omniList .class-track{
   display: block;
   color: var(--md-on-surface-variant, #555);
@@ -692,7 +690,7 @@ table.week td.cgutter{ width: 1.4rem; border: none; padding: 0; background: tran
 table.week td.c-time{ white-space: nowrap; font-weight: 600; }table.week th.today{ background: var(--md-surface-container-high, #e8eefb); }/* tint the whole current-day column the same fill as the header above it;
    placed before the now/next cell rules so now/next still win on equal
    specificity */
-table.week td.c-cell.today{ background: var(--md-surface-container-high, #e8eefb); }table.week td.c-cell.now{ background: var(--md-primary-container, #fff3b0); }table.week td.c-cell.next{ background: var(--md-tertiary-container, #d6e9ff); }table.week .sess{ margin-bottom: .25rem; }table.week .s-subject{ font-weight: 600; }table.week .s-teacher,
+table.week td.c-cell.today{ background: var(--md-surface-container-high, #e8eefb); }table.week td.c-cell.now{ background: var(--md-primary-container, #d8e2ff); }table.week td.c-cell.next{ background: var(--md-tertiary-container, #ffd9e3); }table.week .sess{ margin-bottom: .25rem; }table.week .s-subject{ font-weight: 600; }table.week .s-teacher,
 table.week .s-room{ color: var(--md-on-surface-variant, #555); }/* the red cursor: a semi-transparent line crossing the grid at the current
    time,
 with a right-pointing arrowhead in the gutter */
@@ -821,11 +819,11 @@ table.week .week-pill {
 .msession-list{ display: grid; gap: .75rem; }
 .msession{
   display: flex; align-items: flex-start; gap: .9rem;
-  background: var(--md-surface-container, #f1f1f5);
+  background: var(--md-surface-container-highest, #e2e2e9);
   border-radius: 12px; padding: 1rem;
 }
-.msession.now{ background: var(--md-primary-container, #fff3b0); }
-.msession.next{ background: var(--md-tertiary-container, #d6e9ff); }
+.msession.now{ background: var(--md-primary-container, #d8e2ff); }
+.msession.next{ background: var(--md-tertiary-container, #ffd9e3); }
 /* empty timeslot: outlined placeholder, surface base, muted label. */
 .msession.break{
   background: var(--md-surface, #fff);
@@ -839,11 +837,11 @@ table.week .week-pill {
 .msession-leading{
   flex: 0 0 auto; width: 2.5rem; height: 2.5rem; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--md-secondary-container, #eef4ff);
-  color: var(--md-on-secondary-container, #1b1b1b);
+  background: var(--md-secondary-container, #d8e3f8);
+  color: var(--md-on-secondary-container, #111c2b);
 }
-.msession.now .msession-leading{ background: var(--md-surface, #fff); color: var(--md-on-primary-container, #201047); border: 1px solid var(--md-outline-variant, #ccc); }
-.msession.next .msession-leading{ background: var(--md-surface, #fff); color: var(--md-on-tertiary-container, #201047); border: 1px solid var(--md-outline-variant, #ccc); }
+.msession.now .msession-leading{ background: var(--md-secondary-container, #d8e3f8); color: var(--md-on-secondary-container, #111c2b); }
+.msession.next .msession-leading{ background: var(--md-secondary-container, #d8e3f8); color: var(--md-on-secondary-container, #111c2b); }
 .msession-body{ flex: 1 1 auto; min-width: 0; }
 .msession-head{ display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
 .msession-subject{
@@ -857,8 +855,8 @@ table.week .week-pill {
   letter-spacing: .03125em; padding: 0 .6rem; border-radius: 8px;
 }
 .msession-flag .nextarrow{ width: 1.65em; height: 1.65em; stroke-width: 2.6; }
-.msession-flag.now{ background: var(--md-primary, #0b4da2); color: var(--md-on-primary, #fff); }
-.msession-flag.next{ background: var(--md-tertiary, #7c5260); color: var(--md-on-tertiary, #fff); }
+.msession-flag.now{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }
+.msession-flag.next{ background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d); }
 .msession-room{
   margin: .15rem 0 0; font-size: .875rem; line-height: 1.43; font-weight: 500;
   color: var(--md-on-surface, #1b1b1b);
@@ -883,7 +881,7 @@ table.week .week-pill {
 #layout .sbox-row{
   display:flex; align-items:stretch; width:100%; max-width:40rem; height:2.75rem; box-sizing:border-box; margin:.8rem 0;
   border:1px solid var(--md-outline-variant, #ccc); border-radius:8px;
-  background:var(--md-surface-container-high, #eceef4);
+  background:var(--md-surface-container-high, #e8e7ee);
 }
 #layout .sbox-row:focus-within{
   border-color:var(--md-primary, #0b4da2);
@@ -901,7 +899,7 @@ table.week .week-pill {
 #layout .sbox-back{
   display:none; flex:0 0 auto; width:2.7rem; align-items:center; justify-content:center;
   border:0;
-  border-radius:8px 0 0 8px; background:var(--md-surface-container-high, #eceef4);
+  border-radius:8px 0 0 8px; background:var(--md-surface-container-high, #e8e7ee);
   color:var(--md-on-surface-variant, #555); cursor:pointer; font:inherit;
 }
 #layout .sbox-back svg{ width:1.5rem; height:1.5rem; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
@@ -928,12 +926,12 @@ table.week .week-pill {
 }
 #layout .sbox-tabs .sbox-tab + .sbox-tab{ border-left:1px solid var(--md-outline-variant, #ccc); }
 #layout .sbox-tab.active{
-  background:var(--md-secondary-container, #eef4ff);
-  color:var(--md-on-secondary-container, #1b1b1b);
+  background:var(--md-secondary-container, #d8e3f8);
+  color:var(--md-on-secondary-container, #111c2b);
 }
 @media (hover: hover){
   #layout .sbox-tab:hover{
-    background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
+    background:var(--md-surface-container-high, #e8e7ee);
     color:var(--md-on-surface, #222);
   }
 }
@@ -965,11 +963,11 @@ table.week .week-pill {
 #layout .sbox-options.is-row .sbox-option + .sbox-option{ border-left:1px solid var(--md-outline-variant, #ccc); }
 @media (hover: hover){
   #layout .sbox-option:hover{
-    background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
+    background:var(--md-surface-container-high, #e8e7ee);
   }
 }
 #layout .sbox-option:active{
-  background:color-mix(in srgb, var(--md-on-surface, #1b1b1b) 12%, transparent);
+  background:var(--md-surface-container-high, #e8e7ee);
 }
 #layout .sbox-status{
   margin:0; width:100%; height:2rem; display:flex; align-items:center; justify-content:center;
@@ -979,8 +977,8 @@ table.week .week-pill {
 #layout .sbox-selected{
   display:flex; flex-direction:row; align-items:stretch; width:100%; max-width:40rem; height:2.75rem; box-sizing:border-box; margin:.8rem 0;
   border-radius:8px;
-  background:color-mix(in srgb, var(--md-primary, #0b4da2) 22%, transparent);
-  color:var(--md-on-primary-container, #201047);
+  background:var(--md-secondary-container, #d8e3f8);
+  color:var(--md-on-secondary-container, #111c2b);
   border:1px solid var(--md-outline-variant, #ccc);
 }
 #layout .sbox-selected-arrow{
@@ -994,7 +992,7 @@ table.week .week-pill {
 }
 @media (hover: hover){
   #layout .sbox-selected-arrow:hover{
-    background:color-mix(in srgb, var(--md-primary, #0b4da2) 30%, transparent);
+    background:var(--md-secondary, #545f71); color:var(--md-on-secondary, #ffffff);
   }
 }
 #layout .sbox-selected-x, #layout .sbox-selected-name, #layout .sbox-selected-drop-btn{
@@ -1032,6 +1030,6 @@ table.week .week-pill {
   #detail .msession .pill{ display: none; }
   /* the cards carry the chrome now: drop the section card frame. */
   #detail .day-group{ border: 0; padding: 0; overflow: visible; }
-  #detail .msession.now .pill{ background: color-mix(in srgb, var(--md-primary-container, #fff3b0) 65%, var(--md-primary, #0b4da2) 35%); color: var(--md-on-primary-container, #201047); }
-  #detail .msession.next .pill{ background: color-mix(in srgb, var(--md-tertiary-container, #d6e9ff) 65%, var(--md-tertiary, #7c5260) 35%); color: var(--md-on-tertiary-container, #201047); }
+  #detail .msession.now .pill{ background: var(--md-primary-container, #d8e2ff); color: var(--md-on-primary-container, #001a41); }
+  #detail .msession.next .pill{ background: var(--md-tertiary-container, #ffd9e3); color: var(--md-on-tertiary-container, #31101d); }
 }
