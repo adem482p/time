@@ -160,9 +160,13 @@ the input paints over it; the shadow completion and
 #ghost > span{ flex: 0 0 auto; }#search{
   position: relative; z-index: 1; width: 100%; border: 0; outline: none;
   padding: .45rem .6rem; font: inherit; line-height: 1.5;
-  /* the overlay renders the text; the input only carries the caret */
-  background: transparent; color: transparent;
-  caret-color: var(--md-on-surface, #1b1b1b);
+  background: transparent; color: inherit;
+}
+/* hover-preview mode: the shown text is uncommitted — tinted + italic
+   until the user types (commit) or leaves (revert). */
+#search.previewing{
+  color: var(--md-tertiary, #7c5260);
+  font-style: italic;
 }/* monospace search (issue 001): input + ghost share one fixed-width stack so
    the overlay,
 the typed text and the caret stay aligned on every keystroke

@@ -114,6 +114,65 @@ export function shareAncestor(a, b, kind) {
   return commonAncestors(a, b).some((x) => x?.type === want);
 }
 
+// ---- reduction ----
+
+/**
+ * Reduce classes to their broadest complete levels.
+ * A node is "covered" when it (or everything below it, decomposed) is in
+ * the input: a cohort class needs itself; a group class needs itself or
+ * all its cohorts; a Semester/Year needs every catalog class below it
+ * (recursively). Returns the minimal covering set of domain objects
+ * (Semester | Year | Class) in input order.
+ */
+export function reduceClasses(catalog, classObjects) {
+	const present = new Set(classObjects);
+	const childrenOf = (node) => {
+		if (isClass(node) && node.group != null && node.cohort == null) {
+			return catalog.classes.filter(
+				(c) => c.semester === node.semester && c.group === node.group && c.cohort != null
+			);
+		}
+		if (isSemester(node) || isYear(node)) return catalog.classesBySemester.get(node) ?? [];
+		return [];
+	};
+	const covered = (node) => {
+		if (present.has(node)) return true;
+		const kids = childrenOf(node);
+		return kids.length > 0 && kids.every((k) => covered(k));
+	};
+	const out = [];
+	for (const cls of classObjects) {
+		// Hoist to the broadest covered ancestor of this class.
+		const chain = [cls.semester];
+		if (cls.cohort != null) {
+			const group = catalog.classes.find(
+				(c) => c.semester === cls.semester && c.group === cls.group && c.cohort == null
+			);
+			if (group) chain.unshift(group);
+		}
+		let node = null;
+		for (const ancestor of [...chain].reverse()) {
+			if (covered(ancestor)) { node = ancestor; break; }
+		}
+		const emit = node ?? cls;
+		if (!out.includes(emit)) out.push(emit);
+	}
+	return out;
+}
+
+/**
+ * Label-based wrapper: reduce class labels to the labels of their
+ * broadest complete levels (e.g. 8 GLSI3 cohort labels -> ['GLSI3']).
+ */
+export function reduceClassLabels(catalog, labels) {
+	const objs = [];
+	for (const label of labels) {
+		const r = resolve(catalog, label, { as: 'class' });
+		if (r.type === 'found') objs.push(r.object);
+	}
+	return reduceClasses(catalog, objs).map((o) => o.label);
+}
+
 // ---- collections ----
 
 export function semestersOf(catalog, specialty) {

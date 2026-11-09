@@ -44,12 +44,11 @@
 	const wantTeachers = $derived(!parsedQuery.type || parsedQuery.type === 'teacher');
 	const wantClasses = $derived(!parsedQuery.type || parsedQuery.type === 'class');
 
+	// Completions write to the query; the browser puts the caret in the
+	// natural place. No selection management anywhere.
 	function completeTypePredicate(kind) {
-		const r = completeTypeAt(query, kind, caret);
-		query = r.query;
-		caret = r.caret;
+		query = completeTypeAt(query, kind, caret).query;
 		searchEl?.focus();
-		searchEl?.setSelectionRange(caret, caret);
 	}
 
 	// Completion state derives from the token the caret is inside or
@@ -93,6 +92,9 @@
 			suffix: query.slice(caretToken.end)
 		};
 	});
+
+	const previewEnter = (kind) => (hoveredType = kind);
+	const previewLeave = () => (hoveredType = null);
 
 	// Remember the last selection (teacher or class) across reloads.
 	const TEACHER_STORE_KEY = 'time-omni-teacher';
@@ -229,8 +231,12 @@
 		if (!searchMode || insideTypeNode || insidePredicateNode) return [];
 		// Only predicates that make sense for the current result kind are
 		// suggested (classes: their identity; teachers: what they teach).
-		// Anything else still works when typed explicitly.
+		// Anything else still works when typed explicitly. `type` follows
+		// the same rule — absent from the AST means it is suggestable.
 		const candidates = [];
+		if (!parsedQuery.type && (filteredTeachers.length || filteredClasses.length)) {
+			candidates.push({ key: 'type', label: 'Type', pool: [...filteredTeachers, ...filteredClasses] });
+		}
 		if (wantClasses && filteredClasses.length) {
 			candidates.push(
 				{ key: 'track', label: 'Track', pool: filteredClasses },
@@ -244,8 +250,20 @@
 		const out = [];
 		for (const { key, label, pool } of candidates) {
 			if (parsedQuery.filters.some((f) => f.key === key)) continue;
-			out.push({ key, label, count: pool.length });
+			const distinct =
+				key === 'type'
+					? 2
+					: new Set(
+							pool.flatMap((item) =>
+								['cohort', 'group', 'track', 'year', 'specialty'].includes(key)
+									? [item[key]]
+									: item.filterSets?.[key] ?? []
+							)
+						).size;
+			out.push({ key, label, count: pool.length, distinct });
 		}
+		// One predicate with a single possible value is not a choice — hide.
+		if (out.length === 1 && out[0].distinct <= 1) return [];
 		return out;
 	});
 
@@ -294,19 +312,13 @@
 	});
 
 	function completePredicateValue(value) {
-		const r = completePredicateValueAt(query, value, caret);
-		query = r.query;
-		caret = r.caret;
+		query = completePredicateValueAt(query, value, caret).query;
 		searchEl?.focus();
-		searchEl?.setSelectionRange(caret, caret);
 	}
 
 	function addPredicate(key) {
-		const r = addPredicateAt(query, key, caret);
-		query = r.query;
-		caret = r.caret;
+		query = addPredicateAt(query, key, caret).query;
 		searchEl?.focus();
-		searchEl?.setSelectionRange(caret, caret);
 	}
 
 	const searchMode = $derived(query.trim().length > 0);
@@ -580,19 +592,21 @@
 		</p>
 
 		<div id="searchWrap">
-			<div id="ghost" aria-hidden="true"><span>{ghostPreview ? ghostPreview.prefix : query}</span>{#if ghostPreview}<span class="ghost-pre">{ghostPreview.rest}</span><span>{ghostPreview.suffix}</span>{/if}</div>
 			<input
 				id="search"
 				type="search"
 				placeholder="Search teacher, class, or subject…"
 				autocomplete="off"
-				value={query}
+				value={ghostPreview ? ghostPreview.prefix + ghostPreview.rest + ghostPreview.suffix : query}
 				bind:this={searchEl}
 				oninput={(e) => {
+					// Writing commits the displayed text and leaves hover mode.
+					hoveredType = null;
 					query = e.currentTarget.value;
 					caret = e.currentTarget.selectionStart ?? query.length;
 					if (!query.trim()) showEmpty();
 				}}
+				class:previewing={!!ghostPreview}
 				onkeydown={onKeydown}
 				onfocus={(e) => {
 					// Prefill a COMPLETE value from where the user came from.
@@ -600,8 +614,6 @@
 					// type-selection state.
 					if (!query.trim() && lastViewKind) {
 						query = `type:${lastViewKind}`;
-						caret = query.length;
-						e.currentTarget.setSelectionRange(caret, caret);
 					} else {
 						caret = e.currentTarget.selectionStart ?? query.length;
 					}
@@ -684,9 +696,9 @@
 			</div>
 		</div>
 
-		<!-- Sub-row: type-completion tabs or the status line — one fixed slot.
-		     Hidden while a timetable is selected. -->
-		{#if !(selectedTeacher || selectedClass)}
+		<!-- Sub-row: completion UI or status — one fixed slot. Hidden only
+		     while a timetable detail is shown (not while filtering it). -->
+		{#if !((selectedTeacher || selectedClass) && !menuOpen)}
 		<div class="omni-subrow">
 			<!-- One completion slot: type tabs inside a `type:` node, else
 			     next-predicate suggestions, else the status line. -->
@@ -696,8 +708,8 @@
 					type="button"
 					class="omni-tab-btn"
 					class:active={parsedQuery.type === 'teacher' || (typePartial !== '' && 'teacher'.startsWith(typePartial))}
-					onmouseenter={() => (hoveredType = 'teacher')}
-					onmouseleave={() => (hoveredType = null)}
+					onmouseenter={() => previewEnter('teacher')}
+					onmouseleave={() => previewLeave()}
 					onmousedown={(e) => e.preventDefault()}
 					onclick={() => completeTypePredicate('teacher')}
 				>
@@ -707,8 +719,8 @@
 					type="button"
 					class="omni-tab-btn"
 					class:active={parsedQuery.type === 'class' || (typePartial !== '' && 'class'.startsWith(typePartial))}
-					onmouseenter={() => (hoveredType = 'class')}
-					onmouseleave={() => (hoveredType = null)}
+					onmouseenter={() => previewEnter('class')}
+					onmouseleave={() => previewLeave()}
 					onmousedown={(e) => e.preventDefault()}
 					onclick={() => completeTypePredicate('class')}
 				>
@@ -1167,23 +1179,26 @@
 	}
 
 	/* Tabs positioned directly under the search box */
+	/* Segmented button group (M3): one connected control, shared outer
+	   border, hairline divider, selected segment tonally filled. */
 	.omni-tabs {
 		display: flex;
-		gap: 0.35rem;
+		gap: 0;
 		margin: 0.4rem 0 0.5rem;
-		padding: 0.2rem;
-		background: var(--md-surface-variant, #f0f3f8);
-		border-radius: 8px;
+		border: 1px solid var(--md-outline-variant, #ccc);
+		border-radius: 999px;
+		overflow: hidden;
 		flex-shrink: 0;
+		background: var(--md-surface, #fff);
 	}
 
 	.omni-tab-btn {
 		flex: 1;
 		font-family: inherit;
 		font-size: 0.82rem;
-		padding: 0.35rem 0.5rem;
+		padding: 0.5rem 1rem;
 		border: 0;
-		border-radius: 6px;
+		border-radius: 0;
 		background: transparent;
 		color: var(--md-on-surface-variant, #555);
 		cursor: pointer;
@@ -1192,14 +1207,20 @@
 		transition: background 0.15s ease, color 0.15s ease;
 	}
 
-	.omni-tab-btn:hover {
-		color: var(--md-on-surface, #222);
+	.omni-tab-btn + .omni-tab-btn {
+		border-left: 1px solid var(--md-outline-variant, #ccc);
+	}
+
+	@media (hover: hover) {
+		.omni-tab-btn:hover {
+			background: color-mix(in srgb, var(--md-on-surface, #1b1b1b) 8%, transparent);
+			color: var(--md-on-surface, #222);
+		}
 	}
 
 	.omni-tab-btn.active {
-		background: var(--md-surface, #ffffff);
-		color: var(--md-primary, #0b4da2);
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+		background: var(--md-secondary-container, #eef4ff);
+		color: var(--md-on-secondary-container, #1b1b1b);
 	}
 
 	.omni-lists-scroll {

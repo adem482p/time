@@ -11,7 +11,7 @@ import {
 import { makeCatalog } from './catalog.js';
 import {
   resolve, ancestors, descendants, children, parentOf, commonAncestors, shareAncestor,
-  semestersOf, classes, sessionsFor, isPublished, weeksOverlap
+  semestersOf, classes, sessionsFor, isPublished, weeksOverlap, reduceClasses, reduceClassLabels
 } from './query.js';
 import { parsePublicationField, catalogFromCsv, parseCsvRows } from './csv.js';
 import { formatYear, formatSemester, formatClass, formatSession, printTree } from './print.js';
@@ -213,6 +213,17 @@ test('printing formats every entity', () => {
   assert.ok(tree.startsWith('LCS'));
   assert.ok(tree.includes('GLSI3 A1'));
   assert.ok(tree.includes('LCS1 A1'));
+});
+
+test('reduction goes from generated classes back to broadest levels', () => {
+	const cls = (l) => catalogue.classes.find((c) => c.label === l);
+	const eight = ['GLSI3 A1', 'GLSI3 A2', 'GLSI3 B1', 'GLSI3 B2', 'GLSI3 C1', 'GLSI3 C2', 'GLSI3 D1', 'GLSI3 D2'].map(cls);
+	assert.deepStrictEqual(reduceClasses(catalogue, eight).map((o) => o.label), ['GLSI3']);
+	assert.deepStrictEqual(reduceClasses(catalogue, eight.slice(0, 2)).map((o) => o.label), ['GLSI3 A']);
+	assert.deepStrictEqual(reduceClasses(catalogue, [cls('GLSI3 A1')]).map((o) => o.label), ['GLSI3 A1']);
+	assert.deepStrictEqual(reduceClassLabels(catalogue, eight.map((c) => c.label)), ['GLSI3']);
+	const trunk = catalogue.classes.filter((c) => c.label.startsWith('LCS1'));
+	assert.deepStrictEqual(reduceClasses(catalogue, trunk).map((o) => o.label), ['LCS1']);
 });
 
 test('printing is null-safe', () => {

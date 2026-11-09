@@ -4,7 +4,7 @@ import { catalogue as baseCatalog } from '../../../domain-model/catalogue.js';
 import { catalogFromCsv } from '../../../domain-model/csv.js';
 import { DAYS, SLOTS, trackOf, yearOf } from '../../../domain-model/objects.js';
 import { formatWeekPattern } from '../../../domain-model/print.js';
-import { resolve, sessionsFor } from '../../../domain-model/query.js';
+import { resolve, sessionsFor, reduceClasses } from '../../../domain-model/query.js';
 import { normStr, tokenize, fuzzyRanges, scoreMatch, mergeRanges, parseSearchQuery } from './search.js';
 
 /** Normalize a search input (string or parsed query) to {terms, filters}. */
@@ -468,7 +468,7 @@ export function searchOmniClasses(classes, query) {
 /**
  * Fuse teacher sessions sharing day and time.
  */
-export function fuseTeacherSessions(sessions) {
+export function fuseTeacherSessions(sessions, catalogue) {
 	const slotGroups = {};
 	for (const s of sessions) {
 		const k = `${s.day}|${s.slot}`;
@@ -484,7 +484,17 @@ export function fuseTeacherSessions(sessions) {
 		const first = list[0];
 		const rooms = Array.from(new Set(list.map((s) => s.room).filter(Boolean))).sort();
 		const subjects = Array.from(new Set(list.map((s) => s.subject).filter(Boolean))).sort();
-		const pills = Array.from(new Set(list.map((s) => s.population?.label).filter(Boolean))).sort();
+		// Reduce the slot's classes to their broadest complete levels:
+		// GLSI3 A1…D2 → GLSI3.
+		const classPopulations = list.map((s) => s.population).filter((p) => p?.type?.description === 'class');
+		const pills = catalogue
+			? reduceClasses(catalogue, classPopulations).map((n) => n.label)
+			: Array.from(new Set(list.map((s) => s.population?.label).filter(Boolean))).sort();
+		const otherPills = list
+			.map((s) => s.population)
+			.filter((p) => p && p.type?.description !== 'class')
+			.map((p) => p.label);
+		const allPills = Array.from(new Set([...pills, ...otherPills]));
 		const weeks = Array.from(new Set(list.map((s) => s.weekPattern).filter(Boolean)));
 		const week = weeks.length === 1 ? formatWeekPattern(weeks[0]) : '';
 
@@ -493,7 +503,7 @@ export function fuseTeacherSessions(sessions) {
 			time: first.slot,
 			room: rooms.join(' or ') || '—',
 			subject: subjects.join(' or '),
-			pills,
+			pills: allPills,
 			week,
 			rawSessions: list
 		});
@@ -576,7 +586,7 @@ export function getTeacherDetail(omniStore, teacherName, now) {
 	const teacherSessions = omniStore.records.filter((r) => r.teacher === teacherName);
 	if (!teacherSessions.length) return null;
 
-	const fusedSessions = fuseTeacherSessions(teacherSessions);
+	const fusedSessions = fuseTeacherSessions(teacherSessions, omniStore.catalogue);
 
 	const now2 = now || new Date();
 	const next = nextSessionIdx(fusedSessions, now2);
@@ -589,7 +599,37 @@ export function getTeacherDetail(omniStore, teacherName, now) {
 	);
 	const totalSessions = teacherSessions.length;
 	const rankedSubjects = rankBy(teacherSessions, (s) => s.subject);
-	const rankedClasses = rankBy(teacherSessions, (s) => s.population?.label || 'Other');
+	// Classes ranked by their reduced level: a teacher covering GLSI3 A1…D2
+	// ranks under the single GLSI3 label with summed hours.
+	const classCounts = new Map();
+	for (const s of teacherSessions) {
+		const lbl = s.population?.label || 'Other';
+		classCounts.set(lbl, (classCounts.get(lbl) ?? 0) + 1);
+	}
+	const classObjs = omniStore.catalogue.classes.filter((c) => classCounts.has(c.label));
+	const reduced = reduceClasses(omniStore.catalogue, classObjs);
+	// A reduced node covers an input class when it is the class itself, its
+	// group class, or its Semester/Year parent.
+	const covers = (node, cls) =>
+		node === cls ||
+		node.label === cls.label ||
+		(node.type?.description === 'class' && node.semester === cls.semester && node.group === cls.group) ||
+		node === cls.semester;
+	const reducedCounts = new Map();
+	for (const cls of classObjs) {
+		const target = reduced.find((node) => covers(node, cls));
+		const key = target ? target.label : cls.label;
+		reducedCounts.set(key, (reducedCounts.get(key) ?? 0) + classCounts.get(cls.label));
+	}
+	// Sessions whose population label isn't a catalog class (defensive).
+	for (const [lbl, n] of classCounts) {
+		if (!classObjs.some((c) => c.label === lbl)) {
+			reducedCounts.set(lbl, (reducedCounts.get(lbl) ?? 0) + n);
+		}
+	}
+	const rankedClasses = [...reducedCounts.entries()]
+		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+		.map(([name, sessions]) => ({ name, sessions, share: totalSessions ? sessions / totalSessions : 0 }));
 
 	return {
 		name: teacherName,
