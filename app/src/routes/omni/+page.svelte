@@ -559,6 +559,13 @@
 		return String(h) + 'h';
 	}
 
+	// "08h15-09h45" -> ["8:15", "9:45"] for the leading time circle.
+	function slotRange(slot) {
+		const [s, e] = slotMinutes(slot);
+		const fmt = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+		return [fmt(s), fmt(e)];
+	}
+
 	// Grid element references for cursor positioning
 	let weekWrapEl = $state(null);
 	let cursorLineEl = $state(null);
@@ -912,8 +919,10 @@
 							{@const isNow = isCurrentSession(entry.s.day, entry.s.time, now)}
 							{@const isNext = !isNow && currentTeacherDetail.upcoming.has(entry.i)}
 							<article class="msession {rowClasses(isNow, isNext)}">
-								<span class="msession-leading">
-									<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+								{@const [start, end] = slotRange(entry.s.time || item.slot)}
+								<span class="msession-leading msession-time-circle" aria-label="{start}–{end}">
+									<span class="msession-time-start">{start}</span>
+									<span class="msession-time-end">{end}</span>
 								</span>
 								<div class="msession-body">
 									<div class="msession-head">
@@ -1041,8 +1050,10 @@
 							{@const isNow = isCurrentSession(s.day, s.slot, now)}
 							{@const isNext = !isNow && !!c && c.visible && s.day === c.today && s.slot === c.next}
 							<article class="msession {rowClasses(isNow, isNext)}">
-								<span class="msession-leading">
-									<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+								{@const[cs,ce]=slotRange(s.slot)}
+								<span class="msession-leading msession-time-circle" aria-label="{cs}–{ce}">
+									<span class="msession-time-start">{cs}</span>
+									<span class="msession-time-end">{ce}</span>
 								</span>
 								<div class="msession-body">
 									<div class="msession-head">

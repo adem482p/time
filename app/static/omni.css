@@ -817,6 +817,13 @@ table.week .week-pill {
    subject = title-medium, room = body-medium semibold, time/teacher =
    label-medium on-surface-variant. Leading 40dp tonal icon container. */
 .msession-break{ display: flex; justify-content: center; margin: 8px 0; }
+.msession-time-circle{ flex-direction: column; gap: 2px; width: 3rem; height: 3rem; border-radius: 50%; border: 1px solid var(--md-outline-variant, #ccc); }
+.msession-time-circle .msession-time-start,
+.msession-time-circle .msession-time-end{
+  font-family: "Tiny5", "DejaVu Sans", system-ui, sans-serif;
+  font-size: .62rem; line-height: 1.1; letter-spacing: .03em;
+}
+.msession-time-circle .msession-time-end{ color: var(--md-on-surface-variant, #666); }
 .msession-break .msession-leading{
   width: 3.25rem; height: 3.25rem;
   font-family: "Tiny5", "DejaVu Sans", system-ui, sans-serif;
