@@ -916,8 +916,8 @@ table.week .week-pill {
 #layout .sbox-back{
   display:none; flex:0 0 auto; width:2.7rem; align-items:center; justify-content:center;
   border:0;
-  border-radius:8px 0 0 8px; background:var(--md-surface-container-high, #e8e7ee);
-  color:var(--md-on-surface-variant, #555); cursor:pointer; font:inherit;
+  border-radius:8px 0 0 8px; background:transparent;
+  color:var(--md-on-secondary-container, #111c2b); cursor:pointer; font:inherit;
 }
 #layout .sbox-back svg{ width:1.5rem; height:1.5rem; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
 #layout .sbox-clear{
