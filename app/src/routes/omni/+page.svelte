@@ -14,6 +14,7 @@
 		SLOTS,
 		frDay,
 		hoursLabel,
+		slotMinutes,
 		isCurrentSession
 	} from '$lib/omni-model.js';
 	import { formatWeekPattern } from '../../../../domain-model/print.js';
@@ -548,6 +549,16 @@
 		return groups;
 	}
 
+	// Merged break duration ("1h", "1.5h", "2h") from summed slot minutes.
+	function breakHours(grp) {
+		const mins = grp.reduce((a, g) => {
+			const [s, e] = slotMinutes(g.slot);
+			return a + (e - s);
+		}, 0);
+		const h = Math.round((mins / 60) * 100) / 100;
+		return String(h) + 'h';
+	}
+
 	// Grid element references for cursor positioning
 	let weekWrapEl = $state(null);
 	let cursorLineEl = $state(null);
@@ -881,9 +892,7 @@
 					{#each splitGroups(currentTeacherDetail.byDay[day], (item) => item.kind === 'break' || isCurrentSession(item.s?.day, item.s?.time, now) || (item.i !== undefined && currentTeacherDetail.upcoming.has(item.i))) as grp}
 					{#if grp[0].kind === 'break'}
 						<div class="msession-break" role="separator" aria-label="Break {grp.map((g) => g.slot).join(', ')}">
-							<span class="msession-leading">
-								<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v16M14 4v16M5 8h14M5 16h14" /></svg>
-							</span>
+							<span class="msession-leading" aria-hidden="true">{breakHours(grp)}</span>
 						</div>
 					{:else}
 					<div class="msession-list">
@@ -1014,9 +1023,7 @@
 					{#each splitGroups(g.items, (item) => item.kind === 'break' || isCurrentSession(item.s?.day, item.s?.slot, now) || (!!currentClassDetail.cursor && currentClassDetail.cursor.visible && item.s?.day === currentClassDetail.cursor.today && item.s?.slot === currentClassDetail.cursor.next)) as grp}
 					{#if grp[0].kind === 'break'}
 						<div class="msession-break" role="separator" aria-label="Break {grp.map((g) => g.slot).join(', ')}">
-							<span class="msession-leading">
-								<svg class="msession-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4v16M14 4v16M5 8h14M5 16h14" /></svg>
-							</span>
+							<span class="msession-leading" aria-hidden="true">{breakHours(grp)}</span>
 						</div>
 					{:else}
 					<div class="msession-list">
