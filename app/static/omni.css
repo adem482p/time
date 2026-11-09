@@ -842,8 +842,8 @@ table.week .week-pill {
   background: var(--md-secondary-container, #eef4ff);
   color: var(--md-on-secondary-container, #1b1b1b);
 }
-.msession.now .msession-leading{ background: var(--md-primary-container, #d6e9ff); color: var(--md-on-primary-container, #201047); }
-.msession.next .msession-leading{ background: var(--md-tertiary-container, #d6e9ff); color: var(--md-on-tertiary-container, #201047); }
+.msession.now .msession-leading{ background: var(--md-surface, #fff); color: var(--md-on-primary-container, #201047); border: 1px solid var(--md-outline-variant, #ccc); }
+.msession.next .msession-leading{ background: var(--md-surface, #fff); color: var(--md-on-tertiary-container, #201047); border: 1px solid var(--md-outline-variant, #ccc); }
 .msession-body{ flex: 1 1 auto; min-width: 0; }
 .msession-head{ display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
 .msession-subject{
