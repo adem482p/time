@@ -37,21 +37,15 @@ test('the worker template declares both app families and the full lifecycle (iss
    'respondWith'].forEach(function (tok) {
     assert.ok(tmpl.indexOf(tok) !== -1, 'sw-template.js must contain ' + tok);
   });
-  // The template uses tokens __APP__, __SIBLING__ which gen-sw.mjs replaces per
-  // app; the build-time snapshot-list tokens (__SNAPSHOT_URLS__, __SNAP_SUFFIX__)
-  // are gone since issue 087 moved to runtime response caching.
-  ['__APP__', '__SIBLING__'].forEach(function (tok) {
-    assert.ok(tmpl.indexOf(tok) !== -1, 'sw-template.js must carry token ' + tok);
-  });
+  // The template uses the __APP__ token which gen-sw.mjs replaces per
+// app; the build-time snapshot-list tokens (__SNAPSHOT_URLS__, __SNAP_SUFFIX__)
+// are gone since issue 087 moved to runtime response caching.
+  assert.ok(tmpl.indexOf('__APP__') !== -1,
+    'sw-template.js must carry token __APP__');
   assert.ok(tmpl.indexOf('__SNAPSHOT_URLS__') === -1,
     'sw-template.js must not carry the retired build-time snapshot-list token (issue 087)');
   assert.ok(tmpl.indexOf('__SNAP_SUFFIX__') === -1,
     'sw-template.js must not carry the retired snapshot-version token (issue 087)');
-  // The template has the legacy-root clause (teachers-only) for the old root snapshot
-  assert.ok(tmpl.indexOf('__LEGACY_ROOT_COMMENT__') !== -1,
-    "sw-template.js must carry the teachers-only legacy root snapshot teardown comment token");
-  assert.ok(tmpl.indexOf('__LEGACY_ROOT_CLAUSE__') !== -1,
-    "sw-template.js must carry the teachers-only legacy root snapshot teardown clause token");
   // The cache family name uses the __APP__ token
   assert.ok(tmpl.indexOf("CACHE = 'time-__APP__-snapshot-'") !== -1,
     "sw-template.js must declare the runtime cache family name with __APP__ token");
@@ -60,23 +54,20 @@ test('the worker template declares both app families and the full lifecycle (iss
     "sw-template.js must declare the status database name with __APP__ token");
 });
 
-test('gen-sw.mjs writes per-app runtime-cache workers from the template (issue 087)', function () {
+test('gen-sw.mjs writes the omni runtime-cache worker from the template (issue 087)', function () {
   var gen = readSrc('app/scripts/gen-sw.mjs');
   // The generator replaces __APP__ with the app name, which expands the cache
   // family and status DB name in the template
-  ['__APP__', '__SIBLING__', '__LEGACY_ROOT_COMMENT__', '__LEGACY_ROOT_CLAUSE__'].forEach(function (tok) {
-    assert.ok(gen.indexOf(tok) !== -1, 'gen-sw.mjs must replace ' + tok + ' token');
+  ['__APP__'].forEach(function (tok) {
+    assert.ok(gen.indexOf(tok) !== -1, 'gen-sw.mjs must carry token ' + tok);
   });
   assert.ok(gen.indexOf('__SNAPSHOT_URLS__') === -1,
     'gen-sw.mjs must not build a snapshot URL list any more (issue 087)');
   assert.ok(gen.indexOf('walkFiles') === -1,
     'gen-sw.mjs must not walk the build tree for a snapshot list any more (issue 087)');
-  // The legacy-root clause is ONLY injected for teachers
-  assert.ok(gen.indexOf("time-snapshot-v1") !== -1,
-    'gen-sw.mjs must inject the legacy root snapshot teardown for teachers');
-  // The sibling name is the other app's directory
-  assert.ok(gen.indexOf("'classes'") !== -1 && gen.indexOf("'teachers'") !== -1,
-    'gen-sw.mjs must name both app directories as siblings');
+  // The single app directory is named
+  assert.ok(gen.indexOf("'omni'") !== -1,
+    'gen-sw.mjs must name the omni app directory');
 });
 
 test('the worker runtime-caches successful responses instead of snapshotting a build-time list (issue 087)', function () {
@@ -234,28 +225,6 @@ test('the vocabulary is the runtime cache, not the legacy precache one (issues 0
   assert.ok(/runtime/i.test(regHead), 'the register.js header comment must describe the runtime cache model');
 });
 
-test('the two workers own disjoint cache families and status databases (issue 072)', function () {
-  // The template is shared; gen-sw.mjs produces per-app instances.
-  // We verify the generator produces the right per-app values.
-  var gen = readSrc('app/scripts/gen-sw.mjs');
-  // cache families: each worker never names, let alone tears down, the sibling's
-  // The template has 'time-__APP__-snapshot-' which gen-sw.mjs expands per app
-  // by replacing __APP__. The generator source only has the token replacement logic.
-  assert.ok(gen.indexOf('__APP__') !== -1,
-    'gen-sw.mjs must replace __APP__ token to expand cache families');
-  // status databases: same - the template has 'time-__APP__-status' which gen-sw.mjs expands
-  // by replacing __APP__. The generator source only has the token replacement logic.
-  assert.ok(gen.indexOf('__APP__') !== -1,
-    'gen-sw.mjs must replace __APP__ token to expand status DB names');
-  // The legacy pre-split root snapshot: teardown target of the teachers worker only
-  assert.ok(gen.indexOf("time-snapshot-v1") !== -1,
-    'gen-sw.mjs carries the legacy root snapshot teardown for teachers');
-  // distinct families, both start at v1 (suffix is computed at build time)
-  // The generator produces distinct families by replacing __APP__ with each app name
-  assert.ok(gen.indexOf("'teachers'") !== -1 && gen.indexOf("'classes'") !== -1,
-    'gen-sw.mjs must name both apps for distinct families');
-});
-
 test('the runtime cache is family-scoped per app and never lists pages outside its own app (issues 072, 087)', function () {
   // The template is shared; gen-sw.mjs produces per-app instances. With runtime
   // caching there is no snapshot URL list left to scope — the per-app family name
@@ -267,7 +236,5 @@ test('the runtime cache is family-scoped per app and never lists pages outside i
   var gen = readSrc('app/scripts/gen-sw.mjs');
   APPS.forEach(function (app) {
     assert.ok(gen.indexOf(app.dir) !== -1, 'gen-sw.mjs must reference ' + app.dir);
-    assert.ok(gen.indexOf("join(buildDir, app, 'sw.js')") !== -1,
-      'gen-sw.mjs must stamp the worker of its own app directory only');
   });
 });

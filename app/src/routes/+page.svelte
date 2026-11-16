@@ -1,6 +1,6 @@
 <script>
 	// app/src/routes/+page.svelte — the root does nothing but hand over to the
-	// teachers app (issue 073). The meta refresh covers no-JS; the script for
+	// omni app (issue 073). The meta refresh covers no-JS; the script for
 	// everyone else forwards the ?redact=1 query and any hash (README captures
 	// rely on it).
 	//
@@ -9,11 +9,11 @@
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		location.replace('teachers/' + location.search + location.hash);
+		location.replace('omni/' + location.search + location.hash);
 	});
 </script>
 
 <svelte:head>
 	<title>Time — ISIM Mahdia Timetable</title>
-	<meta http-equiv="refresh" content="0; url=teachers/" />
+	<meta http-equiv="refresh" content="0; url=omni/" />
 </svelte:head>

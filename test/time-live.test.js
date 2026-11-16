@@ -23,7 +23,6 @@ var modelObjs = model.buildAll(store);
 
 var TIME = readSrc('app', 'src', 'routes', 'at', '+page.svelte');
 var ALL = readSrc('app', 'src', 'routes', 'all', '+page.svelte');
-var TEACHERS = readSrc('app', 'src', 'routes', 'teachers', '+page.svelte');
 var CLOCK = readSrc('app', 'src', 'lib', 'clock.js');
 
 function at(monthDay, hh, mm) { return new Date(2026, 9, monthDay, hh, mm); }
@@ -122,14 +121,10 @@ test('the at page drives the list from one clock and leaves the matrix time-blin
   assert.ok(ALL.indexOf('new Date') === -1, 'the matrix page reads no clock');
 });
 
-test('one clock module serves all three pages (issue 051)', function () {
+test('one clock module serves the at page (issue 051)', function () {
   // the byte-identical clock block is now a shared module, imported by name
-  // on each page — the constancy that was pinned per file
-  var pages = { 'at/+page.svelte': TIME, 'teachers/+page.svelte': TEACHERS, 'all/+page.svelte': ALL };
-  ['at/+page.svelte', 'teachers/+page.svelte'].forEach(function (name) {
-    assert.ok(pages[name].indexOf("import { clock } from '$lib/clock.js';") !== -1,
-      name + ' pulls the one clock module');
-  });
+  assert.ok(TIME.indexOf("import { clock } from '$lib/clock.js';") !== -1,
+    'the at page pulls the one clock module');
   // the matrix page stays time-blind (checked in the wiring test above); the
   // cadence lives exactly once, in the module
   assert.ok(CLOCK.indexOf("setInterval(tick, 30000)") !== -1, 'the clock owns the 30 s interval');

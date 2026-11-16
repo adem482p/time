@@ -31,8 +31,7 @@ const APP = path.join(HERE, '..', 'app');
 
 // Issues 072 + 073: four painted pages — the two app pages and the two
 // utility views — all prerender through app.html; the root landing is a redirect.
-const PAGES = ['app/src/routes/teachers/+page.svelte', 'app/src/routes/classes/+page.svelte',
-	'app/src/routes/at/+page.svelte', 'app/src/routes/all/+page.svelte'];
+const PAGES = ['app/src/routes/at/+page.svelte', 'app/src/routes/all/+page.svelte'];
 
 const APPHTML = readSrc('app', 'src', 'app.html');
 const THEME_SRC = readSrc('app', 'src', 'lib', 'theme.js');

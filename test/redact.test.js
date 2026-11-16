@@ -122,41 +122,20 @@ test('display.teacherName highlights by default and redacts when on', function (
 // ---- 6. site-inventory pins ------------------------------------------------
 
 test('site inventory: no raw-esc name sites left; every page wires nameHTML(', function () {
-  const teachersPage = readSrc('app/src/routes/teachers/+page.svelte');
-  const classesPage = readSrc('app/src/routes/classes/+page.svelte');
   const atPage = readSrc('app/src/routes/at/+page.svelte');
   const allPage = readSrc('app/src/routes/all/+page.svelte');
   // negative tokens: a future unredacted name site fails exactly like deadcode
-  assert.ok(classesPage.indexOf('esc(s.professor') === -1,
-    'classes must not raw-esc a professor (use teacherName)');
   assert.ok(atPage.indexOf('esc(s.professor') === -1,
     'the time page must not raw-esc a professor (use teacherName)');
   assert.ok(allPage.indexOf('esc(n)') === -1,
     'the matrix axis must not raw-esc n (use teacherName)');
-  assert.ok(teachersPage.indexOf('highlightHTML(r.teacher') === -1,
-    'list rows must go through display.teacherName, not raw highlightHTML');
-  assert.ok(teachersPage.indexOf('esc(detailGroups.name') === -1,
-    'the detail heading must go through teacherName, not raw esc');
   // positive: each page renders names through the display-layer helper
-  ['app/src/routes/teachers/+page.svelte', 'app/src/lib/components/DayGroupCards.svelte',
-   'app/src/routes/at/+page.svelte', 'app/src/routes/all/+page.svelte'].forEach(function (f) {
+  ['app/src/routes/at/+page.svelte', 'app/src/routes/all/+page.svelte'].forEach(function (f) {
     assert.ok(readSrc(f).indexOf('teacherName(') !== -1, f + ' must call teacherName(');
   });
 });
 
-// ---- 7. ghost suppression --------------------------------------------------
-
-test('the ghost wiring carries the redacted() guard (slice to acceptSuggest)', function () {
-  const src = readSrc('app/src/routes/teachers/+page.svelte');
-  const at = src.indexOf('redacted() ? null : suggestRows[suggestIdx]');
-  const end = src.indexOf('function acceptSuggest', at === -1 ? 0 : at);
-  assert.ok(at !== -1 && end !== -1 && end > at,
-    'the guard lives inside the ghost wiring, feeding the existing hidden path');
-  assert.ok(src.slice(0, at).indexOf('the shadow ghost') !== -1,
-    'the guard belongs to the ghost completion, not some other consumer');
-});
-
-// ---- 8. CSS block ----------------------------------------------------------
+// ---- 7. CSS block ----------------------------------------------------------
 
 test('.redact CSS block pins background: currentColor and display: inline-block', function () {
   const css = readSrc('app/static/app.css');

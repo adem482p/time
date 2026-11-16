@@ -14,7 +14,6 @@ import { fileURLToPath } from 'node:url';
 
 import * as data from '../app/src/lib/data.js';
 import * as model from '../app/src/lib/model.js';
-import * as searchClasses from '../app/src/lib/search-classes.js';
 import * as Groups from '../app/src/lib/libgroups.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -24,7 +23,6 @@ const CSV_PATH = path.join(ROOT, 'time.csv');
 
 const store = data.createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 const modelObjs = model.buildAll(store);
-const index = searchClasses.buildClassIndex(modelObjs.groups);
 const groups = modelObjs.groups;
 
 // Oct 16 2026 is a Friday; Fri 12h00 sits inside slot 3 (11h40-13h10).
@@ -243,12 +241,9 @@ test('time-page slice collapses per teacher without mixing professors', function
 
 // ---- untouched layers ------------------------------------------------------------
 
-test('raw layers are unchanged: classWeek length, availability, one match query', function () {
+test('raw layers are unchanged: classWeek length, availability', function () {
   assert.strictEqual(model.classWeek(groups, 'GLSI3D1').sessions.length, 22);
   assert.strictEqual(model.availability(fusedOf('Dlima'), fri(12, 0)), 'today');
-  assert.deepStrictEqual(
-    searchClasses.searchClasses(index, 'glsi3d').map(function (r) { return r.label; }),
-    ['GLSI3D', 'GLSI3D1', 'GLSI3D2']);
 });
 
 // ---- XSS: joined values escape exactly once ------------------------------------------

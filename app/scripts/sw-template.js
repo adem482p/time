@@ -1,11 +1,7 @@
 // __APP__/sw.js — network-first service worker of the __APP__ app, runtime
 // response caching (issue 087: the build-time "last snapshot" model of
-// issues 063 + 070 is retired). This worker owns the scope ./ = the __APP__
-// directory only: the sibling __SIBLING__ app runs its own worker
-// (__SIBLING__/sw.js) with its own cache family and own status database,
-// because Cache Storage and IndexedDB are per-ORIGIN — shared between the
-// two workers — so every cache access here is filtered to THIS app's family
-// and one app's offline fallback can never erase the other's.
+// issues 063 + 070 is retired). This worker owns the scope ./ = the omni
+// app's directory only.
 // Online, every same-origin GET is fetched network-first (cache: 'no-cache',
 // so an HTTP-cache hit never fakes freshness or connectivity) and every
 // successful response is put into this app's runtime cache; offline, that
@@ -144,11 +140,10 @@ self.addEventListener('activate', function (event) {
   // (…-v-<digest>), stale runtime entries of a superseded worker — then claim.
   // The current runtime cache is kept: entries in it are last-successful-
   // responses, which a returning online session simply overwrites.
-  // __LEGACY_ROOT_COMMENT__
   event.waitUntil(
     caches.keys().then(function (ks) {
       return Promise.all(ks.filter(function (k) {
-        return (k.indexOf(CACHE) === 0 && k !== CACHE)__LEGACY_ROOT_CLAUSE__;
+        return k.indexOf(CACHE) === 0 && k !== CACHE;
       }).map(function (k) { return caches.delete(k); }));
     }).then(function () { return self.clients.claim(); })
   );

@@ -19,8 +19,8 @@
 	//     index.html (scripts/stamp-page.mjs) — the static pages are the site;
 	//   - here at runtime, off the current route, for hydration and any
 	//     client-side navigation. Same rule on both sides: first path
-	//     segment, teachers at the root.
-	const pageName = page.url.pathname.split('/').filter(Boolean)[0] || 'teachers';
+	//     segment, omni at the root.
+	const pageName = page.url.pathname.split('/').filter(Boolean)[0] || 'omni';
 
 	$effect(() => {
 		document.body.setAttribute('data-page', pageName);

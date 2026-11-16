@@ -32,38 +32,21 @@ export function toRoot(rel, fromDir) {
   return path.posix.normalize(path.posix.join(fromDir, rel));
 }
 
-// The two independently installable apps (issue 072): each page registers the
-// worker of its own directory, each worker owns its own cache family + status
-// DB. ONE shared descriptor array — the offline and pwa suites used to keep
-// two copies whose overlapping fields (name/dir/page/manifest) could silently
-// drift apart; the union carries every field both suites read (offline:
-// family/db/registerScript; pwa: nameStr/shortName/manifestMode — the issue-078
-// teachers opt-in stays encoded there). No suite ever asserted the whole
-// object, only its own fields, so behaviour is unchanged.
+// The single independently installable app (issue 072): its page registers the
+// worker of its own directory, its worker owns its own cache family + status DB.
+// ONE descriptor array — the offline suite reads family/db/registerScript from it.
 export var APPS = [
   {
-    name: 'teachers',
-    dir: 'teachers',
-    page: 'app/src/routes/teachers/+page.svelte',
-    family: 'time-teachers-snapshot-',
-    db: 'time-teachers-status',
+    name: 'omni',
+    dir: 'omni',
+    page: 'app/src/routes/omni/+page.svelte',
+    family: 'time-omni-snapshot-',
+    db: 'time-omni-status',
     registerScript: 'app/src/lib/register.js',
-    manifest: 'app/static/teachers/manifest.json',
-    nameStr: 'Time — Enseignants',
-    shortName: 'Enseignants',
+    manifest: 'app/static/omni/manifest.json',
+    nameStr: 'Time — Omni',
+    shortName: 'Omni',
     manifestMode: 'opt-in'
-  },
-  {
-    name: 'classes',
-    dir: 'classes',
-    page: 'app/src/routes/classes/+page.svelte',
-    family: 'time-classes-snapshot-',
-    db: 'time-classes-status',
-    registerScript: 'app/src/lib/register.js',
-    manifest: 'app/static/classes/manifest.json',
-    nameStr: 'Time — Classes',
-    shortName: 'Classes',
-    manifestMode: 'static'
   }
 ];
 

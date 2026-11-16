@@ -4,9 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "predev": "node scripts/sync-static.mjs",
     "build": "vite build",
-    "prebuild": "node scripts/sync-static.mjs",
     "postbuild": "node scripts/gen-sw.mjs"
   },
   "devDependencies": {

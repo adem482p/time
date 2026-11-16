@@ -568,10 +568,11 @@
 		return (Math.round((mins / 60) * 10) / 10).toFixed(1) + 'h';
 	}
 
-	// "08h15-09h45" -> ["8:15", "9:45"] for the leading time circle.
+	// "08h15-09h45" -> ["08:15", "09:45"] for the leading time circle.
+	// Hours are zero-padded so every time takes up the same horizontal space.
 	function slotRange(slot) {
 		const [s, e] = slotMinutes(slot);
-		const fmt = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+		const fmt = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 		return [fmt(s), fmt(e)];
 	}
 

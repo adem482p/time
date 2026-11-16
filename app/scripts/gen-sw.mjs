@@ -2,16 +2,14 @@
 // app/scripts/gen-sw.mjs — the single postbuild script. Stage one stamps the
 // data-page body attribute into every built app page (the CSS scoping hook
 // app.css required of every painted page; see the comment inside). Stage two
-// generates the two app service workers (issues 063/070/072 port, reworked by
-// issue 087): it reads scripts/sw-template.js and stamps out build/<app>/sw.js
-// for each app (teachers, classes). The template body is the network-first
-// runtime-caching worker verbatim, parameterized only by the app/sibling names
-// in the comments and the cache prefix — there is NO snapshot URL list any more
-// (issue 087: the runtime cache self-populates from real traffic, so the build
-// derives nothing but the per-app expansions).
+// generates the omni app service worker (issues 063/070/072 port, reworked by
+// issue 087): it reads scripts/sw-template.js and stamps out build/omni/sw.js.
+// The template body is the network-first runtime-caching worker verbatim,
+// parameterized only by the app name in the cache prefix — there is NO snapshot
+// URL list any more (issue 087: the runtime cache self-populates from real
+// traffic, so the build derives nothing but the per-app expansion).
 //   - the runtime cache family name uses the __APP__ token;
-//   - the status database name uses the __APP__ token;
-//   - the teachers-only legacy root snapshot teardown is injected verbatim.
+//   - the status database name uses the __APP__ token.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,7 +18,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const appDir = path.resolve(here, '..');
 const buildDir = path.join(appDir, 'build');
 
-const APPS = ['teachers', 'classes', 'omni'];
+const APPS = ['omni'];
 
 const template = fs.readFileSync(path.join(appDir, 'scripts', 'sw-template.js'), 'utf8');
 
@@ -36,10 +34,9 @@ const template = fs.readFileSync(path.join(appDir, 'scripts', 'sw-template.js'),
 // layout component re-asserts the same value via $effect (+layout.svelte),
 // for SPA navigations included.
 //
-// Same name rule on both sides: first path segment, teachers at the root.
-// The redirect stubs (the build-root index.html hand-over and classes.html)
-// are never painted app pages and stay untouched (issue 073 / pwa.test.js
-// pin them data-page-free).
+// Same name rule on both sides: first path segment, omni at the root.
+// The redirect stub (the build-root index.html hand-over) is never a painted
+// app page and stays untouched (issue 073 / pwa.test.js pin it data-page-free).
 
 if (!fs.existsSync(buildDir)) {
 	console.error('gen-sw: build/ missing — run the SvelteKit build first');
