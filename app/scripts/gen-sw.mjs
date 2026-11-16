@@ -94,7 +94,10 @@ if (!startFile) {
 	process.exit(1);
 }
 
-// root-relative paths work when served from the build/ root (python3 -m http.server)
+// Paths are prefixed with the build base (PUBLIC_BASE, '' locally) so the
+// shell works both served from the build/ root and from a subdirectory such as
+// GitHub Pages project pages (PUBLIC_BASE=/time -> https://user.github.io/repo/).
+const base = process.env.PUBLIC_BASE || '';
 const shell = `<!doctype html>
 <html lang="en">
 	<head>
@@ -116,11 +119,11 @@ const shell = `<!doctype html>
 				} catch (e) { /* corrupt/unavailable storage: default theme */ }
 			})();
 		</script>
-		<link rel="stylesheet" href="/app.css" />
+		<link rel="stylesheet" href="${base}/app.css" />
 		<title>Time</title>
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<script type="module" src="/_app/immutable/entry/${startFile}"></script>
+		<script type="module" src="${base}/_app/immutable/entry/${startFile}"></script>
 	</body>
 </html>
 `;
