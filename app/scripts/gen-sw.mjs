@@ -41,6 +41,19 @@ if (!appFile) {
 	process.exit(1);
 }
 
+// The production start() entry reads `globalThis.__sveltekit_<version_hash>`
+// (the prerendered payload) at the top of Ye(). With ssr=false no prerendered
+// HTML sets it, so we inject an empty payload here. The hash is build-time
+// dependent (hash(Date.now())), so we extract it from the built start module
+// rather than hardcoding it.
+const startSrc = fs.readFileSync(path.join(entryDir, startFile), 'utf8');
+const payloadMatch = startSrc.match(/__sveltekit_([a-z0-9]+)/);
+const payloadGlobal = payloadMatch ? `globalThis.__sveltekit_${payloadMatch[1]}` : null;
+if (!payloadGlobal) {
+	console.error('gen-sw: no __sveltekit_<hash> payload reference found in start.*.js');
+	process.exit(1);
+}
+
 const shell = `<!doctype html>
 <html lang="en">
 	<head>
@@ -67,6 +80,10 @@ const shell = `<!doctype html>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">
 			<script>
+				// Initialise the prerendered payload global that start()
+				// reads (Ye accesses globalThis.__sveltekit_<hash>.data).
+				// With ssr=false no prerendered HTML sets it, so we do it here.
+				${payloadGlobal} = {};
 				// Mount the CSR-only app (ssr=false, csr=true). The entry module
 				// only exports start(app, element) — it must be invoked with the
 				// app manifest and a target element, or nothing mounts and the
