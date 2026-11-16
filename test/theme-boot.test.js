@@ -59,9 +59,9 @@ test('app.html carries the inline replay snippet immediately before the styleshe
 	assert.strictEqual(APPHTML.split('/* Issue 066:').length - 1, 1,
 		'app.html carries exactly one issue-066 replay snippet');
 	const end = APPHTML.indexOf('</script>', APPHTML.indexOf('/* Issue 066:')) + '</script>'.length;
-	const link = APPHTML.indexOf('rel="stylesheet" href="%sveltekit.assets%/app.css"');
-	assert.ok(link !== -1, 'the stylesheet link must exist');
-	// the snippet sits immediately before the stylesheet link (only whitespace between)
+	const link = APPHTML.indexOf('rel="manifest" href="%sveltekit.assets%/manifest.json"');
+	assert.ok(link !== -1, 'the manifest link must exist');
+	// the snippet sits immediately before the manifest link (only whitespace between)
 	const linkTagStart = APPHTML.lastIndexOf('<link', link);
 	assert.ok(/^\s*$/.test(APPHTML.slice(end, linkTagStart)),
 		'the snippet must sit immediately before the stylesheet link');

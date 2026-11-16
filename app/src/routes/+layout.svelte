@@ -1,11 +1,13 @@
 <script>
-	// app/src/routes/+layout.svelte — the document shell. The stylesheet is
-	// linked in app.html (static/app.css, the single visual definition of the
-	// vocabulary, exactly like the old styles.css); the theme engine reuses the
-	// same custom property vocabulary.
+	// app/src/routes/+layout.svelte — the document shell. app.css carries the
+	// shared vocabulary and legacy-page layout; the omni page is self-contained
+	// in omni.css and does not depend on app.css.
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 	import { init as initTheme } from '$lib/theme.js';
+
+	const needsAppCss = $derived(!page.url.pathname.includes('omni'));
 
 	// the route content ({@render children()} below)
 	let { children } = $props();
@@ -30,5 +32,11 @@
 		initTheme();
 	});
 </script>
+
+<svelte:head>
+	{#if needsAppCss}
+		<link rel="stylesheet" href={`${base}/app.css`} />
+	{/if}
+</svelte:head>
 
 {@render children()}

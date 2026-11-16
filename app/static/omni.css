@@ -78,12 +78,12 @@ and so are the override's larger margins,
 which
    existed only to balance the 32px title. */
 h1{ font-size: 17pt; margin: .6rem 0 .2rem; }#status{ color: var(--md-on-surface-variant, #555); font-size: .85em; margin: .2rem 0 .6rem; }/* teachers + classes pages: centre the title and the session/teacher count line */
-body[data-page="omni"] h1,
-body[data-page="omni"] #status,
-body[data-page="omni"] h1{ text-align: center; }/* the author credit (teachers + classes only) hugs the title above it (2px) and
+h1,
+#status,
+h1{ text-align: center; }/* the author credit (teachers + classes only) hugs the title above it (2px) and
    leaves room before the filter box below (20pt); issue 076 pins both margins */
-body[data-page="omni"] .author-credit,
-body[data-page="omni"] .author-credit{ 
+.author-credit,
+.author-credit{ 
     text-align: center; 
     margin: 2px 0 20pt; 
 }/* the author NAME (the link) back at its old 1.3em (issue 078): Tiny5 is a
@@ -92,14 +92,14 @@ body[data-page="omni"] .author-credit{
    label stays at the inherited body size — it is a label,
 not the name
    (issue 076); the 076 margins above are kept. */
-body[data-page="omni"] .author-credit a,
-body[data-page="omni"] .author-credit a{ 
+.author-credit a,
+.author-credit a{ 
     color: var(--md-primary); 
     font-family: "Tiny5", "DejaVu Sans", sans-serif; 
     font-size: 1.3em; 
     font-style: normal; 
     text-decoration: underline;
-}body[data-page="omni"] .author-credit span{ 
+}.author-credit span{ 
     color: var(--md-on-surface-variant); 
     padding-right: .2em; 
 }/* ---- theme control: the palette square itself is the button ----
@@ -389,19 +389,18 @@ so
      min-height) is what lets the shrink engage; taller content simply
      overflows visibly and the document still scrolls (the global html
      background above keeps the theme color below the fold). */
-  body[data-page="omni"],
-body[data-page="omni"]{
+body{
     height: 100vh;
     height: 100dvh;
     display: flex; flex-direction: column;
-  }body[data-page="omni"] #layout{
+  }#layout{
     flex: 1 1 auto; min-height: 0;
   }/* teachers + classes pages: the left sidebar owns the header exactly like the mobile
      screen does — the title is centred inside the pane and the theme square
      sits at the pane's top-right,
 not at the far corner of the page. */
-  body[data-page="omni"] #listPane,
-body[data-page="omni"] #listPane{ position: relative; }body[data-page="omni"] #listPane{ position: relative; }body[data-page="omni"] #themeCycle{ top: .55rem; right: 0; }body[data-page="omni"] #themeCycle{ top: .55rem; right: 0; }/* keep the teacher/class list inside the viewport instead of letting it grow the
+  #listPane,
+#listPane{ position: relative; }#listPane{ position: relative; }#themeCycle{ top: .55rem; right: 0; }#themeCycle{ top: .55rem; right: 0; }/* keep the teacher/class list inside the viewport instead of letting it grow the
      page: the pane is a flex column capped at the viewport height,
 so the list
      absorbs exactly the space left under the header + search box and scrolls
@@ -425,8 +424,8 @@ so the day
 while min-height keeps the
      definite viewport-tall column the empty state fills. at/ and all/ keep
      the stretch — they carry no sticky children. */
-  body[data-page="omni"] #layout > #detail,
-body[data-page="omni"] #layout > #detail{
+  #layout > #detail,
+#layout > #detail{
     align-self: flex-start;
     min-height: calc(100vh - 2rem);
     min-height: calc(100dvh - 2rem);
@@ -444,14 +443,14 @@ hence the pinned
 no timers,
 no flags. The suggest dropdown is unaffected: it
      stays absolute inside #searchWrap and simply overlays the gap. */
-  body[data-page="omni"] #status,
-body[data-page="omni"] #status{
+  #status,
+#status{
     height: 1.4em; overflow: hidden;
     /* the pane is a flex column; the list (flex:1) must absorb the freed
        space, never the pinned one-line box (flex-shrink would eat it) */
     flex: none;
     transition: height .18s ease, margin .18s ease, opacity .18s ease;
-  }body[data-page="omni"] #status.count-away{
+  }#status.count-away{
     height: 0; margin: 0; opacity: 0;
   }/* gap is wider than the gutter the table hangs into,
 so the hanging now/next
@@ -538,7 +537,7 @@ the list flattens ---- */
      exact-viewport trick as desktop,
 so the empty state fits instead of
      stacking the nav on top of a full-viewport layout. */
-  body[data-page="omni"]{ display: flex; flex-direction: column; height: 100vh; height: 100dvh; }body[data-page="omni"] #layout{ flex: 1 1 auto; min-height: 0; }#layout > #listPane{
+  body{ display: flex; flex-direction: column; height: 100vh; height: 100dvh; }#layout{ flex: 1 1 auto; min-height: 0; }#layout > #listPane{
     max-width: none;
     /* REQUIRED in column direction: the base rule's `flex: 0 1 22rem` would
        read 22rem as a *height* basis and starve #detail of space, so the pane
@@ -553,8 +552,8 @@ so a press in flight can never lose its row. */
 #layout:not(.is-list) #omniList{ display: none; }#layout.is-list #detail{ display: none; }/* the count line leaves with the filter on narrow too (issue 078); the
      narrow pane is not a fill-flex column,
 so it simply goes — no animation */
-  body[data-page="omni"] #status.count-away,
-body[data-page="omni"] #status.count-away{ display: none; }/* the whole page scrolls: #detail must not become an inner scroll
+  #status.count-away,
+#status.count-away{ display: none; }/* the whole page scrolls: #detail must not become an inner scroll
      container. The base rule's overflow-x:auto would compute overflow-y to
      auto and trap the scroll inside #detail (heading + search stuck); here
      it expands with its content and the document scrolls instead. Desktop
