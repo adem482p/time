@@ -1,5 +1,5 @@
 // static/sw.js — simple service worker for the omni timetable app.
-// Scope: /time/omni/ (served from /time/ on GitHub Pages).
+// Scope: /time/ (served from /time/ on GitHub Pages).
 // Installable PWA: cache-first for immutable assets, network-first for time.csv.
 
 const CACHE_NAME = 'time-omni-v1';
@@ -8,7 +8,6 @@ const IMMUTABLE_CACHE = 'time-omni-immutable-v1';
 // Assets to cache on install (app shell)
 const PRECACHE_ASSETS = [
 	'/time/',
-	'/time/omni/',
 	'/time/app.css',
 	'/time/omni.css',
 	'/time/time.csv',

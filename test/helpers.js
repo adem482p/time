@@ -39,7 +39,7 @@ export var APPS = [
   {
     name: 'omni',
     dir: 'omni',
-    page: 'app/src/routes/omni/+page.svelte',
+    page: 'app/src/routes/+page.svelte',
     family: 'time-omni-snapshot-',
     db: 'time-omni-status',
     registerScript: 'app/src/lib/register.js',

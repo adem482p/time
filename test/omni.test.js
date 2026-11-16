@@ -16,7 +16,7 @@ import { teacherName, highlightHTML, highlightClassLabel } from '../app/src/lib/
 import { parseSearchQuery, completeType, completePredicateValue, addPredicate, lastToken, tokenAt, replaceTokenAt, completeTypeAt } from '../app/src/lib/search.js';
 
 test('omni page does not import old modeling code (libgroups.js or model.js)', () => {
-	const src = readSrc('app/src/routes/omni/+page.svelte');
+	const src = readSrc('app/src/routes/+page.svelte');
 	assert.ok(!src.includes('$lib/model.js'), 'omni page must not import model.js');
 	assert.ok(!src.includes('$lib/libgroups.js'), 'omni page must not import libgroups.js');
 	assert.ok(!src.includes('modelObjs'), 'omni page must not use legacy modelObjs');
@@ -313,7 +313,7 @@ test('empty timeslots render as breaks between a day\'s sessions', () => {
 });
 
 test('omni search box is a single isolated component', () => {
-	const page = readSrc('app/src/routes/omni/+page.svelte');
+	const page = readSrc('app/src/routes/+page.svelte');
 	const box = fs.readFileSync(path.join(ROOT, 'app/src/lib/components/SearchBox.svelte'), 'utf8');
 
 	// One box, no JS viewport fork, no triple.
@@ -372,7 +372,7 @@ test('omni search box is a single isolated component', () => {
 });
 
 test('port the animation for the emoticons and include font loading', () => {
-	const html = readSrc('app/src/routes/omni/+page.svelte');
+	const html = readSrc('app/src/routes/+page.svelte');
 
 	// 1. Animation checks
 	assert.ok(html.includes('onEmptyClick'), 'has onEmptyClick handler');

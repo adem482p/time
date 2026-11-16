@@ -7,7 +7,11 @@
 	import { base } from '$app/paths';
 	import { init as initTheme } from '$lib/theme.js';
 
-	const needsAppCss = $derived(!page.url.pathname.includes('omni'));
+	const needsAppCss = $derived(
+		!page.url.pathname.includes('omni') &&
+			page.url.pathname !== '/' &&
+			!page.url.pathname.endsWith('/time/')
+	);
 
 	// the route content ({@render children()} below)
 	let { children } = $props();
