@@ -176,11 +176,7 @@
 
 	// ---- Kaomoji Emoticon Animation -----------------------------------------
 	const shortFaces = kaomoji.all().filter((f) => f.length <= 12);
-	let emptyFace = $state(
-		shortFaces.length
-			? shortFaces[Math.floor(Math.random() * shortFaces.length)]
-			: kaomoji.random() || '(＾▽＾)'
-	);
+	let emptyFace = $state('(＾▽＾)');
 
 	function nextFace() {
 		const pool = shortFaces.filter((f) => f !== emptyFace);
@@ -216,6 +212,9 @@
 	}
 
 	onMount(() => {
+		emptyFace = shortFaces.length
+			? shortFaces[Math.floor(Math.random() * shortFaces.length)]
+			: kaomoji.random() || '(＾▽＾)';
 		let unsub = null;
 		// Register service worker for PWA installability. Skipped under dev:
 		// vite serves from a different origin/port than the production build,

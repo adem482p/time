@@ -15,9 +15,8 @@
   (JavaScript only, no TypeScript; JSDoc restricted to the simple types
   `number`, `boolean`, `string`, `null`, `Array<T>`): `npm run build` in
   `app/` prerenders every route to one index.html per directory
-  (adapter-static, the legacy directory-per-app shape) and stamps the two
-  service workers out of the built tree (postbuild `app/scripts/gen-sw.mjs`).
-  `npm run dev` in `app/` serves the dev copy; re-running the parser then a
+  (adapter-static, the legacy directory-per-app shape). `npm run dev` in
+  `app/` serves the dev copy; re-running the parser then a
   build updates the site; there is no backend.
 - Serve the built tree over HTTP for local checks (`python3 -m http.server`
   from `app/build/`); browsers block `fetch` on `file://`, and `vite preview`

@@ -15,7 +15,7 @@ const config = {
 		adapter: adapter({
 			pages: 'build',
 			assets: 'build',
-			strict: false
+			strict: true
 		}),
 		paths: {
 			base: process.env.PUBLIC_BASE || ''

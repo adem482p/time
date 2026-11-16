@@ -170,8 +170,7 @@ the screenshots shipped with the project are taken in this mode.
 
 Two network-first service workers (issues 063 + 070 + 072, reworked by issue
 087), one per app — the teacher worker owns the `teachers/` scope, the classes
-worker the `classes/` scope — stamped out at build time by `app/scripts/sw-template.js` +
-`app/scripts/gen-sw.mjs` into `build/teachers/sw.js` and `build/classes/sw.js`
+worker the `classes/` scope — served from `app/static/sw.js`
 — each with a runtime response cache (issue 087): online every same-origin GET
 is fetched network-first (`cache: 'no-cache'`, so an HTTP-cache hit can never
 fake freshness or connectivity) and every successful response is put into the
@@ -193,9 +192,8 @@ databases `time-teachers-status` and `time-classes-status`.
   miss is an honest failure, never fabricated content.
 - **No build-time snapshot list.** The cache self-populates from real traffic
   (issue 087): there is no install-time addAll, no generated `SNAPSHOT_URLS` and
-  no snapshot-name versioning any more — the worker source is stamped into the
-  build by `scripts/gen-sw.mjs` (whose only remaining job is the teachers-only
-  legacy root snapshot teardown) and the cache fills itself from whatever the app
+  no snapshot-name versioning any more — the worker source is served from
+  `app/static/sw.js` and the cache fills itself from whatever the app
   actually serves. Offline coverage is therefore visit-dependent (the accepted
   trade-off of runtime caching, issue 087).
 - **Reconnect needs no erase + retake** (issue 070, re-anchored by 087): the last

@@ -4,8 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
-    "postbuild": "node scripts/gen-sw.mjs"
+    "build": "vite build"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.8",

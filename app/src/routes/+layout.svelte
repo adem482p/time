@@ -14,12 +14,9 @@
 	// owns the <body> element (app.html does — a nested <body> renders fine in
 	// SSR but Svelte cannot carry it client-side: the parser strips <body> out
 	// of a template's contents and <svelte:body> takes no attributes), so the
-	// attribute is maintained two ways:
-	//   - at prerender time the postbuild stamp writes it into every built
-	//     index.html (scripts/stamp-page.mjs) — the static pages are the site;
-	//   - here at runtime, off the current route, for hydration and any
-	//     client-side navigation. Same rule on both sides: first path
-	//     segment, omni at the root.
+	// attribute is maintained at runtime, off the current route, for hydration
+	// and any client-side navigation. Prerendered HTML won't carry
+	// body[data-page] until hydration (same as before, no regression).
 	const pageName = page.url.pathname.split('/').filter(Boolean)[0] || 'omni';
 
 	$effect(() => {
