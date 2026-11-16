@@ -887,7 +887,8 @@ table.week .week-pill {
 .msession .pill{ margin: 0; }
 @media (min-width: 701px){
   /* desktop shows the normal tables; the cards are mobile-only. */
-  .msession-list{ display: none; }
+  .msession-list,
+  .msession-break{ display: none; }
 }
 /* ---- omni search box (issue 102): one component, flex-row, CSS decides
    viewport chrome. Scoped under #layout so legacy pages are unaffected.
