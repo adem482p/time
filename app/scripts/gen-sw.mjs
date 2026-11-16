@@ -54,6 +54,7 @@ const shell = `<!doctype html>
 			})();
 		</script>
 		<link rel="stylesheet" href="${base}/app.css" />
+		<link rel="manifest" href="${base}/manifest.json" />
 		<title>Time</title>
 	</head>
 	<body data-sveltekit-preload-data="hover">

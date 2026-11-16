@@ -217,6 +217,12 @@
 
 	onMount(() => {
 		let unsub = null;
+		// Register service worker for PWA installability
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register(`${base}/sw.js`).catch(() => {
+				/* unsupported or no sw.js */
+			});
+		}
 		fetch(`${base}/time.csv`)
 			.then((res) => {
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
