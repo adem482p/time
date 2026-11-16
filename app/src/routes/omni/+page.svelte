@@ -217,8 +217,11 @@
 
 	onMount(() => {
 		let unsub = null;
-		// Register service worker for PWA installability
-		if ('serviceWorker' in navigator) {
+		// Register service worker for PWA installability. Skipped under dev:
+		// vite serves from a different origin/port than the production build,
+		// so the SW scope (/time/sw.js) would never match the dev URL and the
+		// registration would just fail (or worse, claim the wrong origin).
+		if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
 			navigator.serviceWorker.register(`${base}/sw.js`).catch(() => {
 				/* unsupported or no sw.js */
 			});

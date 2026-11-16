@@ -28,9 +28,16 @@ const entryDir = path.join(buildDir, '_app', 'immutable', 'entry');
 const startFile = fs.existsSync(entryDir)
 	? fs.readdirSync(entryDir).find((f) => f.startsWith('start.') && f.endsWith('.js'))
 	: null;
+const appFile = fs.existsSync(entryDir)
+	? fs.readdirSync(entryDir).find((f) => f.startsWith('app.') && f.endsWith('.js'))
+	: null;
 
 if (!startFile) {
 	console.error('gen-sw: no start.*.js entry found in build/_app/immutable/entry/');
+	process.exit(1);
+}
+if (!appFile) {
+	console.error('gen-sw: no app.*.js entry found in build/_app/immutable/entry/');
 	process.exit(1);
 }
 
@@ -58,7 +65,21 @@ const shell = `<!doctype html>
 		<title>Time</title>
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<script type="module" src="${base}/_app/immutable/entry/${startFile}"></script>
+		<div style="display: contents">
+			<script>
+				// Mount the CSR-only app (ssr=false, csr=true). The entry module
+				// only exports start(app, element) — it must be invoked with the
+				// app manifest and a target element, or nothing mounts and the
+				// body stays empty. Mirrors the dev shell: a classic script that
+				// dynamically imports the production entry + app manifest and
+				// calls start(app, element).
+				const element = document.currentScript.parentElement;
+				Promise.all([
+					import('${base}/_app/immutable/entry/${startFile}'),
+					import('${base}/_app/immutable/entry/${appFile}')
+				]).then(([entry, app]) => entry.start(app, element));
+			</script>
+		</div>
 	</body>
 </html>
 `;
