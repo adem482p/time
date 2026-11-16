@@ -1,15 +1,12 @@
-#!/usr/bin/env node
-// app/scripts/gen-sw.mjs — the single postbuild script. Stage one stamps the
-// data-page body attribute into every built app page (the CSS scoping hook
-// app.css required of every painted page; see the comment inside). Stage two
-// generates the omni app service worker (issues 063/070/072 port, reworked by
-// issue 087): it reads scripts/sw-template.js and stamps out build/omni/sw.js.
-// The template body is the network-first runtime-caching worker verbatim,
-// parameterized only by the app name in the cache prefix — there is NO snapshot
-// URL list any more (issue 087: the runtime cache self-populates from real
-// traffic, so the build derives nothing but the per-app expansion).
-//   - the runtime cache family name uses the __APP__ token;
-//   - the status database name uses the __APP__ token.
+// app/scripts/gen-sw.mjs — postbuild: generate the SPA shell index.html and
+// mirror it into every route directory so direct URL visits (and refreshes)
+// resolve to a real file under a plain static file server (no SPA fallback
+// middleware on GitHub Pages). Base-aware via PUBLIC_BASE so the shell works
+// both served from the build/ root (PUBLIC_BASE='') and from a subdirectory
+// such as GitHub Pages project pages (PUBLIC_BASE=/time).
+//
+// All service-worker generation and registration was removed: the omni app is
+// a single static page with no offline cache.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,86 +15,25 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const appDir = path.resolve(here, '..');
 const buildDir = path.join(appDir, 'build');
 
-const APPS = ['omni'];
-
-const template = fs.readFileSync(path.join(appDir, 'scripts', 'sw-template.js'), 'utf8');
-
-// ---- stage one: stamp the data-page body attribute -----------------------
-
-//
-// No component may render the <body> element: app.html owns it, and Svelte
-// cannot carry a nested <body> client-side (the HTML parser strips <body>
-// from a template's contents, and <svelte:body> accepts no attributes). The
-// prerendered page therefore ships its body without the attribute, and this
-// stamp writes it into every built app page — the static pages ARE the site,
-// so the attribute must be on them before any script runs. At hydration the
-// layout component re-asserts the same value via $effect (+layout.svelte),
-// for SPA navigations included.
-//
-// Same name rule on both sides: first path segment, omni at the root.
-// The redirect stub (the build-root index.html hand-over) is never a painted
-// app page and stays untouched (issue 073 / pwa.test.js pin it data-page-free).
-
 if (!fs.existsSync(buildDir)) {
 	console.error('gen-sw: build/ missing — run the SvelteKit build first');
 	process.exit(1);
 }
 
-function stampPage(html, pageName) {
-	// the <body ...> open tag of the one document this page prerenders
-	const at = html.search(/<body(?:\s|>)/);
-	if (at === -1) return { html, changed: false };
-	const tagEnd = html.indexOf('>', at);
-	const bodyTag = html.slice(at, tagEnd + 1);
-	if (/\sdata-page[\s=>]/.test(bodyTag)) return { html, changed: false };
-	return { html: html.slice(0, tagEnd) + ` data-page="${pageName}"` + html.slice(tagEnd), changed: true };
-}
-
-function* appPages(dir) {
-	// the prerendered app pages sit at build/<route>/index.html; the build
-	// root carries only shared assets and redirect stubs — never visit it
-	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-		if (!entry.isDirectory()) continue;
-		const page = path.join(dir, entry.name, 'index.html');
-		if (fs.existsSync(page)) yield [page, entry.name];
-	}
-}
-
-let stamped = 0;
-for (const [file, pageName] of appPages(buildDir)) {
-	const result = stampPage(fs.readFileSync(file, 'utf8'), pageName);
-	if (result.changed) {
-		fs.writeFileSync(file, result.html);
-		stamped += 1;
-	} else {
-		console.warn(`gen-sw: ${path.relative(buildDir, file)} already carries data-page`);
-	}
-}
-console.log(`gen-sw: ${stamped} page(s) stamped (body data-page)`);
-
-// ---- stage three: generate the SPA shell index.html -----------------------
-
-// With ssr = false there are no prerendered pages. The site is a pure
-// client-side app: every route serves the same index.html shell, and the
-// SvelteKit client runtime mounts and fetches time.csv on demand. We generate
-// a single shell at build/index.html and mirror it into every route directory
-// so that direct URL visits (and refreshes) resolve to a real file under a
-// plain static file server (no SPA fallback middleware needed).
+// Paths are prefixed with the build base (PUBLIC_BASE, '' locally) so the
+// shell works both from the build/ root and from /time/ on GitHub Pages.
+const base = process.env.PUBLIC_BASE || '';
 
 const entryDir = path.join(buildDir, '_app', 'immutable', 'entry');
 const startFile = fs.existsSync(entryDir)
-  ? fs.readdirSync(entryDir).find((f) => f.startsWith('start.') && f.endsWith('.js'))
-  : null;
+	? fs.readdirSync(entryDir).find((f) => f.startsWith('start.') && f.endsWith('.js'))
+	: null;
 
 if (!startFile) {
 	console.error('gen-sw: no start.*.js entry found in build/_app/immutable/entry/');
 	process.exit(1);
 }
 
-// Paths are prefixed with the build base (PUBLIC_BASE, '' locally) so the
-// shell works both served from the build/ root and from a subdirectory such as
-// GitHub Pages project pages (PUBLIC_BASE=/time -> https://user.github.io/repo/).
-const base = process.env.PUBLIC_BASE || '';
 const shell = `<!doctype html>
 <html lang="en">
 	<head>
@@ -105,8 +41,6 @@ const shell = `<!doctype html>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="color-scheme" content="light dark" />
 		<script>
-			/* theme replay before first paint — persisted per-scheme custom
-			   properties written verbatim so the first frame is already themed. */
 			(function () {
 				try {
 					var s = JSON.parse(localStorage.getItem('time-theme') || 'null');
@@ -130,20 +64,20 @@ const shell = `<!doctype html>
 
 fs.writeFileSync(path.join(buildDir, 'index.html'), shell);
 
-// mirror the shell into every route directory so each route URL serves it.
-// Routes are discovered from the source tree (app/src/routes/<name>/), so
-// routes with no static adapter output (e.g. /all, /at under ssr=false) are
-// still covered.
+// Mirror the shell into every route directory so each route URL serves it.
+// Routes are discovered from the source tree (app/src/routes/<name>/). Legacy
+// routes (all/, at/) are kept in the repo for reference but are not deployed.
+const LEGACY_ROUTES = new Set(['all', 'at']);
 const routesSrc = path.join(appDir, 'src', 'routes');
 const routeDirs = [];
 for (const entry of fs.readdirSync(routesSrc, { withFileTypes: true })) {
-	if (entry.isDirectory()) {
-		routeDirs.push(entry.name);
-	}
+	if (!entry.isDirectory()) continue;
+	if (LEGACY_ROUTES.has(entry.name)) continue;
+	routeDirs.push(entry.name);
 }
 for (const route of routeDirs) {
 	const routeBuildDir = path.join(buildDir, route);
 	fs.mkdirSync(routeBuildDir, { recursive: true });
 	fs.copyFileSync(path.join(buildDir, 'index.html'), path.join(routeBuildDir, 'index.html'));
 }
-console.log(`gen-sw: SPA shell written to index.html and mirrored into ${routeDirs.length} route dirs`);
+console.log(`gen-sw: SPA shell written to index.html and mirrored into ${routeDirs.length} route dir(s): ${routeDirs.join(', ')}`);

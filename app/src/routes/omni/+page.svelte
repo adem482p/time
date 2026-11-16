@@ -25,7 +25,6 @@
 	import { headingHTML, teacherName, highlightHTML, highlightClassLabel } from '$lib/display.js';
 	import { clock } from '$lib/clock.js';
 	import * as kaomoji from '$lib/kaomoji.js';
-	import { registerApp } from '$lib/register.js';
 	let omniStore = $state(null);
 	let loadError = $state('');
 
@@ -218,7 +217,6 @@
 
 	onMount(() => {
 		let unsub = null;
-		registerApp();
 		fetch(`${base}/time.csv`)
 			.then((res) => {
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);

@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -40,33 +40,25 @@ jobs:
       - name: Install poppler-utils (required by data/extract.py)
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
 
-      - name: Configure Pages build metadata
-        uses: actions/configure-pages@v5
-
       - name: Preprocess static inputs
         # Generates data/time.csv via data/extract.py if missing, then copies
-        # it and root assets/ into app/static/ so the site has its inputs.
+        # it and root assets/ into app/static/.
         run: node scripts/preprocess.mjs
 
       - name: Build site
         run: npm run build
         working-directory: app
         env:
-          # Project pages are served from /<repo>/ on GitHub Pages.
+          # GitHub Pages project pages are served from /<repo>/.
           PUBLIC_BASE: /time
+
+      - name: Configure Pages build metadata
+        uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: app/build
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
