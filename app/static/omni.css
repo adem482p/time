@@ -911,6 +911,7 @@ table.week .week-pill {
   font-family:"Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 #layout .sbox-input.previewing{ color:var(--md-tertiary, #7c5260); font-style:italic; }
+#layout .sbox-input::placeholder{ color:var(--md-on-surface-variant, #555); }
 #layout .sbox-input::-webkit-search-cancel-button,
 #layout .sbox-input::-webkit-search-decoration{ -webkit-appearance:none; appearance:none; display:none; }
 #layout .sbox-back{
