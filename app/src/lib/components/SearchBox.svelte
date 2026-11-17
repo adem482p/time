@@ -19,7 +19,6 @@
 		onQuery,
 		onFocus,
 		onBlur,
-		onCaret,
 		onKeydown,
 		onClear,
 		onCompleteType,
