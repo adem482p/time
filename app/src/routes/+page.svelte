@@ -13,7 +13,6 @@
 		DAYS,
 		SLOTS,
 		frDay,
-		hoursLabel,
 		slotMinutes,
 		isCurrentSession
 	} from '$lib/omni-model.js';
@@ -871,16 +870,6 @@
 		{:else if selectedTeacher && currentTeacherDetail}
 			<!-- Time View -->
 			<h2>{@html teacherName(currentTeacherDetail.name)}</h2>
-			<dl class="class-facts teacher-facts">
-				<div class="fact-card">
-					<dt class="fact-name">Subject</dt>
-					<dd class="fact-value">~ {currentTeacherDetail.topSubject}</dd>
-				</div>
-				<div class="fact-card">
-					<dt class="fact-name">Class</dt>
-					<dd class="fact-value">~ {currentTeacherDetail.topClass}</dd>
-				</div>
-			</dl>
 
 			{#each currentTeacherDetail.dayOrder as day (day)}
 				<h3 class="day-head">{frDay(day)}</h3>
@@ -971,30 +960,6 @@
 					{/each}
 				</section>
 			{/each}
-
-			<h3>Subjects (ranked by hours)</h3>
-			<ul class="subjlist">
-				{#each currentTeacherDetail.rankedSubjects as s (s.name)}
-					<li>
-						{s.name}
-						<span class="hours">
-							{hoursLabel(s.sessions)} ({(s.share * 100).toFixed(1)}%)
-						</span>
-					</li>
-				{/each}
-			</ul>
-
-			<h3>Classes (ranked by hours)</h3>
-			<ul class="subjlist">
-				{#each currentTeacherDetail.rankedClasses as c (c.name)}
-					<li>
-						{@html headingHTML(c.name)}
-						<span class="hours">
-							{hoursLabel(c.sessions)} ({(c.share * 100).toFixed(1)}%)
-						</span>
-					</li>
-				{/each}
-			</ul>
 		{:else if selectedClass && currentClassDetail}
 			<!-- Class Timetable View -->
 			<h2>

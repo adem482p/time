@@ -40,7 +40,6 @@ export function passesFilters(item, filters) {
 // Day/slot sets come from the library — single source of truth.
 export { DAYS, SLOTS };
 
-const HOURS_PER_SESSION = 1.5;
 const JS_DAY = ['DIMANCHE', 'LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
 const DAY_IDX = { LUNDI: 1, MARDI: 2, MERCREDI: 3, JEUDI: 4, VENDREDI: 5, SAMEDI: 6 };
 
@@ -49,15 +48,6 @@ const DAY_IDX = { LUNDI: 1, MARDI: 2, MERCREDI: 3, JEUDI: 4, VENDREDI: 5, SAMEDI
  */
 export function frDay(d) {
 	return String(d || '').toLowerCase();
-}
-
-/**
- * Format hours label: sessions count -> "57h00" or "57h30".
- */
-export function hoursLabel(nSessions) {
-	const h = nSessions * HOURS_PER_SESSION;
-	const whole = Math.floor(h + 1e-9);
-	return whole + 'h' + (h - whole >= 0.5 ? '30' : '00');
 }
 
 /**
@@ -565,19 +555,6 @@ export function withBreaks(entries, slotOf) {
 	return items;
 }
 
-/** Rank counts of a key function into [{name, sessions, share}], desc. */
-function rankBy(items, keyFn) {
-	const counts = {};
-	for (const item of items) {
-		const k = keyFn(item);
-		counts[k] = (counts[k] || 0) + 1;
-	}
-	const total = items.length;
-	return Object.keys(counts)
-		.sort((a, b) => counts[b] - counts[a] || a.localeCompare(b))
-		.map((name) => ({ name, sessions: counts[name], share: total ? counts[name] / total : 0 }));
-}
-
 /**
  * Build teacher detail view data.
  */
@@ -591,53 +568,16 @@ export function getTeacherDetail(omniStore, teacherName, now) {
 	const now2 = now || new Date();
 	const next = nextSessionIdx(fusedSessions, now2);
 
-
 	const grouped = groupByDay(fusedSessions, now2);
 	const dayOrder = grouped.dayOrder;
 	const byDay = Object.fromEntries(
 		Object.entries(grouped.byDay).map(([day, entries]) => [day, withBreaks(entries, (s) => s.time)])
 	);
 	const totalSessions = teacherSessions.length;
-	const rankedSubjects = rankBy(teacherSessions, (s) => s.subject);
-	// Classes ranked by their reduced level: a teacher covering GLSI3 A1…D2
-	// ranks under the single GLSI3 label with summed hours.
-	const classCounts = new Map();
-	for (const s of teacherSessions) {
-		const lbl = s.population?.label || 'Other';
-		classCounts.set(lbl, (classCounts.get(lbl) ?? 0) + 1);
-	}
-	const classObjs = omniStore.catalogue.classes.filter((c) => classCounts.has(c.label));
-	const reduced = reduceClasses(omniStore.catalogue, classObjs);
-	// A reduced node covers an input class when it is the class itself, its
-	// group class, or its Semester/Year parent.
-	const covers = (node, cls) =>
-		node === cls ||
-		node.label === cls.label ||
-		(node.type?.description === 'class' && node.semester === cls.semester && node.group === cls.group) ||
-		node === cls.semester;
-	const reducedCounts = new Map();
-	for (const cls of classObjs) {
-		const target = reduced.find((node) => covers(node, cls));
-		const key = target ? target.label : cls.label;
-		reducedCounts.set(key, (reducedCounts.get(key) ?? 0) + classCounts.get(cls.label));
-	}
-	// Sessions whose population label isn't a catalog class (defensive).
-	for (const [lbl, n] of classCounts) {
-		if (!classObjs.some((c) => c.label === lbl)) {
-			reducedCounts.set(lbl, (reducedCounts.get(lbl) ?? 0) + n);
-		}
-	}
-	const rankedClasses = [...reducedCounts.entries()]
-		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-		.map(([name, sessions]) => ({ name, sessions, share: totalSessions ? sessions / totalSessions : 0 }));
 
 	return {
 		name: teacherName,
 		totalSessions,
-		topSubject: rankedSubjects[0] ? rankedSubjects[0].name : '—',
-		topClass: rankedClasses[0] ? rankedClasses[0].name : '—',
-		rankedSubjects,
-		rankedClasses,
 		fusedSessions,
 		upcoming: next,
 		dayOrder,
