@@ -4,7 +4,6 @@
 	// in omni.css and does not depend on app.css.
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { base } from '$lib/base.js';
 	import { init as initTheme } from '$lib/theme.js';
 
 	const routeId = $derived(page.route.id ?? '/');
@@ -38,7 +37,7 @@
 
 <svelte:head>
 	{#if needsAppCss}
-		<link rel="stylesheet" href={`${base}/app.css`} />
+		<link rel="stylesheet" href="../app.css" />
 	{/if}
 </svelte:head>
 

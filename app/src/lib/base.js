@@ -19,7 +19,11 @@ export function detectBase() {
 			`[base] Unexpected path "${p}". Supported deployment paths: ${KNOWN_BASES.join(', ')}.`
 		);
 	}
-	return ''; // root (local dev via Vite)
+	// Root: the Vite dev server is served at its own origin with no path
+	// prefix (http://localhost:5173/), so the base is ''. This is the local-dev
+	// fallback only — production deployments always match a KNOWN_BASES entry
+	// above or throw.
+	return '';
 }
 
 export const base = detectBase();

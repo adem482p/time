@@ -1,5 +1,5 @@
 <script>
-	import { base } from '$app/paths';
+	import { base } from '$lib/base.js';
 	import { onMount } from 'svelte';
 
 	async function clearLegacyData() {

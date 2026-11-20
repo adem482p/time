@@ -58,8 +58,8 @@ import { teacherName } from '$lib/display.js';
 
 <svelte:head>
 	<title>Timetable matrix — Time</title>
-	<link rel="icon" href={`${base}/assets/icon-192.png`} sizes="192x192" type="image/png" />
-	<link rel="apple-touch-icon" href={`${base}/assets/apple-touch-icon.png`} />
+	<link rel="icon" href="../assets/icon-192.png" sizes="192x192" type="image/png" />
+	<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
 </svelte:head>
 
 <button type="button" id="themeCycle" title="Cycle color preset" aria-label="Cycle color preset"></button>

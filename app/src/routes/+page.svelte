@@ -640,29 +640,29 @@
 	<!-- Preload vendored kaomoji symbol webfonts -->
 	<link
 		rel="preload"
-		href={`${base}/vendor/dejavu-sans.woff2`}
+		href="./vendor/dejavu-sans.woff2"
 		as="font"
 		type="font/woff2"
 		crossorigin="anonymous"
 	/>
 	<link
 		rel="preload"
-		href={`${base}/vendor/noto-sans-kannada.woff2`}
+		href="./vendor/noto-sans-kannada.woff2"
 		as="font"
 		type="font/woff2"
 		crossorigin="anonymous"
 	/>
 	<link
 		rel="preload"
-		href={`${base}/vendor/noto-sans-symbols.woff2`}
+		href="./vendor/noto-sans-symbols.woff2"
 		as="font"
 		type="font/woff2"
 		crossorigin="anonymous"
 	/>
 
-	<link rel="stylesheet" href={`${base}/omni.css`} />
-	<link rel="icon" href={`${base}/assets/icon-192.png`} sizes="192x192" type="image/png" />
-	<link rel="apple-touch-icon" href={`${base}/assets/apple-touch-icon.png`} />
+	<link rel="stylesheet" href="./omni.css" />
+	<link rel="icon" href="./assets/icon-192.png" sizes="192x192" type="image/png" />
+	<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
 </svelte:head>
 
 {#snippet matchLine(kind, m)}
@@ -1130,7 +1130,7 @@
 		font-style: normal;
 		font-weight: 400;
 		font-display: swap;
-		src: url('/vendor/tiny5.ttf') format('truetype');
+		src: url('./vendor/tiny5.ttf') format('truetype');
 	}
 
 	@font-face {
@@ -1138,7 +1138,7 @@
 		font-style: normal;
 		font-weight: 400 700;
 		font-display: swap;
-		src: url('/vendor/dynapuff.ttf') format('truetype');
+		src: url('./vendor/dynapuff.ttf') format('truetype');
 	}
 
 	.omni-lists-scroll {
