@@ -573,11 +573,9 @@ export function getTeacherDetail(omniStore, teacherName, now) {
 	const byDay = Object.fromEntries(
 		Object.entries(grouped.byDay).map(([day, entries]) => [day, withBreaks(entries, (s) => s.time)])
 	);
-	const totalSessions = teacherSessions.length;
 
 	return {
 		name: teacherName,
-		totalSessions,
 		fusedSessions,
 		upcoming: next,
 		dayOrder,
