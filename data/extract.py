@@ -495,7 +495,7 @@ def parse_rest(rest_list):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pdfs", default="data/pdfs")
-    ap.add_argument("--out", default="time.csv")
+    ap.add_argument("--out", default="data/time.csv")
     args = ap.parse_args()
 
     pdfs = sorted(glob.glob(os.path.join(args.pdfs, "*.pdf")))

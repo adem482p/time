@@ -16,11 +16,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import * as Groups from '../app/src/lib/libgroups.js';
+import { CSV_PATH } from './helpers.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
 
-const CSV_PATH = path.join(ROOT, 'time.csv');
 const SOURCE_PATH = path.join(ROOT, 'app', 'src', 'lib', 'libgroups.js');
 
 // Minimal RFC 4180 reader: the CSV has quoted fields that contain commas

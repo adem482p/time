@@ -7,12 +7,13 @@ Source material and extractor for the timetable site.
 - `extract.py` — the parser. Flattens every PDF into a single flat CSV:
 
 ```sh
-python3 data/extract.py [--pdfs data/pdfs] [--out time.csv]
+python3 data/extract.py [--pdfs data/pdfs] [--out data/time.csv]
 ```
 
-Run from the repo root. `--out` defaults to `time.csv` at the root, where
-the site fetches it; the site reads that file and nothing else, so
-re-running the extractor updates the site with no build step.
+Run from the repo root. `--out` defaults to `data/time.csv`, the canonical
+location of the extracted timetable; re-running the extractor updates that
+file, and `scripts/preprocess.mjs` copies it to `app/static/time.csv` for
+the site.
 
 Output columns: `professor,day,time,room,subject,field,week,source,color`,
 where `field` carries the class name, `week` carries the week-alternation

@@ -15,11 +15,10 @@ import { fileURLToPath } from 'node:url';
 import * as data from '../app/src/lib/data.js';
 import * as model from '../app/src/lib/model.js';
 import * as Groups from '../app/src/lib/libgroups.js';
+import { CSV_PATH } from './helpers.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
-
-const CSV_PATH = path.join(ROOT, 'time.csv');
 
 const store = data.createStore(fs.readFileSync(CSV_PATH, 'utf8'));
 const modelObjs = model.buildAll(store);

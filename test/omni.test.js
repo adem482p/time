@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
-import { readSrc, ROOT } from './helpers.js';
+import { readSrc, ROOT, CSV_PATH } from './helpers.js';
 import {
 	buildOmniStore,
 	getTeacherDetail,
@@ -34,7 +34,7 @@ test('omni page does not import old modeling code (libgroups.js or model.js)', (
 });
 
 test('omni store builds from time.csv with 132 teachers and 94 active classes', () => {
-	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
 	const store = buildOmniStore(csvText);
 
 	assert.strictEqual(store.teachers.length, 132, 'exactly 132 teachers');
@@ -43,7 +43,7 @@ test('omni store builds from time.csv with 132 teachers and 94 active classes', 
 });
 
 test('polished filter matching and highlighting on teachers and classes', () => {
-	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
 	const store = buildOmniStore(csvText);
 
 	// 1. Searching "machi" finds Marrakchi and highlights Ma and chi
@@ -84,7 +84,7 @@ test('polished filter matching and highlighting on teachers and classes', () => 
 });
 
 test('cohort token straddling head/sub highlights both parts', () => {
-	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
 	const store = buildOmniStore(csvText);
 	// "D2" straddles the shortcut split: 'D' is in the head, '2' in the sub.
 	// Ranges must be computed on the full identifier and split, not per part.
@@ -126,7 +126,7 @@ test('parseSearchQuery extracts type predicates and keeps terms', () => {
 });
 
 test('multiple predicates filter within the type before fuzzy search', () => {
-	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
 	const store = buildOmniStore(csvText);
 
 	// cohort:2 narrows classes before any fuzzy text runs.
@@ -230,7 +230,7 @@ test('mid-string token edits replace the touched token', () => {
 });
 
 test('class matches in teacher search carry ranges and highlight', () => {
-	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
 	const store = buildOmniStore(csvText);
 	const hits = searchOmniTeachers(store.teachers, 'glsi');
 	assert.ok(hits.length > 0, 'GLSI finds teachers');
@@ -244,7 +244,7 @@ test('class matches in teacher search carry ranges and highlight', () => {
 });
 
 test('day rotation on Sunday keeps Monday first (regression)', () => {
-	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
 	const store = buildOmniStore(csvText);
 	// 2026-11-08 is a Sunday.
 	const sunday = new Date(2026, 10, 8, 12, 0);
@@ -282,7 +282,7 @@ test('day rotation on Sunday keeps Monday first (regression)', () => {
 });
 
 test('empty timeslots render as breaks between a day\'s sessions', () => {
-	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
 	const store = buildOmniStore(csvText);
 	const now = new Date(2026, 10, 8, 12, 0);
 
@@ -358,7 +358,7 @@ test('omni search box is a single isolated component', () => {
 		assert.ok(body.includes('hovered = null'), fn + ' clears hovered');
 	}
 	// Completion gating must not regress: type:class subject:machi → 17 class hits.
-	const csvText = fs.readFileSync(path.join(ROOT, 'time.csv'), 'utf8');
+	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
 	const store = buildOmniStore(csvText);
 	assert.strictEqual(searchOmniClasses(store.classes, parseSearchQuery('type:class subject:machi')).length, 17, 'type:class subject:machi keeps 17 class hits');
 	// Styling ownership: omni.css owns .sbox* (no id selectors, no z-index/:has() in the section).
