@@ -2,7 +2,7 @@
 	// app/src/routes/omni/+page.svelte — Unified omni timetable application.
 	// Combines Teachers and Classes into a single page powered by the new
 	// domain model library ($domain).
-	import { base } from '$app/paths';
+	import { base } from '$lib/base.js';
 	import { onMount } from 'svelte';
 	import {
 		buildOmniStore,
@@ -217,7 +217,7 @@
 		let unsub = null;
 		// Register service worker for PWA installability. Skipped under dev:
 		// vite serves from a different origin/port than the production build,
-		// so the SW scope (/time/sw.js) would never match the dev URL and the
+		// so the SW scope would never match the dev URL and the
 		// registration would just fail (or worse, claim the wrong origin).
 		if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
 			navigator.serviceWorker.register(`${base}/sw.js`).catch(() => {

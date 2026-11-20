@@ -1,9 +1,10 @@
 // svelte.config.js — static-site build config. adapter-static emits one
 // index.html per route directory (trailingSlash is set per-layout), so the
 // built tree keeps the original directory-per-app shape (/, /teachers/,
-// /classes/, /at/, /all/). The build target base can be set for a subdirectory
-// deployment (e.g. PUBLIC_BASE=/time for GitHub Pages); it stays '' for local
-// work, which serves the site from its own root like the old static tree.
+// /classes/, /at/, /all/). Location-agnostic: base is detected at runtime
+// (see $lib/base.js), so a single build works at /time, /time/dev, or root
+// (local dev). relative: true makes SvelteKit's own asset references
+// portable (depth-aware) too.
 import adapter from '@sveltejs/adapter-static';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -18,7 +19,8 @@ const config = {
 			strict: true
 		}),
 		paths: {
-			base: process.env.PUBLIC_BASE || ''
+			base: '',
+			relative: true
 		}
 	}
 };

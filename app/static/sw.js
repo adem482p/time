@@ -1,17 +1,22 @@
-// static/sw.js — simple service worker for the omni timetable app.
-// Scope: /time/ (served from /time/ on GitHub Pages).
+// static/sw.js — service worker for the omni timetable app.
+// Location-agnostic: BASE is derived from this script's own URL, so the same
+// file works at /time, /time/dev, or any supported deployment path.
 // Installable PWA: cache-first for immutable assets, network-first for time.csv.
 
-const CACHE_NAME = 'time-omni-v1';
-const IMMUTABLE_CACHE = 'time-omni-immutable-v1';
+const BASE = new URL('.', self.location).pathname.replace(/\/$/, '');
+if (!BASE.endsWith('/time') && !BASE.endsWith('/time/dev') && BASE !== '') {
+	throw new Error(`[sw] Unexpected base path "${BASE}".`);
+}
+const CACHE_NAME = 'time-omni' + (BASE.replace(/\//g, '-') || '-root') + '-v1';
+const IMMUTABLE_CACHE = 'time-omni-immutable' + (BASE.replace(/\//g, '-') || '-root') + '-v1';
 
 // Assets to cache on install (app shell)
 const PRECACHE_ASSETS = [
-	'/time/',
-	'/time/app.css',
-	'/time/omni.css',
-	'/time/time.csv',
-	'/time/manifest.json'
+	BASE + '/',
+	BASE + '/app.css',
+	BASE + '/omni.css',
+	BASE + '/time.csv',
+	BASE + '/manifest.json'
 ];
 
 // Patterns for cache-first (immutable, hashed filenames)
@@ -65,7 +70,7 @@ self.addEventListener('fetch', (event) => {
 	}
 
 	// Network-first for time.csv (always check for updates)
-	if (pathname === '/time/time.csv') {
+	if (pathname === BASE + '/time.csv') {
 		event.respondWith(
 			fetch(event.request)
 				.then((response) => {

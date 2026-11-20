@@ -7,7 +7,7 @@
 	// pill reduction). One page clock re-renders the slot list wholesale on
 	// every tick (issue 051); the detail pane is slot-derived and never
 	// clock-driven. Online-only by design (issue 073).
-	import { base } from '$app/paths';
+	import { base } from '$lib/base.js';
 	import { onMount } from 'svelte';
 	import { loadStore } from '$lib/load.js';
 	import * as model from '$lib/model.js';

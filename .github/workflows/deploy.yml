@@ -1,8 +1,7 @@
 name: Build and Deploy to GitHub Pages
-
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -41,24 +40,43 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
 
       - name: Preprocess static inputs
-        # Generates data/time.csv via data/extract.py if missing, then copies
-        # it and root assets/ into app/static/.
         run: node scripts/preprocess.mjs
 
       - name: Build site
         run: npm run build
         working-directory: app
-        env:
-          # GitHub Pages project pages are served from /<repo>/.
-          PUBLIC_BASE: /time
 
-      - name: Configure Pages build metadata
-        uses: actions/configure-pages@v5
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-build
+          path: app/build
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-build
+          path: build
+
+      - name: Assemble site (root + /dev)
+        run: |
+          mkdir -p site site/dev
+          cp -a build/. site/
+          cp -a build/. site/dev/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: app/build
+          path: site
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4

@@ -3,7 +3,7 @@
 	// the six time slots, filtered by day and by a live teacher query. Online-
 	// only by design (issue 073: reachable only by its URL), and it runs no
 	// clock (the matrix is static per load — issue 051).
-	import { base } from '$app/paths';
+	import { base } from '$lib/base.js';
 	import { onMount } from 'svelte';
 	import { loadStore } from '$lib/load.js';
 	import * as model from '$lib/model.js';

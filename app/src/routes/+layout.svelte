@@ -4,13 +4,12 @@
 	// in omni.css and does not depend on app.css.
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { base } from '$app/paths';
+	import { base } from '$lib/base.js';
 	import { init as initTheme } from '$lib/theme.js';
 
+	const routeId = $derived(page.route.id ?? '/');
 	const needsAppCss = $derived(
-		!page.url.pathname.includes('omni') &&
-			page.url.pathname !== '/' &&
-			!page.url.pathname.endsWith('/time/')
+		!routeId.includes('omni') && routeId !== '/'
 	);
 
 	// the route content ({@render children()} below)
@@ -23,7 +22,7 @@
 	// attribute is maintained at runtime, off the current route, for hydration
 	// and any client-side navigation. Prerendered HTML won't carry
 	// body[data-page] until hydration (same as before, no regression).
-	const pageName = page.url.pathname.split('/').filter(Boolean)[0] || 'omni';
+	const pageName = $derived(routeId.split('/').filter(Boolean)[0] || 'omni');
 
 	$effect(() => {
 		document.body.setAttribute('data-page', pageName);
