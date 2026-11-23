@@ -22,7 +22,6 @@
 	function tokenAt() { return null; }
 	function restoreCaret() { try { searchEl?.setSelectionRange(caret, caret); } catch {} searchEl?.focus(); }
 	import * as color from '$lib/color.js';
-	import { esc } from '$lib/data.js';
 	import { headingHTML, teacherName, highlightHTML, highlightClassLabel } from '$lib/display.js';
 	import { clock } from '$lib/clock.js';
 	import * as kaomoji from '$lib/kaomoji.js';
