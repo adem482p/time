@@ -3,9 +3,18 @@
 // (with a real <sub> for the cohort) only at the display boundary, leaving
 // matching and data identity untouched. Every part is escaped BEFORE the
 // markup is appended, so a malformed field can never inject HTML.
-import { shortcutOf } from './libgroups.js';
 import { esc, redacted, nameHTML as dataNameHTML } from './data.js';
 import { mergeRanges } from './search.js';
+
+const TRACKS = ['LBC', 'LCE', 'LCS', 'MP'];
+const SHORTCUT_RE = new RegExp(
+  '^(' + TRACKS.join('|') + ')(\\d{1,2})-([A-Za-z0-9]+?)(?:_([A-Z]))?(?: Groupe (\\d+))?$');
+
+function shortcutOf(name) {
+  const m = SHORTCUT_RE.exec(name == null ? '' : String(name));
+  if (!m) return null;
+  return { head: m[3] + m[2] + (m[4] ? ' ' + m[4] : ''), sub: m[5] || '' };
+}
 
 /**
  * Highlight substrings in a string with <mark> tags.

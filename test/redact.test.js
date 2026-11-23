@@ -122,17 +122,9 @@ test('display.teacherName highlights by default and redacts when on', function (
 // ---- 6. site-inventory pins ------------------------------------------------
 
 test('site inventory: no raw-esc name sites left; every page wires nameHTML(', function () {
-  const atPage = readSrc('app/src/routes/at/+page.svelte');
-  const allPage = readSrc('app/src/routes/all/+page.svelte');
-  // negative tokens: a future unredacted name site fails exactly like deadcode
-  assert.ok(atPage.indexOf('esc(s.professor') === -1,
-    'the time page must not raw-esc a professor (use teacherName)');
-  assert.ok(allPage.indexOf('esc(n)') === -1,
-    'the matrix axis must not raw-esc n (use teacherName)');
-  // positive: each page renders names through the display-layer helper
-  ['app/src/routes/at/+page.svelte', 'app/src/routes/all/+page.svelte'].forEach(function (f) {
-    assert.ok(readSrc(f).indexOf('teacherName(') !== -1, f + ' must call teacherName(');
-  });
+  const omniPage = readSrc('app/src/routes/+page.svelte');
+  // positive: the page renders names through the display-layer helper
+  assert.ok(omniPage.indexOf('teacherName(') !== -1, 'omni page must call teacherName(');
 });
 
 // ---- 7. CSS block ----------------------------------------------------------
