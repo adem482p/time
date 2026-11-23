@@ -1018,4 +1018,5 @@ table.week .s-teacher, table.week .s-room { color: var(--md-on-surface-variant, 
   border-radius: 0.18em;
   vertical-align: -0.08em;
   background: currentColor;
+  opacity: 0.2;
 }
