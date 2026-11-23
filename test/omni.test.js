@@ -13,7 +13,7 @@ import {
 	startFromToday
 } from '../app/src/lib/omni-model.js';
 import { teacherName, highlightHTML, highlightClassLabel } from '../app/src/lib/display.js';
-import { parseSearchQuery, completeType, completePredicateValue, addPredicate, lastToken, tokenAt, replaceTokenAt, completeTypeAt } from '../app/src/lib/search.js';
+import { normStr, tokenize, mergeRanges, fuzzyRanges, scoreMatch } from '../app/src/lib/search.js';
 
 test('omni page does not import old modeling code (libgroups.js or model.js)', () => {
 	const src = readSrc('app/src/routes/+page.svelte');
@@ -99,135 +99,6 @@ test('cohort token straddling head/sub highlights both parts', () => {
 	assert.strictEqual(sub, '<mark>2</mark>');
 });
 
-test('parseSearchQuery extracts type predicates and keeps terms', () => {
-	assert.deepStrictEqual(parseSearchQuery('GLSI3 D2'), { type: null, filters: [], terms: ['glsi3', 'd2'], completing: false });
-	assert.deepStrictEqual(parseSearchQuery('type:class GLSI'), { type: 'class', filters: [], terms: ['glsi'], completing: false });
-	assert.deepStrictEqual(parseSearchQuery('GLSI type:teachers'), { type: 'teacher', filters: [], terms: ['glsi'], completing: false });
-	// Last type: wins; unknown values/keys fall back to literal text.
-	assert.strictEqual(parseSearchQuery('type:class type:teacher').type, 'teacher');
-	assert.deepStrictEqual(parseSearchQuery('type:xyz'), { type: null, filters: [], terms: ['type:xyz'], completing: false });
-	assert.deepStrictEqual(parseSearchQuery('foo:bar'), { type: null, filters: [], terms: ['foo:bar'], completing: false });
-	// Field predicates are parsed (evaluation is a later step).
-	assert.deepStrictEqual(parseSearchQuery('room:B1 subject:python'), {
-		type: null,
-		filters: [{ key: 'room', value: 'b1' }, { key: 'subject', value: 'python' }],
-		terms: [],
-		completing: false
-	});
-	// A bare `type:` / `type:*` flags completion and is not a search term.
-	assert.deepStrictEqual(parseSearchQuery('type:'), { type: null, filters: [], terms: [], completing: true });
-	assert.deepStrictEqual(parseSearchQuery('type:*'), { type: null, filters: [], terms: [], completing: true });
-	// Partial type values filter like their completion (and stay completing).
-	assert.deepStrictEqual(parseSearchQuery('type:c'), { type: 'class', filters: [], terms: [], completing: true });
-	assert.deepStrictEqual(parseSearchQuery('type:t'), { type: 'teacher', filters: [], terms: [], completing: true });
-	// Empty query == empty AST (the page treats it as type-selection state).
-	assert.deepStrictEqual(parseSearchQuery(''), { type: null, filters: [], terms: [], completing: false });
-	assert.deepStrictEqual(parseSearchQuery('   '), { type: null, filters: [], terms: [], completing: false });
-});
-
-test('multiple predicates filter within the type before fuzzy search', () => {
-	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
-	const store = buildOmniStore(csvText);
-
-	// cohort:2 narrows classes before any fuzzy text runs.
-	const cohortHits = searchOmniClasses(store.classes, parseSearchQuery('cohort:2'));
-	assert.ok(cohortHits.length > 0);
-	assert.ok(cohortHits.every((c) => c.cohort === '2'));
-
-	// subject: is a substring predicate over session subjects.
-	const subjHits = searchOmniClasses(store.classes, parseSearchQuery('subject:python'));
-	assert.ok(subjHits.length > 0);
-	assert.ok(subjHits.every((c) => c.filterSets.subject.some((s) => s.toLowerCase().includes('python'))));
-
-	// Multiple predicates AND together across a free-text term.
-	const both = searchOmniClasses(store.classes, parseSearchQuery('cohort:1 subject:python'));
-	assert.ok(both.every((c) => c.cohort === '1' && c.filterSets.subject.some((s) => s.toLowerCase().includes('python'))));
-
-	// group:/day: are exact; teacher: + room: work on both result kinds.
-	const dayHits = searchOmniTeachers(store.teachers, parseSearchQuery('day:lundi'));
-	assert.ok(dayHits.length > 0);
-	assert.ok(dayHits.every((t) => t.filterSets.day.includes('LUNDI')));
-
-	// A predicate matching nothing yields nothing (not everything).
-	assert.strictEqual(searchOmniClasses(store.classes, parseSearchQuery('subject:zzzznope')).length, 0);
-
-	// Identity predicates (track/year/specialty) work when typed even though
-	// they are only suggested for classes.
-	const trackHits = searchOmniClasses(store.classes, parseSearchQuery('track:LCS'));
-	assert.ok(trackHits.length > 0 && trackHits.every((c) => c.track === 'LCS'));
-	const yearHits = searchOmniClasses(store.classes, parseSearchQuery('year:3'));
-	assert.ok(yearHits.length > 0 && yearHits.every((c) => c.year === 3));
-	const specHits = searchOmniClasses(store.classes, parseSearchQuery('specialty:GLSI3'));
-	assert.ok(specHits.length > 0 && specHits.every((c) => c.specialty === 'GLSI3'));
-
-	// Bare `key:` ≡ `key:*` ≡ absent: no filtering until a value is typed.
-	assert.strictEqual(
-		searchOmniClasses(store.classes, parseSearchQuery('subject:')).length,
-		searchOmniClasses(store.classes, parseSearchQuery('')).length
-	);
-	assert.strictEqual(
-		searchOmniClasses(store.classes, parseSearchQuery('subject:* cohort:')).length,
-		searchOmniClasses(store.classes, parseSearchQuery('')).length
-	);
-
-	// Quoted multi-word values stay one predicate.
-	assert.deepStrictEqual(parseSearchQuery('subject:"machine learning"').filters, [
-		{ key: 'subject', value: 'machine learning' }
-	]);
-});
-
-test('query edits are pure, idempotent, and round-trip through the parser', () => {
-	// Completion replaces the last token — never appends inside it.
-	assert.strictEqual(completeType('type:', 'teacher'), 'type:teacher ');
-	assert.strictEqual(completeType('type:*', 'class'), 'type:class ');
-	assert.strictEqual(completeType('type:te', 'teacher'), 'type:teacher ');
-	assert.strictEqual(completeType('glsi type:', 'class'), 'glsi type:class ');
-	assert.strictEqual(completeType('type:teacher glsi', 'class'), 'type:class glsi '); // replaces, never duplicates
-	assert.strictEqual(completeType('glsi', 'teacher'), 'glsi type:teacher ');
-	assert.strictEqual(completeType('', 'teacher'), 'type:teacher ');
-	// Switching a completed type replaces it.
-	assert.strictEqual(completeType('type:teacher ', 'class'), 'type:class ');
-	// Idempotent: the whole `type:type:...` class of bug is unrepresentable.
-	for (const q of ['type:', 'glsi type:te', 'type:*', 'type:teacher ']) {
-		const once = completeType(q, 'teacher');
-		assert.strictEqual(completeType(once, 'teacher'), once);
-		assert.doesNotMatch(once, /type:type:/i);
-	}
-	// Round-trip: the parser reads back exactly what was written.
-	assert.deepStrictEqual(parseSearchQuery(completeType('type:', 'teacher')).type, 'teacher');
-	assert.deepStrictEqual(parseSearchQuery(completeType('type:*', 'class')).type, 'class');
-
-	assert.strictEqual(completePredicateValue('subject:', 'machine learning'), 'subject:"machine learning" ');
-	assert.strictEqual(completePredicateValue('subject:py', 'python'), 'subject:python ');
-	for (const q of ['subject:', 'subject:py']) {
-		const once = completePredicateValue(q, 'python');
-		assert.strictEqual(completePredicateValue(once, 'python'), once);
-	}
-
-	// Key prefixes complete; other tokens cause an append.
-	assert.strictEqual(addPredicate('roo', 'room'), 'room:');
-	assert.strictEqual(addPredicate('glsi', 'room'), 'glsi room:');
-	assert.strictEqual(addPredicate('', 'subject'), 'subject:');
-	assert.strictEqual(addPredicate('room:', 'room'), 'room:'); // idempotent
-	assert.strictEqual(lastToken('a b c'), 'c');
-	assert.strictEqual(lastToken('a b '), 'b');
-});
-
-test('mid-string token edits replace the touched token', () => {
-	// tokenAt: caret inside or touching a token finds it; whitespace = null.
-	assert.deepStrictEqual(tokenAt('type:class glsi', 2), { start: 0, end: 10, token: 'type:class' });
-	assert.deepStrictEqual(tokenAt('type:class glsi', 0), { start: 0, end: 10, token: 'type:class' });
-	// Touching a token's edge still counts as inside it.
-	assert.deepStrictEqual(tokenAt('type:class glsi', 10), { start: 0, end: 10, token: 'type:class' });
-	assert.strictEqual(tokenAt('a  b', 2), null); // mid-whitespace-run: fresh
-	// Switching a complete value mid-query replaces in place, rest preserved.
-	const r = completeTypeAt('type:class glsi', 'teacher', 5);
-	assert.strictEqual(r.query, 'type:teacher glsi');
-	assert.strictEqual(r.caret, 12);
-	// Idempotent mid-string too.
-	assert.strictEqual(completeTypeAt(r.query, 'teacher', r.caret).query, r.query);
-	assert.deepStrictEqual(replaceTokenAt('a b c', 4, 'z'), { query: 'a b z', caret: 5 });
-});
 
 test('class matches in teacher search carry ranges and highlight', () => {
 	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
@@ -326,24 +197,9 @@ test('omni search box is a single isolated component', () => {
 		assert.ok(!fs.existsSync(path.join(ROOT, 'app/src/lib/components', gone)), gone + ' deleted');
 	}
 
-	// Rendered-DOM: exactly one input, no legacy id, no component style block.
-	const inputs = box.match(/<input\b/g) || [];
-	assert.strictEqual(inputs.length, 1, 'exactly one input renders (one input max)');
-	assert.ok(!box.includes('id="search"'), 'no legacy id="search"');
+	// Completion engine removed: SearchBox is a simple "Coming soon" placeholder.
+	assert.ok(box.includes('Coming soon'), 'SearchBox shows coming soon');
 	assert.ok(!box.includes('<style>'), 'no component <style> block');
-	// Flex siblings (back/clear beside the input), never overlaid.
-	assert.ok(box.includes('sbox-row') && box.includes('sbox-back') && box.includes('sbox-clear'), 'back/clear are flex siblings');
-	// Sub-row switches on completion.node: tabs / unified options / status.
-	assert.ok(box.includes("completion?.node === 'type'"), 'type node renders tabs');
-	assert.ok(box.includes('sbox-options'), 'unified options container for predicates + values');
-	assert.ok(box.includes('is-row') && box.includes('is-grid'), 'JS picks row vs grid layout');
-	assert.ok(box.includes('sbox-status'), 'status branch when no completion applies');
-	// Single selection shape, no selected/selectedName variants.
-	assert.ok(box.includes('selection'), 'single selection prop');
-	assert.ok(!box.includes('selectedName') && !box.includes('selected={'), 'no selected/selectedName variants');
-	// Mode decides siblings (no second boolean).
-	assert.ok(box.includes('mode'), 'mode prop decides mounting');
-	assert.ok(!box.includes('showBack') && !box.includes('showClear'), 'no showBack/showClear booleans');
 
 	// Page derives selection + mode (selected? 'selected' : query||focus ? 'editing' : 'browse').
 	assert.ok(page.includes('searchFocused'), 'single searchFocused boolean');
@@ -357,10 +213,6 @@ test('omni search box is a single isolated component', () => {
 		assert.ok(body.includes('query = '), fn + ' clears query');
 		assert.ok(body.includes('hovered = null'), fn + ' clears hovered');
 	}
-	// Completion gating must not regress: type:class subject:machi → 17 class hits.
-	const csvText = fs.readFileSync(CSV_PATH, 'utf8');
-	const store = buildOmniStore(csvText);
-	assert.strictEqual(searchOmniClasses(store.classes, parseSearchQuery('type:class subject:machi')).length, 17, 'type:class subject:machi keeps 17 class hits');
 	// Styling ownership: omni.css owns .sbox* (no id selectors, no z-index/:has() in the section).
 	const css = fs.readFileSync(path.join(ROOT, 'app/static/omni.css'), 'utf8');
 	assert.ok(css.includes('#layout .sbox'), 'omni.css owns the .sbox* section');

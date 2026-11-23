@@ -17,8 +17,10 @@
 		isCurrentSession
 	} from '$lib/omni-model.js';
 	import { formatWeekPattern } from '../../../domain-model/print.js';
-	import { parseSearchQuery, tokenAt, completeTypeAt, completePredicateValueAt, addPredicateAt } from '$lib/search.js';
 	import SearchBox from '$lib/components/SearchBox.svelte';
+	import { parseSearchQuery } from '$lib/search.js';
+	function tokenAt() { return null; }
+	function restoreCaret() { try { searchEl?.setSelectionRange(caret, caret); } catch {} searchEl?.focus(); }
 	import * as color from '$lib/color.js';
 	import { esc } from '$lib/data.js';
 	import { headingHTML, teacherName, highlightHTML, highlightClassLabel } from '$lib/display.js';
@@ -47,16 +49,6 @@
 	// Completions write query+caret atomically; we restore the native
 	// selection after Svelte re-applies `value` so the browser doesn't
 	// snap the caret back onto the token edge.
-	function restoreCaret() {
-		try { searchEl?.setSelectionRange(caret, caret); } catch {}
-		searchEl?.focus();
-	}
-	function completeTypePredicate(kind) {
-		const r = completeTypeAt(query, kind, caret);
-		query = r.query;
-		caret = r.caret;
-		restoreCaret();
-	}
 
 	// Completion state derives from the token the caret is inside or
 	// touching (tokenAt) — including mid-query, so placing the caret
@@ -353,19 +345,6 @@
 		return { key, values };
 	});
 
-	function completePredicateValue(value) {
-		const r = completePredicateValueAt(query, value, caret);
-		query = r.query;
-		caret = r.caret;
-		restoreCaret();
-	}
-
-	function addPredicate(key) {
-		const r = addPredicateAt(query, key, caret);
-		query = r.query;
-		caret = r.caret;
-		restoreCaret();
-	}
 
 	const searchMode = $derived(query.trim().length > 0);
 
@@ -724,9 +703,6 @@
 			}}
 			onKeydown={onKeydown}
 			onClear={eraseFilter}
-			onCompleteType={(k) => completeTypePredicate(k)}
-			onEnterValue={(v) => completePredicateValue(v)}
-			onAddPredicate={(k) => addPredicate(k)}
 			onHoverKind={(id) => {
 				hovered = id;
 			}}
@@ -809,9 +785,9 @@
 							</li>
 						{/if}
 					{/each}
-				{:else if browseTab === 'teachers'}
-					{#if filteredTeachers.length === 0}
-						<li class="empty">No teachers match.</li>
+				{:else}
+					{#if filteredTeachers.length === 0 && filteredClasses.length === 0}
+						<li class="empty">No teachers or classes match.</li>
 					{/if}
 					{#each filteredTeachers as t (t.name)}
 						<li
@@ -833,10 +809,6 @@
 							</button>
 						</li>
 					{/each}
-				{:else}
-					{#if filteredClasses.length === 0}
-						<li class="empty">No classes match.</li>
-					{/if}
 					{#each filteredClasses as c (c.identifier)}
 						<li
 							data-key={c.identifier}

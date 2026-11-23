@@ -5,13 +5,12 @@ import { catalogFromCsv } from '../../../domain-model/csv.js';
 import { DAYS, SLOTS, trackOf, yearOf } from '../../../domain-model/objects.js';
 import { formatWeekPattern } from '../../../domain-model/print.js';
 import { resolve, sessionsFor, reduceClasses } from '../../../domain-model/query.js';
-import { normStr, tokenize, fuzzyRanges, scoreMatch, mergeRanges, parseSearchQuery } from './search.js';
+import { normStr, tokenize, fuzzyRanges, scoreMatch, mergeRanges } from './search.js';
 
 /** Normalize a search input (string or parsed query) to {terms, filters}. */
 function normQuery(query) {
 	if (typeof query === 'string' || query == null) {
-		const parsed = parseSearchQuery(query ?? '');
-		return { terms: parsed.terms.join(' '), filters: parsed.filters };
+		return { terms: String(query ?? ''), filters: [] };
 	}
 	return { terms: (query.terms ?? []).join(' '), filters: query.filters ?? [] };
 }

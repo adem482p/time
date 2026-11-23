@@ -928,7 +928,7 @@ table.week .week-pill {
 #layout .sbox-clear svg{ width:1.5rem; height:1.5rem; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
 #layout .sbox-sub{
   min-height:2rem; display:flex; align-items:center; justify-content:center;
-  margin:0 0 .4rem;
+  margin:0 0 .8rem;
 }
 #layout .sbox-tabs{
   display:flex; gap:0; height:2rem; box-sizing:border-box; border:1px solid var(--md-outline-variant, #ccc);

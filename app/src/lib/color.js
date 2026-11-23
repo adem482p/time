@@ -81,12 +81,3 @@ export function weekCell(st) {
   return c;
 }
 
-/**
- * Autocomplete suggestion row. `kind` is part of the identity (teacher /
- * subject / class) and always leads the class list.
- */
-export function suggestion(st) {
-  const c = [st.kind];
-  if (st.active) c.push(CLASSES.active);
-  return c;
-}
