@@ -13,12 +13,9 @@
  * self-fired on DOMContentLoaded were removed — the Svelte layout calls
  * `init()` after mount. `init()` keeps its `inited` gate and stays idempotent.
  *
- * Exports (mirroring the legacy `TT.theme` return object):
- *   PRESETS, VARIANTS, ROLE_ORDER,
- *   createTheme, apply, SOLID_PALETTE, snapPalette, init, current,
- *   hexToArgb, argbToHex, hctFromArgb, argbFromHct, ratioOfTones,
- *   foregroundTone, tonalPalette, buildPalettes, normalizeHex,
- *   detectSystemSeed
+ * Exports (the engine's whole public surface today — the members the app and
+ * its suites actually consume; the remaining helpers above stay module-private):
+ *   PRESETS, createTheme, init, current
  *
  * The light/dark scheme is inherited from `prefers-color-scheme`; when the
  * platform exposes a theme color (an author <meta name="theme-color"> or the OS
@@ -430,7 +427,6 @@ const solveToInt = (hueDegrees, chroma, lstar) => {
   const linrgb = bisectToLimit(y, hueRadians);
   return argbFromLinrgb(linrgb);
 };
-const argbFromHct = (h, c, t) => solveToInt(h, c, t);
 
 // A tonal palette: fixed hue + chroma, one tone(t) lookup per palette.
 // tone(t) is cached because the HCT solver is the expensive part.
@@ -716,8 +712,7 @@ const SOLID_PALETTE = [
 
 // Nearest curated solid to `hex` by squared per-channel RGB distance.
 // Deterministic: iterating in order with a strict `<` comparison keeps the
-// lowest-index entry on ties. Uses hexToArgb + bit shifts (ES5); no HCT and
-// no dependency on js/color.js.
+// lowest-index entry on ties. Uses hexToArgb + bit shifts (ES5); no HCT math.
 const snapPalette = (hex, list) => {
   const src = hexToArgb(hex);
   const r = src >>> 16 & 255, g = src >>> 8 & 255, b = src & 255;
@@ -1018,30 +1013,9 @@ const init = () => {
  * the VARIANTS table. The first entry is the Monochrome preset; the
  * fresh-visitor default is the preset named 'ISIM Blue'.
  */
-// (Named theme presets, in cycle order — see PRESETS's own declaration table
-// above.) Re-exported from the internal table so the legacy `TT.theme.PRESETS`
-// surface is preserved.
-export { PRESETS };
-
-// The rest of the legacy public surface, exported from the internal
-// definitions above — same names, same behavior.
-export {
-  VARIANTS,
-  ROLE_ORDER,
-  createTheme,
-  apply,
-  SOLID_PALETTE,
-  snapPalette,
-  init,
-  current,
-  hexToArgb,
-  argbToHex,
-  hctFromArgb,
-  argbFromHct,
-  ratioOfTones,
-  foregroundTone,
-  tonalPalette,
-  buildPalettes,
-  normalizeHex,
-  detectSystemSeed
-};
+// The public surface this module actually exposes — the engine, its named
+// presets, the factory and the boot. Everything else the engine defines above
+// stays module-private. `init` is the one entry point the layout calls; the
+// PRESETS/createTheme/current names are the reads the boot and the test suites
+// exercise.
+export { PRESETS, createTheme, init, current };

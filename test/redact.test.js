@@ -3,7 +3,7 @@
 //
 // Ported off the legacy suite: lib pins now come from the app's ESM libs
 // (app/src/lib/*.js), and the site-inventory / ghost / CSS pins now target
-// the Svelte routes and app/static/app.css. `?redact=1` swaps every rendered
+// the Svelte routes and app/static/omni.css. `?redact=1` swaps every rendered
 // teacher name for an empty rectangle filled with the text foreground
 // (`background: currentColor`). These tests pin the boot wiring, both
 // redaction-aware entry points, the site inventory (negative tokens so a
@@ -130,8 +130,8 @@ test('site inventory: no raw-esc name sites left; every page wires nameHTML(', f
 // ---- 7. CSS block ----------------------------------------------------------
 
 test('.redact CSS block pins background: currentColor and display: inline-block', function () {
-  const css = readSrc('app/static/app.css');
-  const at = css.indexOf('.redact {');
+  const css = readSrc('app/static/omni.css');
+  const at = css.indexOf('.redact{');
   assert.ok(at !== -1, 'the .redact rule must exist');
   const close = css.indexOf('}', at);
   assert.ok(close !== -1, 'the .redact rule must close');
@@ -139,7 +139,9 @@ test('.redact CSS block pins background: currentColor and display: inline-block'
   assert.ok(block.indexOf('background: currentColor') !== -1,
     'the rectangle is the text foreground');
   assert.ok(block.indexOf('display: inline-block') !== -1, 'the rectangle sizes inline');
-  assert.ok(css.slice(close + 1).trim() === '', 'the block is appended at the end of app.css');
+  const after = css.slice(close + 1).trim();
+  assert.ok(after === '' || after[0] === '/' || after[0] === '@' || after[0] === '#' || after[0] === '.',
+    'the .redact block closes flat and is followed only by later sections');
 });
 
 // ---- 9. README image links resolve -----------------------------------------

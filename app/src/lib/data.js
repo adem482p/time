@@ -1,61 +1,31 @@
 // app/src/lib/data.js — Layer 1: data layer.
-// Vocabulary constants, CSV parsing, and the in-memory Store API.
+// Vocabulary constants and the in-memory Store API (the CSV reader lives in
+// the domain model, which owns the publication notation).
 // No DOM access here; createStore(text) is pure so the whole stack is
 // testable in node. Unlike the legacy js/data.js there is no self-located
-// fetch helper: the CSV URL is resolved by the caller; see load.js.
+// fetch helper: the CSV URL is resolved by the caller (the routes fetch
+// `<base>/time.csv`); no helper module exists.
 // (Redaction mode still reads `?redact=1` from location.search when a
 // `location` object exists.)
 
-const DAYS = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
-const SLOTS = ['08h15-09h45', '10h00-11h30', '11h40-13h10',
-                      '13h20-14h50', '15h00-16h30', '16h45-18h15'];
-const HOURS_PER_SESSION = 1.5;
+import { DAYS, SLOTS } from '../../../domain-model/objects.js';
+import { parseCsvRows } from '../../../domain-model/csv.js';
 
-/**
- * Robust CSV parse: quoted fields, embedded commas/quotes/newlines, CRLF.
- * Returns an array of row objects — one object per data row, keyed by the
- * header names, with every cell value trimmed (missing cells become '').
- */
-function parseCSV(text) {
-  const rows = [];
-  let row = [], cur = '', inQ = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (inQ) {
-      if (c === '"') {
-        if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false;
-      } else cur += c;
-    } else if (c === '"') inQ = true;
-    else if (c === ',') { row.push(cur); cur = ''; }
-    else if (c === '\n' || c === '\r') {
-      if (c === '\r' && text[i + 1] === '\n') i++;
-      row.push(cur); cur = '';
-      if (row.length > 1 || row[0] !== '') rows.push(row);
-      row = [];
-    } else cur += c;
-  }
-  if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
-  const head = rows.shift() || [];
-  return rows.map(function (r) {
-    const o = {};
-    head.forEach(function (h, j) { o[h] = (r[j] || '').trim(); });
-    return o;
-  });
-}
+const HOURS_PER_SESSION = 1.5;
 
 /**
  * Build the in-memory store from CSV text. The store object keeps every
  * parsed row (`rows`, including empty-professor ones, which the time page
  * may still show; teacher-oriented APIs skip empty professors) plus the
- * vocabulary: `days` and `slots` mirror DAYS/SLOTS, `hoursPerSession`
- * mirrors HOURS_PER_SESSION, and `teachers`/`fields`/`subjects` are the
- * sorted distinct value lists. `sessionsByTeacher` maps each teacher name
- * to its rows, `size` is the row count, `sessionsOf(name)` returns a
- * teacher's rows (empty array when unknown) and `byDaySlot(day, slot)`
- * filters rows by exact day and slot strings.
+ * vocabulary: `days` and `slots` are the domain-model constants,
+ * `hoursPerSession` mirrors the session length, and `teachers`/`fields`/
+ * `subjects` are the sorted distinct value lists. `sessionsByTeacher`
+ * maps each teacher name to its rows, `size` is the row count,
+ * `sessionsOf(name)` returns a teacher's rows (empty array when unknown) and
+ * `byDaySlot(day, slot)` filters rows by exact day and slot strings.
  */
 export function createStore(text) {
-  const rows = parseCSV(text);
+  const rows = parseCsvRows(text);
   const teacherSet = {}, fieldSet = {}, subjectSet = {};
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];

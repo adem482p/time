@@ -26,8 +26,8 @@ export function readSrc(...parts) {
 }
 
 // Resolve a page- or worker-relative URL to a site-root-relative path
-// ('../styles.css' from 'classes' -> 'styles.css', 'index.html' from 'teachers'
-// -> 'teachers/index.html'). Both sides of every offline/PWA comparison go
+// ('../omni.css' from 'omni' -> 'omni.css', 'index.html' from 'omni' ->
+// 'omni/index.html'). Both sides of every offline/PWA comparison go
 // through this, so coverage is checked in one canonical coordinate system.
 export function toRoot(rel, fromDir) {
   return path.posix.normalize(path.posix.join(fromDir, rel));

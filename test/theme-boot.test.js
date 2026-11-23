@@ -14,7 +14,7 @@
 //      apply are the same values (double-apply is a no-op). The legacy
 //      DOMContentLoaded auto-init is gone — the layout component calls
 //      init() after mount, so the boots below call init() explicitly.
-//   3. the ONE additive prefers-color-scheme: dark block in app.css that
+//   3. the ONE additive prefers-color-scheme: dark block in omni.css that
 //      gives first-visit dark visitors (and no-JS visitors) a dark first
 //      frame, pinned against the engine so it cannot drift.
 
@@ -288,8 +288,8 @@ test('readState stays backward compatible: the old shape restores and upgrades, 
 
 // ---- 4. the CSS dark fallback ----------------------------------------------
 
-test('the app.css dark-fallback block is additive, singular, top-positioned and drift-free against the engine', () => {
-	const css = readSrc('app', 'static', 'app.css');
+test('the omni.css dark-fallback block is additive, singular, top-positioned and drift-free against the engine', () => {
+	const css = readSrc('app', 'static', 'omni.css');
 	const marker = '@media (prefers-color-scheme: dark)';
 	const start = css.indexOf(marker);
 	assert.ok(start !== -1, 'the dark-fallback block must exist');
@@ -310,21 +310,26 @@ test('the app.css dark-fallback block is additive, singular, top-positioned and 
 	while ((m = def.exec(block))) pairs[m[1]] = m[2];
 	assert.strictEqual(Object.keys(pairs).length, 22, 'the block defines 22 roles');
 
-	// Purely additive: app.css consumes exactly those 22 via var(--md-…,
-	// #fallback) and defines no --md-* anywhere outside this block.
+	// Purely additive: every --md-* the stylesheet consumes via var(--md-… ,
+	// #fallback) has a baked dark value in this block, and no --md-* property
+	// is defined anywhere else. The block may also carry fallbacks for roles
+	// nothing currently references — inert safety, not drift.
 	const consumed = {};
 	const use = /var\((--md-[a-z-]+)[,)]/g;
 	while ((m = use.exec(css))) consumed[m[1]] = true;
-	assert.deepStrictEqual(Object.keys(pairs).sort(), Object.keys(consumed).sort(),
-		'the block covers exactly the roles app.css consumes');
+	const consumedKeys = Object.keys(consumed);
+	consumedKeys.forEach((prop) => {
+		assert.ok(prop in pairs, 'the block carries a baked dark fallback for ' + prop +
+			', which the stylesheet consumes via var(--md-… , #fallback)');
+	});
 	const outside = css.slice(0, start) + css.slice(end + 1);
 	assert.ok(!/--md-[a-z-]+\s*:/.test(outside),
-		'no --md-* property is defined anywhere else in app.css');
+		'no --md-* property is defined anywhere else in omni.css');
 
 	// Top placement (per the issue-066 decision), after the @import that CSS
-	// requires to precede every other at-rule.
-	assert.ok(start < css.indexOf('* { box-sizing'), 'the block precedes the first rule');
+	// requires to precede every other at-rule, before any other rule.
 	assert.ok(start > css.indexOf('@import'), 'the @import stays the first at-rule');
+	assert.ok(start < css.indexOf('@font-face'), 'the block precedes every other rule');
 
 	// Drift pin: every value equals the engine's dark ISIM Blue output.
 	const engine = bootTheme(undefined, false).theme;

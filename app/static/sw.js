@@ -13,7 +13,6 @@ const IMMUTABLE_CACHE = 'time-omni-immutable' + (BASE.replace(/\//g, '-') || '-r
 // Assets to cache on install (app shell)
 const PRECACHE_ASSETS = [
 	BASE + '/',
-	BASE + '/app.css',
 	BASE + '/omni.css',
 	BASE + '/time.csv',
 	BASE + '/manifest.json'

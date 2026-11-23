@@ -23,8 +23,8 @@ const extract = join(root, 'data', 'extract.py');
 
 // ---- time.csv: generate if missing, then copy to site-consumed location ----
 // The single source of truth is data/time.csv, produced by data/extract.py.
-// The site fetches `<base>/time.csv` (see app/src/lib/load.js), served from
-// app/static/ in dev and copied to build/ by the adapter at build time.
+// The site fetches `<base>/time.csv`, served from app/static/ in dev and
+// copied to build/ by the adapter at build time.
 if (!existsSync(csvSrc)) {
 	console.log(`preprocess: ${csvSrc} missing — generating via data/extract.py`);
 	try {

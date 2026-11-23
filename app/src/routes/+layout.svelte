@@ -1,20 +1,17 @@
 <script>
-	// app/src/routes/+layout.svelte — the document shell. app.css carries the
-	// shared vocabulary and legacy-page layout; the omni page is self-contained
-	// in omni.css and does not depend on app.css.
+	// app/src/routes/+layout.svelte — the document shell. The omni page is
+	// self-contained in omni.css; no shared stylesheet is linked here.
+
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { init as initTheme } from '$lib/theme.js';
 
 	const routeId = $derived(page.route.id ?? '/');
-	const needsAppCss = $derived(
-		!routeId.includes('omni') && routeId !== '/'
-	);
 
 	// the route content ({@render children()} below)
 	let { children } = $props();
 
-	// data-page attribute for CSS scoping (required by app.css). No component
+	// data-page attribute for CSS scoping. No component
 	// owns the <body> element (app.html does — a nested <body> renders fine in
 	// SSR but Svelte cannot carry it client-side: the parser strips <body> out
 	// of a template's contents and <svelte:body> takes no attributes), so the
@@ -34,11 +31,5 @@
 		initTheme();
 	});
 </script>
-
-<svelte:head>
-	{#if needsAppCss}
-		<link rel="stylesheet" href="../app.css" />
-	{/if}
-</svelte:head>
 
 {@render children()}
