@@ -750,7 +750,14 @@
 			<!-- Hierarchy facts -->
 			<dl class="class-facts">
 				{#each currentClassDetail.facts as f (f.name)}
-					<div class="fact-card" class:clickable={f.name === 'Groupe'} onclick={f.name === 'Groupe' ? toggleCohort : null}>
+					<div
+						class="fact-card"
+						class:clickable={f.name === 'Groupe'}
+						role={f.name === 'Groupe' ? 'button' : undefined}
+						tabindex={f.name === 'Groupe' ? 0 : undefined}
+						onclick={f.name === 'Groupe' ? toggleCohort : null}
+						onkeydown={f.name === 'Groupe' ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCohort(); } } : null}
+					>
 						<dt class="fact-name">{f.name}</dt>
 						<dd class="fact-value">{@html f.raw ? f.value : esc(f.value)}</dd>
 					</div>

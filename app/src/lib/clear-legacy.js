@@ -1,6 +1,7 @@
 // app/src/lib/clear-legacy.js — shared boot helper: wipe legacy client-side
 // storage/caches so old deployments don't leak into the new app.
 export async function clearLegacyData() {
+	if (typeof window === 'undefined') return;
 	try { localStorage.clear(); } catch (e) {}
 	try { sessionStorage.clear(); } catch (e) {}
 	try {
