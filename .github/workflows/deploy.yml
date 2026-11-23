@@ -14,11 +14,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-main:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -49,28 +51,76 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: site-build
+          name: site-main
+          path: app/build
+          retention-days: 1
+
+  build-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install app dependencies
+        run: npm ci
+        working-directory: app
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install poppler-utils (required by data/extract.py)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Preprocess static inputs
+        run: node scripts/preprocess.mjs
+
+      - name: Build site
+        run: npm run build
+        working-directory: app
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-dev
           path: app/build
           retention-days: 1
 
   deploy:
-    needs: build
+    needs: [build-main, build-dev]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download build artifact
+      - name: Download main build artifact
         uses: actions/download-artifact@v4
         with:
-          name: site-build
-          path: build
+          name: site-main
+          path: site-main
+
+      - name: Download dev build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-dev
+          path: site-dev
 
       - name: Assemble site (root + /dev)
         run: |
-          mkdir -p site site/dev
-          cp -a build/. site/
-          cp -a build/. site/dev/
+          mkdir -p site
+          cp -a site-main/. site/
+          mkdir -p site/dev
+          cp -a site-dev/. site/dev/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
