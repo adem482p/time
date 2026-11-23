@@ -20,6 +20,7 @@
 	import SearchBox from '$lib/components/SearchBox.svelte';
 	import { parseSearchQuery } from '$lib/search.js';
 	import * as color from '$lib/color.js';
+	import { esc } from '$lib/data.js';
 	import { headingHTML, teacherName, highlightHTML, highlightClassLabel } from '$lib/display.js';
 	import { clock } from '$lib/clock.js';
 	import * as kaomoji from '$lib/kaomoji.js';
