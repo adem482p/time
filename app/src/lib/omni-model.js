@@ -18,7 +18,7 @@ function normQuery(query) {
 const EXACT_FILTER_KEYS = new Set(['day', 'cohort', 'group', 'track', 'year', 'specialty']);
 
 /** Predicate evaluation: every filter must match one of the item's values. */
-export function passesFilters(item, filters) {
+function passesFilters(item, filters) {
 	if (!filters?.length) return true;
 	return filters.every((f) => {
 		// Identity predicates read the item's own fields; session predicates
@@ -72,7 +72,7 @@ export function isCurrentSession(day, time, now) {
 /**
  * Calculate the day cursor for the week grid.
  */
-export function dayCursor(now, slots) {
+function dayCursor(now, slots) {
 	now = now || new Date();
 	slots = slots || SLOTS;
 	const today = JS_DAY[now.getDay()];
@@ -109,7 +109,7 @@ export function dayCursor(now, slots) {
 /**
  * Minutes from midnight to next occurrence of session strictly after `now`.
  */
-export function nextKey(s, now) {
+function nextKey(s, now) {
 	const st = slotMinutes(s.time)[0];
 	const cur = now.getHours() * 60 + now.getMinutes();
 	let ahead = (DAY_IDX[s.day] - now.getDay() + 7) % 7;
@@ -120,7 +120,7 @@ export function nextKey(s, now) {
 /**
  * Indices of the earliest next occurrence sessions.
  */
-export function nextSessionIdx(sessions, now) {
+function nextSessionIdx(sessions, now) {
 	now = now || new Date();
 	const keys = (sessions || []).map((s) => nextKey(s, now));
 	const best = Math.min.apply(null, keys);
@@ -166,7 +166,7 @@ export function startFromToday(days, sessions, now) {
  * Format class shortcut representation: head carries the label without the
  * cohort digit, sub carries the cohort (rendered as <sub> by the page).
  */
-export function classShortcut(cls) {
+function classShortcut(cls) {
 	if (cls.cohort != null) {
 		return { head: cls.label.slice(0, -1), sub: String(cls.cohort) };
 	}
@@ -457,7 +457,7 @@ export function searchOmniClasses(classes, query) {
 /**
  * Fuse teacher sessions sharing day and time.
  */
-export function fuseTeacherSessions(sessions, catalogue) {
+function fuseTeacherSessions(sessions, catalogue) {
 	const slotGroups = {};
 	for (const s of sessions) {
 		const k = `${s.day}|${s.slot}`;
@@ -537,7 +537,7 @@ function groupByDay(sortedSessions, now) {
  * {kind:'session', s, i} | {kind:'break', slot}. Multiple sessions in one
  * slot stay grouped (no break markers between them).
  */
-export function withBreaks(entries, slotOf) {
+function withBreaks(entries, slotOf) {
 	const present = new Set(entries.map((e) => slotOf(e.s)));
 	let lo = Infinity, hi = -Infinity;
 	for (const slot of present) {

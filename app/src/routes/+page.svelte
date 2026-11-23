@@ -19,8 +19,6 @@
 	import { formatWeekPattern } from '../../../domain-model/print.js';
 	import SearchBox from '$lib/components/SearchBox.svelte';
 	import { parseSearchQuery } from '$lib/search.js';
-	function tokenAt() { return null; }
-	function restoreCaret() { try { searchEl?.setSelectionRange(caret, caret); } catch {} searchEl?.focus(); }
 	import * as color from '$lib/color.js';
 	import { headingHTML, teacherName, highlightHTML, highlightClassLabel } from '$lib/display.js';
 	import { clock } from '$lib/clock.js';
@@ -31,52 +29,12 @@
 	// Filter query. Starts EMPTY on every viewport: an empty query (by the
 	// parser — no type, terms, or filters) IS the type-selection state.
 	let query = $state('');
-	// Caret position: read-only detection state (which token the caret is
-	// inside/touching). Edits are pure token replacements at this position.
-	let caret = $state(0);
-
-	// Browse mode tab: 'teachers' | 'classes' (no "all")
-	let browseTab = $state('teachers');
-
 	const parsedQuery = $derived(parseSearchQuery(query));
 
 	// Result-type filter: derived from a `type:` predicate in the query
 	// (type:teacher / type:classes), so the chips and the query stay in sync.
 	const wantTeachers = $derived(!parsedQuery.type || parsedQuery.type === 'teacher');
 	const wantClasses = $derived(!parsedQuery.type || parsedQuery.type === 'class');
-
-	// Completions write query+caret atomically; we restore the native
-	// selection after Svelte re-applies `value` so the browser doesn't
-	// snap the caret back onto the token edge.
-
-	// Completion state derives from the token the caret is inside or
-	// touching (tokenAt) — including mid-query, so placing the caret
-	// beside `type:class` reopens the menu to switch values. An entirely
-	// empty query (no type/terms/filters per the parser) is the
-	// type-selection state itself.
-	const isEmptyQuery = $derived(
-		parsedQuery.type === null && parsedQuery.terms.length === 0 && parsedQuery.filters.length === 0
-	);
-	const caretToken = $derived(tokenAt(query, caret));
-	// THE completion state: one derivation — which node (if any) owns the
-	// completion UI, and the data for it. Everything else derives from it.
-	// Only a *parsable* type token opens the type node: an unknown value
-	// like `type:foo` is a literal term (search.js falls back), so after a
-	// space — or even with the caret touching the token edge — the tabs
-	// must not stick; predicates show instead. Placing the caret beside a
-	// complete `type:class` still reopens the menu (parsedQuery.type set).
-	const completion = $derived.by(() => {
-		const tok = caretToken?.token ?? '';
-		if (isEmptyQuery || (/^type:(\*|[a-z]*)$/i.test(tok) && (parsedQuery.type !== null || parsedQuery.completing))) {
-			return { node: 'type', partial: /^type:(\*|[a-z]*)$/i.exec(tok)?.[1]?.toLowerCase().replace('*', '') ?? '' };
-		}
-		if (/^type:/i.test(tok) && parsedQuery.type !== null) return { node: 'type', partial: '' };
-		const pm = /^(subject|room|teacher|day|cohort|group|track|year|specialty):(.*)$/i.exec(tok);
-		if (pm) return { node: 'value', key: pm[1].toLowerCase(), partial: pm[2].toLowerCase() };
-		return { node: 'none' };
-	});
-	const insideTypeNode = $derived(caretToken ? /^type:/i.test(caretToken.token) : false);
-	const insidePredicateNode = $derived(completion.node === 'value');
 
 	// Focus: the box has content expected of editing, or focus with a pending type.
 	let searchFocused = $state(false);
@@ -91,8 +49,6 @@
 	// Entering search clears `selection` (so mode derives to editing);
 	// without this snapshot the back button would land on browse.
 	let returnTo = $state(null); // {kind:'teacher',name} | {kind:'class',identifier} | null
-	let hovered = $state(null); // the hovered completion item (one var)
-
 	// Single selection shape + single mode — derived, never separately stored.
 	const selection = $derived(
 		selectedTeacher
@@ -102,25 +58,6 @@
 				: null
 	);
 	const mode = $derived(selection ? 'selected' : query.trim() || searchFocused ? 'editing' : 'browse');
-	// Hover preview: the displayed text while hovering a completion item.
-	// Typing commits it into the query and clears hover.
-	const ghostPreview = $derived.by(() => {
-		if (!hovered || !caretToken) return null;
-		const tok = caretToken.token;
-		if (/^type:(\*|[a-z]*)$/i.test(tok)) {
-			return query.slice(0, caretToken.start) + `type:${hovered}` + query.slice(caretToken.end);
-		}
-		const pm = /^(subject|room|teacher|day|cohort|group|track|year|specialty):(.*)$/i.exec(tok);
-		if (pm) {
-			const key = pm[1].toLowerCase();
-			const done = hovered.includes(' ') ? `${key}:"${hovered}"` : `${key}:${hovered}`;
-			return query.slice(0, caretToken.start) + done + query.slice(caretToken.end);
-		}
-		return null;
-	});
-
-	// (hovered is the single preview state; tabs, values, and keys all
-	// write to it, the preview derives from the caret's token.)
 
 	// Remember the last selection (teacher or class) across reloads.
 	const TEACHER_STORE_KEY = 'time-omni-teacher';
@@ -260,96 +197,7 @@
 
 	// Contextual predicate suggestions: keys that can still narrow the
 	// current results (with counts), shown when NOT completing `type:`.
-	const predicateSuggestions = $derived.by(() => {
-		if (!searchMode || insideTypeNode || insidePredicateNode) return [];
-		// Only predicates that make sense for the current result kind are
-		// suggested (classes: their identity; teachers: what they teach).
-		// Anything else still works when typed explicitly. `type` follows
-		// the same rule — absent from the AST means it is suggestable.
-		const candidates = [];
-		if (!parsedQuery.type && (filteredTeachers.length || filteredClasses.length)) {
-			candidates.push({ key: 'type', label: 'Type', pool: [...filteredTeachers, ...filteredClasses] });
-		}
-		if (wantClasses && filteredClasses.length) {
-			candidates.push(
-				{ key: 'track', label: 'Track', pool: filteredClasses },
-				{ key: 'year', label: 'Year', pool: filteredClasses },
-				{ key: 'specialty', label: 'Specialty', pool: filteredClasses }
-			);
-		}
-		if (wantTeachers && filteredTeachers.length) {
-			candidates.push({ key: 'subject', label: 'Subject', pool: filteredTeachers });
-		}
-		const out = [];
-		for (const { key, label, pool } of candidates) {
-			if (parsedQuery.filters.some((f) => f.key === key)) continue;
-			const distinct =
-				key === 'type'
-					? 2
-					: new Set(
-							pool.flatMap((item) =>
-								['cohort', 'group', 'track', 'year', 'specialty'].includes(key)
-									? [item[key]]
-									: item.filterSets?.[key] ?? []
-							)
-						).size;
-			out.push({ key, label, count: pool.length, distinct });
-		}
-		// One predicate with a single possible value is not a choice — hide.
-		if (out.length === 1 && out[0].distinct <= 1) return [];
-		return out;
-	});
-
-	// The token being typed, if it prefixes a filter key (e.g. `subj`),
-	// narrows the suggestion list to the matching keys.
-	const keyPrefix = $derived.by(() => {
-		const tok = caretToken?.token ?? '';
-		return /^[a-z]+$/i.test(tok) ? tok.toLowerCase() : '';
-	});
-	const visibleSuggestions = $derived(
-		keyPrefix
-			? predicateSuggestions.filter((p) => p.key.startsWith(keyPrefix))
-			: predicateSuggestions
-	);
-
-	// Values menu: while inside a predicate value, list contextual values —
-	// distinct session values across current results, narrowed by the partial.
-	const valueMenu = $derived.by(() => {
-		const tok = caretToken?.token ?? '';
-		const m = /^(subject|room|teacher|day|cohort|group|track|year|specialty):(.*)$/i.exec(tok);
-		if (!m) return null;
-		const key = m[1].toLowerCase();
-		const partial = m[2].toLowerCase();
-		const pool = [
-			...(wantTeachers ? filteredTeachers : []),
-			...(wantClasses ? filteredClasses : [])
-		];
-		const counts = new Map();
-		for (const item of pool) {
-			// Identity predicates read the item's own field (like the filter).
-			const vals =
-				['cohort', 'group', 'track', 'year', 'specialty'].includes(key)
-					? [item[key]]
-					: item.filterSets?.[key] ?? [];
-			for (const v of new Set(vals)) {
-				if (!v) continue;
-				const sv = String(v);
-				if (partial && !sv.toLowerCase().includes(partial)) continue;
-				counts.set(sv, (counts.get(sv) ?? 0) + 1);
-			}
-		}
-		const values = [...counts.entries()]
-			.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-			.map(([value, count]) => ({ value, count }));
-		return { key, values };
-	});
-
-
 	const searchMode = $derived(query.trim().length > 0);
-
-	// Which lists are visible
-	const showTeachers = $derived(searchMode ? wantTeachers : browseTab === 'teachers');
-	const showClasses = $derived(searchMode ? wantClasses : browseTab === 'classes');
 
 	// Unified, score-sorted results in search mode
 	const searchResults = $derived.by(() => {
@@ -365,9 +213,7 @@
 	});
 
 	// Total results count in list
-	const listTotal = $derived(
-		searchMode ? searchResults.length : (showTeachers ? filteredTeachers.length : 0) + (showClasses ? filteredClasses.length : 0)
-	);
+
 
 	// Selection funnels: entering selected discards query + hover + focus.
 	function selectTeacher(name) {
@@ -376,7 +222,6 @@
 		lastViewKind = 'teacher';
 		returnTo = null;
 		query = '';
-		hovered = null;
 		searchFocused = false;
 		noMatch = '';
 		writeStoredTeacher(name);
@@ -390,7 +235,6 @@
 		lastViewKind = 'class';
 		returnTo = null;
 		query = '';
-		hovered = null;
 		searchFocused = false;
 		noMatch = '';
 		writeStoredClass(identifier);
@@ -420,7 +264,6 @@
 		selectedClass = null;
 		noMatch = '';
 		query = '';
-		hovered = null;
 		searchFocused = false;
 		returnTo = null;
 		// Closing a timetable forgets it: no origin state for prefill.
@@ -431,7 +274,6 @@
 
 	function eraseFilter() {
 		query = '';
-		hovered = null;
 		noMatch = '';
 	}
 
@@ -440,7 +282,6 @@
 	function dismissSearch() {
 		searchFocused = false;
 		query = '';
-		hovered = null;
 		// Dismissing search returns to the timetable we came from.
 		if (returnTo) {
 			if (returnTo.kind === 'teacher') {
@@ -667,54 +508,26 @@
 		<SearchBox
 			mode={mode}
 			query={query}
-			completion={completion}
-			values={valueMenu?.values ?? []}
-			suggestions={visibleSuggestions}
 			statusText={loadError ? `Failed to load data: ${loadError}` : omniStore ? 'ISIM Mahdia timetables' : 'Loading timetable data…'}
-			previewText={ghostPreview}
 			selection={selection}
 			focused={searchFocused}
 			onReady={(el) => (searchEl = el)}
 			onQuery={(v) => {
-				hovered = null;
 				query = v;
-				caret = searchEl?.selectionStart ?? query.length;
-				// Clearing text is not a dismiss: keep returnTo/lastViewKind
-				// so the mobile back button can still restore the timetable.
-				if (!query.trim()) {
-					hovered = null;
-					noMatch = '';
-				}
+				if (!query.trim()) noMatch = '';
 			}}
 			onFocus={(e) => {
 				searchFocused = true;
-				if (!query.trim() && lastViewKind) {
-					query = `type:${lastViewKind} `;
-					caret = query.length;
-					restoreCaret();
-				} else caret = e.currentTarget.selectionStart ?? query.length;
 			}}
 			onBlur={() => {
 				searchFocused = false;
 			}}
-			onCaret={(p) => {
-				caret = p;
-			}}
 			onKeydown={onKeydown}
 			onClear={eraseFilter}
-			onHoverKind={(id) => {
-				hovered = id;
-			}}
 			onBack={() => {
 				showEmpty();
 			}}
 			onOpenList={() => {
-				// Re-enter editing from the selected bar, prefilled with
-				// the selected entity's type. Atomic (query, caret): trailing
-				// space + caret past it (fresh position), so the next
-				// completion is predicates, not a re-pinned type menu.
-				// Remember the timetable so the mobile back button can
-				// dismiss back to it.
 				if (selectedTeacher) returnTo = { kind: 'teacher', name: selectedTeacher };
 				else if (selectedClass) returnTo = { kind: 'class', identifier: selectedClass };
 				else returnTo = null;
@@ -723,10 +536,7 @@
 				selectedClass = null;
 				lastViewKind = kind;
 				query = `type:${kind} `;
-				caret = query.length;
-				hovered = null;
 				searchFocused = true;
-				restoreCaret();
 			}}
 			onDismiss={() => {
 				dismissSearch();

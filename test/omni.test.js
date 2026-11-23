@@ -207,11 +207,10 @@ test('omni search box is a single isolated component', () => {
 	assert.ok(page.includes("'editing' : 'browse'"), 'mode falls through to browse');
 	assert.ok(page.includes('selection={selection}'), 'page passes the single selection');
 	assert.ok(!page.includes('.omni-tab-btn') && !page.includes('.omni-chip') && !page.includes('.omni-filters') && !page.includes('.omni-tabs'), 'page search styles removed');
-	// select*/showEmpty clear query + hovered (state model: editing→selected discards query).
+	// select*/showEmpty clear query (state model: editing→selected discards query).
 	for (const fn of ['function selectTeacher', 'function selectClass', 'function showEmpty']) {
 		const body = page.slice(page.indexOf(fn), page.indexOf(fn) + 500);
 		assert.ok(body.includes('query = '), fn + ' clears query');
-		assert.ok(body.includes('hovered = null'), fn + ' clears hovered');
 	}
 	// Styling ownership: omni.css owns .sbox* (no id selectors, no z-index/:has() in the section).
 	const css = fs.readFileSync(path.join(ROOT, 'app/static/omni.css'), 'utf8');

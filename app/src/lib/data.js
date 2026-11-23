@@ -6,17 +6,17 @@
 // (Redaction mode still reads `?redact=1` from location.search when a
 // `location` object exists.)
 
-export const DAYS = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
-export const SLOTS = ['08h15-09h45', '10h00-11h30', '11h40-13h10',
+const DAYS = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
+const SLOTS = ['08h15-09h45', '10h00-11h30', '11h40-13h10',
                       '13h20-14h50', '15h00-16h30', '16h45-18h15'];
-export const HOURS_PER_SESSION = 1.5;
+const HOURS_PER_SESSION = 1.5;
 
 /**
  * Robust CSV parse: quoted fields, embedded commas/quotes/newlines, CRLF.
  * Returns an array of row objects — one object per data row, keyed by the
  * header names, with every cell value trimmed (missing cells become '').
  */
-export function parseCSV(text) {
+function parseCSV(text) {
   const rows = [];
   let row = [], cur = '', inQ = false;
   for (let i = 0; i < text.length; i++) {

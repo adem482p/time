@@ -33,7 +33,7 @@ export function parseSearchQuery(q) {
 		}
 		terms.push(tok);
 	}
-	return { type, filters, terms, completing: false };
+	return { type, filters, terms };
 }
 
 export function normStr(s) {

@@ -38,17 +38,6 @@ export function sessionRow(st) {
 }
 
 /**
- * Slot entry (time page). now/next only occur inside today's section.
- */
-export function slotEntry(st) {
-  const c = [];
-  if (st.isNow) c.push(CLASSES.now);
-  if (st.isNext) c.push(CLASSES.next);
-  if (st.dim) c.push(CLASSES.dim);
-  return c;
-}
-
-/**
  * Teacher list item. Availability no longer colors list rows (it still
  * drives ordering in match.liveSearch, but has no visual encoding here).
  */
