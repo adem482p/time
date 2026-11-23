@@ -214,7 +214,6 @@
 
 	// Total results count in list
 
-
 	// Selection funnels: entering selected discards query + hover + focus.
 	function selectTeacher(name) {
 		selectedTeacher = name;
